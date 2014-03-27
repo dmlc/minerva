@@ -1,0 +1,28 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+#vim tmp file
+.*.swo
+.*.swp
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# python objects
+*.pyc
+
+# directories
+debug
+release
+build
+deps
+lib
+tags

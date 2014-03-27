@@ -1,0 +1,1 @@
+project(minerva_common)
