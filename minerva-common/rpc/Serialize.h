@@ -18,7 +18,8 @@
 
 namespace minerva
 {
-namespace rpc{
+namespace rpc
+{
 //----------------------------------------------
 // Marshal/UnMarshal 
 

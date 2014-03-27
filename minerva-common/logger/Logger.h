@@ -18,8 +18,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  THE SOFTWARE.
 */
 
-#ifndef FF_LOG_LOGGER_H_
-#define FF_LOG_LOGGER_H_
+#ifndef MINERVA_LOGGER_LOGGER_H
+#define MINERVA_LOGGER_LOGGER_H
 #include <string>
 #include <cstring>
 #include <sstream>
@@ -27,8 +27,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 #include <iomanip>
 #include <ctime>
 #include <exception>
-#include <minerva/logger/log/logwriter.h> // By Jermaine
-#include <minerva/logger/singlton.h> // By Jermaine
 
 #if __cplusplus < 201103L
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -37,9 +35,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 #include <chrono>
 #include <thread>
 #endif
-namespace ff
+
+#include "LogWriter.h"
+
+namespace minerva
 {
-namespace internal
+namespace log
 {
 	template<bool EnableLogFlag> class Logger
 	{
@@ -49,27 +50,27 @@ namespace internal
 			FlushToWriter(false);
 		}
 	public:
-		typedef Logger<EnableLogFlag> self;
+		typedef Logger<EnableLogFlag> Self;
 
-		template<typename T> self& operator<<(T v)
+		template<typename T> Self& operator<<(T v)
 		{
 			buffer_ << v;
 			return * this;
 		}
-		template<typename T> self& operator<<(T * p)
+		template<typename T> Self& operator<<(T * p)
 		{
 			uintptr_t v = reinterpret_cast<uintptr_t>(p);
 			buffer_<<"0x"<<std::hex<<v<<"  ";
 			return *this;
 		}
-		self & operator<<(const char * p)
+		Self & operator<<(const char * p)
 		{
 			buffer_<<p;
 			return *this;
 		}
-		self & operator<<(bool v)
+		Self & operator<<(bool v)
 		{
-			buffer_<<(v ? "1": "0");
+			buffer_<<(v ? "true": "false");
 			return *this;
 		}
 
@@ -90,9 +91,9 @@ namespace internal
 				ss<<str<<"\t"<<std::this_thread::get_id()<<buffer_.str();
 #endif
 				if(syncwriting)
-					ff::singleton<logwriter<> >::instance().flush(ss.str());
+					LogWriter::Instance().Flush(ss.str());
 				else
-					ff::singleton<logwriter<> >::instance().queue().push_back(ss.str());
+					LogWriter::Instance().GetQueue().Push(ss.str());
 
 			} catch(const std::exception & e)
 			{
@@ -107,11 +108,11 @@ namespace internal
 	template<> class Logger<false>
 	{
 	public:
-		typedef Logger<false> self;
-		template<typename T> self& operator<<(T v) { return *this; }
-		template<typename T> self& operator<< (T *v) { return *this; }
+		typedef Logger<false> Self;
+		template<typename T> Self& operator<<(T v) { return *this; }
+		template<typename T> Self& operator<< (T *v) { return *this; }
 	};
 
-}//end namespace internal
-}//end namespace ff
+}//end namespace log
+}//end namespace minerva
 #endif

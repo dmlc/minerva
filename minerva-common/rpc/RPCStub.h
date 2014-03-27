@@ -11,11 +11,12 @@
 #include <stdint.h>
 #include <cassert>
 
-#include <minerva/options/MinervaOptions.h>
-#include <minerva/rpc/RPCTypes.h>
-#include <minerva/rpc/RPCProtocol.h>
-#include <minerva/rpc/CommBase.h>
-#include <minerva/util/Singleton.h>
+#include <minerva-common/options/Options.h>
+#include <minerva-common/util/Singleton.h>
+
+#include "RPCTypes.h"
+#include "RPCProtocol.h"
+#include "CommBase.h"
 
 namespace minerva
 {
@@ -41,10 +42,10 @@ public:
 	~RPCStub();
 	//void SetComm(CommBase* comm);
 	// Initialize communication, etc.
-	//void Init(MinervaOptions& options);
+	//void Init(Options& options);
 	//void Init(int argc, char** argv);
-	static MinervaOptions GetOptions();
-	void SetOptions(const MinervaOptions& options);
+	static Options GetOptions();
+	void SetOptions(const Options& options);
 	// Destroy this rpc stub
 	void Destroy();
 	// start processing messages

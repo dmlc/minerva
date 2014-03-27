@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include <minerva/rpc/CommBase.h>
-#include <minerva/rpc/Message.h>
+#include "CommBase.h"
+#include "Message.h"
 
 namespace minerva
 {
@@ -11,15 +11,15 @@ namespace rpc
 	////////////////////////////////////// CommBase //////////////////////////////////////// 
 CommBase::CommBase(): group(-1), _terminating(false) {}
 
-MinervaOptions CommBase::GetOptions()
+Options CommBase::GetOptions()
 {
-	MinervaOptions commopt("Communicator Options");
+	Options commopt("Communicator Options");
 	commopt.AddOption<int>("comm.group", "group id of this communication group", 1);
 	commopt.AddOption<int>("comm.node", "node id of this process within its communication group", 0);
 	commopt.AddOption<int>("comm.numnodes", "number of processes in this communication group", 1);
 	return commopt;
 }
-void CommBase::SetOptions(const MinervaOptions& options)
+void CommBase::SetOptions(const Options& options)
 {
 	rank = options.Get<int>("comm.node");
 	numnodes = options.Get<int>("comm.numnodes");

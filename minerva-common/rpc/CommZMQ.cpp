@@ -1,10 +1,11 @@
 #include <fstream>
 
-#include <minerva/rpc/Message.h>
-#include <minerva/rpc/CommZMQ.h>
-#include <minerva/logger/log.h>
-#include <minerva/util/FileParsers.h>
-#include <minerva/macro_def.h>
+#include <minerva-common/logger/log.h>
+#include <minerva-common/util/FileParsers.h>
+#include <minerva-common/macro_def.h>
+
+#include "Message.h"
+#include "CommZMQ.h"
 
 DEF_LOG_MODULE(CommZMQ)
 ENABLE_LOG_MODULE(CommZMQ)
@@ -17,16 +18,16 @@ namespace minerva
 {
 namespace rpc
 {
-	MinervaOptions CommGroupZMQ::GetOptions()
+	Options CommGroupZMQ::GetOptions()
 	{
-		MinervaOptions zmqopt("ZMQ options");
+		Options zmqopt("ZMQ options");
 		zmqopt.AddOption<std::string>("zmq.config", "configure file for ZMQ communication group", "./zmq_group.cfg");
 		zmqopt.AddOption<int>("zmq.numthreads", "number of I/O threads used by ZMQ context", 1);
 		zmqopt.AddOption<int>("zmq.linger", "linger time of ZMQ context", 5000);
 		return zmqopt;
 	}
 
-	void CommGroupZMQ::SetOptions(const MinervaOptions& options)
+	void CommGroupZMQ::SetOptions(const Options& options)
 	{
 		assert(context == NULL); // assert the context is not created
 

@@ -17,13 +17,13 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
    */
-#ifndef FFNET_COMMON_LOG_LOG_WRITER_H_
-#define FFNET_COMMON_LOG_LOG_WRITER_H_
+#ifndef MINERVA_COMMON_LOG_WRITER_H
+#define MINERVA_COMMON_LOG_WRITER_H
+
 #include <memory>
 #include <fstream>
-#include <minerva/logger/blocking_queue.h> // By Jermaine
 #include <string>
-#include <minerva/logger/singlton.h>// By Jermaine
+#include <iostream>
 
 #if __cplusplus < 201103L
 #include <boost/thread/mutex.hpp>
@@ -38,69 +38,69 @@
 #include <functional>
 #endif
 
-#include <iostream>
+#include <minerva-common/util/BlockingQueue.h>
+#include <minerva-common/util/Singleton.h>
 
-namespace ff
+namespace minerva
 {
-namespace internal
+namespace log
 {
 	//Container
-	template<class T = ff::blocking_queue<std::string> >
-	class logwriter
+	class LogWriter : public utils::Singleton<LogWriter>
 	{
 	protected:
-		friend class ff::singleton<logwriter<T> > ;
-		logwriter()
-			: m_strFilePath()
-			  , m_bRunning(true) {};
+		typedef utils::BlockingQueue<std::string> LogQueue;
+		friend class utils::Singleton<LogWriter> ;
+		LogWriter(): m_strFilePath(), m_bRunning(true) {}
 	public:
-		virtual ~logwriter()
+		virtual ~LogWriter()
 		{
 			m_oMutex.lock();
-			m_oQueue.push_back("End and quit log!");
+			m_oQueue.Push("End and quit log!");
 			m_bRunning = false;
 			m_oMutex.unlock();
 
 			m_pIOThread->join();
 		}
-		T &	queue()
+		LogQueue & GetQueue()
 		{
 			return m_oQueue;
 		}
-		void run(const char * filePath, bool verbose)
+		void Run(const char * filePath, bool verbose)
 		{
 			m_strFilePath = std::string(filePath);
 			m_verbose = verbose;
 			if(m_pIOThread)
 				return;
 #if __cplusplus < 201103L
-			m_pIOThread = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&logwriter<T>::actualRun, this)));
-#else	
+			m_pIOThread = boost::shared_ptr<boost::thread>(
+					new boost::thread(boost::bind(&LogWriter::ActualRun, this)));
+#else
 			m_pIOThread = std::make_shared<std::thread>([this](){
-					this->actualRun();});
+					this->ActualRun();});
 #endif
 		}
-		void flush(std::string str)
+		void Flush(std::string str)
 		{
-			m_oFile<<str<<std::endl;
+			m_oFile << str << std::endl;
 			if(m_verbose)
 				std::cout << str << std::endl;
 		}
 	protected:
-		void actualRun()
+		void ActualRun()
 		{
 			std::string str;
 			m_oFile.open(m_strFilePath.c_str() );
 
 			m_oMutex.lock();
-			while(m_bRunning || !m_oQueue.empty())
+			while(m_bRunning || !m_oQueue.Empty())
 			{
 				m_oMutex.unlock();
-				size_t t = m_oQueue.size();
+				size_t t = m_oQueue.Size();
 				while(t!=0)
 				{
-					m_oQueue.pop(str);
-					m_oFile<<str<<std::endl;
+					m_oQueue.Pop(str);
+					m_oFile << str << std::endl;
 					if(m_verbose)
 						std::cout << str << std::endl;
 					t--;
@@ -112,7 +112,7 @@ namespace internal
 			m_oFile.close();
 		}
 	protected:
-		T		m_oQueue;
+		LogQueue m_oQueue;
 #if __cplusplus < 201103L
 		boost::shared_ptr<boost::thread>		m_pIOThread;
 		boost::mutex				m_oMutex;
@@ -125,6 +125,7 @@ namespace internal
 		std::ofstream				m_oFile;
 		bool					m_bRunning;
 	};//end class LogWriter
-}//end namespace internal
-}//end namespace ffnet
+
+}//end namespace log
+}//end namespace minerva
 #endif

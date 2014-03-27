@@ -11,20 +11,20 @@
 namespace minerva
 {
 	class OptionHelper;
-	class MinervaOptions
+	class Options
 	{
 	public:
-		MinervaOptions();
-		MinervaOptions(const std::string& name);
-		MinervaOptions(const MinervaOptions& options);
-		//MinervaOptions(const boost::program_options::options_description& desc);
+		Options();
+		Options(const std::string& name);
+		Options(const Options& options);
+		//Options(const boost::program_options::options_description& desc);
 
 		void AddHelpOption();
 		void ExitIfHelp() const;
-		MinervaOptions& AddOptions(const MinervaOptions& options);
-		template<typename T> MinervaOptions& AddOption(const std::string& key, const std::string& desc, const T& defaultval);
-		template<typename T> MinervaOptions& AddOption(const std::string& key, const std::string& desc);
-		MinervaOptions& AddOption(const std::string& key, const std::string& desc);
+		Options& AddOptions(const Options& options);
+		template<typename T> Options& AddOption(const std::string& key, const std::string& desc, const T& defaultval);
+		template<typename T> Options& AddOption(const std::string& key, const std::string& desc);
+		Options& AddOption(const std::string& key, const std::string& desc);
 
 		template<typename T> void Save(const std::string& key, const T& value);
 		void Save(const std::string& key, const char * value);
@@ -51,7 +51,7 @@ namespace minerva
 	class OptionHelper
 	{
 	public:
-		virtual std::string ToString(const std::string& key, const MinervaOptions& options) const = 0;
+		virtual std::string ToString(const std::string& key, const Options& options) const = 0;
 		virtual ~OptionHelper() {}
 	};
 
@@ -59,7 +59,7 @@ namespace minerva
 	class OptionHelperTemp : public OptionHelper
 	{
 	public:
-		std::string ToString(const std::string& key, const MinervaOptions& options) const
+		std::string ToString(const std::string& key, const Options& options) const
 		{
 			std::stringstream ss;
 			ss << options.Get<T>(key);
@@ -71,7 +71,7 @@ namespace minerva
 	class OptionHelperTemp<void> : public OptionHelper
 	{
 	public:
-		std::string ToString(const std::string& key, const MinervaOptions& options) const
+		std::string ToString(const std::string& key, const Options& options) const
 		{
 			std::stringstream ss;
 			ss << "SET";
@@ -80,7 +80,7 @@ namespace minerva
 	};
 
 	template<typename T>
-	MinervaOptions& MinervaOptions::AddOption(const std::string& key, const std::string& desc, const T& defaultval)
+	Options& Options::AddOption(const std::string& key, const std::string& desc, const T& defaultval)
 	{
 		namespace po = boost::program_options;
 		all.add_options()
@@ -89,7 +89,7 @@ namespace minerva
 		return *this;
 	}
 	template<typename T>
-	MinervaOptions& MinervaOptions::AddOption(const std::string& key, const std::string& desc)
+	Options& Options::AddOption(const std::string& key, const std::string& desc)
 	{
 		namespace po = boost::program_options;
 		all.add_options()
@@ -98,18 +98,18 @@ namespace minerva
 		return *this;
 	}
 	template<typename T>
-	void MinervaOptions::AddOptionHelper(const std::string& key)
+	void Options::AddOptionHelper(const std::string& key)
 	{
 		assert(helpermap.find(key) == helpermap.end());
 		helpermap[key] = OptionHelperPtr(new OptionHelperTemp<T>);
 	}
 
-	template<typename T> void MinervaOptions::Save(const std::string& key, const T& value)
+	template<typename T> void Options::Save(const std::string& key, const T& value)
 	{
 		kvmap[key] = boost::any(value);
 		helpermap[key] = OptionHelperPtr(new OptionHelperTemp<T>);
 	}
-	inline void MinervaOptions::Save(const std::string& key, const char * value)
+	inline void Options::Save(const std::string& key, const char * value)
 	{
 		std::stringstream ss;
 		ss << value;
@@ -117,7 +117,7 @@ namespace minerva
 	}
 
 	template<typename T>
-	const T& MinervaOptions::Get(const std::string& key) const
+	const T& Options::Get(const std::string& key) const
 	{
 		if(kvmap.find(key) != kvmap.end())
 		{
@@ -134,7 +134,7 @@ namespace minerva
 			return vm[key].as<T>();
 		}
 	}
-	inline bool MinervaOptions::Exists(const std::string& key) const
+	inline bool Options::Exists(const std::string& key) const
 	{
 		return vm.count(key) || kvmap.find(key) != kvmap.end();
 	}
@@ -143,8 +143,8 @@ namespace minerva
 	class Optionable
 	{
 	public:
-		static MinervaOptions GetOptionableOptions() { return TClass::GetOptions(); }
-		virtual void SetOptions(const MinervaOptions& options) = 0;
+		static Options GetOptionableOptions() { return TClass::GetOptions(); }
+		virtual void SetOptions(const Options& options) = 0;
 		virtual ~Optionable<TClass>() {}
 	};
 

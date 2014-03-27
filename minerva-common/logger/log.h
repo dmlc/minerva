@@ -18,15 +18,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  THE SOFTWARE.
 */
 
-#ifndef FF_COMMON_LOG_H_
-#define FF_COMMON_LOG_H_
-#include <minerva/logger/log/logger.h> // By Jermaine
-#include <minerva/logger/log/logwriter.h> // By Jermaine
-#include <minerva/logger/singlton.h> // By Jermaine
+#ifndef MINERVA_COMMON_LOG_H
+#define MINERVA_COMMON_LOG_H
 
-#define USING_FF_LOG 1
-namespace ff
+#include "Logger.h"
+#include "LogWriter.h"
+#include <minerva-common/options/Options.h>
+
+namespace minerva
 {
+namespace log
+{
+
 enum LogLevel
 {
     TRACE_LEVEL,
@@ -38,21 +41,31 @@ enum LogLevel
     NUM_LOG_LEVELS
 };
 
-template<class T = LogLevel>
-class log
+class Log
 {
 public:
-    inline static void init(const T & l, const char * logfile, bool verbose = true)
+    inline static void Init(const LogLevel & lvl, const char * logfile, bool verbose = true)
     {
-		ll = l;
-		singleton<internal::logwriter<blocking_queue<std::string> > >::instance().run(logfile, verbose);
+		level = lvl;
+		LogWriter::Instance().Run(logfile, verbose);
     }
-    inline static void init(const T & l, const std::string & logfile, bool verbose = true)
+    inline static void Init(const LogLevel & lvl, const std::string & logfile, bool verbose = true)
     {
-		init(l, logfile.c_str(), verbose);
+		Init(lvl, logfile.c_str(), verbose);
     }
-    inline static void init(const std::string & lvlstr, const std::string & logfile, bool verbose = true)
+	static Options GetOptions()
 	{
+		Options opt("Log options");
+		opt.AddOption<std::string>("log.level", "log level(ERROR, INFO, DEBUG, TRACE)", "INFO");
+		opt.AddOption<std::string>("log.path", "log file path", "./log.txt");
+		opt.AddOption("log.verbose", "print log in stdout");
+		return opt;
+	}
+	static void SetOptions(const Options& options)
+	{
+		std::string lvlstr = options.Get<std::string>("log.level");
+		std::string logpath = options.Get<std::string>("log.path");
+		bool verbose = options.Exists("log.verbose");
 		LogLevel loglvl = INFO_LEVEL;
 		if(lvlstr == "ERROR")
 			loglvl = ERROR_LEVEL;
@@ -62,33 +75,43 @@ public:
 			loglvl = DEBUG_LEVEL;
 		else if(lvlstr == "TRACE")
 			loglvl = TRACE_LEVEL;
-		init(loglvl, logfile, verbose);
+		Init(loglvl, logpath, verbose);
 	}
 public:
-    static T ll;
-};//end class log
+    static LogLevel level;
+};//end class Log
 
-template<class T>
-T log<T>::ll = ERROR_LEVEL;
+LogLevel Log::level = ERROR_LEVEL;
 
-namespace llog
+namespace details 
 {
 	template<class T>
 	struct enable_traits{
 		static const bool value = false;
 	};//end class enable_traits;
-}
-}//end namespace ff
+}// end of namespace details
+
+}// end of namespace log
+}// end of namespace minerva
 
 
 #define DEF_LOG_MODULE(module) struct log_ ##module{};
 
 #define ENABLE_LOG_MODULE(module) \
-	namespace ff { \
-	namespace llog { \
-		template<> struct enable_traits<log_ ##module> { \
+	namespace minerva { \
+	namespace log {\
+	namespace details { \
+		template<> struct enable_traits<log_##module> { \
 			static const bool value = true; };  \
-	}}
+	}}}
+
+#define FILE_NAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+
+#define LOG_LEVEL(module, lvl)\
+	if(minerva::log::Log::level <= minerva::log::lvl##_LEVEL) \
+		minerva::log::Logger<minerva::log::details::enable_traits<log_##module>::value >()\
+			<< #lvl << " | " << #module <<" | "\
+			<< FILE_NAME <<":"<<__LINE__<<":"<<__FUNCTION__<<" |\t"
 
 #undef LOG_TRACE
 #undef LOG_DEBUG
@@ -97,21 +120,11 @@ namespace llog
 #undef LOG_ERROR
 #undef LOG_FATAL
 
-#define FILE_NAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-
-#define LOG_LEVEL(module, level)\
-	if(::ff::log<>::ll <= ::ff::level##_LEVEL) \
-	ff::internal::Logger<ff::llog::enable_traits<log_ ## module>::value >()\
-		<< #level << " | " << #module <<" | "\
-		<< FILE_NAME <<":"<<__LINE__<<":"<<__FUNCTION__<<" |\t"
-
 #define LOG_TRACE(module) LOG_LEVEL(module, TRACE)
 #define LOG_DEBUG(module) LOG_LEVEL(module, DEBUG)
 #define LOG_INFO(module)  LOG_LEVEL(module, INFO)
 #define LOG_WARN(module)  LOG_LEVEL(module, WARN)
 #define LOG_ERROR(module) LOG_LEVEL(module, ERROR)
 #define LOG_FATAL(module) LOG_LEVEL(module, FATAL)
-
-#define ASSERT(module, expr) while(!(expr)) LOG_FATAL(module)
 
 #endif

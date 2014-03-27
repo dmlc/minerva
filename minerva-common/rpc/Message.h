@@ -14,7 +14,7 @@
 
 #include <boost/function.hpp>
 
-#include <minerva/rpc/Serialize.h>
+#include "Serialize.h"
 
 namespace minerva
 {

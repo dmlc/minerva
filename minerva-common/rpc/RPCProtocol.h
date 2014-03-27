@@ -2,8 +2,8 @@
 #define MINERVA_RPC_PROTOCOL_H
 #pragma once
 
-#include <minerva/rpc/Serialize.h>
-#include <minerva/rpc/Message.h>
+#include "Serialize.h"
+#include "Message.h"
 
 namespace minerva
 {

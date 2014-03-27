@@ -3,11 +3,12 @@
 #pragma once
 
 #include <stdint.h>
-
-#include <minerva/options/MinervaOptions.h>
-#include <minerva/rpc/RPCTypes.h>
-#include <minerva/util/BlockingQueue.h>
 #include <vector>
+
+#include <minerva-common/options/Options.h>
+#include <minerva-common/util/BlockingQueue.h>
+
+#include "RPCTypes.h"
 
 namespace minerva
 {
@@ -33,7 +34,7 @@ class IComm // interface class for communicator
 public:
 	typedef boost::function<void(RecvEvent)> RecvEventCallback;
 	//virtual void Init(int * argc, char *** argv) = 0;
-	//virtual void Init(MinervaOptions& options) = 0;
+	//virtual void Init(Options& options) = 0;
 	virtual void Finalize() = 0;
 	virtual void AddRecvCallback(RecvEventCallback cb) = 0;
 	virtual void Send(SendEvent& ) = 0;
@@ -56,8 +57,8 @@ public:
 	CommBase();
 	virtual ~CommBase() {}
 
-	static MinervaOptions GetOptions();
-	virtual void SetOptions(const MinervaOptions& options);
+	static Options GetOptions();
+	virtual void SetOptions(const Options& options);
 
 	//void SetGroup(int g) { group = g; }
 	int GroupId() const { return group; }

@@ -15,13 +15,18 @@ elseif(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 
-#set(LIBRARY_OUTPUT_PATH ${Minerva_SOURCE_DIR}/lib)
 set(DEPS_INCLUDE_DIR ${Minerva_SOURCE_DIR}/deps/local/include)
 set(DEPS_LIBS_DIR ${Minerva_SOURCE_DIR}/deps/local/lib)
 set(LIBS_INSTALL_DIR ${Minerva_SOURCE_DIR}/deps/local/)
 
 include(ExternalProject)
+include_directories(
+	SYSTEM
+	${Minerva_SOURCE_DIR}
+	${DEPS_INCLUDE_DIR}
+)
 set(DEP_LIBS "")
+
 #link_directories(${DEPS_LIBS_DIR})
 #include_directories(
 #SYSTEM

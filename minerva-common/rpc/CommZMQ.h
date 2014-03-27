@@ -2,8 +2,8 @@
 #define MINERVA_COMM_ZMQ_H
 #pragma once
 
-#include <minerva/rpc/CommBase.h>
-#include <minerva/util/zmq.hpp>
+#include <minerva-common/util/zmq.hpp>
+#include "CommBase.h"
 
 namespace minerva
 {
@@ -18,10 +18,10 @@ namespace rpc
 		CommGroupZMQ(): context(NULL), receiver(NULL), outgroup(NULL) {}
 		~CommGroupZMQ() {}
 
-		static MinervaOptions GetOptions();
-		virtual void SetOptions(const MinervaOptions& options);
+		static Options GetOptions();
+		virtual void SetOptions(const Options& options);
 
-		//void Init(MinervaOptions& options);
+		//void Init(Options& options);
 		void Send(SendEvent& sndevt) { sendingQueue.Push(sndevt); }
 		virtual void Barrier() {}
 		void Finalize();

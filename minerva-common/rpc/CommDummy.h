@@ -2,7 +2,7 @@
 #define MINERVA_RPC_COMM_DUMMY_H
 #pragma once
 
-#include <minerva/rpc/CommBase.h>
+#include "CommBase.h"
 
 namespace minerva
 {
@@ -11,7 +11,6 @@ namespace rpc
 	class CommDummy : public CommBase
 	{
 	public:
-		void Init(MinervaOptions& options) { }
 		void Finalize() { }
 		void Send(SendEvent& evt) { }
 		void Barrier() { }

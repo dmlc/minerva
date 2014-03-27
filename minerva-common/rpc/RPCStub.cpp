@@ -1,10 +1,10 @@
-#include <minerva/rpc/RPCStub.h>
-#include <minerva/rpc/Message.h>
-#include <minerva/rpc/CommZMQ.h>
-#include <minerva/rpc/CommDummy.h>
+#include "RPCStub.h"
+#include "Message.h"
+#include "CommZMQ.h"
+#include "CommDummy.h"
 
-#include <minerva/logger/log.h>
-#include <minerva/macro_def.h>
+#include <minerva-common/logger/log.h>
+#include <minerva-common/macro_def.h>
 
 DEF_LOG_MODULE(RPCStub)
 ENABLE_LOG_MODULE(RPCStub)
@@ -24,16 +24,16 @@ namespace rpc
 RPCStub::RPCStub(): _comm(NULL), _terminating(true) {}
 RPCStub::~RPCStub() { Destroy(); }
 
-MinervaOptions RPCStub::GetOptions()
+Options RPCStub::GetOptions()
 {
-	MinervaOptions rpcopt("RPC options");
+	Options rpcopt("RPC options");
 	rpcopt.AddOption<std::string>("rpc.comm", "Communicator used by RPC communication (dummy,zmq)", "dummy");
 	rpcopt.AddOption<size_t>("rpc.numthreads", "Number of threads used to handle RPC callbacks", 1);
 	rpcopt.AddOptions(CommBase::GetOptions());
 	rpcopt.AddOptions(CommGroupZMQ::GetOptions());
 	return rpcopt;
 }
-void RPCStub::SetOptions(const MinervaOptions& options)
+void RPCStub::SetOptions(const Options& options)
 {
 	std::string commtype = options.Get<std::string>("rpc.comm");
 	_num_worker_threads = options.Get<size_t>("rpc.numthreads");

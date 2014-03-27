@@ -1,26 +1,27 @@
 #include <iostream>
 #include <sstream>
-#include <minerva/options/MinervaOptions.h>
-#include <minerva/macro_def.h>
+
+#include "Options.h"
+#include <minerva-common/macro_def.h>
 	
 namespace po = boost::program_options;
 
 namespace minerva
 {
-	MinervaOptions::MinervaOptions(){ }
-	MinervaOptions::MinervaOptions(const std::string& name): all(name) {}
-	MinervaOptions::MinervaOptions(const MinervaOptions& options)
+	Options::Options(){ }
+	Options::Options(const std::string& name): all(name) {}
+	Options::Options(const Options& options)
 	{
 		AddOptions(options);
 	}
-	//MinervaOptions::MinervaOptions(const po::options_description& desc): all(desc)
+	//Options::Options(const po::options_description& desc): all(desc)
 	//{
 	//}
-	void MinervaOptions::AddHelpOption()
+	void Options::AddHelpOption()
 	{
 		AddOption("help,h", "print this help");
 	}
-	void MinervaOptions::ExitIfHelp() const
+	void Options::ExitIfHelp() const
 	{
 		if(Exists("help"))
 		{
@@ -28,19 +29,19 @@ namespace minerva
 			exit(1);
 		}
 	}
-	MinervaOptions& MinervaOptions::AddOption(const std::string& key, const std::string& desc)
+	Options& Options::AddOption(const std::string& key, const std::string& desc)
 	{
 		all.add_options()(key.c_str(), desc.c_str());
 		AddOptionHelper<void>(key.substr(0, key.find_first_of(',')));
 		return *this;
 	}
-	MinervaOptions& MinervaOptions::AddOptions(const MinervaOptions& options)
+	Options& Options::AddOptions(const Options& options)
 	{
 		all.add(options.all);
 		helpermap.insert(options.helpermap.begin(), options.helpermap.end());
 		return *this;
 	}
-	void MinervaOptions::ParseFromCmdLine(int argc, char** argv)
+	void Options::ParseFromCmdLine(int argc, char** argv)
 	{
 		try
 		{
@@ -55,7 +56,7 @@ namespace minerva
 			std::cout << all << std::endl;
 		}
 	}
-	void MinervaOptions::ParseFromConfigFile(const std::string& filename)
+	void Options::ParseFromConfigFile(const std::string& filename)
 	{
 		try
 		{
@@ -69,7 +70,7 @@ namespace minerva
 			std::cout << all << std::endl;
 		}
 	}
-	std::string MinervaOptions::ToString() const
+	std::string Options::ToString() const
 	{
 		std::stringstream ss;
 		foreach(OptionHelperEntry ent, helpermap)
