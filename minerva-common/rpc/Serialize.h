@@ -10,11 +10,6 @@
 
 #include <boost/type_traits.hpp>
 #include <boost/shared_ptr.hpp>
-//#define USE_GRAPHLAB_SERIALIZATION
-
-#ifdef USE_GRAPHLAB_SERIALIZATION
-#include <minerva/rpc/serialize/serialize.hpp>
-#endif
 
 namespace minerva
 {
@@ -22,23 +17,6 @@ namespace rpc
 {
 //----------------------------------------------
 // Marshal/UnMarshal 
-
-#ifdef USE_GRAPHLAB_SERIALIZATION
-template<class OutArcType, class T>
-inline OutArcType& Marshall(OutArcType &os, const T &val)
-{
-	graphlab::archive_detail::serialize(os, val);
-	return os;
-}
-
-template<class InArcType, class T>
-inline InArcType& UnMarshall(InArcType &is, T &val)
-{
-	graphlab::archive_detail::deserialize(is, val);
-	return is;
-}
-
-#else
 
 template<class OutArcType, class T, bool POD>
 struct MarshallImpl
@@ -90,8 +68,6 @@ inline InArcType& UnMarshall(InArcType& is, T& val)
 	return UnMarshallImpl<InArcType, T, boost::is_pod<T>::value>::Exec(is, val);
 }
 
-#endif
-
 // serialization of pointers
 template<class OutArcType, class T>
 inline OutArcType& Marshall(OutArcType &os, T* val)
@@ -125,8 +101,6 @@ inline InArcType& UnMarshall(InArcType &is, boost::shared_ptr<T> &val)
 }
 
 //////////////////////////////////////// Serialize/Deserialize of containers ///////////////////////////////////////////
-#ifndef USE_GRAPHLAB_SERIALIZATION
-
 template<class OutArcType>
 inline OutArcType& Marshall(OutArcType &os, const std::stringstream &val)
 {
@@ -348,7 +322,7 @@ inline InArcType & UnMarshall (InArcType &is, std::list<_Kty, _Alloc> &data)
 	}
 	return is;
 }
-#endif
-}
+
+} // end of namespace rpc
 } // end of namespace minerva
 #endif
