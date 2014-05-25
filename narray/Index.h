@@ -6,7 +6,6 @@
 #include <algorithm>
 
 namespace minerva {
-namespace utils {
 
 class Index;
 class IndexRange;
@@ -22,12 +21,12 @@ public:
 	static Index Constant(size_t ndims, int val) { return Index(std::vector<int>(ndims, val)); }
 
 	Index() {}
-	Index(const std::vector<int>& idx): index_(idx) {}
+	Index(const std::vector<int>& idx): index_(idx) {} // allow implicit conversion
 	Index(const std::vector<size_t>& idx): index_(idx.size()) {
 		std::copy(idx.begin(), idx.end(), index_.begin());
 	}
 	Index(const Index& other): index_(other.index_) {}
-	Index(int i1) {
+	explicit Index(int i1) { // forbid implicit conversion
 		index_.push_back(i1);
 	}
 	Index(int i1, int i2) {
@@ -186,33 +185,4 @@ inline std::ostream& operator << (std::ostream& os, const IndexRange& range) {
 	return os << "{" << range.start_ << ", " << range.end_ << "}";
 }
 
-template<class T>
-class NDContainer {
-public:
-	NDContainer(const Index& len) {
-		range_ = IndexRange::MakeRange(Index::Origin(len.NumDims()), len);
-		data_.resize(range_.Area());
-	}
-	NDContainer(const IndexRange& r): range_(r) {
-		data_.resize(range_.Area());
-	}
-	NDContainer(const NDContainer& other): data_(other.data_), range_(other.range_) {}
-	const T& operator[] (const Index& idx) const {
-		return data_[range_.Flatten(idx)];
-	}
-	T& operator[] (const Index& idx) {
-		return data_[range_.Flatten(idx)];
-	}
-	size_t Size() const {
-		return data_.size();
-	}
-	Index Dim() const {
-		return range_.Dim();
-	}
-private:
-	std::vector<T> data_;
-	IndexRange range_;
-};
-
-}// end of namespace utils
 }// end of namespace minerva
