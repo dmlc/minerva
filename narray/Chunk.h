@@ -36,6 +36,7 @@ public:
 public:
 	Chunk() {}
 	Index Size() const { return meta_.size; }
+    size_t storageIdx;
 private:
 	ChunkMeta meta_;
 };
