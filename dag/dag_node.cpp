@@ -14,3 +14,7 @@ void DagNode::AddParents(initializer_list<DagNode*> list) {
     }
 }
 
+uint64_t DagNode::ID() {
+    return nodeID;
+}
+

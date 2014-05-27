@@ -12,6 +12,7 @@ private:
 public:
     void AddParent(DagNode*);
     void AddParents(std::initializer_list<DagNode*>);
+    uint64_t ID();
 };
 
 class DataNode: public DagNode {
