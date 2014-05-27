@@ -1,6 +1,8 @@
 #include "dag.h"
 #include "dag_node.h"
 #include <cstdint>
+#include <functional>
+#include <queue>
 
 using namespace std;
 
@@ -27,5 +29,24 @@ OpNode* Dag::NewOpNode() {
     ret->nodeID = indexCounter++;
     indexToNode.insert(pair<uint64_t, DagNode*>(ret->nodeID, ret));
     return ret;
+}
+
+DagNode* Dag::Root() {
+    return root;
+}
+
+void Dag::BreadthFirstSearch(function<void(DagNode*)> f) {
+    queue<DagNode*> q;
+    for (auto i: root->successors) {
+        q.push(i);
+    }
+    while (q.size()) {
+        auto cur = q.front();
+        f(cur);
+        for (auto i: cur->successors) {
+            q.push(i);
+        }
+        q.pop();
+    }
 }
 
