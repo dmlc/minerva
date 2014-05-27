@@ -10,6 +10,9 @@ Dag::Dag() {
 }
 
 Dag::~Dag() {
+    for (auto i: indexToNode) {
+        delete i.second;
+    }
 }
 
 DataNode* Dag::NewDataNode() {
