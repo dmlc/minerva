@@ -5,7 +5,7 @@
 namespace minerva {
 
 class DagNode {
-protected:
+public:
     std::vector<DagNode*> successors;
     std::vector<DagNode*> predecessors;
 };

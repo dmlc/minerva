@@ -8,8 +8,8 @@ Chunk operator*(const Chunk& a, const Chunk& b) {
     OpNode* op = new OpNode();
     Chunk ret;
     // Set successors and predecessors
-    a->successors.push_back(op);
-    b->successors.push_back(op);
+    a.GetDataNode()->successors.push_back(op);
+    b.GetDataNode()->successors.push_back(op);
     op->predecessors.push_back(a.GetDataNode());
     op->predecessors.push_back(b.GetDataNode());
     op->type = OpNode::mult;
