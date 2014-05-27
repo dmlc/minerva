@@ -1,9 +1,13 @@
 #pragma once
 #include <vector>
+#include <cstdint>
 
 namespace minerva {
 
 class DagNode {
+protected:
+    std::vector<DagNode*> successors;
+    std::vector<DagNode*> predecessors;
 };
 
 class OpNode: public DagNode {
@@ -13,6 +17,11 @@ public:
     };
     OpType type;
     std::vector<size_t> operands;
+};
+
+class DataNode: public DagNode {
+public:
+    uint32_t storageIdx;
 };
 
 }

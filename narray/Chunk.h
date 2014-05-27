@@ -1,6 +1,7 @@
 #pragma once
 
 #include "NVector.h"
+#include "DAGNode.h"
 
 namespace minerva {
 
@@ -36,9 +37,12 @@ public:
 public:
 	Chunk() {}
 	Index Size() const { return meta_.size; }
-    size_t storageIdx;
+    DataNode* GetDataNode() const {
+        return dataNode;
+    }
 private:
 	ChunkMeta meta_;
+    DataNode* dataNode; // Set up in constructor
 };
 
 } // end of namespace minerva
