@@ -2,6 +2,7 @@
 #include <cstdint>
 
 class DagNode {
+    friend class Dag;
 private:
     uint64_t nodeID;
 };
