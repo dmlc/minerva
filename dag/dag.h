@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dag_node.h"
+#include "concurrent_blocking_queue.h"
 #include <cstdint>
 #include <map>
 #include <functional>
