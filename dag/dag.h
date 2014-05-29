@@ -13,6 +13,8 @@ private:
     std::map<uint64_t, DagNode*> indexToNode;
     DagNode* root = NewOpNode();
     std::atomic<size_t> unresolvedCounter{0};
+	// TODO [Jermaine] please make the Dag class as a pure graph data structure
+	// without any logic for execution. Contact me if you have any problem here
 public:
     void Worker(ConcurrentBlockingQueue<DagNode*>*);
     Dag();
@@ -24,4 +26,3 @@ public:
     DagNode* Root();
     void TraverseAndRun();
 };
-
