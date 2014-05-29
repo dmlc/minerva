@@ -5,12 +5,14 @@
 #include <cstdint>
 #include <map>
 #include <functional>
+#include <atomic>
 
 class Dag {
 private:
     static uint64_t indexCounter;
     std::map<uint64_t, DagNode*> indexToNode;
     DagNode* root = NewOpNode();
+    std::atomic<size_t> unresolvedCounter{0};
 public:
     void Worker(ConcurrentBlockingQueue<DagNode*>*);
     Dag();

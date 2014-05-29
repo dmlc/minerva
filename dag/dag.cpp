@@ -25,6 +25,7 @@ DataNode* Dag::NewDataNode() {
     DataNode* ret = new DataNode;
     ret->nodeID = indexCounter++;
     indexToNode.insert(pair<uint64_t, DagNode*>(ret->nodeID, ret));
+    ++unresolvedCounter;
     return ret;
 }
 
@@ -32,6 +33,7 @@ OpNode* Dag::NewOpNode() {
     OpNode* ret = new OpNode;
     ret->nodeID = indexCounter++;
     indexToNode.insert(pair<uint64_t, DagNode*>(ret->nodeID, ret));
+    ++unresolvedCounter;
     return ret;
 }
 
@@ -47,6 +49,7 @@ void Dag::Worker(ConcurrentBlockingQueue<DagNode*>* queue) {
             return;
         }
         cur->Runner()();
+        --(this->unresolvedCounter);
         auto succ = cur->successors;
         for (auto i: succ) {
             if (i->DeleteParent(cur)) {
@@ -63,10 +66,13 @@ void Dag::TraverseAndRun() {
         q.Push(i);
         i->DeleteParent(root);
     }
+    --unresolvedCounter;
     std::thread t1(&Dag::Worker, this, &q);
     std::thread t2(&Dag::Worker, this, &q);
     std::thread t3(&Dag::Worker, this, &q);
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    while (unresolvedCounter.load()) {
+        std::this_thread::yield();
+    }
     q.SignalForKill();
     t1.join();
     t2.join();
