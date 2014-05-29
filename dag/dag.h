@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dag_node.h"
+#include "concurrent_blocking_queue.h"
 #include <cstdint>
 #include <map>
 #include <functional>
@@ -11,6 +12,7 @@ private:
     std::map<uint64_t, DagNode*> indexToNode;
     DagNode* root = NewOpNode();
 public:
+    void Worker(ConcurrentBlockingQueue<DagNode*>*);
     Dag();
     ~Dag();
     Dag(const Dag&);

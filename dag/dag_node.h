@@ -3,15 +3,17 @@
 #include <vector>
 #include <initializer_list>
 #include <functional>
+#include <mutex>
 
 class DagNode {
     friend class Dag;
 protected:
+    std::mutex mutex;
     uint64_t nodeID;
     std::vector<DagNode*> successors;
     std::vector<DagNode*> predecessors;
     std::function<void()> runner;
-    void DeleteParent(DagNode*);
+    bool DeleteParent(DagNode*);
 public:
     DagNode();
     ~DagNode();
@@ -21,7 +23,6 @@ public:
     void AddParents(std::initializer_list<DagNode*>);
     uint64_t ID();
     std::function<void()> Runner();
-    bool IsSource();
 };
 
 class DataNode: public DagNode {

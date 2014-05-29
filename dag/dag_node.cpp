@@ -2,12 +2,15 @@
 #include <initializer_list>
 #include <cstdio>
 #include <algorithm>
+#include <mutex>
 
 using namespace std;
 
-void DagNode::DeleteParent(DagNode* p) {
+bool DagNode::DeleteParent(DagNode* p) {
+    std::lock_guard<std::mutex> lock(mutex);
     predecessors.erase(std::find(predecessors.begin(), predecessors.end(), p));
     p->successors.erase(std::find(p->successors.begin(), p->successors.end(), this));
+    return predecessors.empty();
 }
 
 DagNode::DagNode() {
@@ -17,6 +20,7 @@ DagNode::~DagNode() {
 }
 
 void DagNode::AddParent(DagNode* p) {
+    std::lock_guard<std::mutex> lock(mutex);
     p->successors.push_back(this);
     predecessors.push_back(p);
 }
@@ -33,10 +37,6 @@ uint64_t DagNode::ID() {
 
 function<void()> DagNode::Runner() {
     return runner;
-}
-
-bool DagNode::IsSource() {
-    return predecessors.empty();
 }
 
 DataNode::DataNode() {
