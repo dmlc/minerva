@@ -1,2 +1,2 @@
-main: main.cpp dag.cpp dag.h dag_node.h dag_node.cpp
-	g++ main.cpp dag.cpp dag_node.cpp -o main -std=c++11
+main: main.cpp dag.cpp dag.h dag_node.h dag_node.cpp bool_flag.cpp bool_flag.h
+	g++-4.8 main.cpp dag.cpp dag_node.cpp bool_flag.cpp -o main -std=c++11
