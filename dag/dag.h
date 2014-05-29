@@ -1,7 +1,6 @@
 #pragma once
 
 #include "dag_node.h"
-#include "concurrent_blocking_queue.h"
 #include <cstdint>
 #include <map>
 #include <functional>
@@ -19,6 +18,6 @@ public:
     DataNode* NewDataNode();
     OpNode* NewOpNode();
     DagNode* Root();
-    void BreadthFirstSearch(std::function<void(DagNode*)>);
+    void TraverseAndRun();
 };
 

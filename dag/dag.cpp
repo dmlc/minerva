@@ -1,8 +1,10 @@
 #include "dag.h"
 #include "dag_node.h"
+#include "concurrent_blocking_queue.h"
 #include <cstdint>
 #include <functional>
 #include <queue>
+#include <cstdio>
 
 using namespace std;
 
@@ -35,18 +37,24 @@ DagNode* Dag::Root() {
     return root;
 }
 
-void Dag::BreadthFirstSearch(function<void(DagNode*)> f) {
-    queue<DagNode*> q;
-    for (auto i: root->successors) {
-        q.push(i);
+void Dag::TraverseAndRun() {
+    ConcurrentBlockingQueue<DagNode*> q;
+    auto succ = root->successors;
+    for (auto i: succ) {
+        q.Push(i);
+        i->DeleteParent(root);
     }
-    while (q.size()) {
-        auto cur = q.front();
-        f(cur);
-        for (auto i: cur->successors) {
-            q.push(i);
+    while (!q.Empty()) {
+        DagNode* cur;
+        q.Pop(cur);
+        cur->Runner()();
+        succ = cur->successors;
+        for (auto i: succ) {
+            i->DeleteParent(cur);
+            if (i->IsSource()) {
+                q.Push(i);
+            }
         }
-        q.pop();
     }
 }
 

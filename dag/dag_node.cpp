@@ -1,8 +1,14 @@
 #include "dag_node.h"
 #include <initializer_list>
 #include <cstdio>
+#include <algorithm>
 
 using namespace std;
+
+void DagNode::DeleteParent(DagNode* p) {
+    predecessors.erase(std::find(predecessors.begin(), predecessors.end(), p));
+    p->successors.erase(std::find(p->successors.begin(), p->successors.end(), this));
+}
 
 DagNode::DagNode() {
 }
@@ -27,6 +33,10 @@ uint64_t DagNode::ID() {
 
 function<void()> DagNode::Runner() {
     return runner;
+}
+
+bool DagNode::IsSource() {
+    return predecessors.empty();
 }
 
 DataNode::DataNode() {

@@ -43,5 +43,9 @@ public:
         exitNow.Write(true);
         cv.notify_all();
     }
+    bool Empty() {
+        std::lock_guard<std::mutex> lock(mutex);
+        return queue.empty();
+    }
 };
 
