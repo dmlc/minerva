@@ -1,4 +1,5 @@
 #pragma once
+#include "common/common.h"
 #include <cstdint>
 #include <vector>
 #include <initializer_list>
@@ -6,38 +7,38 @@
 #include <mutex>
 
 class DagNode {
-    friend class Dag;
-protected:
-    std::mutex mutex;
-    uint64_t nodeID;
-    std::vector<DagNode*> successors;
-    std::vector<DagNode*> predecessors;
-    std::function<void()> runner;
-    bool DeleteParent(DagNode*);
-public:
-    DagNode();
-    ~DagNode();
-    DagNode(const DagNode&);
-    DagNode& operator=(const DagNode&);
-    void AddParent(DagNode*);
-    void AddParents(std::initializer_list<DagNode*>);
-    uint64_t ID();
-    std::function<void()> Runner();
+  friend class Dag;
+ public:
+  DagNode();
+  ~DagNode();
+  void AddParent(DagNode*);
+  void AddParents(std::initializer_list<DagNode*>);
+  uint64_t ID();
+  std::function<void()> Runner();
+ protected:
+  bool DeleteParent(DagNode*);
+  std::mutex mutex_;
+  uint64_t node_id_;
+  std::vector<DagNode*> successors_;
+  std::vector<DagNode*> predecessors_;
+  std::function<void()> runner_;
+ private:
+  DISALLOW_COPY_AND_ASSIGN(DagNode);
 };
 
 class DataNode: public DagNode {
-public:
-    DataNode();
-    ~DataNode();
-    DataNode(const DataNode&);
-    DataNode& operator=(const DataNode&);
+ public:
+  DataNode();
+  ~DataNode();
+ private:
+  DISALLOW_COPY_AND_ASSIGN(DataNode);
 };
 
 class OpNode: public DagNode {
-public:
-    OpNode();
-    ~OpNode();
-    OpNode(const OpNode&);
-    OpNode& operator=(const OpNode&);
+ public:
+  OpNode();
+  ~OpNode();
+ private:
+  DISALLOW_COPY_AND_ASSIGN(OpNode);
 };
 

@@ -1,2 +1,6 @@
-main: main.cpp dag.cpp dag.h dag_node.h dag_node.cpp bool_flag.cpp bool_flag.h concurrent_blocking_queue.h
-	g++-4.8 main.cpp dag.cpp dag_node.cpp bool_flag.cpp -o main -std=c++11 -lpthread
+DIRS = ../common . ../procedures
+SRCS = $(foreach dir, $(DIRS), $(shell find $(dir) -name "*.cpp"))
+HDRS = $(foreach dir, $(DIRS), $(shell find $(dir) -name "*.h"))
+
+main: $(SRCS) $(HDRS)
+	g++-4.8 $(SRCS) -o main -std=c++11 -lpthread -I../

@@ -1,28 +1,23 @@
 #pragma once
 
 #include "dag_node.h"
-#include "concurrent_blocking_queue.h"
+#include "common/common.h"
+#include "common/concurrent_blocking_queue.h"
 #include <cstdint>
 #include <map>
 #include <functional>
 #include <atomic>
 
 class Dag {
-private:
-    static uint64_t indexCounter;
-    std::map<uint64_t, DagNode*> indexToNode;
-    DagNode* root = NewOpNode();
-    std::atomic<size_t> unresolvedCounter{0};
-	// TODO [Jermaine] please make the Dag class as a pure graph data structure
-	// without any logic for execution. Contact me if you have any problem here
-public:
-    void Worker(ConcurrentBlockingQueue<DagNode*>*);
-    Dag();
-    ~Dag();
-    Dag(const Dag&);
-    Dag& operator=(const Dag&);
-    DataNode* NewDataNode();
-    OpNode* NewOpNode();
-    DagNode* Root();
-    void TraverseAndRun();
+ public:
+  Dag();
+  ~Dag();
+  DataNode* NewDataNode();
+  OpNode* NewOpNode();
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(Dag);
+  static uint64_t index_counter_;
+  std::map<uint64_t, DagNode*> index_to_node_;
 };
+
