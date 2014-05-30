@@ -1,18 +1,29 @@
 #pragma once
-
-#include "dag_procedure.h"
+#include "procedures/dag_procedure.h"
+#include "common/common.h"
+#include <cstdint>
+#include <map>
 
 namespace minerva {
 
-class DAGEngine : public DAGProcedure {
-public:
-	void Process(Dag& dag) {
-		// TODO execute the dag along the flow
-	}
-private:
-	// TODO private members including but not limited to
-	// 1. Threadpool
-	// 2. Execution state (like counter)
+struct NodeState {
+  enum State {
+    kNoNeed,
+    kReady
+  } state;
+};
+
+class DagEngine : public DagProcedure {
+ public:
+  void Process(Dag&);
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(DagEngine);
+  void ParseDagState(Dag&);
+  std::map<uint64_t, NodeState> node_states_;
+  // TODO private members including but not limited to
+  // 1. Threadpool
+  // 2. Execution state (like counter)
 };
 
 }

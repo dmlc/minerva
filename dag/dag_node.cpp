@@ -6,6 +6,8 @@
 
 using namespace std;
 
+namespace minerva {
+
 DagNode::DagNode() {
 }
 

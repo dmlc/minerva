@@ -1,12 +1,11 @@
 #pragma once
-
-#include <athena/dag/dag.h>
+#include "dag/dag.h"
 
 namespace minerva {
 
-class DAGProcedure {
-public:
-	virtual void Process(Dag& dag) = 0;
+class DagProcedure {
+ public:
+  virtual void Process(Dag&) = 0;
 };
 
-} // end of namespace minerva
+}

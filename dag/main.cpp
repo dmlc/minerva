@@ -5,6 +5,6 @@
 using namespace std;
 
 int main() {
-    Dag d;
-    return 0;
+  minerva::Dag d;
+  return 0;
 }

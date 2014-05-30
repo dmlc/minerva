@@ -11,6 +11,7 @@
 namespace minerva {
 
 class Dag {
+  friend class DagEngine;
  public:
   Dag();
   ~Dag();
