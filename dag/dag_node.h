@@ -12,6 +12,7 @@ namespace minerva {
 
 class DagNode {
   friend class Dag;
+  friend class DagEngine;
  public:
   DagNode();
   ~DagNode();
