@@ -10,6 +10,8 @@
 
 using namespace std;
 
+namespace minerva {
+
 uint64_t Dag::indexCounter = 0;
 
 Dag::Dag() {
@@ -23,16 +25,16 @@ Dag::~Dag() {
 
 DataNode* Dag::NewDataNode() {
     DataNode* ret = new DataNode;
-    ret->nodeID = indexCounter++;
-    indexToNode.insert(pair<uint64_t, DagNode*>(ret->nodeID, ret));
+    ret->node_id_ = indexCounter++;
+    indexToNode.insert(pair<uint64_t, DagNode*>(ret->node_id(), ret));
     ++unresolvedCounter;
     return ret;
 }
 
 OpNode* Dag::NewOpNode() {
     OpNode* ret = new OpNode;
-    ret->nodeID = indexCounter++;
-    indexToNode.insert(pair<uint64_t, DagNode*>(ret->nodeID, ret));
+    ret->node_id_ = indexCounter++;
+    indexToNode.insert(pair<uint64_t, DagNode*>(ret->node_id(), ret));
     ++unresolvedCounter;
     return ret;
 }
@@ -48,9 +50,9 @@ void Dag::Worker(ConcurrentBlockingQueue<DagNode*>* queue) {
         if (exitNow) {
             return;
         }
-        cur->Runner()();
+        cur->runner()();
         --(this->unresolvedCounter);
-        auto succ = cur->successors;
+        auto succ = cur->successors_;
         for (auto i: succ) {
             if (i->DeleteParent(cur)) {
                 queue->Push(i);
@@ -61,7 +63,7 @@ void Dag::Worker(ConcurrentBlockingQueue<DagNode*>* queue) {
 
 void Dag::TraverseAndRun() {
     ConcurrentBlockingQueue<DagNode*> q;
-    auto succ = root->successors;
+    auto succ = root->successors_;
     for (auto i: succ) {
         q.Push(i);
         i->DeleteParent(root);
@@ -79,3 +81,4 @@ void Dag::TraverseAndRun() {
     t3.join();
 }
 
+} // end of namespace minerva

@@ -7,6 +7,8 @@
 #include <functional>
 #include <atomic>
 
+namespace minerva {
+
 class Dag {
 private:
     static uint64_t indexCounter;
@@ -26,3 +28,5 @@ public:
     DagNode* Root();
     void TraverseAndRun();
 };
+
+} // end of namespace minerva

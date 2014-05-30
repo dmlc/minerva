@@ -6,11 +6,13 @@
 
 using namespace std;
 
+namespace minerva {
+
 bool DagNode::DeleteParent(DagNode* p) {
-    std::lock_guard<std::mutex> lock(mutex);
-    predecessors.erase(std::find(predecessors.begin(), predecessors.end(), p));
-    p->successors.erase(std::find(p->successors.begin(), p->successors.end(), this));
-    return predecessors.empty();
+    std::lock_guard<std::mutex> lock(mutex_);
+    predecessors_.erase(std::find(predecessors_.begin(), predecessors_.end(), p));
+    p->successors_.erase(std::find(p->successors_.begin(), p->successors_.end(), this));
+    return predecessors_.empty();
 }
 
 DagNode::DagNode() {
@@ -20,9 +22,9 @@ DagNode::~DagNode() {
 }
 
 void DagNode::AddParent(DagNode* p) {
-    std::lock_guard<std::mutex> lock(mutex);
-    p->successors.push_back(this);
-    predecessors.push_back(p);
+    std::lock_guard<std::mutex> lock(mutex_);
+    p->successors_.push_back(this);
+    predecessors_.push_back(p);
 }
 
 void DagNode::AddParents(initializer_list<DagNode*> list) {
@@ -31,17 +33,9 @@ void DagNode::AddParents(initializer_list<DagNode*> list) {
     }
 }
 
-uint64_t DagNode::ID() {
-    return nodeID;
-}
-
-function<void()> DagNode::Runner() {
-    return runner;
-}
-
 DataNode::DataNode() {
-    runner = [this] () {
-        printf("Node %llu: Data Node\n", (unsigned long long) nodeID);
+    runner_ = [this] () {
+        printf("Node %llu: Data Node\n", (unsigned long long) node_id_);
     };
 }
 
@@ -49,11 +43,12 @@ DataNode::~DataNode() {
 }
 
 OpNode::OpNode() {
-    runner = [this] () {
-        printf("Node %llu: Op Node\n", (unsigned long long) nodeID);
+    runner_ = [this] () {
+        printf("Node %llu: Op Node\n", (unsigned long long) node_id_);
     };
 }
 
 OpNode::~OpNode() {
 }
 
+} // end of namespace minerva

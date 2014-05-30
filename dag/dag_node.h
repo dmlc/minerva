@@ -5,15 +5,23 @@
 #include <functional>
 #include <mutex>
 
+#include "dag_context.h"
+
+namespace minerva {
+
 class DagNode {
     friend class Dag;
 protected:
-    std::mutex mutex;
-    uint64_t nodeID;
-    std::vector<DagNode*> successors;
-    std::vector<DagNode*> predecessors;
-    std::function<void()> runner;
+    std::mutex mutex_;
+    uint64_t node_id_;
+    std::vector<DagNode*> successors_;
+    std::vector<DagNode*> predecessors_;
+    std::function<void()> runner_;
+	DagNodeContext context_;
+
+protected:
     bool DeleteParent(DagNode*);
+
 public:
     DagNode();
     ~DagNode();
@@ -21,8 +29,10 @@ public:
     DagNode& operator=(const DagNode&);
     void AddParent(DagNode*);
     void AddParents(std::initializer_list<DagNode*>);
-    uint64_t ID();
-    std::function<void()> Runner();
+public:
+	// getters
+    uint64_t node_id() { return node_id_; }
+    std::function<void()> runner() { return runner_; }
 };
 
 class DataNode: public DagNode {
@@ -41,3 +51,4 @@ public:
     OpNode& operator=(const OpNode&);
 };
 
+} // end of namespace minerva
