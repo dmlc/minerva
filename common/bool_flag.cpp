@@ -3,20 +3,20 @@
 
 using namespace std;
 
-BoolFlag::BoolFlag(): flag(false) {
+BoolFlag::BoolFlag(): flag_(false) {
 }
 
-BoolFlag::BoolFlag(bool f): flag(f) {
+BoolFlag::BoolFlag(bool f): flag_(f) {
 }
 
 BoolFlag::~BoolFlag() {
 }
 
 bool BoolFlag::Read() const {
-    return flag;
+  return flag_;
 }
 
 void BoolFlag::Write(bool f) {
-    flag = f;
+  flag_ = f;
 }
 
