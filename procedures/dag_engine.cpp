@@ -34,15 +34,19 @@ void DagEngine::FindRootNodes(Dag& dag, vector<uint64_t>& targets) {
   while (!ready_node_queue.empty()) {
     uint64_t cur = ready_node_queue.front();
     ready_node_queue.pop();
-    auto it = node_states_.find(cur);
+    auto& it = node_states_[cur];
     auto node = dag.index_to_node_[cur];
-    it->second.state = NodeState::kReady; // Set state to ready
-    it->second.dependency_counter = node->predecessors_.size();
+    it.state = NodeState::kReady; // Set state to ready
+    it.dependency_counter = node->predecessors_.size();
     if (node->predecessors_.empty()) {
       // Add to execution queue
+      ready_to_execute_queue_.Push(node);
     } else {
       // Traverse predecessors
       for (auto i: node->predecessors_) {
+        if (node_states_[i->node_id_].state == NodeState::kReady) { // Already visited
+          continue;
+        }
         ready_node_queue.push(i->node_id_);
       }
     }

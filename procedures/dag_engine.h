@@ -1,4 +1,5 @@
 #pragma once
+#include "dag/dag_node.h"
 #include "procedures/dag_procedure.h"
 #include "common/common.h"
 #include "common/concurrent_blocking_queue.h"
@@ -25,6 +26,7 @@ class DagEngine : public DagProcedure {
   void ParseDagState(Dag&);
   void FindRootNodes(Dag&, std::vector<uint64_t>&);
   std::map<uint64_t, NodeState> node_states_;
+  ConcurrentBlockingQueue<DagNode*> ready_to_execute_queue_;
   // TODO private members including but not limited to
   // 1. Threadpool
 };
