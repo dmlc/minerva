@@ -32,7 +32,7 @@ void ThreadPool::SimpleWorker() {
       return;
     }
     task.first->runner()();
-    task.second(task.first);
+    task.second(task.first, this);
   }
 }
 

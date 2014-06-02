@@ -12,7 +12,7 @@ namespace minerva {
 class ThreadPool {
  public:
   typedef DagNode* Task;
-  typedef std::function<void(Task)> Callback;
+  typedef std::function<void(DagNode*, ThreadPool*)> Callback;
   typedef std::pair<Task, Callback> TaskPair;
   ThreadPool(size_t);
   ~ThreadPool();
