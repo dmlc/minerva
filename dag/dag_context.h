@@ -9,6 +9,18 @@ struct Place {
   Place(): procid(0), device_type(0), device_id(0) {}
 };
 
+class PlaceContext {
+ public:
+  static void SetOpContext(const Place& place) {
+    current_place_ = place;
+  }
+  static Place GetOpContext() {
+    return current_place_;
+  }
+ private:
+  static Place current_place_;
+};
+
 struct DagNodeContext {
   Place place;
   int impl_type; // 0 is basic, 1 is MKL, 2 is CUDA

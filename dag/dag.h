@@ -1,12 +1,15 @@
 #pragma once
 
-#include "dag_node.h"
-#include "common/common.h"
-#include "common/concurrent_blocking_queue.h"
 #include <cstdint>
 #include <map>
 #include <functional>
 #include <atomic>
+
+#include "dag_node.h"
+#include "dag_context.h"
+#include "common/singleton.h"
+#include "common/common.h"
+#include "common/concurrent_blocking_queue.h"
 
 namespace minerva {
 
