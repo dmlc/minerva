@@ -31,12 +31,14 @@ class DagEngine : public DagProcedure {
 
  private:
   DISALLOW_COPY_AND_ASSIGN(DagEngine);
+  // Create states for new nodes
   void ParseDagState(Dag&);
-  void FindRootNodes(Dag&, std::vector<uint64_t>&);
+  // Find execution entry point
+  std::queue<DagNode*> FindRootNodes(Dag&, std::vector<uint64_t>&);
+  // Callback when a node finishes execution
   void AppendSubsequentNodes(DagNode*, ThreadPool*);
   std::map<uint64_t, NodeState> node_states_;
   std::mutex node_states_mutex_;
-  std::queue<DagNode*> ready_to_execute_queue_;
   size_t unresolved_counter_;
   std::mutex unresolved_counter_mutex_;
   std::condition_variable execution_finished_;
