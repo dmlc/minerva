@@ -20,19 +20,19 @@ ThreadPool::~ThreadPool() {
   }
 }
 
-void ThreadPool::AppendTask(Task t) {
-  task_queue_.Push(t);
+void ThreadPool::AppendTask(Task t, Callback c) {
+  task_queue_.Push(make_pair(t, c));
 }
 
 void ThreadPool::SimpleWorker() {
   while (true) {
-    Task task;
+    TaskPair task;
     bool exit_now = task_queue_.Pop(task);
     if (exit_now) {
       return;
     }
     task.first->runner()();
-    task.second();
+    task.second(task.first);
   }
 }
 
