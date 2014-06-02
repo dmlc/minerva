@@ -15,6 +15,7 @@ int main() {
   for (int i = 0; i < 5; ++i) {
     nodes[i] = d.NewDataNode();
   }
+  // nodes[2] is never used!
   nodes[3]->AddParents({nodes[0], nodes[1]});
   nodes[4]->AddParent(nodes[3]);
   minerva::DagEngine engine;
