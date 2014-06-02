@@ -28,7 +28,6 @@ void ThreadPool::AppendTask(Task t, Callback c) {
 void ThreadPool::SimpleWorker() {
   while (true) {
     TaskPair task;
-    printf("Waiting in queue: %u\n", this_thread::get_id());
     bool exit_now = task_queue_.Pop(task);
     if (exit_now) {
       return;
