@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <algorithm>
 #include <mutex>
+#include <thread>
+#include <chrono>
 
 using namespace std;
 
@@ -37,6 +39,8 @@ bool DagNode::DeleteParent(DagNode* p) {
 DataNode::DataNode() {
   runner_ = [this] () {
     printf("Node %llu: Data Node\n", (unsigned long long) node_id_);
+    printf("Thread id: %u\n", this_thread::get_id());
+    this_thread::sleep_for(chrono::seconds(2));
   };
 }
 

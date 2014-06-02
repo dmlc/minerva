@@ -21,7 +21,5 @@ int main() {
   minerva::DagEngine engine;
   vector<uint64_t> targets{nodes[4]->node_id()};
   engine.Process(d, targets);
-  // TODO [yutian] Use CV to notify when execution is completed
-  this_thread::sleep_for(chrono::seconds(3));
   return 0;
 }

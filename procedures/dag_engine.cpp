@@ -8,11 +8,13 @@
 #include <mutex>
 #include <cstdio>
 
+#define THREAD_NUM 4
+
 using namespace std;
 
 namespace minerva {
 
-DagEngine::DagEngine() {
+DagEngine::DagEngine(): unresolved_counter_(0), thread_pool_(THREAD_NUM) {
 }
 
 DagEngine::~DagEngine() {
@@ -24,6 +26,12 @@ void DagEngine::Process(Dag& dag, vector<uint64_t>& targets) {
   while (!ready_to_execute_queue_.empty()) {
     thread_pool_.AppendTask(ready_to_execute_queue_.front(), std::bind(&DagEngine::AppendSubsequentNodes, this, placeholders::_1, placeholders::_2));
     ready_to_execute_queue_.pop();
+  }
+  {
+    unique_lock<mutex> lock(unresolved_counter_mutex_);
+    execution_finished_.wait(lock, [this]() -> bool {
+      return unresolved_counter_ == 0;
+    });
   }
 }
 
@@ -66,6 +74,11 @@ void DagEngine::FindRootNodes(Dag& dag, vector<uint64_t>& targets) {
       }
     }
   }
+  // Mark target nodes
+  for (auto i: targets) {
+    node_states_[i].state = NodeState::kTarget;
+    ++unresolved_counter_;
+  }
 }
 
 // TODO [yutian] Better use lambda functions. Binding for `this` is incorrect.
@@ -87,8 +100,15 @@ void DagEngine::AppendSubsequentNodes(DagNode* node, ThreadPool* pool) {
   auto succ = node->successors_;
   for (auto i: succ) {
     auto& state = node_states_[i->node_id_];
-    if (state.state == NodeState::kReady && (--state.dependency_counter) == 0) {
+    // Append node if all predecessors are finished
+    if (state.state != NodeState::kNoNeed && (--state.dependency_counter) == 0) {
       pool->AppendTask(i, bind(&DagEngine::AppendSubsequentNodes, this, placeholders::_1, placeholders::_2));
+    }
+    // Signal main process if a target is finished
+    if (state.state == NodeState::kTarget) {
+      unique_lock<mutex> lock(unresolved_counter_mutex_);
+      --unresolved_counter_;
+      execution_finished_.notify_one();
     }
   }
 };
