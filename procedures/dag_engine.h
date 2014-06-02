@@ -35,6 +35,8 @@ class DagEngine : public DagProcedure {
   std::mutex node_states_mutex_;
   std::queue<DagNode*> ready_to_execute_queue_;
   ThreadPool thread_pool_{4};
+  void AppendSubsequentNodes(DagNode*, ThreadPool*);
+  // std::function<void(DagNode*, ThreadPool*)> append_subseqeuent_nodes_;
 };
 
 }

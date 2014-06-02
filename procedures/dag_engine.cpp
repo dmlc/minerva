@@ -6,6 +6,7 @@
 #include <queue>
 #include <functional>
 #include <mutex>
+#include <cstdio>
 
 using namespace std;
 
@@ -20,18 +21,8 @@ DagEngine::~DagEngine() {
 void DagEngine::Process(Dag& dag, vector<uint64_t>& targets) {
   ParseDagState(dag);
   FindRootNodes(dag, targets);
-  function<void(DagNode*, ThreadPool*)> append_subsequent_nodes = [this, &append_subsequent_nodes] (DagNode* node, ThreadPool* pool) {
-    auto succ = node->successors_;
-    lock_guard<mutex> lock(node_states_mutex_);
-    for (auto i: succ) {
-      auto& state = node_states_[i->node_id_];
-      if (state.state == NodeState::kReady && (--state.dependency_counter) == 0) {
-        pool->AppendTask(i, append_subsequent_nodes);
-      }
-    }
-  };
   while (!ready_to_execute_queue_.empty()) {
-    thread_pool_.AppendTask(ready_to_execute_queue_.front(), append_subsequent_nodes);
+    thread_pool_.AppendTask(ready_to_execute_queue_.front(), std::bind(&DagEngine::AppendSubsequentNodes, this, placeholders::_1, placeholders::_2));
     ready_to_execute_queue_.pop();
   }
 }
@@ -76,5 +67,30 @@ void DagEngine::FindRootNodes(Dag& dag, vector<uint64_t>& targets) {
     }
   }
 }
+
+// TODO Better use lambda functions. Binding for this is incorrect.
+// function<void(DagNode*, ThreadPool*)> DagEngine::append_subsequent_nodes_ = [this] (DagNode* node, ThreadPool* pool) {
+//   auto succ = node->successors_;
+//   lock_guard<mutex> lock(node_states_mutex_);
+//   for (auto i: succ) {
+//     auto& state = node_states_[i->node_id_];
+//     if (state.state == NodeState::kReady && (--state.dependency_counter) == 0) {
+//       printf("pool: %p\n", pool);
+//       pool->AppendTask(i, this->append_subsequent_nodes_);
+//       printf("Ready: %d\n", i->node_id_);
+//     }
+//   }
+// };
+
+void DagEngine::AppendSubsequentNodes(DagNode* node, ThreadPool* pool) {
+  lock_guard<mutex> lock(node_states_mutex_);
+  auto succ = node->successors_;
+  for (auto i: succ) {
+    auto& state = node_states_[i->node_id_];
+    if (state.state == NodeState::kReady && (--state.dependency_counter) == 0) {
+      pool->AppendTask(i, bind(&DagEngine::AppendSubsequentNodes, this, placeholders::_1, placeholders::_2));
+    }
+  }
+};
 
 }

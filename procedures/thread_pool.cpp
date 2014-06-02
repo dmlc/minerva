@@ -1,5 +1,6 @@
 #include "procedures/thread_pool.h"
 #include "common/concurrent_blocking_queue.h"
+#include <cstdio>
 #include <thread>
 #include <functional>
 
