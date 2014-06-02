@@ -50,6 +50,8 @@ DataNode::~DataNode() {
 OpNode::OpNode() {
   runner_ = [this] () {
     printf("Node %llu: Op Node\n", (unsigned long long) node_id_);
+    printf("Thread id: %u\n", this_thread::get_id());
+    this_thread::sleep_for(chrono::seconds(2));
   };
 }
 
