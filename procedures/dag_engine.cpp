@@ -68,7 +68,7 @@ void DagEngine::FindRootNodes(Dag& dag, vector<uint64_t>& targets) {
   }
 }
 
-// TODO Better use lambda functions. Binding for `this` is incorrect.
+// TODO [yutian] Better use lambda functions. Binding for `this` is incorrect.
 // function<void(DagNode*, ThreadPool*)> DagEngine::append_subsequent_nodes_ = [this] (DagNode* node, ThreadPool* pool) {
 //   auto succ = node->successors_;
 //   lock_guard<mutex> lock(node_states_mutex_);
