@@ -27,8 +27,6 @@ class DagEngine : public DagProcedure {
   void FindRootNodes(Dag&, std::vector<uint64_t>&);
   std::map<uint64_t, NodeState> node_states_;
   ConcurrentBlockingQueue<DagNode*> ready_to_execute_queue_;
-  // TODO private members including but not limited to
-  // 1. Threadpool
 };
 
 }
