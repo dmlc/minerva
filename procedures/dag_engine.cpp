@@ -8,11 +8,13 @@
 #include <mutex>
 #include <cstdio>
 
+#define THREAD_NUM 4
+
 using namespace std;
 
 namespace minerva {
 
-DagEngine::DagEngine() {
+DagEngine::DagEngine(): unresolved_counter_(0), thread_pool_(THREAD_NUM) {
 }
 
 DagEngine::~DagEngine() {
@@ -20,10 +22,17 @@ DagEngine::~DagEngine() {
 
 void DagEngine::Process(Dag& dag, vector<uint64_t>& targets) {
   ParseDagState(dag);
-  FindRootNodes(dag, targets);
-  while (!ready_to_execute_queue_.empty()) {
-    thread_pool_.AppendTask(ready_to_execute_queue_.front(), std::bind(&DagEngine::AppendSubsequentNodes, this, placeholders::_1, placeholders::_2));
-    ready_to_execute_queue_.pop();
+  auto ready_to_execute_queue = FindRootNodes(dag, targets);
+  while (!ready_to_execute_queue.empty()) {
+    thread_pool_.AppendTask(ready_to_execute_queue.front(), std::bind(&DagEngine::AppendSubsequentNodes, this, placeholders::_1, placeholders::_2));
+    ready_to_execute_queue.pop();
+  }
+  {
+    // Waiting execution to complete
+    unique_lock<mutex> lock(unresolved_counter_mutex_);
+    execution_finished_.wait(lock, [this]() -> bool {
+      return unresolved_counter_ == 0;
+    });
   }
 }
 
@@ -37,8 +46,9 @@ void DagEngine::ParseDagState(Dag& dag) {
   }
 }
 
-void DagEngine::FindRootNodes(Dag& dag, vector<uint64_t>& targets) {
+queue<DagNode*> DagEngine::FindRootNodes(Dag& dag, vector<uint64_t>& targets) {
   queue<uint64_t> ready_node_queue;
+  queue<DagNode*> ready_to_execute_queue;
   for (auto i: targets) {
     auto it = node_states_.find(i);
     if (it == node_states_.end()) { // Node not found
@@ -55,7 +65,7 @@ void DagEngine::FindRootNodes(Dag& dag, vector<uint64_t>& targets) {
     it.dependency_counter = node->predecessors_.size();
     if (node->predecessors_.empty()) {
       // Add root nodes to execution queue
-      ready_to_execute_queue_.push(node);
+      ready_to_execute_queue.push(node);
     } else {
       // Traverse predecessors
       for (auto i: node->predecessors_) {
@@ -66,31 +76,31 @@ void DagEngine::FindRootNodes(Dag& dag, vector<uint64_t>& targets) {
       }
     }
   }
+  // Mark target nodes
+  for (auto i: targets) {
+    node_states_[i].state = NodeState::kTarget;
+    ++unresolved_counter_;
+  }
+  return ready_to_execute_queue;
 }
-
-// TODO Better use lambda functions. Binding for this is incorrect.
-// function<void(DagNode*, ThreadPool*)> DagEngine::append_subsequent_nodes_ = [this] (DagNode* node, ThreadPool* pool) {
-//   auto succ = node->successors_;
-//   lock_guard<mutex> lock(node_states_mutex_);
-//   for (auto i: succ) {
-//     auto& state = node_states_[i->node_id_];
-//     if (state.state == NodeState::kReady && (--state.dependency_counter) == 0) {
-//       printf("pool: %p\n", pool);
-//       pool->AppendTask(i, this->append_subsequent_nodes_);
-//       printf("Ready: %d\n", i->node_id_);
-//     }
-//   }
-// };
 
 void DagEngine::AppendSubsequentNodes(DagNode* node, ThreadPool* pool) {
   lock_guard<mutex> lock(node_states_mutex_);
   auto succ = node->successors_;
   for (auto i: succ) {
     auto& state = node_states_[i->node_id_];
-    if (state.state == NodeState::kReady && (--state.dependency_counter) == 0) {
+    // Append node if all predecessors are finished
+    if (state.state != NodeState::kNoNeed && (--state.dependency_counter) == 0) {
       pool->AppendTask(i, bind(&DagEngine::AppendSubsequentNodes, this, placeholders::_1, placeholders::_2));
+    }
+    // Signal main process if a target is finished
+    if (state.state == NodeState::kTarget) {
+      unique_lock<mutex> lock(unresolved_counter_mutex_);
+      --unresolved_counter_;
+      execution_finished_.notify_one();
     }
   }
 };
 
 }
+

@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <algorithm>
 #include <mutex>
+#include <thread>
+#include <chrono>
 
 using namespace std;
 
@@ -35,6 +37,7 @@ uint64_t DataNode::data_id_gen_ = 0;
 
 void DataNode::Init() {
   data_id_ = data_id_gen_++;
+}
 }
 
 bool DataNode::CreateCPUData() {

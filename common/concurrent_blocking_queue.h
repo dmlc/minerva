@@ -4,6 +4,8 @@
 #include <list>
 #include <mutex>
 #include <condition_variable>
+#include <thread>
+#include <cstdio>
 
 template <typename T> class ConcurrentBlockingQueue {
  public:
@@ -13,7 +15,7 @@ template <typename T> class ConcurrentBlockingQueue {
     std::lock_guard<std::mutex> lock(mutex_);
     queue_.push_back(e);
     if (queue_.size() == 1) {
-      cv_.notify_one();
+      cv_.notify_all();
     }
   }
   bool Pop(T& rv) {
