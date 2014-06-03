@@ -1,4 +1,5 @@
 #include "procedures/thread_pool.h"
+#include "procedures/dag_engine.h"
 #include "common/concurrent_blocking_queue.h"
 #include <cstdio>
 #include <thread>
@@ -8,32 +9,30 @@ using namespace std;
 
 namespace minerva {
 
-ThreadPool::ThreadPool(size_t size) {
+ThreadPool::ThreadPool(size_t size, DagEngine* engine): engine_(engine) {
   while (size--) {
-    workers_.push_back(thread(&ThreadPool::SimpleWorker, this));
+    workers_.push_back(thread(&ThreadPool::SimpleWorker, this, engine_));
   }
 }
 
 ThreadPool::~ThreadPool() {
-  task_queue_.SignalForKill();
   for (auto& i: workers_) {
     i.join();
   }
 }
 
-void ThreadPool::AppendTask(Task t, Callback c) {
-  task_queue_.Push(make_pair(t, c));
-}
-
-void ThreadPool::SimpleWorker() {
+void ThreadPool::SimpleWorker(DagEngine* engine) {
   while (true) {
-    TaskPair task;
-    bool exit_now = task_queue_.Pop(task);
+    DagEngine::TaskPair task;
+    bool exit_now = engine->GetNewTask(this_thread::get_id(), task);
     if (exit_now) {
       return;
     }
+    printf("First start\n");
     task.first->runner()();
-    task.second(task.first, this);
+    printf("First complete\n");
+    task.second(task.first);
+    printf("Second complete\n");
   }
 }
 
