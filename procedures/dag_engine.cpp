@@ -86,7 +86,6 @@ queue<DagNode*> DagEngine::FindRootNodes(Dag& dag, vector<uint64_t>& targets) {
 }
 
 void DagEngine::AppendSubsequentNodes(DagNode* node) {
-  printf("this: %p\n", this);
   lock_guard<mutex> lock(node_states_mutex_);
   auto succ = node->successors_;
   for (auto i: succ) {

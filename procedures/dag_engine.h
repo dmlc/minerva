@@ -50,8 +50,8 @@ class DagEngine : public DagProcedure {
   size_t unresolved_counter_;
   std::mutex unresolved_counter_mutex_;
   std::condition_variable execution_finished_;
-  ThreadPool thread_pool_;
   ConcurrentBlockingQueue<TaskPair> task_queue_;
+  ThreadPool thread_pool_;
 };
 
 }

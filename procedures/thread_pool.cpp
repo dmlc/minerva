@@ -28,11 +28,8 @@ void ThreadPool::SimpleWorker(DagEngine* engine) {
     if (exit_now) {
       return;
     }
-    printf("First start\n");
     task.first->runner()();
-    printf("First complete\n");
     task.second(task.first);
-    printf("Second complete\n");
   }
 }
 
