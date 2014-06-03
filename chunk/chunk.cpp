@@ -1,4 +1,4 @@
-#include "Chunk.h"
+#include "chunk.h"
 #include "DAGNode.h"
 
 namespace minerva {
