@@ -88,10 +88,12 @@ queue<DagNode*> DagEngine::FindRootNodes(Dag& dag, vector<uint64_t>& targets) {
 
 void DagEngine::NodeRunner(DagNode* node) {
   if (node->Type() == DagNode::OP_NODE) { // OpNode
+    for (auto i: node->successors_) { // Allocate for each succesor
+      DataNode* n = dynamic_cast<DataNode*>(i);
+      DataStore::Instance().CreateData(n->data_id(), DataStore::CPU, n->meta().length);
+    }
     dynamic_cast<OpNode*>(node)->runner()();
   } else {
-    DataNode* n = dynamic_cast<DataNode*>(node);
-    DataStore::Instance().CreateData(n->data_id(), DataStore::CPU, n->meta().length);
   }
   {
     lock_guard<mutex> lock(node_states_mutex_);

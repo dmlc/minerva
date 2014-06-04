@@ -1,5 +1,6 @@
 #include <cassert>
 #include <functional>
+#include <cstdio>
 
 #include "chunk.h"
 #include "dag/dag.h"
@@ -20,7 +21,7 @@ void MatrixMultiply(vector<DataNode*> inputs, vector<DataNode*> outputs) {
   for(int i = 0; i < m; ++i)
     for(int j = 0; j < n; ++j) {
       c[i * n + j] = 0.0;
-      for(int l = 0; l < k; ++k)
+      for(int l = 0; l < k; ++l)
         c[i * n + j] += a[i * k + l] * b[l * n + j];
     }
 }
