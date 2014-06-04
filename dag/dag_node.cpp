@@ -1,10 +1,12 @@
-#include "dag_node.h"
 #include <initializer_list>
 #include <cstdio>
 #include <algorithm>
 #include <mutex>
 #include <thread>
 #include <chrono>
+
+#include "dag_node.h"
+#include "system/data_store.h"
 
 using namespace std;
 
@@ -17,8 +19,8 @@ DagNode::~DagNode() {
 }
 
 void DagNode::AddParent(DagNode* p) {
-  p->successors_.push_back(this);
-  predecessors_.push_back(p);
+  p->successors_.insert(this);
+  predecessors_.insert(p);
 }
 
 void DagNode::AddParents(initializer_list<DagNode*> list) {
@@ -33,24 +35,8 @@ bool DagNode::DeleteParent(DagNode* p) {
   return predecessors_.empty();
 }
 
-uint64_t DataNode::data_id_gen_ = 0;
-
 void DataNode::Init() {
-  data_id_ = data_id_gen_++;
-}
-}
-
-bool DataNode::CreateCPUData() {
-  return true;
-}
-bool DataNode::CreateGPUData() {
-  return false;
-}
-float* DataNode::GetCPUData() {
-  return NULL;
-}
-float* DataNode::GetGPUData() {
-  return NULL;
+  data_id_ = DataStore::Instance().GenerateDataId();
 }
 
 OpNode::OpNode() {

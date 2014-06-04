@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <vector>
+#include <set>
 #include <initializer_list>
 #include <functional>
 #include <mutex>
@@ -26,12 +27,10 @@ class DagNode {
     DATA_NODE
   };
   DagNode();
-  ~DagNode();
+  virtual ~DagNode();
   void AddParent(DagNode*);
   void AddParents(std::initializer_list<DagNode*>);
   bool DeleteParent(DagNode*);
-  // setters
-  void set_context(const DagNodeContext& ctx) { context_ = ctx; }
   // getters
   uint64_t node_id() { return node_id_; };
 
@@ -39,9 +38,8 @@ class DagNode {
 
  protected:
   uint64_t node_id_;
-  std::vector<DagNode*> successors_;
-  std::vector<DagNode*> predecessors_;
-  DagNodeContext context_;
+  std::set<DagNode*> successors_;
+  std::set<DagNode*> predecessors_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(DagNode);
@@ -71,19 +69,20 @@ class DataNode: public DagNode {
   DataNode() { Init(); }
   DataNode(const DataNodeMeta& meta): meta_(meta) { Init(); }
   ~DataNode() {}
-  DataNodeMeta& meta() { return meta_; }
+
+  void set_data_id(uint64_t id) { data_id_ = id; }
+  uint64_t data_id() const { return data_id_; }
+  void set_meta(const DataNodeMeta& meta) { meta_ = meta; }
   const DataNodeMeta& meta() const { return meta_; }
+  void set_context(const DataNodeContext& ctx) { context_ = ctx; }
+  const DataNodeContext& context() const { return context_; }
 
   NodeTypes Type() const { return DATA_NODE; }
-  bool CreateCPUData();
-  bool CreateGPUData();
-  float* GetCPUData();
-  float* GetGPUData();
 
  private:
-  static uint64_t data_id_gen_;
   uint64_t data_id_;
   DataNodeMeta meta_;
+  DataNodeContext context_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(DataNode);
@@ -92,14 +91,20 @@ class DataNode: public DagNode {
 
 class OpNode: public DagNode {
  public:
+  typedef std::function<void()> Runner;
   OpNode();
   ~OpNode();
-  void set_runner(std::function<void()> r) { runner_ = r; }
-  std::function<void()> runner() { return runner_; };
+  void set_runner(const Runner& r) { runner_ = r; }
+  const Runner& runner() const { return runner_; };
+  void set_context(const OpNodeContext& ctx) { context_ = ctx; }
+  const OpNodeContext& context() const { return context_; }
+
   NodeTypes Type() const { return OP_NODE; }
 
  private:
-  std::function<void()> runner_;
+  Runner runner_;
+  //std::vector<DataNode*> inputs_, outputs_; TODO not sure we need this or not
+  OpNodeContext context_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(OpNode);

@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <map>
 #include <functional>
+#include <initializer_list>
 #include <atomic>
 
 #include "dag_node.h"
@@ -18,8 +19,10 @@ class Dag {
  public:
   Dag();
   ~Dag();
-  DataNode* NewDataNode();
-  OpNode* NewOpNode();
+  DataNode* NewDataNode(const DataNodeMeta& meta, const DataNodeContext& ctx);
+  OpNode* NewOpNode(std::initializer_list<DataNode*> inputs,
+      std::initializer_list<DataNode*> outputs,
+      const OpNode::Runner& runner, const OpNodeContext& ctx);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(Dag);

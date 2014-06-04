@@ -23,17 +23,29 @@ Dag::~Dag() {
   }
 }
 
-DataNode* Dag::NewDataNode() {
+DataNode* Dag::NewDataNode(const DataNodeMeta& meta, const DataNodeContext& ctx) {
   DataNode* ret = new DataNode;
+  ret->set_meta(meta);
+  ret->set_context(ctx);
   ret->node_id_ = index_counter_++;
   index_to_node_.insert(pair<uint64_t, DagNode*>(ret->node_id_, ret));
   return ret;
 }
 
-OpNode* Dag::NewOpNode() {
+OpNode* Dag::NewOpNode(std::initializer_list<DataNode*> inputs,
+    std::initializer_list<DataNode*> outputs,
+    const OpNode::Runner& runner, const OpNodeContext& ctx) {
   OpNode* ret = new OpNode;
+  ret->set_runner(runner);
+  ret->set_context(ctx);
   ret->node_id_ = index_counter_++;
   index_to_node_.insert(pair<uint64_t, DagNode*>(ret->node_id_, ret));
+  for(auto in : inputs) {
+    ret->AddParent(in);
+  }
+  for(auto out : outputs) {
+    out->AddParent(ret);
+  }
   return ret;
 }
 

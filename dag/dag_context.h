@@ -9,22 +9,34 @@ struct Place {
   Place(): procid(0), device_type(0), device_id(0) {}
 };
 
-class PlaceContext {
+struct OpNodeContext {
+  Place place;
+  int impl_type; // -1 is dynamic, 0 is basic, 1 is MKL, 2 is CUDA
+  OpNodeContext(): impl_type(0) {}
+};
+
+struct DataNodeContext {
+  bool transpose;
+  DataNodeContext(): transpose(false) {}
+};
+
+class GlobalContext {
  public:
-  static void SetOpContext(const Place& place) {
+  static void SetOpPlace(const Place& place) {
     current_place_ = place;
   }
-  static Place GetOpContext() {
+  static Place GetOpPlace() {
     return current_place_;
+  }
+  static void SetOpImpl(int impl) {
+    current_impl_ = impl;
+  }
+  static int GetOpImpl() {
+    return current_impl_;
   }
  private:
   static Place current_place_;
+  static int current_impl_;
 };
 
-struct DagNodeContext {
-  Place place;
-  int impl_type; // 0 is basic, 1 is MKL, 2 is CUDA
-  DagNodeContext(): impl_type(0) {}
-};
-
-}
+} // end of namespace minerva
