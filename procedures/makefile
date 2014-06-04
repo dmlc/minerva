@@ -1,4 +1,4 @@
-DIRS = ../common . ../procedures
+DIRS = ../common . ../system ../dag
 SRCS = $(foreach dir, $(DIRS), $(shell find $(dir) -name "*.cpp"))
 HDRS = $(foreach dir, $(DIRS), $(shell find $(dir) -name "*.h"))
 

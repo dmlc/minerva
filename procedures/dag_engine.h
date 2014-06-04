@@ -42,7 +42,7 @@ class DagEngine : public DagProcedure {
   // Find execution entry point
   std::queue<DagNode*> FindRootNodes(Dag&, std::vector<uint64_t>&);
   // Callback when a node finishes execution
-  void AppendSubsequentNodes(DagNode*);
+  void NodeRunner(DagNode*);
   void AppendTask(Task, Callback);
   bool GetNewTask(std::thread::id, TaskPair&);
   std::map<uint64_t, NodeState> node_states_;

@@ -28,7 +28,6 @@ void ThreadPool::SimpleWorker(DagEngine* engine) {
     if (exit_now) {
       return;
     }
-    task.first->runner()();
     task.second(task.first);
   }
 }

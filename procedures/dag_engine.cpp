@@ -2,6 +2,7 @@
 #include "dag/dag.h"
 #include "dag/dag_node.h"
 #include "procedures/thread_pool.h"
+#include "system/data_store.h"
 #include <map>
 #include <queue>
 #include <functional>
@@ -25,7 +26,7 @@ void DagEngine::Process(Dag& dag, vector<uint64_t>& targets) {
   ParseDagState(dag);
   auto ready_to_execute_queue = FindRootNodes(dag, targets);
   while (!ready_to_execute_queue.empty()) {
-    AppendTask(ready_to_execute_queue.front(), bind(&DagEngine::AppendSubsequentNodes, this, placeholders::_1));
+    AppendTask(ready_to_execute_queue.front(), bind(&DagEngine::NodeRunner, this, placeholders::_1));
     ready_to_execute_queue.pop();
   }
   {
@@ -85,20 +86,28 @@ queue<DagNode*> DagEngine::FindRootNodes(Dag& dag, vector<uint64_t>& targets) {
   return ready_to_execute_queue;
 }
 
-void DagEngine::AppendSubsequentNodes(DagNode* node) {
-  lock_guard<mutex> lock(node_states_mutex_);
-  auto succ = node->successors_;
-  for (auto i: succ) {
-    auto& state = node_states_[i->node_id_];
-    // Append node if all predecessors are finished
-    if (state.state != NodeState::kNoNeed && (--state.dependency_counter) == 0) {
-      AppendTask(i, bind(&DagEngine::AppendSubsequentNodes, this, placeholders::_1));
-    }
-    // Signal main process if a target is finished
-    if (state.state == NodeState::kTarget) {
-      unique_lock<mutex> lock(unresolved_counter_mutex_);
-      --unresolved_counter_;
-      execution_finished_.notify_one();
+void DagEngine::NodeRunner(DagNode* node) {
+  if (node->Type() == DagNode::OP_NODE) { // OpNode
+    dynamic_cast<OpNode*>(node)->runner()();
+  } else {
+    DataNode* n = dynamic_cast<DataNode*>(node);
+    DataStore::Instance().CreateData(n->data_id(), DataStore::CPU, n->meta().length);
+  }
+  {
+    lock_guard<mutex> lock(node_states_mutex_);
+    auto succ = node->successors_;
+    for (auto i: succ) {
+      auto& state = node_states_[i->node_id_];
+      // Append node if all predecessors are finished
+      if (state.state != NodeState::kNoNeed && (--state.dependency_counter) == 0) {
+        AppendTask(i, bind(&DagEngine::NodeRunner, this, placeholders::_1));
+      }
+      // Signal main process if a target is finished
+      if (state.state == NodeState::kTarget) {
+        unique_lock<mutex> lock(unresolved_counter_mutex_);
+        --unresolved_counter_;
+        execution_finished_.notify_one();
+      }
     }
   }
 };

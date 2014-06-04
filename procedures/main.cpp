@@ -12,13 +12,6 @@ using namespace std;
 int main() {
   minerva::Dag d;
   minerva::DagNode* nodes[5];
-  nodes[0] = d.NewDataNode();
-  nodes[1] = d.NewDataNode();
-  nodes[2] = d.NewDataNode(); // Never used. Should never execute.
-  nodes[3] = d.NewOpNode(); // Should be multiplication of 0 and 1.
-  nodes[4] = d.NewDataNode(); // Result of 3.
-  nodes[3]->AddParents({nodes[0], nodes[1]});
-  nodes[4]->AddParent(nodes[3]);
   minerva::DagEngine engine;
   vector<uint64_t> targets{nodes[4]->node_id()};
   engine.Process(d, targets);
