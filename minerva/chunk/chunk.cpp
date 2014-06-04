@@ -3,6 +3,7 @@
 
 #include "chunk.h"
 #include "dag/dag.h"
+#include "procedures/dag_engine.h"
 #include "system/data_store.h"
 
 using namespace std;
@@ -84,6 +85,11 @@ Chunk Chunk::Constant(const Index& size, float val) {
 
 void Chunk::operator += (const Chunk& a) {
   *this = (*this) + a;
+}
+
+void Chunk::Eval() {
+  vector<uint64_t> targets{data_node_->node_id()};
+  DagEngine::Instance().Process(Dag::Instance(), targets);
 }
 
 } // end of namespace minerva

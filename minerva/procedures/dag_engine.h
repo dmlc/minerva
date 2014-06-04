@@ -3,6 +3,7 @@
 #include "procedures/dag_procedure.h"
 #include "procedures/thread_pool.h"
 #include "common/common.h"
+#include "common/singleton.h"
 #include "common/concurrent_blocking_queue.h"
 #include <cstdint>
 #include <map>
@@ -24,7 +25,7 @@ struct NodeState {
   size_t dependency_counter;
 };
 
-class DagEngine : public DagProcedure {
+class DagEngine : public DagProcedure, public Singleton<DagEngine> {
   friend class ThreadPool;
 
  public:
