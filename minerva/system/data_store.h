@@ -3,6 +3,7 @@
 #include "common/common.h"
 #include <map>
 #include <cstdint>
+#include <cstddef>
 
 namespace minerva {
 
