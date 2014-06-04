@@ -6,6 +6,7 @@ namespace minerva {
 Chunk::Chunk(): data_node_(NULL) {
 }
 Chunk::Chunk(const Index& size) {
+  data_node_ = Dag::Instance().NewDataNode(DataNodeMeta(size));
 }
 
 Chunk operator*(const Chunk& a, const Chunk& b) {

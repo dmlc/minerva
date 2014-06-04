@@ -14,12 +14,12 @@
 
 namespace minerva {
 
-class Dag {
+class Dag : public Singleton<Dag> {
   friend class DagEngine;
  public:
-  Dag();
   ~Dag();
-  DataNode* NewDataNode(const DataNodeMeta& meta, const DataNodeContext& ctx);
+  DataNode* NewDataNode(const DataNodeMeta& meta, 
+      const DataNodeContext& ctx = DataNodeContext());
   OpNode* NewOpNode(std::initializer_list<DataNode*> inputs,
       std::initializer_list<DataNode*> outputs,
       const OpNode::Runner& runner, const OpNodeContext& ctx);
