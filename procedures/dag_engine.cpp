@@ -14,17 +14,18 @@ using namespace std;
 
 namespace minerva {
 
-DagEngine::DagEngine(): unresolved_counter_(0), thread_pool_(THREAD_NUM) {
+DagEngine::DagEngine(): unresolved_counter_(0), thread_pool_(THREAD_NUM, this) {
 }
 
 DagEngine::~DagEngine() {
+  task_queue_.SignalForKill();
 }
 
 void DagEngine::Process(Dag& dag, vector<uint64_t>& targets) {
   ParseDagState(dag);
   auto ready_to_execute_queue = FindRootNodes(dag, targets);
   while (!ready_to_execute_queue.empty()) {
-    thread_pool_.AppendTask(ready_to_execute_queue.front(), std::bind(&DagEngine::AppendSubsequentNodes, this, placeholders::_1, placeholders::_2));
+    AppendTask(ready_to_execute_queue.front(), bind(&DagEngine::AppendSubsequentNodes, this, placeholders::_1));
     ready_to_execute_queue.pop();
   }
   {
@@ -84,14 +85,14 @@ queue<DagNode*> DagEngine::FindRootNodes(Dag& dag, vector<uint64_t>& targets) {
   return ready_to_execute_queue;
 }
 
-void DagEngine::AppendSubsequentNodes(DagNode* node, ThreadPool* pool) {
+void DagEngine::AppendSubsequentNodes(DagNode* node) {
   lock_guard<mutex> lock(node_states_mutex_);
   auto succ = node->successors_;
   for (auto i: succ) {
     auto& state = node_states_[i->node_id_];
     // Append node if all predecessors are finished
     if (state.state != NodeState::kNoNeed && (--state.dependency_counter) == 0) {
-      pool->AppendTask(i, bind(&DagEngine::AppendSubsequentNodes, this, placeholders::_1, placeholders::_2));
+      AppendTask(i, bind(&DagEngine::AppendSubsequentNodes, this, placeholders::_1));
     }
     // Signal main process if a target is finished
     if (state.state == NodeState::kTarget) {
@@ -101,6 +102,14 @@ void DagEngine::AppendSubsequentNodes(DagNode* node, ThreadPool* pool) {
     }
   }
 };
+
+void DagEngine::AppendTask(Task node, Callback callback) {
+  task_queue_.Push(make_pair(node, callback));
+}
+
+bool DagEngine::GetNewTask(thread::id id, TaskPair& task) {
+  return task_queue_.Pop(task);
+}
 
 }
 
