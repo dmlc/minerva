@@ -1,7 +1,8 @@
 #pragma once
-
-#include <map>
 #include "common/singleton.h"
+#include "common/common.h"
+#include <map>
+#include <cstdint>
 
 namespace minerva {
 
@@ -11,13 +12,18 @@ class DataStore : public Singleton<DataStore> {
     CPU = 0,
     GPU,
   };
-  static uint64_t GenerateDataId();
-  bool CreateData(uint64_t, MemTypes);
+  DataStore();
+  ~DataStore();
+  uint64_t GenerateDataID();
+  bool CreateData(uint64_t, MemTypes, size_t);
   float* GetData(uint64_t, MemTypes);
   void FreeData(uint64_t, MemTypes);
+
  private:
-  static uint64_t data_id_gen_;
+  DISALLOW_COPY_AND_ASSIGN(DataStore);
+  uint64_t data_id_gen_;
   std::map<uint64_t, float*> data_pointers_;
 };
 
 } // end of namespace minerva
+
