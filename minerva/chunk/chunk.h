@@ -9,16 +9,16 @@ class Chunk;
 class ChunkOp;
 
 class Chunk {
-	friend Chunk operator * (const Chunk& a, const Chunk& b);
-	friend Chunk operator + (const Chunk& a, const Chunk& b);
-	friend Chunk operator += (const Chunk& a, const Chunk& b);
+  friend Chunk operator * (const Chunk& a, const Chunk& b);
+  friend Chunk operator + (const Chunk& a, const Chunk& b);
+  friend Chunk operator += (const Chunk& a, const Chunk& b);
  public:
-	static Chunk Constant(const Index& size, float val);
+  static Chunk Constant(const Index& size, float val);
 
  public:
-	Chunk();
+  Chunk();
   explicit Chunk(const Index& size);
-	Index Size() const { return data_node_->meta().size; }
+  Index Size() const { return data_node_->meta().size; }
   DataNode* data_node() const { return data_node_; }
 
  private:

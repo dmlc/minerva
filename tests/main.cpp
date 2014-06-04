@@ -10,7 +10,7 @@
 using namespace std;
 
 int main() {
-  minerva::Dag d;
+  /*minerva::Dag d;
   minerva::DagNode* nodes[5];
   nodes[0] = d.NewDataNode();
   nodes[1] = d.NewDataNode();
@@ -21,7 +21,7 @@ int main() {
   nodes[4]->AddParent(nodes[3]);
   minerva::DagEngine engine;
   vector<uint64_t> targets{nodes[4]->node_id()};
-  engine.Process(d, targets);
+  engine.Process(d, targets);*/
   return 0;
 }
 
