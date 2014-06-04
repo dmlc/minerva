@@ -36,7 +36,7 @@ bool DagNode::DeleteParent(DagNode* p) {
 }
 
 void DataNode::Init() {
-  data_id_ = DataStore::Instance().GenerateDataId();
+  data_id_ = DataStore::Instance().GenerateDataID();
 }
 
 OpNode::OpNode() {

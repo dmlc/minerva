@@ -46,22 +46,22 @@ class DagNode {
 };
 
 struct DataNodeMeta {
-	DataNodeMeta(): length(0) {}
-	DataNodeMeta(const DataNodeMeta& other):
-		length(other.length), size(other.size),
-		offset(other.offset), chunk_index(other.chunk_index) {}
-	DataNodeMeta(const Index& size, const Index& off, 
-			const Index& chidx):
-		size(size), offset(off), chunk_index(chidx) {
-		length = size.Prod();
-	}
-	DataNodeMeta(const Index& size): size(size) {
-		length = size.Prod();
-		offset = Index::Origin(size.NumDims());
-		chunk_index = Index::Origin(size.NumDims());
-	}
-	size_t length;
-	Index size, offset, chunk_index;
+  DataNodeMeta(): length(0) {}
+  DataNodeMeta(const DataNodeMeta& other):
+    length(other.length), size(other.size),
+    offset(other.offset), chunk_index(other.chunk_index) {}
+  DataNodeMeta(const Index& size, const Index& off,
+      const Index& chidx):
+    size(size), offset(off), chunk_index(chidx) {
+    length = size.Prod();
+  }
+  DataNodeMeta(const Index& size): size(size) {
+    length = size.Prod();
+    offset = Index::Origin(size.NumDims());
+    chunk_index = Index::Origin(size.NumDims());
+  }
+  size_t length;
+  Index size, offset, chunk_index;
 };
 
 class DataNode: public DagNode {
