@@ -9,21 +9,19 @@
 
 namespace minerva {
 
+class DagEngine;
+
 class ThreadPool {
  public:
-  typedef DagNode* Task;
-  typedef std::function<void(DagNode*, ThreadPool*)> Callback;
-  typedef std::pair<Task, Callback> TaskPair;
-  ThreadPool(size_t);
+  ThreadPool(size_t, DagEngine*);
   ~ThreadPool();
-  void AppendTask(Task, Callback);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ThreadPool);
   ThreadPool();
+  DagEngine* engine_;
   std::vector<std::thread> workers_;
-  ConcurrentBlockingQueue<TaskPair> task_queue_;
-  void SimpleWorker();
+  void SimpleWorker(DagEngine*);
 };
 
 }

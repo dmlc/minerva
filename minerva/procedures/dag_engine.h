@@ -11,6 +11,7 @@
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
+#include <thread>
 
 namespace minerva {
 
@@ -24,7 +25,12 @@ struct NodeState {
 };
 
 class DagEngine : public DagProcedure {
+  friend class ThreadPool;
+
  public:
+  typedef DagNode* Task;
+  typedef std::function<void(DagNode*)> Callback;
+  typedef std::pair<Task, Callback> TaskPair;
   DagEngine();
   ~DagEngine();
   void Process(Dag&, std::vector<uint64_t>&);
@@ -36,12 +42,15 @@ class DagEngine : public DagProcedure {
   // Find execution entry point
   std::queue<DagNode*> FindRootNodes(Dag&, std::vector<uint64_t>&);
   // Callback when a node finishes execution
-  void AppendSubsequentNodes(DagNode*, ThreadPool*);
+  void NodeRunner(DagNode*);
+  void AppendTask(Task, Callback);
+  bool GetNewTask(std::thread::id, TaskPair&);
   std::map<uint64_t, NodeState> node_states_;
   std::mutex node_states_mutex_;
   size_t unresolved_counter_;
   std::mutex unresolved_counter_mutex_;
   std::condition_variable execution_finished_;
+  ConcurrentBlockingQueue<TaskPair> task_queue_;
   ThreadPool thread_pool_;
 };
 

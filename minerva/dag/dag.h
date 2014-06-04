@@ -17,6 +17,7 @@ namespace minerva {
 class Dag : public Singleton<Dag> {
   friend class DagEngine;
  public:
+  Dag();
   ~Dag();
   DataNode* NewDataNode(const DataNodeMeta& meta, 
       const DataNodeContext& ctx = DataNodeContext());
