@@ -123,4 +123,3 @@ bool DagEngine::GetNewTask(thread::id id, TaskPair& task) {
 }
 
 }
-

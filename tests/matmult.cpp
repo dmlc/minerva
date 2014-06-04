@@ -15,6 +15,6 @@ int main() {
   Chunk a = Chunk::Constant({100, 200}, 0.2);
   Chunk b = Chunk::Constant({200, 50}, 0.1);
   Chunk c = a * b;
-  c.Eval();
+  c.Print();
   return 0;
 }

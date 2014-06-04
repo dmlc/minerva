@@ -16,15 +16,16 @@ class Chunk {
 
  public:
   Chunk();
+  Chunk(const Index& size);
+  Chunk(const Chunk& other);
   Index Size() const { return data_node_->meta().size; }
   DataNode* data_node() const { return data_node_; }
-  void Eval();
-
- public:
   void operator += (const Chunk& a);
+  Chunk& operator = (const Chunk& other);
+  void Eval();
+  void Print();
 
  private:
-  explicit Chunk(const Index& size);
   DataNode* data_node_; // Set up in constructor
 };
 

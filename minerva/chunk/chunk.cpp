@@ -1,6 +1,7 @@
 #include <cassert>
 #include <functional>
 #include <cstdio>
+#include <cstdlib>
 
 #include "chunk.h"
 #include "dag/dag.h"
@@ -12,6 +13,7 @@ using namespace std;
 namespace minerva {
 
 void MatrixMultiply(vector<DataNode*> inputs, vector<DataNode*> outputs) {
+  cout << "Do matrix multiply" << endl;
   float* a = DataStore::Instance().GetData(inputs[0]->data_id(), DataStore::CPU);
   float* b = DataStore::Instance().GetData(inputs[1]->data_id(), DataStore::CPU);
   float* c = DataStore::Instance().GetData(outputs[0]->data_id(), DataStore::CPU);
@@ -26,6 +28,7 @@ void MatrixMultiply(vector<DataNode*> inputs, vector<DataNode*> outputs) {
     }
 }
 void MatrixAdd(vector<DataNode*> inputs, DataNode* output) {
+  cout << "Do matrix addition" << endl;
   vector<float*> inptrs;
   for(auto innode : inputs)
     inptrs.push_back(DataStore::Instance().GetData(innode->data_id(), DataStore::CPU));
@@ -38,6 +41,7 @@ void MatrixAdd(vector<DataNode*> inputs, DataNode* output) {
   }
 }
 void FillConstant(DataNode* out, float val) {
+  cout << "Do filling constants" << endl;
   float* a = DataStore::Instance().GetData(out->data_id(), DataStore::CPU);
   size_t len = out->meta().length;
   for(size_t i = 0; i < len; ++i)
@@ -46,11 +50,13 @@ void FillConstant(DataNode* out, float val) {
 
 Chunk::Chunk(): data_node_(NULL) {
 }
+Chunk::Chunk(const Chunk& other): data_node_(other.data_node_) {
+}
 Chunk::Chunk(const Index& size) {
   data_node_ = Dag::Instance().NewDataNode(DataNodeMeta(size));
 }
 
-Chunk operator*(const Chunk& a, const Chunk& b) {
+Chunk operator * (const Chunk& a, const Chunk& b) {
   Index asize = a.Size(), bsize = b.Size();
   // Check if operands match in dimension.
   assert(asize[1] == bsize[0]);
@@ -88,9 +94,25 @@ void Chunk::operator += (const Chunk& a) {
   *this = (*this) + a;
 }
 
+Chunk& Chunk::operator = (const Chunk& other) {
+  data_node_ = other.data_node_;
+  return *this;
+}
+
 void Chunk::Eval() {
   vector<uint64_t> targets{data_node_->node_id()};
   DagEngine::Instance().Process(Dag::Instance(), targets);
+}
+
+void Chunk::Print() {
+  Eval();
+  float *p = DataStore::Instance().GetData(data_node_->data_id(), DataStore::CPU);
+  cout << "Size: " << data_node_->meta().size << endl;
+  cout << "Data: [";
+  size_t end = std::min(data_node_->meta().length, 10ul);
+  for(size_t i = 0; i < end; ++i)
+    cout << p[i] << " ";
+  cout << "]" << endl;
 }
 
 } // end of namespace minerva
