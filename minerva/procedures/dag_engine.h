@@ -13,6 +13,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <thread>
+#include <unordered_set>
 
 namespace minerva {
 
@@ -20,6 +21,7 @@ struct NodeState {
   enum State {
     kNoNeed, // No need to execute
     kReady, // Need to execute
+    kComplete,
     kTarget // Target node
   } state;
   size_t dependency_counter;
@@ -41,7 +43,7 @@ class DagEngine : public DagProcedure, public Singleton<DagEngine> {
   // Create states for new nodes
   void ParseDagState(Dag&);
   // Find execution entry point
-  std::queue<DagNode*> FindRootNodes(Dag&, std::vector<uint64_t>&);
+  std::unordered_set<DagNode*> FindRootNodes(Dag&, std::vector<uint64_t>&);
   // Callback when a node finishes execution
   void NodeRunner(DagNode*);
   void AppendTask(Task, Callback);
