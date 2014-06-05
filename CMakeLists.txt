@@ -23,4 +23,5 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O2 -march=native -mtune=native -mssse3 -ftree-vect
 #endmacro(requires_core_deps)
 
 add_subdirectory(minerva)
+add_subdirectory(owl)
 add_subdirectory(tests)
