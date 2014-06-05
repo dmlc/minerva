@@ -92,11 +92,11 @@ fi
 if [ -d $MKL_ROOT ]; then
 	echo "Found MKL in $MKL_ROOT"
 	CFLAGS="$CFLAGS \
-		-D MKL_FOUND \
-		-D MKL_ROOT=$MKL_ROOT \
-		-D MKL_INCLUDE_PATH=$MKL_ROOT/include \
-		-D MKL_LIBRARY_PATH=$MKL_ROOT/lib/intel64/ \
-		-D INTEL_LIBRARY_PATH=$MKL_ROOT/../compiler/lib/intel64"
+		-DMKL_FOUND=1 \
+		-DMKL_ROOT=$MKL_ROOT \
+		-DMKL_INCLUDE_PATH=$MKL_ROOT/include \
+		-DMKL_LIBRARY_PATH=$MKL_ROOT/lib/intel64/ \
+		-DINTEL_LIBRARY_PATH=$MKL_ROOT/../compiler/lib/intel64"
 fi
 #===============================================================================
 
@@ -133,17 +133,17 @@ fi
 #================================ main configuration =============================
 echo -e "\n\n\n========================== Release =========================="
 if [ ! -d $RELEASE_DIR ]; then
-	mkdir $RELEASE_DIR 
+	mkdir $RELEASE_DIR
 fi
 cd $RELEASE_DIR
-cmake -D CMAKE_BUILD_TYPE=Release $CFLAGS ..
+cmake -DCMAKE_BUILD_TYPE=Release $CFLAGS ..
 cd ..
 
 echo -e "\n\n\n========================== Debug =========================="
 if [ ! -d $DEBUG_DIR ]; then
-	mkdir $DEBUG_DIR 
+	mkdir $DEBUG_DIR
 fi
 cd $DEBUG_DIR
-cmake -D CMAKE_BUILD_TYPE=Debug $CFLAGS ..
+cmake -DCMAKE_BUILD_TYPE=Debug $CFLAGS ..
 cd ..
 
