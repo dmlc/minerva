@@ -3,6 +3,7 @@
 #include <vector>
 #include <thread>
 #include <chrono>
+#include <iostream>
 
 #include "procedures/dag_engine.h"
 #include "dag/dag.h"
@@ -18,5 +19,6 @@ int main() {
   a.Print();
   c.Print();
   c.Print();
+  cout << Dag::Instance().PrintDag() << endl;
   return 0;
 }

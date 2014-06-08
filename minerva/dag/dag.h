@@ -5,6 +5,7 @@
 #include <functional>
 #include <initializer_list>
 #include <atomic>
+#include <string>
 
 #include "dag_node.h"
 #include "dag_context.h"
@@ -19,11 +20,12 @@ class Dag : public Singleton<Dag> {
  public:
   Dag();
   ~Dag();
-  DataNode* NewDataNode(const DataNodeMeta& meta, 
+  DataNode* NewDataNode(const DataNodeMeta& meta,
       const DataNodeContext& ctx = DataNodeContext());
   OpNode* NewOpNode(std::initializer_list<DataNode*> inputs,
       std::initializer_list<DataNode*> outputs,
       const OpNode::Runner& runner, const OpNodeContext& ctx);
+  std::string PrintDag() const;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(Dag);
@@ -32,3 +34,4 @@ class Dag : public Singleton<Dag> {
 };
 
 } // end of namespace minerva
+

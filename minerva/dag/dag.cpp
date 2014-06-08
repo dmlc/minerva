@@ -4,9 +4,7 @@
 #include <cstdint>
 #include <functional>
 #include <queue>
-#include <cstdio>
-#include <thread>
-#include <chrono>
+#include <sstream>
 
 using namespace std;
 
@@ -49,4 +47,24 @@ OpNode* Dag::NewOpNode(std::initializer_list<DataNode*> inputs,
   return ret;
 }
 
+string Dag::PrintDag() const {
+  ostringstream out;
+  out << "digraph G {" << endl;
+  for (auto i: index_to_node_) {
+    out << "  " << i.first << " [shape=";
+    if (i.second->Type() == DagNode::OP_NODE) {
+      out << "box";
+    } else {
+      out << "ellipse";
+    }
+    out << "];" << endl;
+    for (auto j: i.second->successors_) {
+      out << "  " << i.first << " -> " << j->node_id() << ";" << endl;
+    }
+  }
+  out << "}";
+  return out.str();
+}
+
 } // end of namespace minerva
+
