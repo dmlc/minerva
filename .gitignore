@@ -1,28 +1,36 @@
-# Compiled Object files
+# Compiled object files
 *.slo
 *.lo
 *.o
-#vim tmp file
-.*.swo
-.*.swp
 
-# Compiled Dynamic libraries
+# Compiled dynamic libraries
 *.so
 *.dylib
 *.dll
 
-# Compiled Static libraries
+# Compiled static libraries
 *.lai
 *.la
 *.a
 
-# python objects
+# Python objects
 *.pyc
 
-# directories
+# Generated directories
 debug
 release
 build
 deps
 lib
 tags
+
+# Vim temporary file
+.*.swo
+.*.swp
+
+# Atom rule file
+.editorconfig
+
+# Vagrant files
+.vagrant
+Vagrantfile
