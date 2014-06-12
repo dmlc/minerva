@@ -68,9 +68,7 @@ flags = [
 #'-isystem',
 #'../llvm/tools/clang/include',
 '-I',
-'./minerva-common/',
-'-I',
-'./minerva-ps/',
+'./minerva',
 '-I',
 './deps/local/include'
 ]

@@ -15,7 +15,7 @@ class Index {
 	friend Index operator - (const Index& idx1, const Index& idx2);
 	friend Index operator * (const Index& idx1, const Index& idx2);
 	friend std::ostream& operator << (std::ostream& os, const Index& idx);
-public:
+ public:
 	static const Index NullIndex;
 	static Index Origin(size_t ndims) { return Index(std::vector<int>(ndims, 0)); }
 	static Index Constant(size_t ndims, int val) { return Index(std::vector<int>(ndims, val)); }
@@ -72,7 +72,7 @@ public:
 			return prod;
 		}
 	}
-private:
+ private:
 	std::vector<int> index_;
 };
 
@@ -107,7 +107,7 @@ inline std::ostream& operator << (std::ostream& os, const Index& idx) {
 
 class IndexRange {
 	friend std::ostream& operator << (std::ostream& os, const IndexRange& range);
-public:
+ public:
 	static const IndexRange NullRange;
 	static bool ValidRange(const Index& st, const Index& ed) {
 		bool valid = st.NumDims() == ed.NumDims();
@@ -175,9 +175,9 @@ public:
 		return end_ - start_;
 	}
 
-private:
+ private:
 	IndexRange(const Index& st, const Index& ed): start_(st), end_(ed) { }
-private:
+ private:
 	Index start_, end_;
 };
 
