@@ -1,5 +1,4 @@
 #pragma once
-#include "common/singleton.h"
 #include "common/common.h"
 #include <map>
 #include <cstdint>
@@ -7,7 +6,7 @@
 
 namespace minerva {
 
-class DataStore : public Singleton<DataStore> {
+class DataStore {
  public:
   enum MemTypes {
     CPU = 0,

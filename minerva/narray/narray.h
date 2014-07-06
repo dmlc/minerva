@@ -4,37 +4,48 @@
 #include <vector>
 #include <initializer_list>
 
+#include "common/scale.h"
+
 namespace minerva {
 
-class Vector;
 class NArray;
 class Elewise;
 class Reduction;
+class Convolution;
 
-class Vector {
- public:
-   Vector(int );
-   template<typename T> Vector(std::initializer_list<T> init) {}
-};
+class DataNode;
 
 class Elewise {
  public:
-  static NArray Add(const NArray&, const NArray&);
-  static NArray Minus(const NArray&, const NArray&);
-  static NArray Mult(const NArray&, const NArray&);
-  static NArray Div(const NArray&, const NArray&);
+  static NArray Add(NArray, NArray);
+  static NArray Minus(NArray, NArray);
+  static NArray Mult(NArray&, NArray);
+  static NArray Div(NArray, NArray);
 
-  static NArray Exp(const NArray& );
-  static NArray Ln(const NArray& );
-  static NArray Sigmoid(const NArray&, const NArray&);
+  static NArray Exp(NArray );
+  static NArray Ln(NArray );
+  static NArray Sigmoid(NArray );
+};
+
+struct ConvInfo {
+  int numfilters;
+  Scale filtersize, stride, paddingsize;
+};
+
+class Convolution {
+ public:
+  static NArray ConvFF(NArray act, NArray weight, const ConvInfo& convinfo);
+  static NArray ConvBP(NArray sen, NArray weight, const ConvInfo& convinfo);
+  static NArray GetGrad(NArray act_low, NArray sen_high, const ConvInfo& convinfo);
 };
 
 class NArray {
   friend class Elewise;
   friend class Reduction;
+  friend class Convolution;
  public:
-  static NArray Constant(const Vector& size, float val);
-  static NArray Randn(const Vector& size, float mu, float var);
+  static NArray Constant(const Scale& size, float val);
+  static NArray Randn(const Scale& size, float mu, float var);
  public:
   // element-wise
   friend NArray operator + (const NArray&, const NArray&);
@@ -48,21 +59,32 @@ class NArray {
   friend NArray operator - (const NArray&, float);
   friend NArray operator * (const NArray&, float);
   friend NArray operator / (const NArray&, float);
+  void operator += (const NArray& );
+  void operator -= (const NArray& );
+  void operator *= (const NArray& );
+  void operator /= (const NArray& );
+  void operator += (float );
+  void operator -= (float );
+  void operator *= (float );
+  void operator /= (float );
   // matmult
   friend NArray operator * (const NArray&, const NArray&);
   // lazy reductions
-  NArray Sum(const Vector& dims);
-  NArray Max(const Vector& dims);
-  NArray MaxIndex(const Vector& dims);
+  NArray Sum(const Scale& dims);
+  NArray Max(const Scale& dims);
+  NArray MaxIndex(const Scale& dims);
   // non-lazy reductions
   float Sum();
   float Max();
   int CountZero();
   // shape
-  size_t Size(size_t dim);
-  NArray Tile(const Vector& times);
-  NArray Reshape(const Vector& dims);
+  int Size(int dim);
+  NArray Tile(const Scale& times);
+  NArray Reshape(const Scale& dims);
   NArray Trans();
+
+ private:
+  DataNode* data_node_;
 };
 
 } // end of namespace minerva

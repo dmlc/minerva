@@ -9,13 +9,12 @@
 
 #include "dag_node.h"
 #include "dag_context.h"
-#include "common/singleton.h"
 #include "common/common.h"
 #include "common/concurrent_blocking_queue.h"
 
 namespace minerva {
 
-class Dag : public Singleton<Dag> {
+class Dag {
   friend class DagEngine;
  public:
   Dag();
@@ -24,7 +23,7 @@ class Dag : public Singleton<Dag> {
       const DataNodeContext& ctx = DataNodeContext());
   OpNode* NewOpNode(std::initializer_list<DataNode*> inputs,
       std::initializer_list<DataNode*> outputs,
-      const OpNode::Runner& runner, const OpNodeContext& ctx);
+      OpNodeRunner* runner, const OpNodeContext& ctx);
   std::string PrintDag() const;
 
  private:
@@ -34,4 +33,3 @@ class Dag : public Singleton<Dag> {
 };
 
 } // end of namespace minerva
-

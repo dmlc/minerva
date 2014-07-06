@@ -32,7 +32,7 @@ DataNode* Dag::NewDataNode(const DataNodeMeta& meta, const DataNodeContext& ctx)
 
 OpNode* Dag::NewOpNode(std::initializer_list<DataNode*> inputs,
     std::initializer_list<DataNode*> outputs,
-    const OpNode::Runner& runner, const OpNodeContext& ctx) {
+    OpNodeRunner* runner, const OpNodeContext& ctx) {
   OpNode* ret = new OpNode;
   ret->set_runner(runner);
   ret->set_context(ctx);

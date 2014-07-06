@@ -7,8 +7,9 @@
 #include <mutex>
 
 #include "common/common.h"
-#include "common/index.h"
-#include "dag_context.h"
+#include "common/scale.h"
+#include "dag/dag_context.h"
+#include "dag/op/closure.h"
 
 namespace minerva {
 
@@ -50,17 +51,17 @@ struct DataNodeMeta {
   DataNodeMeta(const DataNodeMeta& other):
     length(other.length), size(other.size),
     offset(other.offset), chunk_index(other.chunk_index) {}
-  DataNodeMeta(const Index& size, const Index& off, const Index& chidx):
+  DataNodeMeta(const Scale& size, const Scale& off, const Scale& chidx):
     size(size), offset(off), chunk_index(chidx) {
       length = size.Prod();
   }
-  DataNodeMeta(const Index& size): size(size) {
+  DataNodeMeta(const Scale& size): size(size) {
     length = size.Prod();
-    offset = Index::Origin(size.NumDims());
-    chunk_index = Index::Origin(size.NumDims());
+    offset = Scale::Origin(size.NumDims());
+    chunk_index = Scale::Origin(size.NumDims());
   }
   size_t length;
-  Index size, offset, chunk_index;
+  Scale size, offset, chunk_index;
 };
 
 class DataNode: public DagNode {
@@ -90,20 +91,23 @@ class DataNode: public DagNode {
 
 class OpNode: public DagNode {
  public:
-  typedef std::function<void()> Runner;
   OpNode();
   ~OpNode();
-  void set_runner(const Runner& r) { runner_ = r; }
-  const Runner& runner() const { return runner_; };
+  void set_closure(void* r) { closure_ = r; }
+  void* closure() { return closure_; };
   void set_context(const OpNodeContext& ctx) { context_ = ctx; }
   const OpNodeContext& context() const { return context_; }
+  void set_inputs(const std::vector<DataNode*>& in) { inputs_ = in; }
+  const std::vector<DataNode*>& inputs() { return inputs_; }
+  void set_outputs(const std::vector<DataNode*>& out) { outputs_ = out; }
+  const std::vector<DataNode*>& outputs() { return outputs_; }
 
   NodeTypes Type() const { return OP_NODE; }
 
  private:
-  Runner runner_;
-  //std::vector<DataNode*> inputs_, outputs_; TODO not sure we need this or not
+  void* closure_;
   OpNodeContext context_;
+  std::vector<DataNode*> inputs_, outputs_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(OpNode);

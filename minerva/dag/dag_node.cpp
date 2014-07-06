@@ -6,7 +6,7 @@
 #include <chrono>
 
 #include "dag_node.h"
-#include "system/data_store.h"
+#include "system/minerva_system.h"
 
 using namespace std;
 
@@ -36,7 +36,7 @@ bool DagNode::DeleteParent(DagNode* p) {
 }
 
 void DataNode::Init() {
-  data_id_ = DataStore::Instance().GenerateDataID();
+  data_id_ = MinervaSystem::Instance().data_store().GenerateDataID();
 }
 
 OpNode::OpNode() {
