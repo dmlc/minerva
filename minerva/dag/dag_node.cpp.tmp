@@ -35,9 +35,9 @@ bool DagNode::DeleteParent(DagNode* p) {
   return predecessors_.empty();
 }
 
-void DataNode::Init() {
+/*void DataNode::Init() {
   data_id_ = MinervaSystem::Instance().data_store().GenerateDataID();
-}
+}*/
 
 OpNode::OpNode() {
   /*runner_ = [this] () {

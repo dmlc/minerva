@@ -5,6 +5,7 @@
 
 #include "chunk.h"
 #include "dag/dag.h"
+#include "dag/dag_node.h"
 #include "procedures/dag_engine.h"
 #include "system/data_store.h"
 
@@ -48,19 +49,19 @@ void FillConstant(DataNode* out, float val) {
     a[i] = val;
 }
 
-Chunk::Chunk(): data_node_(NULL) {
-}
+/*Chunk::Chunk(): data_node_(NULL) {
+}*/
 Chunk::Chunk(const Chunk& other): data_node_(other.data_node_) {
 }
-Chunk::Chunk(const Index& size) {
+/*Chunk::Chunk(const Scale& size) {
   data_node_ = Dag::Instance().NewDataNode(DataNodeMeta(size));
-}
+}*/
 
 Chunk operator * (const Chunk& a, const Chunk& b) {
-  Index asize = a.Size(), bsize = b.Size();
+  Scale asize = a.Size(), bsize = b.Size();
   // Check if operands match in dimension.
   assert(asize[1] == bsize[0]);
-  Index retsize = {asize[0], bsize[1]};
+  Scale retsize = {asize[0], bsize[1]};
   Chunk ret(retsize);
   vector<DataNode*> in_nodes = {a.data_node(), b.data_node()};
   vector<DataNode*> out_nodes = {ret.data_node()};
@@ -72,7 +73,7 @@ Chunk operator * (const Chunk& a, const Chunk& b) {
 }
 
 Chunk operator + (const Chunk& a, const Chunk& b) {
-  Index asize = a.Size(), bsize = b.Size();
+  Scale asize = a.Size(), bsize = b.Size();
   // checking
   assert(asize == bsize);
   Chunk ret(asize); 
@@ -83,7 +84,7 @@ Chunk operator + (const Chunk& a, const Chunk& b) {
   return ret;
 }
 
-Chunk Chunk::Constant(const Index& size, float val) {
+Chunk Chunk::Constant(const Scale& size, float val) {
   Chunk ret(size);
   OpNode::Runner fillrunner = bind(&FillConstant, ret.data_node(), val);
   Dag::Instance().NewOpNode({}, {ret.data_node()}, fillrunner, OpNodeContext());
@@ -99,7 +100,7 @@ Chunk& Chunk::operator = (const Chunk& other) {
   return *this;
 }
 
-void Chunk::Eval() {
+/*void Chunk::Eval() {
   vector<uint64_t> targets{data_node_->node_id()};
   DagEngine::Instance().Process(Dag::Instance(), targets);
 }
@@ -113,6 +114,10 @@ void Chunk::Print() {
   for(size_t i = 0; i < end; ++i)
     cout << p[i] << " ";
   cout << "]" << endl;
+}*/
+
+Scale Chunk::Size() {
+  return data_node_->meta().size;
 }
 
 } // end of namespace minerva

@@ -1,7 +1,8 @@
 #pragma once
 
 #include "common/singleton.h"
-#include "dag/dag.h"
+#include "dag/logical.h"
+#include "dag/physical.h"
 #include "system/data_store.h"
 
 namespace minerva {
@@ -9,11 +10,12 @@ namespace minerva {
 class MinervaSystem : public Singleton<MinervaSystem> {
  public:
   MinervaSystem() {}
-  Dag& logic_dag() { return logic_dag_; }
-  Dag& concrete_dag() { return concrete_dag_; }
+  LogicalDag& logical_dag() { return logical_dag_; }
+  PhysicalDag& physical_dag() { return physical_dag_; }
   DataStore& data_store() { return data_store_; }
  private:
-  Dag logic_dag_, concrete_dag_;
+  LogicalDag logical_dag_;
+  PhysicalDag physical_dag_;
   DataStore data_store_;
 };
 

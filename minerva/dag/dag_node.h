@@ -8,8 +8,8 @@
 
 #include "common/common.h"
 #include "common/scale.h"
+#include "common/nvector.h"
 #include "dag/dag_context.h"
-#include "dag/op/closure.h"
 
 namespace minerva {
 
@@ -18,33 +18,6 @@ struct DataNodeMeta;
 class DataNode;
 class OpNode;
 
-class DagNode {
-  friend class Dag;
-  friend class DagEngine;
-
- public:
-  enum NodeTypes {
-    OP_NODE = 0,
-    DATA_NODE
-  };
-  DagNode();
-  virtual ~DagNode();
-  void AddParent(DagNode*);
-  void AddParents(std::initializer_list<DagNode*>);
-  bool DeleteParent(DagNode*);
-  // getters
-  uint64_t node_id() { return node_id_; };
-
-  virtual NodeTypes Type() const = 0;
-
- protected:
-  uint64_t node_id_;
-  std::set<DagNode*> successors_;
-  std::set<DagNode*> predecessors_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(DagNode);
-};
 
 struct DataNodeMeta {
   DataNodeMeta(): length(0) {}
@@ -66,12 +39,12 @@ struct DataNodeMeta {
 
 class DataNode: public DagNode {
  public:
-  DataNode() { Init(); }
-  DataNode(const DataNodeMeta& meta): meta_(meta) { Init(); }
+  DataNode() {}
+  DataNode(const DataNodeMeta& meta): meta_(meta) {}
   ~DataNode() {}
 
-  void set_data_id(uint64_t id) { data_id_ = id; }
-  uint64_t data_id() const { return data_id_; }
+  //void set_data_id(uint64_t id) { data_id_ = id; }
+  //uint64_t data_id() const { return data_id_; }
   void set_meta(const DataNodeMeta& meta) { meta_ = meta; }
   const DataNodeMeta& meta() const { return meta_; }
   void set_context(const DataNodeContext& ctx) { context_ = ctx; }
@@ -79,14 +52,29 @@ class DataNode: public DagNode {
 
   NodeTypes Type() const { return DATA_NODE; }
 
- private:
-  uint64_t data_id_;
+ protected:
+  //uint64_t data_id_; //TODO shall we have data_id ? The problem is logical 
+                       //data_node has no data_id while physical node has
   DataNodeMeta meta_;
   DataNodeContext context_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(DataNode);
-  void Init();
+};
+
+class LDagDataNode : public DataNode {
+ public:
+  LDagDataNode() {}
+ private:
+  NVector<DataNode*> mapped_pdag_nodes_;
+};
+
+class OpNodeRunner {
+ public:
+  virtual void Init() = 0;
+  virtual void Compute(void* closure, std::vector<DataNode*> inputs,
+      std::vector<DataNode*> outputs) = 0;
+  virtual void Destroy() = 0;
 };
 
 class OpNode: public DagNode {
@@ -95,8 +83,8 @@ class OpNode: public DagNode {
   ~OpNode();
   void set_closure(void* r) { closure_ = r; }
   void* closure() { return closure_; };
-  void set_context(const OpNodeContext& ctx) { context_ = ctx; }
-  const OpNodeContext& context() const { return context_; }
+  //void set_context(const OpNodeContext& ctx) { context_ = ctx; }
+  //const OpNodeContext& context() const { return context_; }
   void set_inputs(const std::vector<DataNode*>& in) { inputs_ = in; }
   const std::vector<DataNode*>& inputs() { return inputs_; }
   void set_outputs(const std::vector<DataNode*>& out) { outputs_ = out; }
@@ -106,7 +94,8 @@ class OpNode: public DagNode {
 
  private:
   void* closure_;
-  OpNodeContext context_;
+  OpNodeRunner* runner_;
+  //OpNodeContext context_;
   std::vector<DataNode*> inputs_, outputs_;
 
  private:

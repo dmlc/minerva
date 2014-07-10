@@ -5,6 +5,7 @@
 #include <initializer_list>
 
 #include "common/scale.h"
+#include "dag/logical.h"
 
 namespace minerva {
 
@@ -12,8 +13,6 @@ class NArray;
 class Elewise;
 class Reduction;
 class Convolution;
-
-class DataNode;
 
 class Elewise {
  public:
@@ -46,29 +45,30 @@ class NArray {
  public:
   static NArray Constant(const Scale& size, float val);
   static NArray Randn(const Scale& size, float mu, float var);
+  NArray();
  public:
   // element-wise
-  friend NArray operator + (const NArray&, const NArray&);
-  friend NArray operator - (const NArray&, const NArray&);
-  friend NArray operator / (const NArray&, const NArray&);
-  friend NArray operator + (float, const NArray&);
-  friend NArray operator - (float, const NArray&);
-  friend NArray operator * (float, const NArray&);
-  friend NArray operator / (float, const NArray&);
-  friend NArray operator + (const NArray&, float);
-  friend NArray operator - (const NArray&, float);
-  friend NArray operator * (const NArray&, float);
-  friend NArray operator / (const NArray&, float);
-  void operator += (const NArray& );
-  void operator -= (const NArray& );
-  void operator *= (const NArray& );
-  void operator /= (const NArray& );
+  friend NArray operator + (NArray, NArray);
+  friend NArray operator - (NArray, NArray);
+  friend NArray operator / (NArray, NArray);
+  friend NArray operator + (float, NArray);
+  friend NArray operator - (float, NArray);
+  friend NArray operator * (float, NArray);
+  friend NArray operator / (float, NArray);
+  friend NArray operator + (NArray, float);
+  friend NArray operator - (NArray, float);
+  friend NArray operator * (NArray, float);
+  friend NArray operator / (NArray, float);
+  void operator += (NArray );
+  void operator -= (NArray );
+  void operator *= (NArray );
+  void operator /= (NArray );
   void operator += (float );
   void operator -= (float );
   void operator *= (float );
   void operator /= (float );
   // matmult
-  friend NArray operator * (const NArray&, const NArray&);
+  friend NArray operator * (NArray, NArray);
   // lazy reductions
   NArray Sum(const Scale& dims);
   NArray Max(const Scale& dims);
@@ -78,13 +78,15 @@ class NArray {
   float Max();
   int CountZero();
   // shape
+  Scale Size();
   int Size(int dim);
   NArray Tile(const Scale& times);
   NArray Reshape(const Scale& dims);
   NArray Trans();
 
  private:
-  DataNode* data_node_;
+  NArray(LogicalDataNode* node);
+  LogicalDataNode* data_node_;
 };
 
 } // end of namespace minerva
