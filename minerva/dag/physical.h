@@ -12,6 +12,8 @@ struct PhysicalData;
 struct PhysicalOp;
 class OpExecutor;
 
+class Closure;
+
 struct PhysicalData {
   Scale size, offset, chunk_index;
   DataNodeContext context;
@@ -19,14 +21,14 @@ struct PhysicalData {
 };
 
 struct PhysicalOp {
-  void* closure;
+  Closure* closure;
   OpNodeContext context;
   OpExecutor* executor;
 };
 
 class OpExecutor {
  public:
-  virtual void Execute(std::vector<PhysicalData> inputs, std::vector<PhysicalData> outputs, PhysicalOp& op);
+  virtual void Execute(std::vector<PhysicalData> inputs, std::vector<PhysicalData> outputs, PhysicalOp& op) = 0;
 };
 
 typedef Dag<PhysicalData, PhysicalOp> PhysicalDag;

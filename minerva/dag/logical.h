@@ -14,13 +14,15 @@ struct LogicalData;
 struct LogicalOp;
 class OpExpander;
 
+class Closure;
+
 struct LogicalData {
   Scale size;
   DataNodeContext context;
 };
 
 struct LogicalOp {
-  void* closure;
+  Closure* closure;
   OpNodeContext context;
   OpExpander* expander;
 };
