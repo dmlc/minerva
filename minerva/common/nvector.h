@@ -8,11 +8,11 @@ template<class T>
 class NVector {
 public:
 	NVector() { }
-	NVector(const Scale& size) {
+	explicit NVector(const Scale& size) {
 		data_.resize(size.Prod());
 		range_ = ScaleRange::MakeRange(Scale::Origin(size.NumDims()), size);
 	}
-	NVector(const ScaleRange& r): range_(r) {
+	explicit NVector(const ScaleRange& r): range_(r) {
 		data_.resize(range_.Area());
 	}
 	NVector(const NVector& other): data_(other.data_), range_(other.range_) {}
@@ -27,6 +27,9 @@ public:
 	}
 	Scale Size() const {
 		return range_.Dim();
+	}
+	int Size(int dim) const {
+		return range_.Dim()[dim];
 	}
 	void Resize(const Scale& size) {
 		data_.resize(size.Prod());

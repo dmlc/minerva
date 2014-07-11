@@ -27,7 +27,7 @@ struct LogicalOp {
 
 class OpExpander {
  public:
-  virtual std::vector<NVector<Chunk>> Expend(std::vector<NVector<Chunk>> inputs, LogicalOp& op) = 0;
+  virtual std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs, LogicalOp& op) = 0;
 };
 
 typedef Dag<LogicalData, LogicalOp> LogicalDag;

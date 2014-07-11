@@ -1,4 +1,5 @@
 #include "narray.h"
+#include "op/logical_op.h"
 #include "system/minerva_system.h"
 
 using namespace std;
@@ -27,8 +28,9 @@ NArray operator * (NArray lhs, NArray rhs) {
   Scale newsize = {lhs.Size(0), rhs.Size(1)};
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
   LogicalDataNode* newnode = ldag.NewDataNode(LogicalData{newsize});
+  LogicalOp lop{NULL, OpNodeContext(), new MatMultLogicalOp};
   ldag.NewOpNode(
-      {lhs.data_node_, rhs.data_node_}, {newnode}, LogicalOp()
+      {lhs.data_node_, rhs.data_node_}, {newnode}, lop
       );
   return NArray(newnode);
 }

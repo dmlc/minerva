@@ -16,8 +16,11 @@ class Chunk {
   static Chunk Constant(const Scale& size, float val);
 
  public:
+  Chunk();
+  Chunk(PhysicalDataNode* node);
   Chunk(const Chunk& other);
   Scale Size() const;
+  int Size(int dim) const;
   PhysicalDataNode* data_node() const { return data_node_; }
   void operator += (const Chunk& a);
   Chunk& operator = (const Chunk& other);

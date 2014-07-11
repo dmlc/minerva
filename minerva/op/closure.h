@@ -53,7 +53,9 @@ struct ReductionClosure {
   Scale dims_to_reduce;
 };
 
-struct ConvolutionClosure {
+struct ConvInfo {
+  int numfilters;
+  Scale filtersize, stride, paddingsize;
 };
 
 } // end of namespace minerva

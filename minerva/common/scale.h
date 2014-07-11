@@ -24,7 +24,7 @@ class Scale {
 	Scale() {}
 	Scale(const std::vector<int>& sc): vec_(sc) {} // allow implicit conversion
 	Scale(const Scale& other): vec_(other.vec_) {}
-	Scale(int i1) {
+	explicit Scale(int i1) {
 		vec_.push_back(i1);
 	}
 	Scale(int i1, int i2) {

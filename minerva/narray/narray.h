@@ -70,8 +70,11 @@ class NArray {
   // matmult
   friend NArray operator * (NArray, NArray);
   // lazy reductions
+  NArray Sum(int dim);
   NArray Sum(const Scale& dims);
+  NArray Max(int dim);
   NArray Max(const Scale& dims);
+  NArray MaxIndex(int dim);
   NArray MaxIndex(const Scale& dims);
   // non-lazy reductions
   float Sum();

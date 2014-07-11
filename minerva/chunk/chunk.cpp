@@ -5,15 +5,13 @@
 
 #include "chunk.h"
 #include "dag/dag.h"
-#include "dag/dag_node.h"
-#include "procedures/dag_engine.h"
-#include "system/data_store.h"
+#include "op/physical_op.h"
 
 using namespace std;
 
 namespace minerva {
 
-void MatrixMultiply(vector<DataNode*> inputs, vector<DataNode*> outputs) {
+/*void MatrixMultiply(vector<DataNode*> inputs, vector<DataNode*> outputs) {
   cout << "Do matrix multiply" << endl;
   float* a = DataStore::Instance().GetData(inputs[0]->data_id(), DataStore::CPU);
   float* b = DataStore::Instance().GetData(inputs[1]->data_id(), DataStore::CPU);
@@ -47,17 +45,19 @@ void FillConstant(DataNode* out, float val) {
   size_t len = out->meta().length;
   for(size_t i = 0; i < len; ++i)
     a[i] = val;
-}
-
-/*Chunk::Chunk(): data_node_(NULL) {
 }*/
+
+Chunk::Chunk(): data_node_(NULL) {
+}
+Chunk::Chunk(PhysicalDataNode* node): data_node_(node) {
+}
 Chunk::Chunk(const Chunk& other): data_node_(other.data_node_) {
 }
 /*Chunk::Chunk(const Scale& size) {
   data_node_ = Dag::Instance().NewDataNode(DataNodeMeta(size));
 }*/
 
-Chunk operator * (const Chunk& a, const Chunk& b) {
+/*Chunk operator * (const Chunk& a, const Chunk& b) {
   Scale asize = a.Size(), bsize = b.Size();
   // Check if operands match in dimension.
   assert(asize[1] == bsize[0]);
@@ -89,7 +89,7 @@ Chunk Chunk::Constant(const Scale& size, float val) {
   OpNode::Runner fillrunner = bind(&FillConstant, ret.data_node(), val);
   Dag::Instance().NewOpNode({}, {ret.data_node()}, fillrunner, OpNodeContext());
   return ret;
-}
+}*/
 
 void Chunk::operator += (const Chunk& a) {
   *this = (*this) + a;
@@ -116,8 +116,12 @@ void Chunk::Print() {
   cout << "]" << endl;
 }*/
 
-Scale Chunk::Size() {
-  return data_node_->meta().size;
+Scale Chunk::Size() const {
+  return data_node_->data().size;
+}
+
+int Chunk::Size(int dim) const {
+  return data_node_->data().size[dim];
 }
 
 } // end of namespace minerva
