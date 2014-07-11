@@ -16,9 +16,9 @@ template<class D, class O>
 typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
   typedef Dag<D, O>::DNode DNode;
   DNode* ret = new DNode;
-  ret->set_data(data);
-  ret->set_node_id( NewIndex() );
-  index_to_node_.insert(std::make_pair(ret->node_id(), ret));
+  ret->data_ = data;
+  ret->node_id_ = NewIndex();
+  index_to_node_.insert(std::make_pair(ret->node_id_, ret));
   return ret;
 }
 
@@ -28,9 +28,9 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
     std::initializer_list<DataNode<D, O>*> outputs, const O& op) {
   typedef OpNode<D, O> ONode;
   ONode* ret = new ONode;
-  ret->set_op(op);
-  ret->set_node_id( NewIndex() );
-  index_to_node_.insert(std::make_pair(ret->node_id(), ret));
+  ret->op_ = op;
+  ret->node_id_ = NewIndex();
+  index_to_node_.insert(std::make_pair(ret->node_id_, ret));
   for(auto in : inputs) {
     ret->AddParent(in);
   }
@@ -59,7 +59,7 @@ std::string Dag<D, O>::PrintDag() const {
     }
     out << "];" << std::endl;
     for (auto j: i.second->successors_) {
-      out << "  " << i.first << " -> " << j->node_id() << ";" << std::endl;
+      out << "  " << i.first << " -> " << j->node_id_ << ";" << std::endl;
     }
   }
   out << "}";

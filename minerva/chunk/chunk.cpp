@@ -117,11 +117,11 @@ void Chunk::Print() {
 }*/
 
 Scale Chunk::Size() const {
-  return data_node_->data().size;
+  return data_node_->data_.size;
 }
 
 int Chunk::Size(int dim) const {
-  return data_node_->data().size[dim];
+  return data_node_->data_.size[dim];
 }
 
 } // end of namespace minerva
