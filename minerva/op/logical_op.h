@@ -1,11 +1,12 @@
 #pragma once
 
 #include "dag/logical.h"
+#include "closure.h"
 
 namespace minerva {
 
-class MatMultLogicalOp : public OpExpander {
-  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs, LogicalOp& op) {
+class MatMultLogic : public LogicalOp {
+  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     NVector<Chunk> a = inputs[0];
     NVector<Chunk> b = inputs[1];
     // validity
@@ -31,4 +32,39 @@ class MatMultLogicalOp : public OpExpander {
   }
 };
 
-}
+class RandnLogic : public LogicalOpWithClosure<RandnClosure> {
+  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+    //TODO
+    return std::vector<NVector<Chunk>>();
+  }
+};
+
+class TransLogic : public LogicalOp {
+  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+    //TODO
+    return std::vector<NVector<Chunk>>();
+  }
+};
+
+class ElewiseLogic : public LogicalOpWithClosure<ElewiseClosure> {
+  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+    //TODO
+    return std::vector<NVector<Chunk>>();
+  }
+};
+
+class ArithmicLogic : public LogicalOpWithClosure<ArithmicClosure> {
+  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+    //TODO
+    return std::vector<NVector<Chunk>>();
+  }
+};
+
+class ArithmicConstLogic : public LogicalOpWithClosure<ArithmicConstClosure> {
+  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+    //TODO
+    return std::vector<NVector<Chunk>>();
+  }
+};
+
+} // end of namespace minerva

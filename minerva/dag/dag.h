@@ -76,8 +76,8 @@ class Dag {
   Dag() {}
   ~Dag();
   DNode* NewDataNode(const Data& data);
-  ONode* NewOpNode(std::initializer_list<DNode*> inputs,
-      std::initializer_list<DNode*> outputs, const Op& op);
+  ONode* NewOpNode(std::vector<DNode*> inputs,
+      std::vector<DNode*> outputs, const Op& op);
   std::string PrintDag() const;
 
  private:

@@ -11,28 +11,30 @@
 namespace minerva {
 
 struct LogicalData;
-struct LogicalOp;
+class LogicalOp;
 class OpExpander;
 
 class Closure;
 
 struct LogicalData {
   Scale size;
-  DataNodeContext context;
+  //DataNodeContext context; // TODO how to set context ?
 };
 
-struct LogicalOp {
-  Closure* closure;
-  OpNodeContext context;
-  OpExpander* expander;
-};
-
-class OpExpander {
+class LogicalOp {
  public:
-  virtual std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs, LogicalOp& op) = 0;
+  virtual std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) = 0;
+  virtual ~LogicalOp() {}
 };
 
-typedef Dag<LogicalData, LogicalOp> LogicalDag;
+template<class T>
+class LogicalOpWithClosure : public LogicalOp {
+ public:
+  T closure;
+  //OpNodeContext context; // TODO how to set context ?
+};
+
+typedef Dag<LogicalData, LogicalOp*> LogicalDag;
 typedef LogicalDag::DNode LogicalDataNode;
 typedef LogicalDag::ONode LogicalOpNode;
 
