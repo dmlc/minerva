@@ -18,19 +18,19 @@ NArray BinaryElewiseCustom(NArray lhs, NArray rhs, LogicalOp* op) {
 }
 
 NArray ElewiseHelper(NArray narr, enum ElewiseType type) {
-  ElewiseLogic* elewise_op = new ElewiseLogic;
+  ElewiseOp* elewise_op = new ElewiseOp;
   elewise_op->closure = {type};
   return UnaryElewiseCustom(narr, elewise_op);
 }
 
 NArray ArithmicHelper(NArray lhs, NArray rhs, enum ArithmicType type) {
-  ArithmicLogic* arith_op = new ArithmicLogic;
+  ArithmicOp* arith_op = new ArithmicOp;
   arith_op->closure = {type};
   return BinaryElewiseCustom(lhs, rhs, arith_op);
 }
 
 NArray ArithmicConstHelper(NArray narr, float val, int side, enum ArithmicType type) {
-  ArithmicConstLogic* arith_const_op = new ArithmicConstLogic;
+  ArithmicConstOp* arith_const_op = new ArithmicConstOp;
   arith_const_op->closure = {type, val, side};
   return UnaryElewiseCustom(narr, arith_const_op);
 }
@@ -49,8 +49,8 @@ NArray Elewise::Sigmoid(NArray narr) {
 NArray Elewise::Mult(NArray lhs, NArray rhs) {
   return ArithmicHelper(lhs, rhs, MULT);
 }
-void NArray::operator - () {
-  *this = ElewiseHelper(*this, NEGATIVE);
+NArray NArray::operator - () {
+  return ElewiseHelper(*this, NEGATIVE);
 }
 NArray operator + (NArray lhs, NArray rhs) {
   return ArithmicHelper(lhs, rhs, ADD);

@@ -28,12 +28,13 @@ std::vector<NArray> NArray::Custom(std::vector<NArray> params,
 }
 
 NArray NArray::Constant(const Scale& size, float val, const Scale& parts) {
-  // TODO
-  return NArray();
+  FillOp* fill_op = new FillOp;
+  fill_op->closure = {val, parts};
+  return NArray::Custom({}, {size}, fill_op)[0];
 }
 
 NArray NArray::Randn(const Scale& size, float mu, float var, const Scale& parts) {
-  RandnLogic* randn_op = new RandnLogic;
+  RandnOp* randn_op = new RandnOp;
   randn_op->closure = {mu, var, parts};
   return NArray::Custom({}, {size}, randn_op)[0];
 }
@@ -44,7 +45,7 @@ NArray operator * (NArray lhs, NArray rhs) {
   assert(lhs.Size().NumDims() == 2 && rhs.Size().NumDims() == 2);
   assert(lhs.Size(1) == rhs.Size(0));
   Scale newsize = {lhs.Size(0), rhs.Size(1)};
-  MatMultLogic* matmult_op = new MatMultLogic;
+  MatMultOp* matmult_op = new MatMultOp;
   return NArray::Custom({lhs, rhs}, {newsize}, matmult_op)[0];
 }
 
@@ -71,7 +72,7 @@ NArray NArray::Trans() {
   // validity
   assert(Size().NumDims() == 2);
   Scale newsize = {Size(1), Size(0)};
-  TransLogic* trans_op = new TransLogic;
+  TransOp* trans_op = new TransOp;
   return NArray::Custom({*this}, {newsize}, trans_op)[0];
 }
 

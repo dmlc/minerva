@@ -1,8 +1,8 @@
 #pragma once
 
 #include "common/singleton.h"
-#include "dag/logical.h"
-#include "dag/physical.h"
+#include "dag/logical_dag.h"
+#include "dag/physical_dag.h"
 #include "system/data_store.h"
 
 namespace minerva {

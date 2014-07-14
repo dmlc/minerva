@@ -57,12 +57,12 @@ Chunk::Chunk(const Chunk& other): data_node_(other.data_node_) {
   data_node_ = Dag::Instance().NewDataNode(DataNodeMeta(size));
 }*/
 
-Chunk operator * (const Chunk& a, const Chunk& b) {
+Chunk operator * (Chunk a, Chunk b) {
   // TODO
   return Chunk();
 }
 
-Chunk operator + (const Chunk& a, const Chunk& b) {
+Chunk operator + (Chunk a, Chunk b) {
   // TODO
   return Chunk();
 }
@@ -72,7 +72,7 @@ Chunk Chunk::Constant(const Scale& size, float val) {
   return Chunk();
 }
 
-void Chunk::operator += (const Chunk& a) {
+void Chunk::operator += (Chunk a) {
   *this = (*this) + a;
 }
 

@@ -6,7 +6,7 @@
 
 #include "common/scale.h"
 #include "op/closure.h"
-#include "dag/logical.h"
+#include "dag/logical_dag.h"
 
 namespace minerva {
 
@@ -61,7 +61,7 @@ class NArray {
   void operator -= (float );
   void operator *= (float );
   void operator /= (float );
-  void operator - ();
+  NArray operator - ();
   // matmult
   friend NArray operator * (NArray, NArray);
   // lazy reductions
@@ -83,7 +83,8 @@ class NArray {
   NArray Trans();
 
   // customize operator
-  static std::vector<NArray> Custom(std::vector<NArray> params, std::vector<Scale> result_sizes, LogicalOp* op);
+  static std::vector<NArray> Custom(std::vector<NArray> params,
+      std::vector<Scale> result_sizes, LogicalOp* op);
 
  private:
   NArray(LogicalDataNode* node);
