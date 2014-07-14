@@ -19,6 +19,9 @@ int main() {
   a.Print();
   c.Print();
   c.Print();
+  c.Print();
+  c.Print();
+  c.Print();
   cout << Dag::Instance().PrintDag() << endl;
   return 0;
 }

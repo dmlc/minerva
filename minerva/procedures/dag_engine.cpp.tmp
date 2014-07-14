@@ -33,9 +33,11 @@ void DagEngine::Process(Dag& dag, vector<uint64_t>& targets) {
   {
     // Waiting execution to complete
     unique_lock<mutex> lock(unresolved_counter_mutex_);
-    execution_finished_.wait(lock, [this]() -> bool {
-      return unresolved_counter_ == 0;
-    });
+    if (unresolved_counter_) {
+      execution_finished_.wait(lock, [this]() -> bool {
+        return unresolved_counter_ == 0;
+      });
+    }
   }
 }
 

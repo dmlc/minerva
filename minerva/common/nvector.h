@@ -1,6 +1,6 @@
 #pragma once
 
-#include "index.h"
+#include "scale.h"
 
 namespace minerva {
 
@@ -8,33 +8,36 @@ template<class T>
 class NVector {
 public:
 	NVector() { }
-	NVector(const Index& size) {
+	explicit NVector(const Scale& size) {
 		data_.resize(size.Prod());
-		range_ = IndexRange::MakeRange(Index::Origin(size.NumDims()), size);
+		range_ = ScaleRange::MakeRange(Scale::Origin(size.NumDims()), size);
 	}
-	NVector(const IndexRange& r): range_(r) {
+	explicit NVector(const ScaleRange& r): range_(r) {
 		data_.resize(range_.Area());
 	}
 	NVector(const NVector& other): data_(other.data_), range_(other.range_) {}
-	const T& operator[] (const Index& idx) const {
+	const T& operator[] (const Scale& idx) const {
 		return data_[range_.Flatten(idx)];
 	}
-	T& operator[] (const Index& idx) {
+	T& operator[] (const Scale& idx) {
 		return data_[range_.Flatten(idx)];
 	}
 	size_t Length() const {
 		return data_.size();
 	}
-	Index Size() const {
+	Scale Size() const {
 		return range_.Dim();
 	}
-	void Resize(const Index& size) {
+	int Size(int dim) const {
+		return range_.Dim()[dim];
+	}
+	void Resize(const Scale& size) {
 		data_.resize(size.Prod());
-		range_ = IndexRange::MakeRange(Index::Origin(size.NumDims()), size);
+		range_ = ScaleRange::MakeRange(Scale::Origin(size.NumDims()), size);
 	}
 private:
 	std::vector<T> data_;
-	IndexRange range_;
+	ScaleRange range_;
 };
 
 } // end of namespace minerva

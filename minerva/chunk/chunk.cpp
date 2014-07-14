@@ -5,14 +5,13 @@
 
 #include "chunk.h"
 #include "dag/dag.h"
-#include "procedures/dag_engine.h"
-#include "system/data_store.h"
+#include "op/physical_op.h"
 
 using namespace std;
 
 namespace minerva {
 
-void MatrixMultiply(vector<DataNode*> inputs, vector<DataNode*> outputs) {
+/*void MatrixMultiply(vector<DataNode*> inputs, vector<DataNode*> outputs) {
   cout << "Do matrix multiply" << endl;
   float* a = DataStore::Instance().GetData(inputs[0]->data_id(), DataStore::CPU);
   float* b = DataStore::Instance().GetData(inputs[1]->data_id(), DataStore::CPU);
@@ -46,48 +45,31 @@ void FillConstant(DataNode* out, float val) {
   size_t len = out->meta().length;
   for(size_t i = 0; i < len; ++i)
     a[i] = val;
-}
+}*/
 
 Chunk::Chunk(): data_node_(NULL) {
 }
+Chunk::Chunk(PhysicalDataNode* node): data_node_(node) {
+}
 Chunk::Chunk(const Chunk& other): data_node_(other.data_node_) {
 }
-Chunk::Chunk(const Index& size) {
+/*Chunk::Chunk(const Scale& size) {
   data_node_ = Dag::Instance().NewDataNode(DataNodeMeta(size));
-}
+}*/
 
 Chunk operator * (const Chunk& a, const Chunk& b) {
-  Index asize = a.Size(), bsize = b.Size();
-  // Check if operands match in dimension.
-  assert(asize[1] == bsize[0]);
-  Index retsize = {asize[0], bsize[1]};
-  Chunk ret(retsize);
-  vector<DataNode*> in_nodes = {a.data_node(), b.data_node()};
-  vector<DataNode*> out_nodes = {ret.data_node()};
-  OpNode::Runner multrunner = bind(&MatrixMultiply, in_nodes, out_nodes);
-  Dag::Instance().NewOpNode(
-      {a.data_node(), b.data_node()}, {ret.data_node()},
-      multrunner, OpNodeContext());
-  return ret;
+  // TODO
+  return Chunk();
 }
 
 Chunk operator + (const Chunk& a, const Chunk& b) {
-  Index asize = a.Size(), bsize = b.Size();
-  // checking
-  assert(asize == bsize);
-  Chunk ret(asize); 
-  vector<DataNode*> in_nodes = {a.data_node(), b.data_node()};
-  OpNode::Runner addrunner = bind(&MatrixAdd, in_nodes, ret.data_node());
-  Dag::Instance().NewOpNode({a.data_node(), b.data_node()}, {ret.data_node()},
-      addrunner, OpNodeContext());
-  return ret;
+  // TODO
+  return Chunk();
 }
 
-Chunk Chunk::Constant(const Index& size, float val) {
-  Chunk ret(size);
-  OpNode::Runner fillrunner = bind(&FillConstant, ret.data_node(), val);
-  Dag::Instance().NewOpNode({}, {ret.data_node()}, fillrunner, OpNodeContext());
-  return ret;
+Chunk Chunk::Constant(const Scale& size, float val) {
+  // TODO
+  return Chunk();
 }
 
 void Chunk::operator += (const Chunk& a) {
@@ -99,7 +81,7 @@ Chunk& Chunk::operator = (const Chunk& other) {
   return *this;
 }
 
-void Chunk::Eval() {
+/*void Chunk::Eval() {
   vector<uint64_t> targets{data_node_->node_id()};
   DagEngine::Instance().Process(Dag::Instance(), targets);
 }
@@ -113,6 +95,14 @@ void Chunk::Print() {
   for(size_t i = 0; i < end; ++i)
     cout << p[i] << " ";
   cout << "]" << endl;
+}*/
+
+Scale Chunk::Size() const {
+  return data_node_->data_.size;
+}
+
+int Chunk::Size(int dim) const {
+  return data_node_->data_.size[dim];
 }
 
 } // end of namespace minerva
