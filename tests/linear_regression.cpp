@@ -1,5 +1,8 @@
 #include "minerva.h"
 
+#include <cstring>
+#include <fstream>
+
 using namespace std;
 using namespace minerva;
 
@@ -15,5 +18,8 @@ int main() {
     NArray error = x * theta - y;
     theta = theta - alpha * x.Trans() * error;
   }
+  ofstream fout("ldag.txt");
+  fout << MinervaSystem::Instance().logical_dag().PrintDag() << endl;
+  fout.close();
   return 0;
 }

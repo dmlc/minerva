@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sstream>
 #include <cassert>
 #include <vector>
 #include <iostream>
@@ -70,6 +71,14 @@ class Scale {
 			return prod;
 		}
 	}
+  std::string ToString() const {
+    std::stringstream ss;
+    ss << "[";
+    for(size_t i = 0; i < vec_.size(); ++i)
+      ss << vec_[i] << " ";
+    ss << "]";
+    return ss.str();
+  }
  private:
 	std::vector<int> vec_;
 };
@@ -96,11 +105,7 @@ inline Scale operator * (const Scale& sc1, const Scale& sc2) {
 	return Scale(vec);
 }
 inline std::ostream& operator << (std::ostream& os, const Scale& sc) {
-	os << "[";
-	for(size_t i = 0; i < sc.vec_.size(); ++i)
-		os << sc.vec_[i] << " ";
-	os << "]";
-	return os;
+  return os << sc.ToString();
 }
 
 class ScaleRange {

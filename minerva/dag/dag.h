@@ -86,6 +86,17 @@ class Dag {
   std::map<uint64_t, DagNode*> index_to_node_;
 };
 
+template<typename Data, typename Op>
+class DagHelper {
+ public:
+  static std::string DataToString(const Data& d) {
+    return "N/A";
+  }
+  static std::string OpToString(const Op& o) {
+    return "N/A";
+  }
+};
+
 } // end of namespace minerva
 
 #include "dag.inl"

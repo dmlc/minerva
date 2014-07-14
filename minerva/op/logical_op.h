@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sstream>
 #include "dag/logical.h"
 #include "closure.h"
 
@@ -30,12 +31,18 @@ class MatMultLogic : public LogicalOp {
     rst.push_back(c);
     return rst;
   }
+  std::string Name() const {
+    return "*";
+  }
 };
 
 class RandnLogic : public LogicalOpWithClosure<RandnClosure> {
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     //TODO
     return std::vector<NVector<Chunk>>();
+  }
+  std::string Name() const {
+    return "randn";
   }
 };
 
@@ -44,12 +51,23 @@ class TransLogic : public LogicalOp {
     //TODO
     return std::vector<NVector<Chunk>>();
   }
+  std::string Name() const {
+    return "trans";
+  }
 };
 
 class ElewiseLogic : public LogicalOpWithClosure<ElewiseClosure> {
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     //TODO
     return std::vector<NVector<Chunk>>();
+  }
+  std::string Name() const {
+    switch(closure.type) {
+      case EXP:      return "exp";
+      case LN:       return "ln";
+      case SIGMOID:  return "sigmoid";
+      case NEGATIVE: return "-";
+    };
   }
 };
 
@@ -58,12 +76,36 @@ class ArithmicLogic : public LogicalOpWithClosure<ArithmicClosure> {
     //TODO
     return std::vector<NVector<Chunk>>();
   }
+  std::string Name() const {
+    switch(closure.type) {
+      case ADD:   return "+";
+      case SUB:   return "-";
+      case MULT:  return ".*";
+      case DIV:   return "./";
+    };
+  }
 };
 
 class ArithmicConstLogic : public LogicalOpWithClosure<ArithmicConstClosure> {
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     //TODO
     return std::vector<NVector<Chunk>>();
+  }
+  std::string Name() const {
+    std::stringstream ss;
+    if(closure.side == 0) { // left
+      ss << closure.val;
+    }
+    switch(closure.type) {
+      case ADD:   ss << "+";
+      case SUB:   ss << "-";
+      case MULT:  ss << ".*";
+      case DIV:   ss << "./";
+    };
+    if(closure.side == 1) { // right
+      ss << closure.val;
+    }
+    return ss.str();
   }
 };
 
