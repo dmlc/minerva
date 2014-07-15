@@ -24,8 +24,8 @@ typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
 
 template<class D, class O>
 typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
-    std::initializer_list<DataNode<D, O>*> inputs,
-    std::initializer_list<DataNode<D, O>*> outputs, const O& op) {
+    std::vector<DataNode<D, O>*> inputs,
+    std::vector<DataNode<D, O>*> outputs, const O& op) {
   typedef OpNode<D, O> ONode;
   ONode* ret = new ONode;
   ret->op_ = op;
@@ -41,7 +41,7 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
 }
 
 template<class D, class O>
-uint64_t NewIndex() {
+uint64_t Dag<D, O>::NewIndex() {
   static uint64_t index_counter = 0;
   return index_counter++;
 }
@@ -53,12 +53,16 @@ std::string Dag<D, O>::PrintDag() const {
   for (auto i: index_to_node_) {
     out << "  " << i.first << " [shape=";
     if (i.second->Type() == DagNode::OP_NODE) {
-      out << "box";
-    } else {
       out << "ellipse";
+      Dag<D, O>::ONode* onode = dynamic_cast<Dag<D, O>::ONode*>(i.second);
+      out << " label=\"" << DagHelper<D, O>::OpToString(onode->op_) << "\"";
+    } else {
+      out << "box";
+      Dag<D, O>::DNode* dnode = dynamic_cast<Dag<D, O>::DNode*>(i.second);
+      out << " label=\"" << DagHelper<D, O>::DataToString(dnode->data_) << "\"";
     }
     out << "];" << std::endl;
-    for (auto j: i.second->successors_) {
+    for (auto j: i.second->successors()) {
       out << "  " << i.first << " -> " << j->node_id_ << ";" << std::endl;
     }
   }

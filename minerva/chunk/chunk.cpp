@@ -57,41 +57,22 @@ Chunk::Chunk(const Chunk& other): data_node_(other.data_node_) {
   data_node_ = Dag::Instance().NewDataNode(DataNodeMeta(size));
 }*/
 
-/*Chunk operator * (const Chunk& a, const Chunk& b) {
-  Scale asize = a.Size(), bsize = b.Size();
-  // Check if operands match in dimension.
-  assert(asize[1] == bsize[0]);
-  Scale retsize = {asize[0], bsize[1]};
-  Chunk ret(retsize);
-  vector<DataNode*> in_nodes = {a.data_node(), b.data_node()};
-  vector<DataNode*> out_nodes = {ret.data_node()};
-  OpNode::Runner multrunner = bind(&MatrixMultiply, in_nodes, out_nodes);
-  Dag::Instance().NewOpNode(
-      {a.data_node(), b.data_node()}, {ret.data_node()},
-      multrunner, OpNodeContext());
-  return ret;
+Chunk operator * (Chunk a, Chunk b) {
+  // TODO
+  return Chunk();
 }
 
-Chunk operator + (const Chunk& a, const Chunk& b) {
-  Scale asize = a.Size(), bsize = b.Size();
-  // checking
-  assert(asize == bsize);
-  Chunk ret(asize); 
-  vector<DataNode*> in_nodes = {a.data_node(), b.data_node()};
-  OpNode::Runner addrunner = bind(&MatrixAdd, in_nodes, ret.data_node());
-  Dag::Instance().NewOpNode({a.data_node(), b.data_node()}, {ret.data_node()},
-      addrunner, OpNodeContext());
-  return ret;
+Chunk operator + (Chunk a, Chunk b) {
+  // TODO
+  return Chunk();
 }
 
 Chunk Chunk::Constant(const Scale& size, float val) {
-  Chunk ret(size);
-  OpNode::Runner fillrunner = bind(&FillConstant, ret.data_node(), val);
-  Dag::Instance().NewOpNode({}, {ret.data_node()}, fillrunner, OpNodeContext());
-  return ret;
-}*/
+  // TODO
+  return Chunk();
+}
 
-void Chunk::operator += (const Chunk& a) {
+void Chunk::operator += (Chunk a) {
   *this = (*this) + a;
 }
 

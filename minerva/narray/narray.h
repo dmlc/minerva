@@ -5,7 +5,8 @@
 #include <initializer_list>
 
 #include "common/scale.h"
-#include "dag/logical.h"
+#include "op/closure.h"
+#include "dag/logical_dag.h"
 
 namespace minerva {
 
@@ -16,19 +17,10 @@ class Convolution;
 
 class Elewise {
  public:
-  static NArray Add(NArray, NArray);
-  static NArray Minus(NArray, NArray);
-  static NArray Mult(NArray&, NArray);
-  static NArray Div(NArray, NArray);
-
+  static NArray Mult(NArray, NArray);
   static NArray Exp(NArray );
   static NArray Ln(NArray );
   static NArray Sigmoid(NArray );
-};
-
-struct ConvInfo {
-  int numfilters;
-  Scale filtersize, stride, paddingsize;
 };
 
 class Convolution {
@@ -43,8 +35,10 @@ class NArray {
   friend class Reduction;
   friend class Convolution;
  public:
-  static NArray Constant(const Scale& size, float val);
-  static NArray Randn(const Scale& size, float mu, float var);
+  static NArray Constant(const Scale& size, float val,
+      const Scale& parts = Scale::kNullScale);
+  static NArray Randn(const Scale& size, float mu, float var,
+      const Scale& parts = Scale::kNullScale);
   NArray();
  public:
   // element-wise
@@ -67,6 +61,7 @@ class NArray {
   void operator -= (float );
   void operator *= (float );
   void operator /= (float );
+  NArray operator - ();
   // matmult
   friend NArray operator * (NArray, NArray);
   // lazy reductions
@@ -86,6 +81,11 @@ class NArray {
   NArray Tile(const Scale& times);
   NArray Reshape(const Scale& dims);
   NArray Trans();
+
+  // customize operator
+  static std::vector<NArray> Compute(std::vector<NArray> params,
+      std::vector<Scale> result_sizes, LogicalComputeFn* fn);
+  static NArray Generate(const Scale& size, LogicalDataGenFn* fn);
 
  private:
   NArray(LogicalDataNode* node);

@@ -76,14 +76,25 @@ class Dag {
   Dag() {}
   ~Dag();
   DNode* NewDataNode(const Data& data);
-  ONode* NewOpNode(std::initializer_list<DNode*> inputs,
-      std::initializer_list<DNode*> outputs, const Op& op);
+  ONode* NewOpNode(std::vector<DNode*> inputs,
+      std::vector<DNode*> outputs, const Op& op);
   std::string PrintDag() const;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(Dag);
   uint64_t NewIndex();
   std::map<uint64_t, DagNode*> index_to_node_;
+};
+
+template<typename Data, typename Op>
+class DagHelper {
+ public:
+  static std::string DataToString(const Data& d) {
+    return "N/A";
+  }
+  static std::string OpToString(const Op& o) {
+    return "N/A";
+  }
 };
 
 } // end of namespace minerva

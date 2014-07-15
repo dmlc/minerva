@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sstream>
 #include <cassert>
 #include <vector>
 #include <iostream>
@@ -17,7 +18,7 @@ class Scale {
 	friend Scale operator * (const Scale& sc1, const Scale& sc2);
 	friend std::ostream& operator << (std::ostream& os, const Scale& sc);
  public:
-	static const Scale NullScale;
+	static const Scale kNullScale;
 	static Scale Origin(size_t ndims) { return Scale(std::vector<int>(ndims, 0)); }
 	static Scale Constant(size_t ndims, int val) { return Scale(std::vector<int>(ndims, val)); }
 
@@ -70,6 +71,14 @@ class Scale {
 			return prod;
 		}
 	}
+  std::string ToString() const {
+    std::stringstream ss;
+    ss << "[";
+    for(size_t i = 0; i < vec_.size(); ++i)
+      ss << vec_[i] << " ";
+    ss << "]";
+    return ss.str();
+  }
  private:
 	std::vector<int> vec_;
 };
@@ -96,17 +105,13 @@ inline Scale operator * (const Scale& sc1, const Scale& sc2) {
 	return Scale(vec);
 }
 inline std::ostream& operator << (std::ostream& os, const Scale& sc) {
-	os << "[";
-	for(size_t i = 0; i < sc.vec_.size(); ++i)
-		os << sc.vec_[i] << " ";
-	os << "]";
-	return os;
+  return os << sc.ToString();
 }
 
 class ScaleRange {
 	friend std::ostream& operator << (std::ostream& os, const ScaleRange& range);
  public:
-	static const ScaleRange NullRange;
+	static const ScaleRange kNullRange;
 	static bool ValidRange(const Scale& st, const Scale& ed) {
 		bool valid = st.NumDims() == ed.NumDims();
 		if(valid) {
@@ -117,10 +122,10 @@ class ScaleRange {
 		return valid;
 	}
 	static ScaleRange MakeRange(const Scale& st, const Scale& ed) {
-		return ValidRange(st, ed) ? ScaleRange(st, ed) : NullRange;
+		return ValidRange(st, ed) ? ScaleRange(st, ed) : kNullRange;
 	}
 	static ScaleRange Intersect(const ScaleRange& r1, const ScaleRange& r2) {
-		if(r1.NumDims() != r2.NumDims()) return NullRange;
+		if(r1.NumDims() != r2.NumDims()) return kNullRange;
 		std::vector<int> new_st, new_ed;
 		for(size_t i = 0; i < r1.NumDims(); ++i) {
 			new_st.push_back(std::max(r1.start_[i], r2.start_[i]));
