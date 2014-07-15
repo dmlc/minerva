@@ -83,8 +83,9 @@ class NArray {
   NArray Trans();
 
   // customize operator
-  static std::vector<NArray> Custom(std::vector<NArray> params,
-      std::vector<Scale> result_sizes, LogicalOp* op);
+  static std::vector<NArray> Compute(std::vector<NArray> params,
+      std::vector<Scale> result_sizes, LogicalComputeFn* fn);
+  static NArray Generate(const Scale& size, LogicalDataGenFn* fn);
 
  private:
   NArray(LogicalDataNode* node);

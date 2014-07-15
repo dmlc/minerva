@@ -8,31 +8,31 @@ namespace minerva {
 
 /////////////////////////////////////////////////////////////////////////
 // Helper functions
-NArray UnaryElewiseCustom(NArray narr, LogicalOp* op) {
-  return NArray::Custom({narr}, {narr.Size()}, op)[0];
+NArray UnaryElewiseCompute(NArray narr, LogicalComputeFn* op) {
+  return NArray::Compute({narr}, {narr.Size()}, op)[0];
 }
 
-NArray BinaryElewiseCustom(NArray lhs, NArray rhs, LogicalOp* op) {
+NArray BinaryElewiseCompute(NArray lhs, NArray rhs, LogicalComputeFn* op) {
   assert(lhs.Size() == rhs.Size());
-  return NArray::Custom({lhs, rhs}, {lhs.Size()}, op)[0];
+  return NArray::Compute({lhs, rhs}, {lhs.Size()}, op)[0];
 }
 
 NArray ElewiseHelper(NArray narr, enum ElewiseType type) {
   ElewiseOp* elewise_op = new ElewiseOp;
   elewise_op->closure = {type};
-  return UnaryElewiseCustom(narr, elewise_op);
+  return UnaryElewiseCompute(narr, elewise_op);
 }
 
 NArray ArithmicHelper(NArray lhs, NArray rhs, enum ArithmicType type) {
   ArithmicOp* arith_op = new ArithmicOp;
   arith_op->closure = {type};
-  return BinaryElewiseCustom(lhs, rhs, arith_op);
+  return BinaryElewiseCompute(lhs, rhs, arith_op);
 }
 
 NArray ArithmicConstHelper(NArray narr, float val, int side, enum ArithmicType type) {
   ArithmicConstOp* arith_const_op = new ArithmicConstOp;
   arith_const_op->closure = {type, val, side};
-  return UnaryElewiseCustom(narr, arith_const_op);
+  return UnaryElewiseCompute(narr, arith_const_op);
 }
 
 /////////////////////////////////////////////////////////////////////////

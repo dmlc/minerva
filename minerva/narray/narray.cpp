@@ -9,13 +9,13 @@ namespace minerva {
 NArray::NArray(): data_node_(NULL) {}
 NArray::NArray(LogicalDataNode* node): data_node_(node) {}
 
-std::vector<NArray> NArray::Custom(std::vector<NArray> params, 
-    std::vector<Scale> result_sizes, LogicalOp* op) {
+std::vector<NArray> NArray::Compute(std::vector<NArray> params, 
+    std::vector<Scale> result_sizes, LogicalComputeFn* fn) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
   std::vector<NArray> rst;
   std::vector<LogicalDataNode*> rst_data_nodes;
   for(Scale size : result_sizes) {
-    LogicalDataNode* rst_node = ldag.NewDataNode(LogicalData{size});
+    LogicalDataNode* rst_node = ldag.NewDataNode({size, NULL});
     rst.push_back(NArray(rst_node));
     rst_data_nodes.push_back(rst_node);
   }
@@ -23,20 +23,26 @@ std::vector<NArray> NArray::Custom(std::vector<NArray> params,
   for(NArray p : params) {
     param_data_nodes.push_back(p.data_node_);
   }
-  ldag.NewOpNode(param_data_nodes, rst_data_nodes, op);
+  ldag.NewOpNode(param_data_nodes, rst_data_nodes, {fn});
   return rst;
+}
+  
+NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn) {
+  LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
+  LogicalDataNode* rst_node = ldag.NewDataNode({size, fn});
+  return NArray(rst_node);
 }
 
 NArray NArray::Constant(const Scale& size, float val, const Scale& parts) {
   FillOp* fill_op = new FillOp;
   fill_op->closure = {val, parts};
-  return NArray::Custom({}, {size}, fill_op)[0];
+  return NArray::Generate(size, fill_op);
 }
 
 NArray NArray::Randn(const Scale& size, float mu, float var, const Scale& parts) {
   RandnOp* randn_op = new RandnOp;
   randn_op->closure = {mu, var, parts};
-  return NArray::Custom({}, {size}, randn_op)[0];
+  return NArray::Generate(size, randn_op);
 }
 
 // matmult
@@ -46,7 +52,7 @@ NArray operator * (NArray lhs, NArray rhs) {
   assert(lhs.Size(1) == rhs.Size(0));
   Scale newsize = {lhs.Size(0), rhs.Size(1)};
   MatMultOp* matmult_op = new MatMultOp;
-  return NArray::Custom({lhs, rhs}, {newsize}, matmult_op)[0];
+  return NArray::Compute({lhs, rhs}, {newsize}, matmult_op)[0];
 }
 
 // shape
@@ -73,7 +79,7 @@ NArray NArray::Trans() {
   assert(Size().NumDims() == 2);
   Scale newsize = {Size(1), Size(0)};
   TransOp* trans_op = new TransOp;
-  return NArray::Custom({*this}, {newsize}, trans_op)[0];
+  return NArray::Compute({*this}, {newsize}, trans_op)[0];
 }
 
 } // end of namespace minerva

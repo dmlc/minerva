@@ -53,11 +53,11 @@ std::string Dag<D, O>::PrintDag() const {
   for (auto i: index_to_node_) {
     out << "  " << i.first << " [shape=";
     if (i.second->Type() == DagNode::OP_NODE) {
-      out << "box";
+      out << "ellipse";
       Dag<D, O>::ONode* onode = dynamic_cast<Dag<D, O>::ONode*>(i.second);
       out << " label=\"" << DagHelper<D, O>::OpToString(onode->op_) << "\"";
     } else {
-      out << "ellipse";
+      out << "box";
       Dag<D, O>::DNode* dnode = dynamic_cast<Dag<D, O>::DNode*>(i.second);
       out << " label=\"" << DagHelper<D, O>::DataToString(dnode->data_) << "\"";
     }
