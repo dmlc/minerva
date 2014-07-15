@@ -63,12 +63,13 @@ class Chunk {
   Scale Size() const;
   int Size(int dim) const;
   Chunk Trans();
-  static Chunk Merge(NVector<Chunk> );
-  NVector<Chunk> Split(const Scale& parts);
+  static Chunk Merge(const NVector<Chunk>& );
+  NVector<Chunk> Split(const Scale& numparts);
 
   // customized operations
-  static std::vector<Chunk> Custom(std::vector<Chunk> params,
-      std::vector<Scale> result_sizes, PhysicalOp* op);
+  static std::vector<Chunk> Compute(std::vector<Chunk> params,
+      std::vector<Scale> result_sizes, PhysicalComputeFn* fn);
+  static Chunk Generate(const Scale& result_size, PhysicalDataGenFn* fn);
 
  private:
   PhysicalDataNode* data_node_; // Set up in constructor

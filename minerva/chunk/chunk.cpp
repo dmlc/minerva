@@ -53,16 +53,23 @@ Chunk::Chunk(PhysicalDataNode* node): data_node_(node) {
 }
 Chunk::Chunk(const Chunk& other): data_node_(other.data_node_) {
 }
-/*Chunk::Chunk(const Scale& size) {
-  data_node_ = Dag::Instance().NewDataNode(DataNodeMeta(size));
-}*/
+
+std::vector<Chunk> Chunk::Compute(std::vector<Chunk> params,
+    std::vector<Scale> result_sizes, PhysicalComputeFn* fn) {
+  // TODO
+  return std::vector<Chunk>();
+}
+Chunk Chunk::Generate(const Scale& result_size, PhysicalDataGenFn* fn) {
+  // TODO
+  return Chunk();
+}
 
 Chunk operator * (Chunk a, Chunk b) {
   // TODO
   return Chunk();
 }
 
-Chunk operator + (Chunk a, Chunk b) {
+Chunk Chunk::Randn(const Scale& size, float mu, float var) {
   // TODO
   return Chunk();
 }
@@ -70,10 +77,6 @@ Chunk operator + (Chunk a, Chunk b) {
 Chunk Chunk::Constant(const Scale& size, float val) {
   // TODO
   return Chunk();
-}
-
-void Chunk::operator += (Chunk a) {
-  *this = (*this) + a;
 }
 
 Chunk& Chunk::operator = (const Chunk& other) {
@@ -100,9 +103,20 @@ void Chunk::Print() {
 Scale Chunk::Size() const {
   return data_node_->data_.size;
 }
-
 int Chunk::Size(int dim) const {
   return data_node_->data_.size[dim];
+}
+Chunk Chunk::Trans() {
+  // TODO
+  return Chunk();
+}
+Chunk Chunk::Merge(const NVector<Chunk>& partitions) {
+  // TODO
+  return Chunk();
+}
+NVector<Chunk> Chunk::Split(const Scale& numparts) {
+  // TODO
+  return NVector<Chunk>();
 }
 
 } // end of namespace minerva

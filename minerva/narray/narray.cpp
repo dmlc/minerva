@@ -33,15 +33,15 @@ NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn) {
   return NArray(rst_node);
 }
 
-NArray NArray::Constant(const Scale& size, float val, const Scale& parts) {
+NArray NArray::Constant(const Scale& size, float val, const Scale& numparts) {
   FillOp* fill_op = new FillOp;
-  fill_op->closure = {val, parts};
+  fill_op->closure = {val, numparts};
   return NArray::Generate(size, fill_op);
 }
 
-NArray NArray::Randn(const Scale& size, float mu, float var, const Scale& parts) {
+NArray NArray::Randn(const Scale& size, float mu, float var, const Scale& numparts) {
   RandnOp* randn_op = new RandnOp;
-  randn_op->closure = {mu, var, parts};
+  randn_op->closure = {mu, var, numparts};
   return NArray::Generate(size, randn_op);
 }
 

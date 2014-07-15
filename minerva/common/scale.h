@@ -12,10 +12,13 @@ namespace minerva {
 class Scale;
 class ScaleRange;
 
+template<class T> class NVector;
+
 class Scale {
 	friend Scale operator + (const Scale& sc1, const Scale& sc2);
 	friend Scale operator - (const Scale& sc1, const Scale& sc2);
 	friend Scale operator * (const Scale& sc1, const Scale& sc2);
+	friend Scale operator / (const Scale& sc1, const Scale& sc2);
 	friend std::ostream& operator << (std::ostream& os, const Scale& sc);
  public:
 	static const Scale kNullScale;
@@ -62,48 +65,13 @@ class Scale {
 		return vec_ >= other.vec_;
 	}
 	size_t NumDims() const { return vec_.size(); }
-	int Prod() const {
-		if(vec_.empty())
-			return 0;
-		else {
-			int prod = 1;
-			for(int i : vec_) prod *= i;
-			return prod;
-		}
-	}
-  std::string ToString() const {
-    std::stringstream ss;
-    ss << "[";
-    for(size_t i = 0; i < vec_.size(); ++i)
-      ss << vec_[i] << " ";
-    ss << "]";
-    return ss.str();
-  }
+	int Prod() const;
+  std::string ToString() const;
+  NVector<Scale> EquallySplit(const Scale& parts) const;
  private:
 	std::vector<int> vec_;
 };
 
-inline Scale operator + (const Scale& sc1, const Scale& sc2) {
-	assert(sc1.NumDims() == sc2.NumDims());
-	std::vector<int> vec;
-	for(size_t i = 0; i < sc1.NumDims(); ++i)
-		vec.push_back(sc1[i] + sc2[i]);
-	return Scale(vec);
-}
-inline Scale operator - (const Scale& sc1, const Scale& sc2) {
-	assert(sc1.NumDims() == sc2.NumDims());
-	std::vector<int> vec;
-	for(size_t i = 0; i < sc1.NumDims(); ++i)
-		vec.push_back(sc1[i] - sc2[i]);
-	return Scale(vec);
-}
-inline Scale operator * (const Scale& sc1, const Scale& sc2) {
-	assert(sc1.NumDims() == sc2.NumDims());
-	std::vector<int> vec;
-	for(size_t i = 0; i < sc1.NumDims(); ++i)
-		vec.push_back(sc1[i] * sc2[i]);
-	return Scale(vec);
-}
 inline std::ostream& operator << (std::ostream& os, const Scale& sc) {
   return os << sc.ToString();
 }

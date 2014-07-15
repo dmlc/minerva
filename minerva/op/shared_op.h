@@ -6,6 +6,45 @@
 
 namespace minerva {
 
+///////////////////////////////////////////////////
+// Data generate functions
+///////////////////////////////////////////////////
+class RandnOp : public SharedDataGenFn, public ClosureTrait<RandnClosure> {
+ public:
+  std::vector<NVector<Chunk>> Expand(const Scale& size) {
+    NVector<Scale> partsizes = size.EquallySplit(closure.numparts);
+    NVector<Chunk> rst_chunks = partsizes.Map<Chunk>(
+      [&] (const Scale& size)->Chunk {
+        return Chunk::Randn(size, closure.mu, closure.var);
+      });
+    return {rst_chunks};
+  }
+  std::string Name() const {
+    return ":randn";
+  }
+};
+
+class FillOp : public SharedDataGenFn, public ClosureTrait<FillClosure> {
+ public:
+  std::vector<NVector<Chunk>> Expand(const Scale& size) {
+    NVector<Scale> partsizes = size.EquallySplit(closure.numparts);
+    NVector<Chunk> rst_chunks = partsizes.Map<Chunk>(
+      [&] (const Scale& size)->Chunk {
+        return Chunk::Constant(size, closure.val);
+      });
+    return {rst_chunks};
+  }
+  std::string Name() const {
+    std::stringstream ss;
+    ss << ":const=" << closure.val;
+    return ss.str();
+  }
+};
+
+///////////////////////////////////////////////////
+// Compute functions
+///////////////////////////////////////////////////
+
 class MatMultOp : public SharedComputeFn {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
@@ -32,30 +71,6 @@ class MatMultOp : public SharedComputeFn {
   }
   std::string Name() const {
     return "*";
-  }
-};
-
-class RandnOp : public SharedDataGenFn, public ClosureTrait<RandnClosure> {
- public:
-  std::vector<NVector<Chunk>> Expand(const Scale& size) {
-    //TODO
-    return std::vector<NVector<Chunk>>();
-  }
-  std::string Name() const {
-    return ":randn";
-  }
-};
-
-class FillOp : public SharedDataGenFn, public ClosureTrait<FillClosure> {
- public:
-  std::vector<NVector<Chunk>> Expand(const Scale& size) {
-    //TODO
-    return std::vector<NVector<Chunk>>();
-  }
-  std::string Name() const {
-    std::stringstream ss;
-    ss << ":const=" << closure.val;
-    return ss.str();
   }
 };
 

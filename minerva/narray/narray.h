@@ -36,9 +36,9 @@ class NArray {
   friend class Convolution;
  public:
   static NArray Constant(const Scale& size, float val,
-      const Scale& parts = Scale::kNullScale);
+      const Scale& numparts = Scale::kNullScale);
   static NArray Randn(const Scale& size, float mu, float var,
-      const Scale& parts = Scale::kNullScale);
+      const Scale& numparts = Scale::kNullScale);
   NArray();
  public:
   // element-wise
