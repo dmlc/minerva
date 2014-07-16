@@ -6,6 +6,45 @@
 
 namespace minerva {
 
+///////////////////////////////////////////////////
+// Data generate functions
+///////////////////////////////////////////////////
+class RandnOp : public SharedDataGenFn, public ClosureTrait<RandnClosure> {
+ public:
+  NVector<Chunk> Expand(const Scale& size) {
+    NVector<Scale> partsizes = size.EquallySplit(closure.numparts);
+    NVector<Chunk> rst_chunks = partsizes.Map<Chunk>(
+      [&] (const Scale& size)->Chunk {
+        return Chunk::Randn(size, closure.mu, closure.var);
+      });
+    return rst_chunks;
+  }
+  std::string Name() const {
+    return ":randn";
+  }
+};
+
+class FillOp : public SharedDataGenFn, public ClosureTrait<FillClosure> {
+ public:
+  NVector<Chunk> Expand(const Scale& size) {
+    NVector<Scale> partsizes = size.EquallySplit(closure.numparts);
+    NVector<Chunk> rst_chunks = partsizes.Map<Chunk>(
+      [&] (const Scale& size)->Chunk {
+        return Chunk::Constant(size, closure.val);
+      });
+    return rst_chunks;
+  }
+  std::string Name() const {
+    std::stringstream ss;
+    ss << ":const=" << closure.val;
+    return ss.str();
+  }
+};
+
+///////////////////////////////////////////////////
+// Compute functions
+///////////////////////////////////////////////////
+
 class MatMultOp : public SharedComputeFn {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
@@ -35,35 +74,17 @@ class MatMultOp : public SharedComputeFn {
   }
 };
 
-class RandnOp : public SharedDataGenFn, public ClosureTrait<RandnClosure> {
- public:
-  std::vector<NVector<Chunk>> Expand(const Scale& size) {
-    //TODO
-    return std::vector<NVector<Chunk>>();
-  }
-  std::string Name() const {
-    return ":randn";
-  }
-};
-
-class FillOp : public SharedDataGenFn, public ClosureTrait<FillClosure> {
- public:
-  std::vector<NVector<Chunk>> Expand(const Scale& size) {
-    //TODO
-    return std::vector<NVector<Chunk>>();
-  }
-  std::string Name() const {
-    std::stringstream ss;
-    ss << ":const=" << closure.val;
-    return ss.str();
-  }
-};
-
 class TransOp : public SharedComputeFn {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
-    //TODO
-    return std::vector<NVector<Chunk>>();
+    NVector<Chunk> in = inputs[0];
+    assert(in.Size().NumDims() == 2);
+    int row = in.Size(0), col = in.Size(1);
+    NVector<Chunk> rst({col, row});
+    for(int i = 0; i < row; ++i)
+      for(int j = 0; j < col; ++j)
+        rst[{j, i}] = in[{i, j}].Trans();
+    return {rst};
   }
   std::string Name() const {
     return "trans";
@@ -75,6 +96,7 @@ class ElewiseOp : public SharedComputeFn,
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     //TODO
+    assert(false);
     return std::vector<NVector<Chunk>>();
   }
   std::string Name() const {
@@ -91,8 +113,15 @@ class ArithmicOp : public SharedComputeFn,
   public ClosureTrait<ArithmicClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
-    //TODO
-    return std::vector<NVector<Chunk>>();
+    NVector<Chunk> a = inputs[0], b = inputs[1];
+    NVector<Chunk> ret = NVector<Chunk>::ZipMap(a, b,
+        [&] (const Chunk& c1, const Chunk& c2) {
+          ArithmicOp* arith_op = new ArithmicOp;
+          arith_op->closure = closure;
+          return Chunk::Compute({c1, c2}, {c1.Size()}, arith_op)[0];
+        }
+      );
+    return {ret};
   }
   std::string Name() const {
     switch(closure.type) {
@@ -108,8 +137,15 @@ class ArithmicConstOp : public SharedComputeFn,
   public ClosureTrait<ArithmicConstClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
-    //TODO
-    return std::vector<NVector<Chunk>>();
+    NVector<Chunk>& a = inputs[0];
+    NVector<Chunk> ret = a.Map<Chunk>(
+        [&] (const Chunk& c) {
+          ArithmicConstOp* arith_const_op = new ArithmicConstOp;
+          arith_const_op->closure = closure;
+          return Chunk::Compute({c}, {c.Size()}, arith_const_op)[0];
+        }
+      );
+    return {ret};
   }
   std::string Name() const {
     std::stringstream ss;

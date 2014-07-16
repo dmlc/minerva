@@ -33,15 +33,17 @@ NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn) {
   return NArray(rst_node);
 }
 
-NArray NArray::Constant(const Scale& size, float val, const Scale& parts) {
+NArray NArray::Constant(const Scale& size, float val, const Scale& numparts) {
   FillOp* fill_op = new FillOp;
-  fill_op->closure = {val, parts};
+  Scale partitions = (numparts == Scale::kNullScale) ? Scale::Constant(size.NumDims(), 1) : numparts;
+  fill_op->closure = {val, partitions};
   return NArray::Generate(size, fill_op);
 }
 
-NArray NArray::Randn(const Scale& size, float mu, float var, const Scale& parts) {
+NArray NArray::Randn(const Scale& size, float mu, float var, const Scale& numparts) {
   RandnOp* randn_op = new RandnOp;
-  randn_op->closure = {mu, var, parts};
+  Scale partitions = (numparts == Scale::kNullScale) ? Scale::Constant(size.NumDims(), 1) : numparts;
+  randn_op->closure = {mu, var, partitions};
   return NArray::Generate(size, randn_op);
 }
 
@@ -80,6 +82,10 @@ NArray NArray::Trans() {
   Scale newsize = {Size(1), Size(0)};
   TransOp* trans_op = new TransOp;
   return NArray::Compute({*this}, {newsize}, trans_op)[0];
+}
+
+void NArray::Eval() {
+  MinervaSystem::Instance().Eval(*this);
 }
 
 } // end of namespace minerva

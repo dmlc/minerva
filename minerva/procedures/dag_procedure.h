@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
-#include "dag/logical.h"
-#include "dag/physical.h"
+#include "dag/logical_dag.h"
+#include "dag/physical_dag.h"
 
 namespace minerva {
 

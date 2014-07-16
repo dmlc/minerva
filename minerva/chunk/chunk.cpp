@@ -6,6 +6,7 @@
 #include "chunk.h"
 #include "dag/dag.h"
 #include "op/physical_op.h"
+#include "system/minerva_system.h"
 
 using namespace std;
 
@@ -53,27 +54,51 @@ Chunk::Chunk(PhysicalDataNode* node): data_node_(node) {
 }
 Chunk::Chunk(const Chunk& other): data_node_(other.data_node_) {
 }
-/*Chunk::Chunk(const Scale& size) {
-  data_node_ = Dag::Instance().NewDataNode(DataNodeMeta(size));
-}*/
 
-Chunk operator * (Chunk a, Chunk b) {
-  // TODO
-  return Chunk();
+std::vector<Chunk> Chunk::Compute(std::vector<Chunk> params,
+    std::vector<Scale> result_sizes, PhysicalComputeFn* fn) {
+  PhysicalDag& pdag = MinervaSystem::Instance().physical_dag();
+  std::vector<Chunk> rst;
+  std::vector<PhysicalDataNode*> rst_data_nodes;
+  for(Scale size : result_sizes) {
+    PhysicalDataNode* rst_node = pdag.NewDataNode(PhysicalData(size));
+    rst.push_back(Chunk(rst_node));
+    rst_data_nodes.push_back(rst_node);
+  }
+  std::vector<PhysicalDataNode*> param_data_nodes;
+  for(Chunk ch : params) {
+    param_data_nodes.push_back(ch.data_node());
+  }
+  pdag.NewOpNode(param_data_nodes, rst_data_nodes, {fn});
+  return rst;
+}
+Chunk Chunk::Generate(const Scale& result_size, PhysicalDataGenFn* fn) {
+  PhysicalDag& pdag = MinervaSystem::Instance().physical_dag();
+  PhysicalData pdata(result_size);
+  pdata.data_gen_fn = fn;
+  PhysicalDataNode* rst_node = pdag.NewDataNode(pdata);
+  return Chunk(rst_node);
 }
 
-Chunk operator + (Chunk a, Chunk b) {
-  // TODO
-  return Chunk();
+Chunk Chunk::Randn(const Scale& size, float mu, float var) {
+  RandnOp* randn_op = new RandnOp;
+  randn_op->closure = {mu, var};
+  return Chunk::Generate(size, randn_op);
 }
 
 Chunk Chunk::Constant(const Scale& size, float val) {
-  // TODO
-  return Chunk();
+  FillOp* fill_op = new FillOp;
+  fill_op->closure = {val};
+  return Chunk::Generate(size, fill_op);
 }
 
-void Chunk::operator += (Chunk a) {
-  *this = (*this) + a;
+Chunk operator * (Chunk a, Chunk b) {
+  // validity
+  assert(a.Size().NumDims() == 2 && b.Size().NumDims() == 2);
+  assert(a.Size(1) == b.Size(0));
+  Scale newsize = {a.Size(0), b.Size(1)};
+  MatMultOp* matmult_op = new MatMultOp;
+  return Chunk::Compute({a, b}, {newsize}, matmult_op)[0];
 }
 
 Chunk& Chunk::operator = (const Chunk& other) {
@@ -100,9 +125,23 @@ void Chunk::Print() {
 Scale Chunk::Size() const {
   return data_node_->data_.size;
 }
-
 int Chunk::Size(int dim) const {
   return data_node_->data_.size[dim];
+}
+Chunk Chunk::Trans() {
+  // validity
+  assert(Size().NumDims() == 2);
+  Scale newsize = {Size(1), Size(0)};
+  TransOp* trans_op = new TransOp;
+  return Chunk::Compute({*this}, {newsize}, trans_op)[0];
+}
+Chunk Chunk::Merge(const NVector<Chunk>& partitions) {
+  // TODO
+  return Chunk();
+}
+NVector<Chunk> Chunk::Split(const Scale& numparts) {
+  // TODO
+  return NVector<Chunk>();
 }
 
 } // end of namespace minerva
