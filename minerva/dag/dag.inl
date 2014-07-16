@@ -44,22 +44,6 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
 }
 
 template<class D, class O>
-DagNode* Dag<D, O>::GetNode(uint64_t nid) const {
-  auto pos = index_to_node_.find(nid);
-  return pos == index_to_node_.end() ? NULL : pos->second;
-}
-
-template<class D, class O>
-typename Dag<D, O>::ONode* Dag<D, O>::GetOpNode(uint64_t nid) const {
-  return dynamic_cast<ONode*>(GetNode(nid));
-}
-
-template<class D, class O>
-typename Dag<D, O>::DNode* Dag<D, O>::GetDataNode(uint64_t nid) const {
-  return dynamic_cast<DNode*>(GetNode(nid));
-}
-
-template<class D, class O>
 uint64_t Dag<D, O>::NewIndex() {
   static uint64_t index_counter = 0;
   return index_counter++;
