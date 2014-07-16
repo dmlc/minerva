@@ -6,31 +6,19 @@
 
 namespace minerva {
 
-class Chunk;
-class ChunkElewise;
-
-class ChunkElewise {
- public:
-  static Chunk Mult(Chunk, Chunk);
-  static Chunk Exp(Chunk );
-  static Chunk Ln(Chunk );
-  static Chunk Sigmoid(Chunk );
-};
-
 class Chunk {
   friend class ChunkElewise;
+
  public:
   static Chunk Constant(const Scale& size, float val);
   static Chunk Randn(const Scale& size, float mu, float var);
-
- public:
   Chunk();
   Chunk(PhysicalDataNode* node);
   Chunk(const Chunk& other);
   PhysicalDataNode* data_node() const { return data_node_; }
-  Chunk& operator = (const Chunk& other);
+  Chunk& operator=(const Chunk& other);
 
-  // elewise
+  // TODO Elewise, to be implemented
   friend Chunk operator + (Chunk , Chunk );
   friend Chunk operator - (Chunk , Chunk );
   friend Chunk operator / (Chunk , Chunk );
@@ -42,7 +30,6 @@ class Chunk {
   friend Chunk operator - (float , Chunk );
   friend Chunk operator * (float , Chunk );
   friend Chunk operator / (float , Chunk );
-
   void operator += (Chunk );
   void operator -= (Chunk );
   void operator *= (Chunk );
@@ -53,20 +40,11 @@ class Chunk {
   void operator /= (float );
   void operator - ();
 
-  // matmult
-  friend Chunk operator * (Chunk a, Chunk b);
-
-  // reduction
-  // TODO
-
-  // shape
+  friend Chunk operator*(Chunk, Chunk); // Matrix multiplication
   Scale Size() const;
-  int Size(int dim) const;
+  int Size(int) const;
+  // TODO Functionality to split and merge
   Chunk Trans();
-  static Chunk Merge(const NVector<Chunk>& );
-  NVector<Chunk> Split(const Scale& numparts);
-
-  // customized operations
   static std::vector<Chunk> Compute(std::vector<Chunk> params,
       std::vector<Scale> result_sizes, PhysicalComputeFn* fn);
   static Chunk Generate(const Scale& result_size, PhysicalDataGenFn* fn);
@@ -75,4 +53,12 @@ class Chunk {
   PhysicalDataNode* data_node_; // Set up in constructor
 };
 
+class ChunkElewise {
+ public:
+  static Chunk Exp(Chunk);
+  static Chunk Ln(Chunk);
+  static Chunk Sigmoid(Chunk);
+};
+
 } // end of namespace minerva
+

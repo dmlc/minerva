@@ -8,10 +8,14 @@
 
 namespace minerva {
 
-struct PhysicalData;
-struct PhysicalOp;
-class PhysicalDataGenFn;
-class PhysicalComputeFn;
+class PhysicalDataGenFn : public BasicFn {
+};
+
+class PhysicalComputeFn : public BasicFn {
+ public:
+  //virtual void Execute(std::vector<PhysicalData> inputs,
+      //std::vector<PhysicalData> outputs, PhysicalOp& op) = 0;
+};
 
 struct PhysicalData {
   Scale size, offset, chunk_index;
@@ -28,13 +32,5 @@ struct PhysicalOp {
   PhysicalComputeFn* compute_fn;
 };
 
-class PhysicalDataGenFn : public BasicFn {
-};
-
-class PhysicalComputeFn : public BasicFn {
- public:
-  //virtual void Execute(std::vector<PhysicalData> inputs,
-      //std::vector<PhysicalData> outputs, PhysicalOp& op) = 0;
-};
-
 } // end of namespace minerva
+
