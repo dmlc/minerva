@@ -15,7 +15,7 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
   if(lnode_to_pnode_.find(lnid) == lnode_to_pnode_.end()) { // haven't been expanded yet
     DagNode* curnode = dag.GetNode(lnid);
     //cout << "Try expand nodeid=" << lnid << " " << curnode->Type() << endl;
-    for(DagNode* pred : curnode->predecessors()) {
+    for(DagNode* pred : curnode->predecessors_) {
       ExpandNode(dag, pred->node_id_);
     }
     if(curnode->Type() == DagNode::DATA_NODE) { // data node

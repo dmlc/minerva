@@ -81,7 +81,7 @@ std::string Dag<D, O>::PrintDag() const {
       out << " label=\"" << DagHelper<D, O>::DataToString(dnode->data_) << "\"";
     }
     out << "];" << std::endl;
-    for (auto j: i.second->successors()) {
+    for (auto j: i.second->successors_) {
       out << "  " << i.first << " -> " << j->node_id_ << ";" << std::endl;
     }
   }

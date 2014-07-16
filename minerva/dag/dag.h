@@ -25,17 +25,10 @@ class DagNode {
   void AddParent(DagNode*);
   void AddParents(std::initializer_list<DagNode*>);
   bool DeleteParent(DagNode*);
-  // getters
-  const std::set<DagNode*>& successors() const { return successors_; }
-  std::set<DagNode*>& successors() { return successors_; }
-  const std::set<DagNode*>& predecessors() const { return predecessors_; }
-  std::set<DagNode*>& predecessors() { return predecessors_; }
-  uint64_t node_id_;
-  virtual NodeTypes Type() const = 0;
-
- protected:
   std::set<DagNode*> successors_;
   std::set<DagNode*> predecessors_;
+  uint64_t node_id_;
+  virtual NodeTypes Type() const = 0;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(DagNode);
