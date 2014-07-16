@@ -82,4 +82,17 @@ NVector<Scale> Scale::EquallySplit(const Scale& numparts) const {
   return rst;
 }
 
+Scale Scale::Merge(const NVector<Scale>& partsizes) {
+  size_t numdims = partsizes.Size().NumDims();
+  Scale rst = Scale::Origin(numdims);
+  for(size_t dim = 0; dim < numdims; ++dim) {
+    Scale pos = Scale::Origin(numdims);
+    for(int i = 0; i < partsizes.Size()[dim]; ++i) {
+      rst[dim] += partsizes[pos][dim];
+      ++pos[dim];
+    }
+  }
+  return rst;
+}
+
 } // end of namespace minerva

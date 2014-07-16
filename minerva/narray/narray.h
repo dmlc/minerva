@@ -15,6 +15,8 @@ class Elewise;
 class Reduction;
 class Convolution;
 
+class MinervaSystem;
+
 class Elewise {
  public:
   static NArray Mult(NArray, NArray);
@@ -34,6 +36,7 @@ class NArray {
   friend class Elewise;
   friend class Reduction;
   friend class Convolution;
+  friend class MinervaSystem;
  public:
   static NArray Constant(const Scale& size, float val,
       const Scale& numparts = Scale::kNullScale);
@@ -86,6 +89,9 @@ class NArray {
   static std::vector<NArray> Compute(std::vector<NArray> params,
       std::vector<Scale> result_sizes, LogicalComputeFn* fn);
   static NArray Generate(const Scale& size, LogicalDataGenFn* fn);
+
+  // system
+  void Eval();
 
  private:
   NArray(LogicalDataNode* node);

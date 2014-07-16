@@ -29,8 +29,12 @@ void Test1() {
 void Test2() {
   Scale s1 = {4, 5};
   Scale s2 = {3, 3};
+  cout << "s1=" << s1 << endl;
+  cout << "s2=" << s2 << endl;
   NVector<Scale> s3 = s1.EquallySplit(s2);
-  cout << s3.Size() << endl;
+  cout << "s1.EquallySplit(s2)=" << endl;
+  cout << "size=" << s3.Size() << endl;
+  cout << "content=" << endl;
   for(int i = 0; i < s3.Size()[0]; ++i) {
     cout << "|| ";
     for(int j = 0; j < s3.Size()[1]; ++j) {
@@ -38,6 +42,9 @@ void Test2() {
     }
     cout << endl;
   }
+  cout << "Merge above" << endl;
+  Scale s4 = Scale::Merge(s3);
+  cout << s4 << endl;
 }
 
 int main() {

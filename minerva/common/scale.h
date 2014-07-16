@@ -67,7 +67,9 @@ class Scale {
 	size_t NumDims() const { return vec_.size(); }
 	int Prod() const;
   std::string ToString() const;
-  NVector<Scale> EquallySplit(const Scale& parts) const;
+
+  NVector<Scale> EquallySplit(const Scale& numparts) const;
+  static Scale Merge(const NVector<Scale>& partsizes);
  private:
 	std::vector<int> vec_;
 };

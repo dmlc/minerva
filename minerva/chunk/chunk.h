@@ -11,10 +11,10 @@ class ChunkElewise;
 
 class ChunkElewise {
  public:
-  Chunk Mult(Chunk, Chunk);
-  Chunk Exp(Chunk );
-  Chunk Ln(Chunk );
-  Chunk Sigmoid(Chunk );
+  static Chunk Mult(Chunk, Chunk);
+  static Chunk Exp(Chunk );
+  static Chunk Ln(Chunk );
+  static Chunk Sigmoid(Chunk );
 };
 
 class Chunk {
