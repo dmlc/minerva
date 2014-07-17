@@ -1,10 +1,9 @@
 #pragma once
-
-#include <vector>
-
 #include "common/scale.h"
 #include "context.h"
 #include "op.h"
+#include "procedures/physical_engine.h"
+#include <vector>
 
 namespace minerva {
 
@@ -29,7 +28,7 @@ struct PhysicalData {
 struct PhysicalOp {
   //OpNodeContext context; // TODO how to set context ?
   //OpExecutor* executor; // TODO [jermaine] I think we don't need to set the function pointer here, because there might be several types of implementation for a single function which needs to be determined later.
-  PhysicalComputeFn* compute_fn;
+  PhysicalEngine::RunnerID runner_id;
 };
 
 } // end of namespace minerva
