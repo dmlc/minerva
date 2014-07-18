@@ -113,6 +113,7 @@ class ElewiseOp : public SharedComputeFn,
       case SIGMOID:  return "sigmoid";
       case NEGATIVE: return "-";
     };
+    return "NA";
   }
 };
 
@@ -137,6 +138,7 @@ class ArithmicOp : public SharedComputeFn,
       case MULT:  return ".*";
       case DIV:   return "./";
     };
+    return "NA";
   }
 };
 

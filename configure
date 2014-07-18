@@ -25,13 +25,14 @@ echo "Are you sure to delete all builds (release, debug, deps)? (yes or no)"
 	exit 0
 }
 
-RELEASE_DIR=release
-DEBUG_DIR=debug
-
-PACKAGE_PATH=/home/minerva/shared/minerva_packages
-DEPS_PATH=$PWD/deps
-MKL_ROOT=/opt/intel/composer_xe_2013.4.183/mkl
-CFLAGS=""
+source configure.in
+EXTERNAL_LIBS="$MKL_LIBS,$GLOG_LIBS,$BOOST_LIBS"
+EXTERNAL_LIB_PATH="$MKL_LIB_PATH,$GLOG_LIB_PATH,$BOOST_LIB_PATH"
+EXTERNAL_INCLUDE_PATH="$MKL_INCLUDE_PATH,$GLOG_INCLUDE_PATH,$BOOST_INCLUDE_PATH"
+CXXFLAGS="$CXXFLAGS \
+  -DEXTERNAL_LIBS=$EXTERNAL_LIBS\
+  -DEXTERNAL_LIB_PATH=$EXTERNAL_LIB_PATH\
+  -DEXTERNAL_INCLUDE_PATH=$EXTERNAL_INCLUDE_PATH"
 
 while [ $# -gt 0 ]
 do
@@ -44,12 +45,10 @@ do
 			run_cleanall=yes ;;
 		--mkl=*)
 			MKL_ROOT=`expr "x$1" : "x--mkl=\(.*\)"` ;;
-		--packages=*)
-			PACKAGE_PATH=`expr "x$1" : "x--packages=\(.*\)"` ;;
 		-D)
-			CFLAGS="$CFLAGS -D $2"; shift ;;
+			CXXFLAGS="$CXXFLAGS -D $2"; shift ;;
 		-D*)
-			CFLAGS="$CFLAGS -D `expr "x$1" : "x-D\(.*\)"`" ;;
+			CXXFLAGS="$CXXFLAGS -D `expr "x$1" : "x-D\(.*\)"`" ;;
 		*)	unknown_option $1 ;;
 	esac
 	shift
@@ -59,7 +58,7 @@ done
 #echo $run_clean
 #echo $HAS_MKL
 #echo $MKL_ROOT
-#echo $CFLAGS
+#echo $CXXFLAGS
 
 #================================ help description =============================
 if test "x$want_help" = xyes; then
@@ -89,41 +88,20 @@ fi
 #===============================================================================
 
 #================================ MKL configuration =============================
-if [ -d $MKL_ROOT ]; then
-	echo "Found MKL in $MKL_ROOT"
-	CFLAGS="$CFLAGS \
-		-DMKL_FOUND=1 \
-		-DMKL_ROOT=$MKL_ROOT \
-		-DMKL_INCLUDE_PATH=$MKL_ROOT/include \
-		-DMKL_LIBRARY_PATH=$MKL_ROOT/lib/intel64/ \
-		-DINTEL_LIBRARY_PATH=$MKL_ROOT/../compiler/lib/intel64"
-fi
+#if [ -d $MKL_ROOT ]; then
+#	echo "Found MKL in $MKL_ROOT"
+#	CXXFLAGS="$CXXFLAGS \
+#		-DMKL_FOUND=1 \
+#		-DMKL_ROOT=$MKL_ROOT \
+#		-DMKL_INCLUDE_PATH=$MKL_ROOT/include \
+#		-DMKL_LIBRARY_PATH=$MKL_ROOT/lib/intel64/ \
+#		-DINTEL_LIBRARY_PATH=$MKL_ROOT/../compiler/lib/intel64"
+#fi
 #===============================================================================
 
-#================================ copy dependency =============================
+#============================== external libraries =============================
 #echo "copy the dependency package files from $PACKAGE_PATH"
-BOOST_LIB=$PACKAGE_PATH/boost_1_54_0.tar.gz
-BZIP2_LIB=$PACKAGE_PATH/bzip2-1.0.6.tar.gz
-EVENT_LIB=$PACKAGE_PATH/libevent-2.0.18-stable.tar.gz
-GPERF_LIB=$PACKAGE_PATH/gperftools-2.0.tar.gz
 #MTL_LIB=$PACKAGE_PATH/MTL-4.0.9261-Linux.tar.gz
-
-if [ -f $BOOST_LIB ]; then
-	echo "copy boost library from $BOOST_LIB"
-	cp -v $BOOST_LIB $DEPS_PATH/boost/src/
-fi
-if [ -f $BZIP2_LIB ]; then
-	echo "copy libbz2 from $BZIP2_LIB"
-	cp -v $BZIP2_LIB $DEPS_PATH/libbz2/src/
-fi
-if [ -f $EVENT_LIB ]; then
-	echo "copy libevent from $EVENT_LIB"
-	cp -v $EVENT_LIB $DEPS_PATH/event/src/
-fi
-if [ -f $GPERF_LIB ]; then
-	echo "copy gperftools from $GPERF_LIB"
-	cp -v $GPERF_LIB $DEPS_PATH/gperftools/src/
-fi
 #if [ -f $MTL_LIB ]; then
 	#echo "copy mtl from $MTL_LIB"
 	#cp -v $MTL_LIB $DEPS_PATH/mtl/src/
@@ -136,7 +114,7 @@ if [ ! -d $RELEASE_DIR ]; then
 	mkdir $RELEASE_DIR
 fi
 cd $RELEASE_DIR
-cmake -DCMAKE_BUILD_TYPE=Release $CFLAGS ..
+CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Release $CXXFLAGS ..
 cd ..
 
 echo -e "\n\n\n========================== Debug =========================="
@@ -144,6 +122,6 @@ if [ ! -d $DEBUG_DIR ]; then
 	mkdir $DEBUG_DIR
 fi
 cd $DEBUG_DIR
-cmake -DCMAKE_BUILD_TYPE=Debug $CFLAGS ..
+CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Debug $CXXFLAGS ..
 cd ..
 
