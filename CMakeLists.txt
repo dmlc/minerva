@@ -16,7 +16,6 @@ string(REPLACE "," ";" external_lib_path_list ${EXTERNAL_LIB_PATH})
 string(REPLACE "," ";" external_include_path_list ${EXTERNAL_INCLUDE_PATH})
 
 include_directories(
-  SYSTEM 
   ${external_include_path_list}
 )
 link_directories(
