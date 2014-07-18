@@ -59,11 +59,13 @@ class MatMultOp : public SharedComputeFn {
     NVector<Chunk> c({m, n});
     for(int i = 0 ; i < m; ++i) {
       for(int j = 0; j < n; ++j) {
-        int row = a[{i, 0}].Size(0);
-        int col = b[{0, j}].Size(1);
-        c[{i, j}] = Chunk::Constant({row, col}, 0.0);
         for(int l = 0; l < k; ++l) {
-          c[{i, j}] += a[{i, l}] * b[{l, j}];
+          if(l == 0) {
+            c[{i, j}] = a[{i, l}] * b[{l, j}];
+          }
+          else {
+            c[{i, j}] += a[{i, l}] * b[{l, j}];
+          }
         }
       }
     }
@@ -95,9 +97,14 @@ class ElewiseOp : public SharedComputeFn,
   public ClosureTrait<ElewiseClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
-    //TODO
-    assert(false);
-    return std::vector<NVector<Chunk>>();
+    NVector<Chunk> ret = inputs[0].Map<Chunk>(
+        [&] (const Chunk& ch) {
+          ElewiseOp* elewise_op = new ElewiseOp;
+          elewise_op->closure = closure;
+          return Chunk::Compute({ch}, {ch.Size()}, elewise_op)[0];
+        }
+      );
+    return {ret};
   }
   std::string Name() const {
     switch(closure.type) {
