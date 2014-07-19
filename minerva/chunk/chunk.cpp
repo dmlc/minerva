@@ -50,9 +50,6 @@ void FillConstant(DataNode* out, float val) {
 Chunk Chunk::Constant(const Scale& size, float val) {
   auto closure = new FillClosure{val};
   return Chunk::Generate(size, "fill", (ClosureTrait<FillClosure>*) closure);
-  // FillOp* fill_op = new FillOp;
-  // fill_op->closure = {val};
-  // return Chunk::Generate(size, fill_op);
 }
 
 Chunk Chunk::Randn(const Scale& size, float mu, float var) {
@@ -105,8 +102,7 @@ Chunk Chunk::Trans() {
   return Chunk();
 }
 
-vector<Chunk> Chunk::Compute(vector<Chunk> params,
-    vector<Scale> result_sizes, PhysicalComputeFn* fn) {
+vector<Chunk> Chunk::Compute(const vector<Chunk>& params, const vector<Scale>& result_sizes, PhysicalComputeFn* fn) {
   PhysicalDag& pdag = MinervaSystem::Instance().physical_dag();
   vector<Chunk> rst;
   vector<PhysicalDataNode*> rst_data_nodes;
@@ -123,7 +119,7 @@ vector<Chunk> Chunk::Compute(vector<Chunk> params,
   return rst;
 }
 
-Chunk Chunk::Generate(const Scale& result_size, string runner_name, ClosureBase* closure) {
+Chunk Chunk::Generate(const Scale& result_size, const string& runner_name, ClosureBase* closure) {
   auto& pdag = MinervaSystem::Instance().physical_dag();
   auto& pengine = MinervaSystem::Instance().physical_engine();
   PhysicalData pdata(result_size);

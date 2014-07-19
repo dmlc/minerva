@@ -48,9 +48,9 @@ class Chunk {
   int Size(int) const;
   // TODO Functionality to split and merge
   Chunk Trans();
-  static std::vector<Chunk> Compute(std::vector<Chunk> params,
-      std::vector<Scale> result_sizes, PhysicalComputeFn*);
-  static Chunk Generate(const Scale&, std::string, ClosureBase*);
+  static std::vector<Chunk> Compute(const std::vector<Chunk>&, const std::vector<Scale>& result_sizes, PhysicalComputeFn*);
+  // TODO Possibly use shared_ptr
+  static Chunk Generate(const Scale&, const std::string&, ClosureBase*);
 
  private:
   PhysicalDataNode* data_node_; // Set up in constructor
