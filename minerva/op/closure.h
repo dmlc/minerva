@@ -71,4 +71,8 @@ struct FillClosure {
   Scale numparts;
 };
 
+struct Closure { // Base class of all closures
+};
+
 } // end of namespace minerva
+

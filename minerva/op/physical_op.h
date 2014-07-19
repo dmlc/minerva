@@ -1,7 +1,13 @@
 #pragma once
-
-#include "physical.h"
-#include "shared_op.h"
+#include "op/runner_wrapper.h"
+#include "op/closure.h"
 
 namespace minerva {
+
+struct PhysicalOp {
+  RunnerWrapper runner_wrapper;
+  Closure* closure;
+};
+
 }
+

@@ -8,12 +8,6 @@
 
 namespace minerva {
 
-struct RunnerWrapper {
-  typedef std::function<void(const std::vector<PhysicalData*>&, const std::vector<PhysicalData*>&)> RunnerType;
-  std::string name;
-  RunnerType runner;
-};
-
 class PhysicalEngine: public PhysicalDagProcedure {
  public:
   typedef uint64_t RunnerID;
