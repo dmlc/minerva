@@ -48,10 +48,11 @@ void FillConstant(DataNode* out, float val) {
 }*/
 
 Chunk Chunk::Constant(const Scale& size, float val) {
+  auto closure = new FillClosure{val};
+  return Chunk::Generate(size, "fill", (ClosureTrait<FillClosure>*) closure);
   // FillOp* fill_op = new FillOp;
   // fill_op->closure = {val};
   // return Chunk::Generate(size, fill_op);
-  return Chunk();
 }
 
 Chunk Chunk::Randn(const Scale& size, float mu, float var) {
