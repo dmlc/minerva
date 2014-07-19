@@ -2,6 +2,10 @@
 #include "common/scale.h"
 #include "common/nvector.h"
 #include "dag/physical_dag.h"
+#include "op/physical_op.h"
+#include "op/physical_data.h"
+#include "op/runner_wrapper.h"
+#include <string>
 
 namespace minerva {
 
@@ -9,8 +13,8 @@ class Chunk {
   friend class ChunkElewise;
 
  public:
-  static Chunk Constant(const Scale& size, float val);
-  static Chunk Randn(const Scale& size, float mu, float var);
+  static Chunk Constant(const Scale&, float);
+  static Chunk Randn(const Scale&, float, float);
   Chunk();
   Chunk(PhysicalDataNode* node);
   Chunk(const Chunk& other);
@@ -45,8 +49,8 @@ class Chunk {
   // TODO Functionality to split and merge
   Chunk Trans();
   static std::vector<Chunk> Compute(std::vector<Chunk> params,
-      std::vector<Scale> result_sizes, PhysicalComputeFn* fn);
-  static Chunk Generate(const Scale& result_size, PhysicalDataGenFn* fn);
+      std::vector<Scale> result_sizes, PhysicalComputeFn*);
+  static Chunk Generate(const Scale&, std::string, Closure*);
 
  private:
   PhysicalDataNode* data_node_; // Set up in constructor

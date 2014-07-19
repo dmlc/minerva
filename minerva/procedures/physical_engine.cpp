@@ -28,6 +28,9 @@ RunnerWrapper::ID PhysicalEngine::GetRunnerID(string name) {
   return it->second;
 }
 
+void PhysicalEngine::Process(PhysicalDag& dag, std::vector<uint64_t>& targets) {
+}
+
 void PhysicalEngine::Init() {
   LoadBuiltinRunners();
   // Then we can load user defined runners

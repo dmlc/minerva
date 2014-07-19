@@ -1,12 +1,11 @@
-#include <cassert>
-#include <functional>
-#include <cstdio>
-#include <cstdlib>
-
 #include "chunk.h"
 #include "dag/dag.h"
 #include "op/physical_op.h"
 #include "system/minerva_system.h"
+#include <cassert>
+#include <functional>
+#include <cstdio>
+#include <cstdlib>
 
 using namespace std;
 
@@ -123,10 +122,12 @@ vector<Chunk> Chunk::Compute(vector<Chunk> params,
   return rst;
 }
 
-Chunk Chunk::Generate(const Scale& result_size, PhysicalDataGenFn* fn) {
-  PhysicalDag& pdag = MinervaSystem::Instance().physical_dag();
+Chunk Chunk::Generate(const Scale& result_size, string runner_name, Closure* closure) {
+  auto& pdag = MinervaSystem::Instance().physical_dag();
+  auto& pengine = MinervaSystem::Instance().physical_engine();
   PhysicalData pdata(result_size);
-  // TODO: pdata.data_gen_fn = fn;
+  pdata.generator_id = pengine.GetRunnerID(runner_name);
+  pdata.closure = closure;
   PhysicalDataNode* rst_node = pdag.NewDataNode(pdata);
   return Chunk(rst_node);
 }

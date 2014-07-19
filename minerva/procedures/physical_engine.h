@@ -16,6 +16,7 @@ class PhysicalEngine: public PhysicalDagProcedure {
   ~PhysicalEngine();
   PhysicalEngine& RegisterRunner(std::string, RunnerWrapper::Runner);
   RunnerWrapper::ID GetRunnerID(std::string);
+  void Process(PhysicalDag&, std::vector<uint64_t>&);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(PhysicalEngine);

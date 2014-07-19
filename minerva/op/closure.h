@@ -33,6 +33,9 @@ enum ReductionType {
   MAX,
 };
 
+struct Closure { // Base class of all closures
+};
+
 struct ArithmicClosure {
   ArithmicType type;
 };
@@ -66,12 +69,9 @@ struct RandnClosure {
   Scale numparts;
 };
 
-struct FillClosure {
+struct FillClosure: Closure {
   float val;
   Scale numparts;
-};
-
-struct Closure { // Base class of all closures
 };
 
 } // end of namespace minerva
