@@ -18,28 +18,28 @@ class Chunk {
   Chunk& operator=(const Chunk& other);
 
   // TODO Elewise, to be implemented
-  friend Chunk operator + (Chunk , Chunk );
-  friend Chunk operator - (Chunk , Chunk );
-  friend Chunk operator / (Chunk , Chunk );
-  friend Chunk operator + (Chunk , float );
-  friend Chunk operator - (Chunk , float );
-  friend Chunk operator * (Chunk , float );
-  friend Chunk operator / (Chunk , float );
-  friend Chunk operator + (float , Chunk );
-  friend Chunk operator - (float , Chunk );
-  friend Chunk operator * (float , Chunk );
-  friend Chunk operator / (float , Chunk );
+  // friend Chunk operator + (Chunk , Chunk );
+  // friend Chunk operator - (Chunk , Chunk );
+  // friend Chunk operator / (Chunk , Chunk );
+  // friend Chunk operator + (Chunk , float );
+  // friend Chunk operator - (Chunk , float );
+  // friend Chunk operator * (Chunk , float );
+  // friend Chunk operator / (Chunk , float );
+  // friend Chunk operator + (float , Chunk );
+  // friend Chunk operator - (float , Chunk );
+  // friend Chunk operator * (float , Chunk );
+  // friend Chunk operator / (float , Chunk );
   void operator += (Chunk );
-  void operator -= (Chunk );
-  void operator *= (Chunk );
-  void operator /= (Chunk );
+  // void operator -= (Chunk );
+  // void operator *= (Chunk );
+  // void operator /= (Chunk );
   void operator += (float );
-  void operator -= (float );
-  void operator *= (float );
-  void operator /= (float );
-  void operator - ();
-
+  // void operator -= (float );
+  // void operator *= (float );
+  // void operator /= (float );
+  // void operator - ();
   friend Chunk operator*(Chunk, Chunk); // Matrix multiplication
+
   Scale Size() const;
   int Size(int) const;
   // TODO Functionality to split and merge
@@ -54,9 +54,9 @@ class Chunk {
 
 class ChunkElewise {
  public:
-  static Chunk Exp(Chunk);
-  static Chunk Ln(Chunk);
-  static Chunk Sigmoid(Chunk);
+  // static Chunk Exp(Chunk);
+  // static Chunk Ln(Chunk);
+  // static Chunk Sigmoid(Chunk);
 };
 
 } // end of namespace minerva
