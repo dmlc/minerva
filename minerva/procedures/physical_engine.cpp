@@ -4,7 +4,7 @@ using namespace std;
 
 namespace minerva {
 
-PhysicalEngine& PhysicalEngine::RegisterRunner(string name, RunnerWrapper::RunnerType runner) {
+PhysicalEngine& PhysicalEngine::RegisterRunner(string name, RunnerWrapper::Runner runner) {
   assert(reverse_lookup_.find(name) == reverse_lookup_.end());
   RunnerWrapper runner_wrapper;
   runner_wrapper.name = name;
@@ -14,10 +14,21 @@ PhysicalEngine& PhysicalEngine::RegisterRunner(string name, RunnerWrapper::Runne
   return *this;
 }
 
-PhysicalEngine::RunnerID PhysicalEngine::GetRunner(string name) {
+RunnerWrapper::ID PhysicalEngine::GetRunner(string name) {
   auto it = reverse_lookup_.find(name);
   assert(it != reverse_lookup_.end());
   return it->second;
+}
+
+void PhysicalEngine::Init() {
+  LoadBuiltinRunners();
+  // Then we can load user defined runners
+}
+
+void PhysicalEngine::LoadBuiltinRunners() {
+  RegisterRunner("add", [](RunnerWrapper::Operands inputs, RunnerWrapper::Operands outputs, Closure* closure) {
+    assert(outputs.size() == 1);
+  });
 }
 
 }

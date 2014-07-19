@@ -1,5 +1,4 @@
 #pragma once
-
 #include "common/scale.h"
 #include "common/nvector.h"
 #include "dag/physical_dag.h"

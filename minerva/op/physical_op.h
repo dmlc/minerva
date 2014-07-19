@@ -5,7 +5,7 @@
 namespace minerva {
 
 struct PhysicalOp {
-  RunnerWrapper runner_wrapper;
+  RunnerWrapper::ID runner_id;
   Closure* closure;
 };
 

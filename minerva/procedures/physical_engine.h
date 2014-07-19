@@ -1,5 +1,6 @@
 #pragma once
 #include "procedures/dag_procedure.h"
+#include "op/runner_wrapper.h"
 #include <functional>
 #include <string>
 #include <vector>
@@ -10,13 +11,14 @@ namespace minerva {
 
 class PhysicalEngine: public PhysicalDagProcedure {
  public:
-  typedef uint64_t RunnerID;
-  PhysicalEngine& RegisterRunner(std::string, RunnerWrapper::RunnerType);
-  RunnerID GetRunner(std::string);
+  PhysicalEngine& RegisterRunner(std::string, RunnerWrapper::Runner);
+  RunnerWrapper::ID GetRunner(std::string);
+  void Init();
 
  private:
+  void LoadBuiltinRunners();
   std::vector<RunnerWrapper> runners_;
-  std::map<std::string, RunnerID> reverse_lookup_;
+  std::map<std::string, RunnerWrapper::ID> reverse_lookup_;
 };
 
 }

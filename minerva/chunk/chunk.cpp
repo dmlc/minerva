@@ -49,15 +49,17 @@ void FillConstant(DataNode* out, float val) {
 }*/
 
 Chunk Chunk::Constant(const Scale& size, float val) {
-  FillOp* fill_op = new FillOp;
-  fill_op->closure = {val};
-  return Chunk::Generate(size, fill_op);
+  // FillOp* fill_op = new FillOp;
+  // fill_op->closure = {val};
+  // return Chunk::Generate(size, fill_op);
+  return Chunk();
 }
 
 Chunk Chunk::Randn(const Scale& size, float mu, float var) {
-  RandnOp* randn_op = new RandnOp;
-  randn_op->closure = {mu, var};
-  return Chunk::Generate(size, randn_op);
+  // RandnOp* randn_op = new RandnOp;
+  // randn_op->closure = {mu, var};
+  // return Chunk::Generate(size, randn_op);
+  return Chunk();
 }
 
 Chunk::Chunk(): data_node_(NULL) {
@@ -78,11 +80,12 @@ Chunk& Chunk::operator=(const Chunk& other) {
 }
 
 Chunk operator*(Chunk a, Chunk b) {
-  assert(a.Size().NumDims() == 2 && b.Size().NumDims() == 2); // 2D multiplication
-  assert(a.Size(1) == b.Size(0));
-  Scale newsize = {a.Size(0), b.Size(1)};
-  MatMultOp* matmult_op = new MatMultOp;
-  return Chunk::Compute({a, b}, {newsize}, matmult_op)[0];
+  // assert(a.Size().NumDims() == 2 && b.Size().NumDims() == 2); // 2D multiplication
+  // assert(a.Size(1) == b.Size(0));
+  // Scale newsize = {a.Size(0), b.Size(1)};
+  // MatMultOp* matmult_op = new MatMultOp;
+  // return Chunk::Compute({a, b}, {newsize}, matmult_op)[0];
+  return Chunk();
 }
 
 Scale Chunk::Size() const {
@@ -95,10 +98,11 @@ int Chunk::Size(int dim) const {
 
 Chunk Chunk::Trans() {
   // validity
-  assert(Size().NumDims() == 2);
-  Scale newsize = {Size(1), Size(0)};
-  TransOp* trans_op = new TransOp;
-  return Chunk::Compute({*this}, {newsize}, trans_op)[0];
+  // assert(Size().NumDims() == 2);
+  // Scale newsize = {Size(1), Size(0)};
+  // TransOp* trans_op = new TransOp;
+  // return Chunk::Compute({*this}, {newsize}, trans_op)[0];
+  return Chunk();
 }
 
 vector<Chunk> Chunk::Compute(vector<Chunk> params,
@@ -115,14 +119,14 @@ vector<Chunk> Chunk::Compute(vector<Chunk> params,
   for (Chunk ch: params) {
     param_data_nodes.push_back(ch.data_node());
   }
-  pdag.NewOpNode(param_data_nodes, rst_data_nodes, {fn});
+  // TODO: pdag.NewOpNode(param_data_nodes, rst_data_nodes, {fn});
   return rst;
 }
 
 Chunk Chunk::Generate(const Scale& result_size, PhysicalDataGenFn* fn) {
   PhysicalDag& pdag = MinervaSystem::Instance().physical_dag();
   PhysicalData pdata(result_size);
-  pdata.data_gen_fn = fn;
+  // TODO: pdata.data_gen_fn = fn;
   PhysicalDataNode* rst_node = pdag.NewDataNode(pdata);
   return Chunk(rst_node);
 }

@@ -7,24 +7,28 @@ using namespace std;
 namespace minerva {
 
 Chunk UnaryElewiseCompute(Chunk narr, PhysicalComputeFn* op) {
-  return Chunk::Compute({narr}, {narr.Size()}, op)[0];
+  // return Chunk::Compute({narr}, {narr.Size()}, op)[0];
+  return Chunk();
 }
 
 Chunk BinaryElewiseCompute(Chunk lhs, Chunk rhs, PhysicalComputeFn* op) {
-  assert(lhs.Size() == rhs.Size());
-  return Chunk::Compute({lhs, rhs}, {lhs.Size()}, op)[0];
+  // assert(lhs.Size() == rhs.Size());
+  // return Chunk::Compute({lhs, rhs}, {lhs.Size()}, op)[0];
+  return Chunk();
 }
 
 Chunk ArithmicHelper(Chunk lhs, Chunk rhs, enum ArithmicType type) {
-  ArithmicOp* arith_op = new ArithmicOp;
-  arith_op->closure = {type};
-  return BinaryElewiseCompute(lhs, rhs, arith_op);
+  // ArithmicOp* arith_op = new ArithmicOp;
+  // arith_op->closure = {type};
+  // return BinaryElewiseCompute(lhs, rhs, arith_op);
+  return Chunk();
 }
 
 Chunk ArithmicConstHelper(Chunk narr, float val, int side, enum ArithmicType type) {
-  ArithmicConstOp* arith_const_op = new ArithmicConstOp;
-  arith_const_op->closure = {type, val, side};
-  return UnaryElewiseCompute(narr, arith_const_op);
+  // ArithmicConstOp* arith_const_op = new ArithmicConstOp;
+  // arith_const_op->closure = {type, val, side};
+  // return UnaryElewiseCompute(narr, arith_const_op);
+  return Chunk();
 }
 
 void Chunk::operator += (float val) {

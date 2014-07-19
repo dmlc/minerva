@@ -12,12 +12,14 @@ template<>
 class DagHelper<PhysicalData, PhysicalOp> {
  public:
   static std::string DataToString(const PhysicalData& d) {
-    std::stringstream ss;
-    ss << d.size;
-    if(d.data_gen_fn != NULL) {
-      ss << d.data_gen_fn->Name();
-    }
-    return ss.str();
+    // std::stringstream ss;
+    // ss << d.size;
+    // if(d.data_gen_fn != NULL) {
+    //   ss << d.data_gen_fn->Name();
+    // }
+    // return ss.str();
+    // TODO
+    return std::string("Not implemented yet");
   }
   static std::string OpToString(const PhysicalOp& o) {
     // TODO
