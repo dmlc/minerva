@@ -10,8 +10,11 @@ class BasicFn {
   virtual ~BasicFn() {}
 };
 
+class ClosureBase {
+};
+
 template<class T>
-class ClosureTrait {
+class ClosureTrait: public ClosureBase {
  public:
   T closure;
 };

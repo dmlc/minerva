@@ -122,7 +122,7 @@ vector<Chunk> Chunk::Compute(vector<Chunk> params,
   return rst;
 }
 
-Chunk Chunk::Generate(const Scale& result_size, string runner_name, Closure* closure) {
+Chunk Chunk::Generate(const Scale& result_size, string runner_name, ClosureBase* closure) {
   auto& pdag = MinervaSystem::Instance().physical_dag();
   auto& pengine = MinervaSystem::Instance().physical_engine();
   PhysicalData pdata(result_size);

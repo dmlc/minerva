@@ -50,7 +50,7 @@ class Chunk {
   Chunk Trans();
   static std::vector<Chunk> Compute(std::vector<Chunk> params,
       std::vector<Scale> result_sizes, PhysicalComputeFn*);
-  static Chunk Generate(const Scale&, std::string, Closure*);
+  static Chunk Generate(const Scale&, std::string, ClosureBase*);
 
  private:
   PhysicalDataNode* data_node_; // Set up in constructor

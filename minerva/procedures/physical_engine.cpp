@@ -37,7 +37,7 @@ void PhysicalEngine::Init() {
 }
 
 void PhysicalEngine::LoadBuiltinRunners() {
-  RegisterRunner("add", [](RunnerWrapper::Operands inputs, RunnerWrapper::Operands outputs, Closure* closure) {
+  RegisterRunner("add", [](RunnerWrapper::Operands inputs, RunnerWrapper::Operands outputs, ClosureBase* closure) {
     assert(outputs.size() == 1);
   });
 }

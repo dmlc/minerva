@@ -33,9 +33,6 @@ enum ReductionType {
   MAX,
 };
 
-struct Closure { // Base class of all closures
-};
-
 struct ArithmicClosure {
   ArithmicType type;
 };
@@ -69,7 +66,7 @@ struct RandnClosure {
   Scale numparts;
 };
 
-struct FillClosure: Closure {
+struct FillClosure {
   float val;
   Scale numparts;
 };
