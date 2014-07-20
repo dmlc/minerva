@@ -1,4 +1,5 @@
 #include "procedures/physical_engine.h"
+#include "op/op.h"
 
 using namespace std;
 
@@ -39,6 +40,7 @@ void PhysicalEngine::Init() {
 void PhysicalEngine::LoadBuiltinRunners() {
   RegisterRunner("add", [](RunnerWrapper::Operands inputs, RunnerWrapper::Operands outputs, ClosureBase* closure) {
     assert(outputs.size() == 1);
+    GetClosureFromBase<FillClosure>(closure); // Do runtime checking of type
   });
 }
 

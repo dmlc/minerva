@@ -11,6 +11,11 @@ class BasicFn {
 };
 
 class ClosureBase {
+ public:
+  ClosureBase() {
+  }
+  virtual ~ClosureBase() {
+  }
 };
 
 template<class T>
@@ -19,4 +24,9 @@ class ClosureTrait: public ClosureBase {
   T closure;
 };
 
+template <typename T> T& GetClosureFromBase(ClosureBase* base) {
+  return dynamic_cast<ClosureTrait<T>*>(base)->closure;
 }
+
+}
+
