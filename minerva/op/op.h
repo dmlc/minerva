@@ -24,7 +24,8 @@ class ClosureTrait: public ClosureBase {
   T closure;
 };
 
-template <typename T> T& GetClosureFromBase(ClosureBase* base) {
+template<typename T>
+T& GetClosureFromBase(ClosureBase* base) {
   return dynamic_cast<ClosureTrait<T>*>(base)->closure;
 }
 
