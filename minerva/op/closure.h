@@ -14,7 +14,7 @@ enum ClosureType {
   // TODO how to generate this when adding new closure types ?
 };
 
-enum ArithmicType {
+enum ArithmeticType {
   ADD = 0,
   SUB,
   MULT,
@@ -33,11 +33,11 @@ enum ReductionType {
   MAX,
 };
 
-struct ArithmicClosure {
-  ArithmicType type;
+struct ArithmeticClosure {
+  ArithmeticType type;
 };
 
-struct ArithmicConstClosure {
+struct ArithmeticConstClosure {
   ArithmicType type;
   float val;
   int side; // 0 is left, 1 is right

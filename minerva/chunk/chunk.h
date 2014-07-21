@@ -21,8 +21,8 @@ class Chunk {
   PhysicalDataNode* data_node() const { return data_node_; }
   Chunk& operator=(const Chunk& other);
 
-  // TODO Elewise, to be implemented
-  // friend Chunk operator + (Chunk , Chunk );
+  // TODO to be implemented
+  friend Chunk operator+(Chunk, Chunk);
   // friend Chunk operator - (Chunk , Chunk );
   // friend Chunk operator / (Chunk , Chunk );
   // friend Chunk operator + (Chunk , float );

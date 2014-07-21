@@ -47,6 +47,11 @@ void FillConstant(DataNode* out, float val) {
     a[i] = val;
 }*/
 
+Chunk operator+(Chunk a, Chunk b) {
+  assert(a.Size() == b.Size());
+  // return Compute({a, b}, {a.Size()}
+}
+
 Chunk Chunk::Constant(const Scale& size, float val) {
   FillClosure closure{val};
   return Chunk::Generate(size, "fill", NewClosureBase(closure));
