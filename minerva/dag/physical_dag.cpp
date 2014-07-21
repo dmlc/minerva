@@ -16,7 +16,6 @@ string DagHelper<PhysicalData, PhysicalOp>::DataToString(const PhysicalData& d) 
   return ss.str();
 }
 
-
 string DagHelper<PhysicalData, PhysicalOp>::OpToString(const PhysicalOp& op) {
   return MinervaSystem::Instance().physical_engine().GetRunnerWrapper(op.runner_id).name;
 }
