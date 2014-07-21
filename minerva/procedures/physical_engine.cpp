@@ -38,7 +38,7 @@ RunnerWrapper::ID PhysicalEngine::GetRunnerID(string name) {
   return it->second;
 }
 
-RunnerWrapper PhysicalEngine::GetRunnerWrapper(RunnerWrapper::ID id) {
+const RunnerWrapper& PhysicalEngine::GetRunnerWrapper(RunnerWrapper::ID id) {
   auto it = runners_.find(id);
   assert(it != runners_.end());
   return it->second;
@@ -271,7 +271,46 @@ unordered_set<DagNode*> PhysicalEngine::FindRootNodes(const vector<uint64_t>& ta
 }
 
 void PhysicalEngine::NodeRunner(DagNode* node) {
-  // TODO
+  if (node->Type() == DagNode::OP_NODE) { // OpNode
+    vector<PhysicalData*> input;
+    vector<PhysicalData*> output;
+    for (auto i: node->predecessors_) {
+      input.push_back(&(dynamic_cast<PhysicalDataNode*>(i)->data_));
+    }
+    for (auto i: node->successors_) { // Allocate storage for each successor
+      auto& n = dynamic_cast<PhysicalDataNode*>(i)->data_;
+      MinervaSystem::Instance().data_store().CreateData(n.data_id, DataStore::CPU, n.size.Prod());
+      output.push_back(&n);
+    }
+    auto& op = dynamic_cast<PhysicalOpNode*>(node)->op_;
+    auto runner_wrapper = GetRunnerWrapper(op.runner_id);
+    runner_wrapper.runner(input, output, op.closure);
+  } else { // DataNode
+    if (!node->predecessors_.size()) { // Headless data node
+      auto& data = dynamic_cast<PhysicalDataNode*>(node)->data_;
+      MinervaSystem::Instance().data_store().CreateData(data.data_id, DataStore::CPU, data.size.Prod());
+      auto& runner_wrapper = GetRunnerWrapper(data.generator_id);
+      runner_wrapper.runner({}, {&data}, data.closure);
+    }
+  }
+  {
+    lock_guard<mutex> lock(node_states_mutex_);
+    auto succ = node->successors_;
+    for (auto i: succ) {
+      auto state = node_states_.find(i->node_id_);
+      if (state == node_states_.end()) { // New nodes, not committed yet
+        continue;
+      }
+      // Append node if all predecessors are finished
+      if (state->second.state == NodeState::kReady && !(--state->second.dependency_counter)) {
+        AppendTask(i, bind(&PhysicalEngine::NodeRunner, this, placeholders::_1));
+      }
+    }
+    node_states_[node->node_id_].state = NodeState::kComplete;
+    if (node_states_[node->node_id_].on_complete) {
+      node_states_[node->node_id_].on_complete->notify_all();
+    }
+  }
 }
 
 void PhysicalEngine::AppendTask(Task node, Callback callback) {

@@ -44,7 +44,7 @@ class PhysicalEngine: public PhysicalDagProcedure {
   ~PhysicalEngine();
   PhysicalEngine& RegisterRunner(std::string, RunnerWrapper::Runner);
   RunnerWrapper::ID GetRunnerID(std::string);
-  RunnerWrapper GetRunnerWrapper(RunnerWrapper::ID);
+  const RunnerWrapper& GetRunnerWrapper(RunnerWrapper::ID);
   void Process(PhysicalDag&, std::vector<uint64_t>&);
 
  private:

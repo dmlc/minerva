@@ -7,7 +7,7 @@
 namespace minerva {
 
 struct PhysicalData {
-  PhysicalData() {}
+  PhysicalData();
   PhysicalData(const Scale&);
   // TODO offset and chunk_index not used for now
   Scale size, offset, chunk_index;
