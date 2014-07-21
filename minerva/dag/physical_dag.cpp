@@ -9,7 +9,7 @@ namespace minerva {
 
 string DagHelper<PhysicalData, PhysicalOp>::DataToString(const PhysicalData& d) {
   stringstream ss;
-  ss << d.size;
+  ss << d.data_id << ":" << d.size;
   if (d.generator_id) {
     ss << MinervaSystem::Instance().physical_engine().GetRunnerWrapper(d.generator_id).name;
   }

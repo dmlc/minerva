@@ -1,6 +1,7 @@
 #include "expand_engine.h"
 #include "system/minerva_system.h"
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -11,6 +12,13 @@ void ExpandEngine::Process(LogicalDag& dag, std::vector<uint64_t>& nodes) {
     ExpandNode(dag, nid);
   }
 }
+
+vector<uint64_t> ExpandEngine::GetPhysicalNodes(uint64_t id) {
+  auto it = lnode_to_pnode_.find(id);
+  assert(it != lnode_to_pnode_.end());
+  return it->second.ToVector();
+}
+
 void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
   if(lnode_to_pnode_.find(lnid) == lnode_to_pnode_.end()) { // haven't been expanded yet
     DagNode* curnode = dag.GetNode(lnid);
@@ -70,7 +78,7 @@ void ExpandEngine::MakeMapping(LogicalDag::DNode* ldnode, const NVector<Chunk>& 
     cout << "Returned: " << merged_size << endl;
     assert(false);
   }
-  // offset & offset_index 
+  // offset & offset_index
   // TODO
   // insert mapping
   lnode_to_pnode_[ldnode->node_id_] = chunks.Map<uint64_t>(

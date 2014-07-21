@@ -55,11 +55,12 @@ void PhysicalEngine::Process(PhysicalDag&, std::vector<uint64_t>& targets) {
     // Waiting execution to complete
     for (auto i: targets) {
       unique_lock<mutex> lock(node_states_mutex_);
-      if (node_states_[i].on_complete) {
+      if (node_states_[i].state != NodeState::kComplete) {
         node_states_[i].on_complete->wait(lock);
-        delete node_states_[i].on_complete;
-        node_states_[i].on_complete = 0;
       }
+      delete node_states_[i].on_complete;
+      node_states_[i].on_complete = 0;
+      printf("Target complete received\n");
     }
   }
 }
@@ -77,8 +78,8 @@ void PhysicalEngine::LoadBuiltinRunners() {
     assert(inputs.size() == 0); // This is how we define generators for now
     assert(outputs.size() == 1);
     auto& closure = GetClosureFromBase<FillClosure>(closure_base); // Do runtime checking of type
-    size_t size = inputs[0]->size.Prod();
-    auto data = MinervaSystem::Instance().data_store().GetData(inputs[0]->data_id, DataStore::CPU);
+    size_t size = outputs[0]->size.Prod();
+    auto data = MinervaSystem::Instance().data_store().GetData(outputs[0]->data_id, DataStore::CPU);
     for (size_t i = 0; i < size; ++i) {
       data[i] = closure.val;
     }
@@ -87,8 +88,8 @@ void PhysicalEngine::LoadBuiltinRunners() {
     assert(inputs.size() == 0);
     assert(outputs.size() == 1);
     auto& closure = GetClosureFromBase<RandnClosure>(closure_base);
-    size_t size = inputs[0]->size.Prod();
-    auto data = MinervaSystem::Instance().data_store().GetData(inputs[0]->data_id, DataStore::CPU);
+    size_t size = outputs[0]->size.Prod();
+    auto data = MinervaSystem::Instance().data_store().GetData(outputs[0]->data_id, DataStore::CPU);
     default_random_engine generator;
     normal_distribution<float> distribution(closure.mu, closure.var); // TODO only float for now
     for (size_t i = 0; i < size; ++i) {
@@ -272,6 +273,7 @@ unordered_set<DagNode*> PhysicalEngine::FindRootNodes(const vector<uint64_t>& ta
 
 void PhysicalEngine::NodeRunner(DagNode* node) {
   if (node->Type() == DagNode::OP_NODE) { // OpNode
+    printf("Working on OP\n");
     vector<PhysicalData*> input;
     vector<PhysicalData*> output;
     for (auto i: node->predecessors_) {
@@ -286,6 +288,7 @@ void PhysicalEngine::NodeRunner(DagNode* node) {
     auto runner_wrapper = GetRunnerWrapper(op.runner_id);
     runner_wrapper.runner(input, output, op.closure);
   } else { // DataNode
+    printf("Working on DATA %u\n", (unsigned int) dynamic_cast<PhysicalDataNode*>(node)->data_.data_id);
     if (!node->predecessors_.size()) { // Headless data node
       auto& data = dynamic_cast<PhysicalDataNode*>(node)->data_;
       MinervaSystem::Instance().data_store().CreateData(data.data_id, DataStore::CPU, data.size.Prod());
@@ -308,6 +311,7 @@ void PhysicalEngine::NodeRunner(DagNode* node) {
     }
     node_states_[node->node_id_].state = NodeState::kComplete;
     if (node_states_[node->node_id_].on_complete) {
+      printf("Target complete %u\n", (unsigned int) dynamic_cast<PhysicalDataNode*>(node)->data_.data_id);
       node_states_[node->node_id_].on_complete->notify_all();
     }
   }
