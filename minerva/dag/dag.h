@@ -66,9 +66,11 @@ class OpNode : public DagNode {
   DISALLOW_COPY_AND_ASSIGN(OpNode);
 };
 
-template<typename Data, typename Op>
+template<class DagType> class DagProcedure;
+
+template<class Data, class Op>
 class Dag {
-  friend class DagEngine;
+  friend class DagProcedure<Dag<Data, Op>>;
 
  public:
   typedef DataNode<Data, Op> DNode;
@@ -79,6 +81,12 @@ class Dag {
   ONode* NewOpNode(std::vector<DNode*> inputs,
       std::vector<DNode*> outputs, const Op& op);
   std::string PrintDag() const;
+
+  // node accessors, return NULL if not exist
+  DagNode* GetNode(uint64_t nid) const;
+  ONode* GetOpNode(uint64_t nid) const;
+  DNode* GetDataNode(uint64_t nid) const;
+  const std::map<uint64_t, DagNode*>& GetAllNodes() const { return index_to_node_; }
 
  private:
   DISALLOW_COPY_AND_ASSIGN(Dag);
@@ -100,4 +108,3 @@ class DagHelper {
 } // end of namespace minerva
 
 #include "dag.inl"
-

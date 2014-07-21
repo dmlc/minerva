@@ -17,7 +17,7 @@ class LogicalComputeFn;
 
 class LogicalDataGenFn : public BasicFn {
  public:
-   virtual std::vector<NVector<Chunk>> Expand(const Scale& rst_size) = 0;
+   virtual NVector<Chunk> Expand(const Scale& rst_size) = 0;
    virtual ~LogicalDataGenFn() {}
 };
 

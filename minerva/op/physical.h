@@ -18,6 +18,8 @@ struct PhysicalData {
   //DataNodeContext context; // TODO how to set context ?
   uint64_t data_id;
   PhysicalDataGenFn* data_gen_fn;
+  PhysicalData() {}
+  PhysicalData(const Scale& size): size(size), data_id(0), data_gen_fn(NULL) {}
 };
 
 struct PhysicalOp {
