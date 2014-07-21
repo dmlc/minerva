@@ -1,7 +1,6 @@
 #pragma once
 #include "common/common.h"
 #include "common/concurrent_blocking_queue.h"
-#include "procedures/physical_engine.h"
 #include <vector>
 #include <functional>
 #include <thread>

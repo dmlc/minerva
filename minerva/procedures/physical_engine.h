@@ -1,5 +1,6 @@
 #pragma once
 #include "procedures/dag_procedure.h"
+#include "procedures/thread_pool.h"
 #include "op/runner_wrapper.h"
 #include "common/common.h"
 #include <functional>
@@ -56,6 +57,8 @@ class PhysicalEngine: public PhysicalDagProcedure {
 
   void CommitDagChanges();
   std::unordered_set<DagNode*> FindRootNodes(const std::vector<uint64_t>&);
+  void NodeRunner(DagNode*);
+  void AppendTask(Task, Callback);
   bool GetNewTask(std::thread::id, TaskPair&);
   std::unordered_map<uint64_t, NodeState> node_states_;
   std::mutex node_states_mutex_;

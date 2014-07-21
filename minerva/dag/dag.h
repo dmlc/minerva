@@ -25,6 +25,7 @@ class DagNode {
   void AddParent(DagNode*);
   void AddParents(std::initializer_list<DagNode*>);
   bool DeleteParent(DagNode*);
+  // TODO Use unordered version for quicker access
   std::set<DagNode*> successors_;
   std::set<DagNode*> predecessors_;
   uint64_t node_id_;
