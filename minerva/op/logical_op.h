@@ -7,5 +7,21 @@
 
 namespace minerva {
 
+struct PartitionClosure {
+  NVector<PartInfo> partitions;
+};
+
+class PartitionOp :
+  public LogicalComputeFnTemp<1, 1>,
+  public ClosureTrait<PartitionClosure> {
+ public:
+  NVector<Chunk> ExpandReal(NVector<Chunk> input) {
+    // TODO
+    return input;
+  }
+  std::string Name() const {
+    return "re-part";
+  }
+};
 
 } // end of namespace minerva

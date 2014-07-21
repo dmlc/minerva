@@ -63,12 +63,10 @@ struct ConvInfo {
 
 struct RandnClosure {
   float mu, var;
-  Scale numparts;
 };
 
 struct FillClosure {
   float val;
-  Scale numparts;
 };
 
 } // end of namespace minerva

@@ -64,7 +64,7 @@ class Chunk {
   int Size(int dim) const;
   Chunk Trans();
   static Chunk Merge(const NVector<Chunk>& );
-  NVector<Chunk> Split(const Scale& numparts);
+  NVector<Chunk> Split(const NVector<Scale>& partsizes);
 
   // customized operations
   static std::vector<Chunk> Compute(std::vector<Chunk> params,

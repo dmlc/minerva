@@ -8,6 +8,7 @@ namespace minerva {
 
 NArray::NArray(): data_node_(NULL) {}
 NArray::NArray(LogicalDataNode* node): data_node_(node) {}
+NArray::~NArray() {}
 
 std::vector<NArray> NArray::Compute(std::vector<NArray> params, 
     std::vector<Scale> result_sizes, LogicalComputeFn* fn) {
@@ -27,24 +28,43 @@ std::vector<NArray> NArray::Compute(std::vector<NArray> params,
   return rst;
 }
   
-NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn) {
+NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<PartInfo>& parts) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
-  LogicalDataNode* rst_node = ldag.NewDataNode({size, fn});
+  LogicalDataNode* rst_node = ldag.NewDataNode({size, fn, parts});
   return NArray(rst_node);
+}
+
+NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const Scale& numparts) {
+  NVector<Scale> partsizes = size.EquallySplit(numparts);
+  return Generate(size, fn, 
+      partsizes.Map<PartInfo>(
+        [] (const Scale& size) { return PartInfo{kUnknownPlace, size}; }
+      )
+   );
+}
+
+NArray NArray::Constant(const Scale& size, float val, const NVector<PartInfo>& parts) {
+  FillOp* fill_op = new FillOp;
+  fill_op->closure = {val};
+  return NArray::Generate(size, fill_op, parts);
+}
+
+NArray NArray::Randn(const Scale& size, float mu, float var, const NVector<PartInfo>& parts) {
+  RandnOp* randn_op = new RandnOp;
+  randn_op->closure = {mu, var};
+  return NArray::Generate(size, randn_op, parts);
 }
 
 NArray NArray::Constant(const Scale& size, float val, const Scale& numparts) {
   FillOp* fill_op = new FillOp;
-  Scale partitions = (numparts == Scale::kNullScale) ? Scale::Constant(size.NumDims(), 1) : numparts;
-  fill_op->closure = {val, partitions};
-  return NArray::Generate(size, fill_op);
+  fill_op->closure = {val};
+  return NArray::Generate(size, fill_op, numparts);
 }
 
 NArray NArray::Randn(const Scale& size, float mu, float var, const Scale& numparts) {
   RandnOp* randn_op = new RandnOp;
-  Scale partitions = (numparts == Scale::kNullScale) ? Scale::Constant(size.NumDims(), 1) : numparts;
-  randn_op->closure = {mu, var, partitions};
-  return NArray::Generate(size, randn_op);
+  randn_op->closure = {mu, var};
+  return NArray::Generate(size, randn_op, numparts);
 }
 
 // matmult
@@ -86,6 +106,21 @@ NArray NArray::Trans() {
 
 void NArray::Eval() {
   MinervaSystem::Instance().Eval(*this);
+}
+
+NArray NArray::RePartition(const NVector<PartInfo>& partitions) {
+  if(partitions == data_node_->data_.partitions) {
+    // partition is the same
+    return *this;
+  }
+  // new partition plan
+  Scale total_size = Scale::Merge( 
+      partitions.Map<Scale>( [] (const PartInfo& pi) { return pi.size; } )
+    );
+  assert(total_size == data_node_->data_.size); // validity
+  PartitionOp* part_op = new PartitionOp;
+  part_op->closure = {partitions};
+  return Compute({*this}, {this->Size()}, part_op)[0];
 }
 
 } // end of namespace minerva

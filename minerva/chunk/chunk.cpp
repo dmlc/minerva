@@ -139,7 +139,7 @@ Chunk Chunk::Merge(const NVector<Chunk>& partitions) {
   // TODO
   return Chunk();
 }
-NVector<Chunk> Chunk::Split(const Scale& numparts) {
+NVector<Chunk> Chunk::Split(const NVector<Scale>& partsizes) {
   // TODO
   return NVector<Chunk>();
 }

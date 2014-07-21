@@ -11,13 +11,8 @@ namespace minerva {
 ///////////////////////////////////////////////////
 class RandnOp : public SharedDataGenFn, public ClosureTrait<RandnClosure> {
  public:
-  NVector<Chunk> Expand(const Scale& size) {
-    NVector<Scale> partsizes = size.EquallySplit(closure.numparts);
-    NVector<Chunk> rst_chunks = partsizes.Map<Chunk>(
-      [&] (const Scale& size)->Chunk {
-        return Chunk::Randn(size, closure.mu, closure.var);
-      });
-    return rst_chunks;
+  Chunk Expand(const Scale& size) {
+    return Chunk::Randn(size, closure.mu, closure.var);
   }
   std::string Name() const {
     return ":randn";
@@ -26,13 +21,8 @@ class RandnOp : public SharedDataGenFn, public ClosureTrait<RandnClosure> {
 
 class FillOp : public SharedDataGenFn, public ClosureTrait<FillClosure> {
  public:
-  NVector<Chunk> Expand(const Scale& size) {
-    NVector<Scale> partsizes = size.EquallySplit(closure.numparts);
-    NVector<Chunk> rst_chunks = partsizes.Map<Chunk>(
-      [&] (const Scale& size)->Chunk {
-        return Chunk::Constant(size, closure.val);
-      });
-    return rst_chunks;
+  Chunk Expand(const Scale& size) {
+    return Chunk::Constant(size, closure.val);
   }
   std::string Name() const {
     std::stringstream ss;

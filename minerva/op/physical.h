@@ -15,9 +15,9 @@ class PhysicalComputeFn;
 
 struct PhysicalData {
   Scale size, offset, chunk_index;
-  //DataNodeContext context; // TODO how to set context ?
   uint64_t data_id;
   PhysicalDataGenFn* data_gen_fn;
+  //DataNodeContext context; // TODO how to set context ?
   PhysicalData() {}
   PhysicalData(const Scale& size): size(size), data_id(0), data_gen_fn(NULL) {}
 };
