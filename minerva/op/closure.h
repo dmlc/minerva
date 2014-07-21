@@ -50,6 +50,9 @@ struct ElewiseClosure {
 struct MatMultClosure {
 };
 
+struct TransposeClosure {
+};
+
 struct ReductionClosure {
   ReductionType type;
   Scale dims_to_reduce;

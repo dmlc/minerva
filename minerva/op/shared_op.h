@@ -1,8 +1,8 @@
 #pragma once
-
-#include <sstream>
 #include "shared.h"
 #include "closure.h"
+#include <sstream>
+#include <vector>
 
 namespace minerva {
 
@@ -118,7 +118,8 @@ class ArithmeticOp : public SharedComputeFn,
         [&] (const Chunk& c1, const Chunk& c2) {
           ArithmeticOp* arith_op = new ArithmeticOp;
           arith_op->closure = closure;
-          return Chunk::Compute({c1, c2}, {c1.Size()}, arith_op)[0];
+          // TODO return Chunk::Compute({c1, c2}, {c1.Size()}, arith_op)[0];
+          return Chunk();
         }
       );
     return {ret};
@@ -142,7 +143,8 @@ class ArithmeticConstOp : public SharedComputeFn,
         [&] (const Chunk& c) {
           ArithmeticConstOp* arith_const_op = new ArithmeticConstOp;
           arith_const_op->closure = closure;
-          return Chunk::Compute({c}, {c.Size()}, arith_const_op)[0];
+          // TODO return Chunk::Compute({c}, {c.Size()}, arith_const_op)[0];
+          return Chunk();
         }
       );
     return {ret};

@@ -31,11 +31,5 @@ Chunk ArithmeticConstHelper(Chunk narr, float val, int side, enum ArithmeticType
   return Chunk();
 }
 
-void Chunk::operator += (float val) {
-  *this = ArithmeticConstHelper(*this, val, 1, ADD);
-}
-void Chunk::operator += (Chunk ch) {
-  *this = ArithmeticHelper(*this, ch, ADD);
-}
-
 } // end of namespace minerva
+

@@ -47,9 +47,28 @@ void FillConstant(DataNode* out, float val) {
     a[i] = val;
 }*/
 
-Chunk operator+(Chunk a, Chunk b) {
+Chunk operator+(const Chunk& a, const Chunk& b) {
   assert(a.Size() == b.Size());
-  // return Compute({a, b}, {a.Size()}
+  ArithmeticClosure closure{ADD};
+  return Chunk::Compute({a, b}, {a.Size()}, "arithmetic", NewClosureBase(closure))[0];
+}
+
+Chunk operator+(const Chunk& a, float f) {
+  ArithmeticConstClosure closure{ADD, f, 1};
+  return Chunk::Compute({a}, {a.Size()}, "arithmeticConstant", NewClosureBase(closure))[0];
+}
+
+Chunk operator+(float f, const Chunk& a) {
+  ArithmeticConstClosure closure{ADD, f, 0};
+  return Chunk::Compute({a}, {a.Size()}, "arithmeticConstant", NewClosureBase(closure))[0];
+}
+
+void Chunk::operator+=(const Chunk& o) {
+  *this = *this + o;
+}
+
+void Chunk::operator+=(float f) {
+  *this = *this + f;
 }
 
 Chunk Chunk::Constant(const Scale& size, float val) {
@@ -81,13 +100,12 @@ Chunk& Chunk::operator=(const Chunk& other) {
   return *this;
 }
 
-Chunk operator*(Chunk a, Chunk b) {
-  // assert(a.Size().NumDims() == 2 && b.Size().NumDims() == 2); // 2D multiplication
-  // assert(a.Size(1) == b.Size(0));
-  // Scale newsize = {a.Size(0), b.Size(1)};
-  // MatMultOp* matmult_op = new MatMultOp;
-  // return Chunk::Compute({a, b}, {newsize}, matmult_op)[0];
-  return Chunk();
+Chunk operator*(const Chunk& a, const Chunk& b) {
+  assert(a.Size().NumDims() == 2 && b.Size().NumDims() == 2); // 2D multiplication
+  assert(a.Size(1) == b.Size(0));
+  Scale new_size{a.Size(0), b.Size(1)};
+  MatMultClosure closure;
+  return Chunk::Compute({a, b}, {new_size}, "matMult", NewClosureBase(closure))[0];
 }
 
 Scale Chunk::Size() const {
@@ -99,28 +117,30 @@ int Chunk::Size(int dim) const {
 }
 
 Chunk Chunk::Trans() {
-  // validity
-  // assert(Size().NumDims() == 2);
-  // Scale newsize = {Size(1), Size(0)};
-  // TransOp* trans_op = new TransOp;
-  // return Chunk::Compute({*this}, {newsize}, trans_op)[0];
-  return Chunk();
+  assert(Size().NumDims() == 2); // 2D transposing
+  Scale new_size{Size(1), Size(0)};
+  TransposeClosure closure;
+  return Chunk::Compute({*this}, {new_size}, "trans", NewClosureBase(closure))[0];
 }
 
-vector<Chunk> Chunk::Compute(const vector<Chunk>& params, const vector<Scale>& result_sizes, PhysicalComputeFn* fn) {
-  PhysicalDag& pdag = MinervaSystem::Instance().physical_dag();
+vector<Chunk> Chunk::Compute(const vector<Chunk>& params, const vector<Scale>& result_sizes, const string& runner_name, ClosureBase* closure) {
+  auto& pdag = MinervaSystem::Instance().physical_dag();
+  auto& pengine = MinervaSystem::Instance().physical_engine();
   vector<Chunk> rst;
   vector<PhysicalDataNode*> rst_data_nodes;
-  for (Scale size: result_sizes) {
-    PhysicalDataNode* rst_node = pdag.NewDataNode(PhysicalData(size));
+  for (auto& size: result_sizes) {
+    auto rst_node = pdag.NewDataNode(PhysicalData(size));
     rst.push_back(Chunk(rst_node));
     rst_data_nodes.push_back(rst_node);
   }
   vector<PhysicalDataNode*> param_data_nodes;
-  for (Chunk ch: params) {
+  for (auto& ch: params) {
     param_data_nodes.push_back(ch.data_node());
   }
-  // TODO: pdag.NewOpNode(param_data_nodes, rst_data_nodes, {fn});
+  PhysicalOp op;
+  op.runner_id = pengine.GetRunnerID(runner_name);
+  op.closure = closure;
+  pdag.NewOpNode(param_data_nodes, rst_data_nodes, op);
   return rst;
 }
 

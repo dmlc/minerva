@@ -22,34 +22,33 @@ class Chunk {
   Chunk& operator=(const Chunk& other);
 
   // TODO to be implemented
-  friend Chunk operator+(Chunk, Chunk);
+  friend Chunk operator+(const Chunk&, const Chunk&);
   // friend Chunk operator - (Chunk , Chunk );
   // friend Chunk operator / (Chunk , Chunk );
-  // friend Chunk operator + (Chunk , float );
+  friend Chunk operator+(const Chunk&, float);
   // friend Chunk operator - (Chunk , float );
   // friend Chunk operator * (Chunk , float );
   // friend Chunk operator / (Chunk , float );
-  // friend Chunk operator + (float , Chunk );
+  friend Chunk operator+(float, const Chunk&);
   // friend Chunk operator - (float , Chunk );
   // friend Chunk operator * (float , Chunk );
   // friend Chunk operator / (float , Chunk );
-  void operator += (Chunk);
+  void operator+=(const Chunk&);
   // void operator -= (Chunk );
   // void operator *= (Chunk );
   // void operator /= (Chunk );
-  void operator += (float);
+  void operator+=(float);
   // void operator -= (float );
   // void operator *= (float );
   // void operator /= (float );
   // void operator - ();
-  friend Chunk operator*(Chunk, Chunk); // Matrix multiplication
+  // Split(), Merge()
+  friend Chunk operator*(const Chunk&, const Chunk&); // Matrix multiplication
 
   Scale Size() const;
   int Size(int) const;
-  // TODO Functionality to split and merge
   Chunk Trans();
-  static std::vector<Chunk> Compute(const std::vector<Chunk>&, const std::vector<Scale>& result_sizes, PhysicalComputeFn*);
-  // TODO Possibly use shared_ptr
+  static std::vector<Chunk> Compute(const std::vector<Chunk>&, const std::vector<Scale>&, const std::string&, ClosureBase*);
   static Chunk Generate(const Scale&, const std::string&, ClosureBase*);
 
  private:
