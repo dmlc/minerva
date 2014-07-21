@@ -8,8 +8,8 @@ namespace minerva {
 
 struct PhysicalData {
   PhysicalData() {}
-  PhysicalData(const Scale& size): size(size) {}
-  // TODO Ask storage to allocate a requested size
+  PhysicalData(const Scale&);
+  // TODO offset and chunk_index not used for now
   Scale size, offset, chunk_index;
   uint64_t data_id = 0;
   RunnerWrapper::ID generator_id = 0;

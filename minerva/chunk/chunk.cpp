@@ -77,10 +77,8 @@ Chunk Chunk::Constant(const Scale& size, float val) {
 }
 
 Chunk Chunk::Randn(const Scale& size, float mu, float var) {
-  // RandnOp* randn_op = new RandnOp;
-  // randn_op->closure = {mu, var};
-  // return Chunk::Generate(size, randn_op);
-  return Chunk();
+  RandnClosure closure{mu, var};
+  return Chunk::Generate(size, "randn", NewClosureBase(closure));
 }
 
 Chunk::Chunk(): data_node_(NULL) {

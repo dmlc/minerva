@@ -25,6 +25,7 @@ PhysicalEngine& PhysicalEngine::RegisterRunner(string name, RunnerWrapper::Runne
 }
 
 RunnerWrapper::ID PhysicalEngine::GetRunnerID(string name) {
+  return 0;
   auto it = reverse_lookup_.find(name);
   assert(it != reverse_lookup_.end());
   return it->second;

@@ -116,10 +116,8 @@ class ArithmeticOp : public SharedComputeFn,
     NVector<Chunk> a = inputs[0], b = inputs[1];
     NVector<Chunk> ret = NVector<Chunk>::ZipMap(a, b,
         [&] (const Chunk& c1, const Chunk& c2) {
-          ArithmeticOp* arith_op = new ArithmeticOp;
-          arith_op->closure = closure;
-          // TODO return Chunk::Compute({c1, c2}, {c1.Size()}, arith_op)[0];
-          return Chunk();
+          assert(c1.Size() == c2.Size());
+          return Chunk::Compute({c1, c2}, {c1.Size()}, "arithmetic", NewClosureBase(closure))[0];
         }
       );
     return {ret};
@@ -141,10 +139,7 @@ class ArithmeticConstOp : public SharedComputeFn,
     NVector<Chunk>& a = inputs[0];
     NVector<Chunk> ret = a.Map<Chunk>(
         [&] (const Chunk& c) {
-          ArithmeticConstOp* arith_const_op = new ArithmeticConstOp;
-          arith_const_op->closure = closure;
-          // TODO return Chunk::Compute({c}, {c.Size()}, arith_const_op)[0];
-          return Chunk();
+          return Chunk::Compute({c}, {c.Size()}, "arithmeticConstant", NewClosureBase(closure))[0];
         }
       );
     return {ret};
