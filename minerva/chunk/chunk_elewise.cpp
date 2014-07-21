@@ -17,25 +17,25 @@ Chunk BinaryElewiseCompute(Chunk lhs, Chunk rhs, PhysicalComputeFn* op) {
   return Chunk();
 }
 
-Chunk ArithmicHelper(Chunk lhs, Chunk rhs, enum ArithmicType type) {
-  // ArithmicOp* arith_op = new ArithmicOp;
+Chunk ArithmeticHelper(Chunk lhs, Chunk rhs, enum ArithmeticType type) {
+  // ArithmeticOp* arith_op = new ArithmeticOp;
   // arith_op->closure = {type};
   // return BinaryElewiseCompute(lhs, rhs, arith_op);
   return Chunk();
 }
 
-Chunk ArithmicConstHelper(Chunk narr, float val, int side, enum ArithmicType type) {
-  // ArithmicConstOp* arith_const_op = new ArithmicConstOp;
+Chunk ArithmeticConstHelper(Chunk narr, float val, int side, enum ArithmeticType type) {
+  // ArithmeticConstOp* arith_const_op = new ArithmeticConstOp;
   // arith_const_op->closure = {type, val, side};
   // return UnaryElewiseCompute(narr, arith_const_op);
   return Chunk();
 }
 
 void Chunk::operator += (float val) {
-  *this = ArithmicConstHelper(*this, val, 1, ADD);
+  *this = ArithmeticConstHelper(*this, val, 1, ADD);
 }
 void Chunk::operator += (Chunk ch) {
-  *this = ArithmicHelper(*this, ch, ADD);
+  *this = ArithmeticHelper(*this, ch, ADD);
 }
 
 } // end of namespace minerva

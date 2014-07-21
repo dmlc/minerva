@@ -23,14 +23,14 @@ NArray ElewiseHelper(NArray narr, enum ElewiseType type) {
   return UnaryElewiseCompute(narr, elewise_op);
 }
 
-NArray ArithmicHelper(NArray lhs, NArray rhs, enum ArithmicType type) {
-  ArithmicOp* arith_op = new ArithmicOp;
+NArray ArithmeticHelper(NArray lhs, NArray rhs, enum ArithmeticType type) {
+  ArithmeticOp* arith_op = new ArithmeticOp;
   arith_op->closure = {type};
   return BinaryElewiseCompute(lhs, rhs, arith_op);
 }
 
-NArray ArithmicConstHelper(NArray narr, float val, int side, enum ArithmicType type) {
-  ArithmicConstOp* arith_const_op = new ArithmicConstOp;
+NArray ArithmeticConstHelper(NArray narr, float val, int side, enum ArithmeticType type) {
+  ArithmeticConstOp* arith_const_op = new ArithmeticConstOp;
   arith_const_op->closure = {type, val, side};
   return UnaryElewiseCompute(narr, arith_const_op);
 }
@@ -47,68 +47,68 @@ NArray Elewise::Sigmoid(NArray narr) {
   return ElewiseHelper(narr, SIGMOID);
 }
 NArray Elewise::Mult(NArray lhs, NArray rhs) {
-  return ArithmicHelper(lhs, rhs, MULT);
+  return ArithmeticHelper(lhs, rhs, MULT);
 }
 NArray NArray::operator - () {
   return ElewiseHelper(*this, NEGATIVE);
 }
 NArray operator + (NArray lhs, NArray rhs) {
-  return ArithmicHelper(lhs, rhs, ADD);
+  return ArithmeticHelper(lhs, rhs, ADD);
 }
 NArray operator - (NArray lhs, NArray rhs) {
-  return ArithmicHelper(lhs, rhs, SUB);
+  return ArithmeticHelper(lhs, rhs, SUB);
 }
 NArray operator / (NArray lhs, NArray rhs) {
-  return ArithmicHelper(lhs, rhs, DIV);
+  return ArithmeticHelper(lhs, rhs, DIV);
 }
 NArray operator + (float lhs, NArray rhs) {
-  return ArithmicConstHelper(rhs, lhs, 0, ADD);
+  return ArithmeticConstHelper(rhs, lhs, 0, ADD);
 }
 NArray operator - (float lhs, NArray rhs) {
-  return ArithmicConstHelper(rhs, lhs, 0, SUB);
+  return ArithmeticConstHelper(rhs, lhs, 0, SUB);
 }
 NArray operator * (float lhs, NArray rhs) {
-  return ArithmicConstHelper(rhs, lhs, 0, MULT);
+  return ArithmeticConstHelper(rhs, lhs, 0, MULT);
 }
 NArray operator / (float lhs, NArray rhs) {
-  return ArithmicConstHelper(rhs, lhs, 0, DIV);
+  return ArithmeticConstHelper(rhs, lhs, 0, DIV);
 }
 NArray operator + (NArray lhs, float rhs) {
-  return ArithmicConstHelper(lhs, rhs, 1, ADD);
+  return ArithmeticConstHelper(lhs, rhs, 1, ADD);
 }
 NArray operator - (NArray lhs, float rhs) {
-  return ArithmicConstHelper(lhs, rhs, 1, SUB);
+  return ArithmeticConstHelper(lhs, rhs, 1, SUB);
 }
 NArray operator * (NArray lhs, float rhs) {
-  return ArithmicConstHelper(lhs, rhs, 1, MULT);
+  return ArithmeticConstHelper(lhs, rhs, 1, MULT);
 }
 NArray operator / (NArray lhs, float rhs) {
-  return ArithmicConstHelper(lhs, rhs, 1, DIV);
+  return ArithmeticConstHelper(lhs, rhs, 1, DIV);
 }
 
 void NArray::operator += (NArray narr) {
-  *this = ArithmicHelper(*this, narr, ADD);
+  *this = ArithmeticHelper(*this, narr, ADD);
 }
 void NArray::operator -= (NArray narr) {
-  *this = ArithmicHelper(*this, narr, SUB);
+  *this = ArithmeticHelper(*this, narr, SUB);
 }
 void NArray::operator *= (NArray narr) {
-  *this = ArithmicHelper(*this, narr, MULT);
+  *this = ArithmeticHelper(*this, narr, MULT);
 }
 void NArray::operator /= (NArray narr) {
-  *this = ArithmicHelper(*this, narr, DIV);
+  *this = ArithmeticHelper(*this, narr, DIV);
 }
 void NArray::operator += (float val) {
-  *this = ArithmicConstHelper(*this, val, 1, ADD);
+  *this = ArithmeticConstHelper(*this, val, 1, ADD);
 }
 void NArray::operator -= (float val) {
-  *this = ArithmicConstHelper(*this, val, 1, SUB);
+  *this = ArithmeticConstHelper(*this, val, 1, SUB);
 }
 void NArray::operator *= (float val) {
-  *this = ArithmicConstHelper(*this, val, 1, MULT);
+  *this = ArithmeticConstHelper(*this, val, 1, MULT);
 }
 void NArray::operator /= (float val) {
-  *this = ArithmicConstHelper(*this, val, 1, DIV);
+  *this = ArithmeticConstHelper(*this, val, 1, DIV);
 }
 
 } // end of namespace minerva

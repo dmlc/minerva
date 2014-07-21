@@ -5,8 +5,8 @@
 namespace minerva {
 
 enum ClosureType {
-  ARITHMIC = 0,
-  ARITHMIC_CONST,
+  ARITHMETIC = 0,
+  ARITHMETIC_CONST,
   ELEWISE,
   MAT_MULT,
   REDUCTION,
@@ -38,10 +38,9 @@ struct ArithmeticClosure {
 };
 
 struct ArithmeticConstClosure {
-  ArithmicType type;
+  ArithmeticType type;
   float val;
   int side; // 0 is left, 1 is right
-
 };
 
 struct ElewiseClosure {

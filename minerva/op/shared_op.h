@@ -109,14 +109,14 @@ class ElewiseOp : public SharedComputeFn,
   }
 };
 
-class ArithmicOp : public SharedComputeFn,
-  public ClosureTrait<ArithmicClosure> {
+class ArithmeticOp : public SharedComputeFn,
+  public ClosureTrait<ArithmeticClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     NVector<Chunk> a = inputs[0], b = inputs[1];
     NVector<Chunk> ret = NVector<Chunk>::ZipMap(a, b,
         [&] (const Chunk& c1, const Chunk& c2) {
-          ArithmicOp* arith_op = new ArithmicOp;
+          ArithmeticOp* arith_op = new ArithmeticOp;
           arith_op->closure = closure;
           return Chunk::Compute({c1, c2}, {c1.Size()}, arith_op)[0];
         }
@@ -133,14 +133,14 @@ class ArithmicOp : public SharedComputeFn,
   }
 };
 
-class ArithmicConstOp : public SharedComputeFn,
-  public ClosureTrait<ArithmicConstClosure> {
+class ArithmeticConstOp : public SharedComputeFn,
+  public ClosureTrait<ArithmeticConstClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     NVector<Chunk>& a = inputs[0];
     NVector<Chunk> ret = a.Map<Chunk>(
         [&] (const Chunk& c) {
-          ArithmicConstOp* arith_const_op = new ArithmicConstOp;
+          ArithmeticConstOp* arith_const_op = new ArithmeticConstOp;
           arith_const_op->closure = closure;
           return Chunk::Compute({c}, {c.Size()}, arith_const_op)[0];
         }
