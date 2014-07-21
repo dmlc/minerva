@@ -40,7 +40,7 @@ struct ArithmicClosure {
 struct ArithmicConstClosure {
   ArithmicType type;
   float val;
-  int side; // 0 is left, 1 is right
+  int side; // 0 is left const, 1 is right const
 
 };
 
