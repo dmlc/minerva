@@ -12,8 +12,6 @@ class BasicFn {
 
 class ClosureBase {
  public:
-  ClosureBase() {
-  }
   virtual ~ClosureBase() {
   }
 };
@@ -27,6 +25,13 @@ class ClosureTrait: public ClosureBase {
 template<typename T>
 T& GetClosureFromBase(ClosureBase* base) {
   return dynamic_cast<ClosureTrait<T>*>(base)->closure;
+}
+
+template<typename T>
+ClosureBase* NewClosureBase(const T& closure) {
+  auto trait = new ClosureTrait<T>;
+  trait->closure = closure;
+  return trait;
 }
 
 }

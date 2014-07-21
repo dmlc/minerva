@@ -33,11 +33,11 @@ class Chunk {
   // friend Chunk operator - (float , Chunk );
   // friend Chunk operator * (float , Chunk );
   // friend Chunk operator / (float , Chunk );
-  void operator += (Chunk );
+  void operator += (Chunk);
   // void operator -= (Chunk );
   // void operator *= (Chunk );
   // void operator /= (Chunk );
-  void operator += (float );
+  void operator += (float);
   // void operator -= (float );
   // void operator *= (float );
   // void operator /= (float );
