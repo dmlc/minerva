@@ -12,10 +12,12 @@ namespace minerva {
 
 class PhysicalEngine: public PhysicalDagProcedure {
  public:
+  // TODO use reference to reduce overhead
   PhysicalEngine();
   ~PhysicalEngine();
   PhysicalEngine& RegisterRunner(std::string, RunnerWrapper::Runner);
   RunnerWrapper::ID GetRunnerID(std::string);
+  RunnerWrapper GetRunnerWrapper(RunnerWrapper::ID);
   void Process(PhysicalDag&, std::vector<uint64_t>&);
 
  private:
