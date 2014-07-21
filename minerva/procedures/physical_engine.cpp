@@ -1,5 +1,6 @@
 #include "procedures/physical_engine.h"
 #include "op/op.h"
+#include "system/minerva_system.h"
 
 using namespace std;
 
@@ -38,9 +39,15 @@ void PhysicalEngine::Init() {
 }
 
 void PhysicalEngine::LoadBuiltinRunners() {
-  RegisterRunner("add", [](RunnerWrapper::Operands inputs, RunnerWrapper::Operands outputs, ClosureBase* closure) {
+  RegisterRunner("fill", [](RunnerWrapper::Operands inputs, RunnerWrapper::Operands outputs, ClosureBase* closure_base) {
+    assert(inputs.size() == 0); // This is how we define generators for now
     assert(outputs.size() == 1);
-    GetClosureFromBase<FillClosure>(closure); // Do runtime checking of type
+    auto& closure = GetClosureFromBase<FillClosure>(closure_base); // Do runtime checking of type
+    size_t size = inputs[0]->size.Prod();
+    auto data = MinervaSystem::Instance().data_store().GetData(inputs[0]->data_id, DataStore::CPU);
+    for (size_t i = 0; i < size; ++i) {
+      data[i] = closure.val;
+    }
   });
 }
 
