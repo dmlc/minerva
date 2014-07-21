@@ -10,6 +10,11 @@
 
 namespace minerva {
 
+struct NodeState {
+  enum State {
+    kNoNeed,
+    kReady,
+    kComplete,
 class PhysicalEngine: public PhysicalDagProcedure {
  public:
   // TODO use reference to reduce overhead
