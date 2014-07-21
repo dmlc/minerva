@@ -3,15 +3,18 @@
 #include "system/minerva_system.h"
 #include <random>
 
+#define THREAD_NUM 4
+
 using namespace std;
 
 namespace minerva {
 
-PhysicalEngine::PhysicalEngine() {
+PhysicalEngine::PhysicalEngine(): thread_pool_(THREAD_NUM, this) {
   Init();
 }
 
 PhysicalEngine::~PhysicalEngine() {
+  task_queue_.SignalForKill();
 }
 
 PhysicalEngine& PhysicalEngine::RegisterRunner(string name, RunnerWrapper::Runner runner) {
