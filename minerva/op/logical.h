@@ -17,7 +17,7 @@ class LogicalComputeFn;
 
 class LogicalDataGenFn : public BasicFn {
  public:
-   virtual NVector<Chunk> Expand(const Scale& rst_size) = 0;
+   virtual Chunk Expand(const Scale& size) = 0;
    virtual ~LogicalDataGenFn() {}
 };
 
@@ -29,6 +29,7 @@ class LogicalComputeFn : public BasicFn {
 struct LogicalData {
   Scale size;
   LogicalDataGenFn* data_gen_fn;
+  NVector<PartInfo> partitions;
   //DataNodeContext context; // TODO how to set context ?
 };
 
@@ -36,14 +37,27 @@ struct LogicalOp {
   LogicalComputeFn* compute_fn;
 };
 
-/*
-template<class T>
-class LogicalComputeFnWithClosure : public LogicalComputeFn {
+////////////////////////// Helper functions for logical op
+template<int num_outputs, int num_inputs>
+class LogicalComputeFnTemp : public LogicalComputeFn {
+};
+
+template<>
+class LogicalComputeFnTemp<1, 1> : public LogicalComputeFn {
  public:
-  T closure; // Q: why we isolate the closure here ? A: simply because i'm too lazy
-             // to write constructors for every operators, and it's quite elegant to
-             // use brace-initializer.
-  //OpNodeContext context; // TODO how to set context ?
-};*/
+  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+    return {ExpandReal(inputs[0])};
+  }
+  virtual NVector<Chunk> ExpandReal(NVector<Chunk> in) = 0;
+};
+
+template<>
+class LogicalComputeFnTemp<1, 2> : public LogicalComputeFn {
+ public:
+  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+    return {ExpandReal(inputs[0], inputs[1])};
+  }
+  virtual NVector<Chunk> ExpandReal(NVector<Chunk> in1, NVector<Chunk> in2) = 0;
+};
 
 }// end of namespace minerva

@@ -1,6 +1,6 @@
 #include "chunk.h"
-#include "dag/dag.h"
-#include "op/physical_op.h"
+#include "dag/physical_dag.h"
+#include "op/physical.h"
 #include "system/minerva_system.h"
 #include <cassert>
 #include <functional>
@@ -10,42 +10,6 @@
 using namespace std;
 
 namespace minerva {
-
-/*void MatrixMultiply(vector<DataNode*> inputs, vector<DataNode*> outputs) {
-  cout << "Do matrix multiply" << endl;
-  float* a = DataStore::Instance().GetData(inputs[0]->data_id(), DataStore::CPU);
-  float* b = DataStore::Instance().GetData(inputs[1]->data_id(), DataStore::CPU);
-  float* c = DataStore::Instance().GetData(outputs[0]->data_id(), DataStore::CPU);
-  int m = outputs[0]->meta().size[0];
-  int n = outputs[0]->meta().size[1];
-  int k = inputs[0]->meta().size[1];
-  for(int i = 0; i < m; ++i)
-    for(int j = 0; j < n; ++j) {
-      c[i * n + j] = 0.0;
-      for(int l = 0; l < k; ++l)
-        c[i * n + j] += a[i * k + l] * b[l * n + j];
-    }
-}
-void MatrixAdd(vector<DataNode*> inputs, DataNode* output) {
-  cout << "Do matrix addition" << endl;
-  vector<float*> inptrs;
-  for(auto innode : inputs)
-    inptrs.push_back(DataStore::Instance().GetData(innode->data_id(), DataStore::CPU));
-  float* outptrs = DataStore::Instance().GetData(output->data_id(), DataStore::CPU);
-  size_t len = output->meta().length;
-  for(size_t i = 0; i < len; ++i) {
-    outptrs[i] = 0.0;
-    for(size_t j = 0; j < inptrs.size(); ++j)
-      outptrs[i] += inptrs[j][i];
-  }
-}
-void FillConstant(DataNode* out, float val) {
-  cout << "Do filling constants" << endl;
-  float* a = DataStore::Instance().GetData(out->data_id(), DataStore::CPU);
-  size_t len = out->meta().length;
-  for(size_t i = 0; i < len; ++i)
-    a[i] = val;
-}*/
 
 Chunk operator+(const Chunk& a, const Chunk& b) {
   assert(a.Size() == b.Size());
@@ -143,13 +107,20 @@ vector<Chunk> Chunk::Compute(const vector<Chunk>& params, const vector<Scale>& r
 }
 
 Chunk Chunk::Generate(const Scale& result_size, const string& runner_name, ClosureBase* closure) {
-  auto& pdag = MinervaSystem::Instance().physical_dag();
+  /*auto& pdag = MinervaSystem::Instance().physical_dag();
   auto& pengine = MinervaSystem::Instance().physical_engine();
   PhysicalData pdata(result_size);
   pdata.generator_id = pengine.GetRunnerID(runner_name);
   pdata.closure = closure;
   PhysicalDataNode* rst_node = pdag.NewDataNode(pdata);
-  return Chunk(rst_node);
+  return Chunk(rst_node);*/
+  // TODO
+  return Chunk();
+}
+
+NVector<Chunk> Chunk::Split(const NVector<Scale>& partsizes) {
+  // TODO
+  return NVector<Chunk>();
 }
 
 } // end of namespace minerva

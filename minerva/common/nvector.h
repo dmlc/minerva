@@ -24,6 +24,9 @@ public:
 	T& operator[] (const Scale& idx) {
 		return data_[range_.Flatten(idx)];
 	}
+  bool operator == (const NVector<T>& other) const {
+    return data_ == other.data_ && range_ == other.range_;
+  }
 	size_t Length() const {
 		return data_.size();
 	}
@@ -33,6 +36,9 @@ public:
 	int Size(int dim) const {
 		return range_.Dim()[dim];
 	}
+  bool IsEmpty() const {
+    return range_.Area() == 0;
+  }
 	void Resize(const Scale& size) {
 		data_.resize(size.Prod());
 		range_ = ScaleRange::MakeRange(Scale::Origin(size.NumDims()), size);

@@ -28,12 +28,16 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
     }
     if(curnode->Type() == DagNode::DATA_NODE) { // data node
       LogicalDag::DNode* dnode = dynamic_cast<LogicalDag::DNode*>(curnode);
+      // call expand function to generate data
       LogicalDataGenFn* fn = dnode->data_.data_gen_fn;
-      if(fn != NULL) {
-        cout << "Logical datagen function: " << fn->Name() << endl;
-        NVector<Chunk> chunks = fn->Expand(dnode->data_.size);
-        MakeMapping(dnode, chunks);
-      }
+      assert(fn != NULL);
+      cout << "Logical datagen function: " << fn->Name() << endl;
+      NVector<Chunk> chunks = dnode->data_.partitions.Map<Chunk>(
+          [fn] (const PartInfo& partinfo) {
+            return fn->Expand(partinfo.size);
+          }
+        );
+      MakeMapping(dnode, chunks);
     }
     else { // op node
       LogicalDag::ONode* onode = dynamic_cast<LogicalDag::ONode*>(curnode);

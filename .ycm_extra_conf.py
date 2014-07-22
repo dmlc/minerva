@@ -69,8 +69,6 @@ flags = [
 #'../llvm/tools/clang/include',
 '-I',
 './minerva',
-'-I',
-'./deps/local/include'
 ]
 
 # Set this to the absolute path to the folder (NOT the file!) containing the
@@ -132,11 +130,18 @@ def FlagsForFile( filename ):
     # NOTE: This is just for YouCompleteMe; it's highly likely that your project
     # does NOT need to remove the stdlib flag. DO NOT USE THIS IN YOUR
     # ycm_extra_conf IF YOU'RE NOT 100% YOU NEED IT.
-    try:
-      final_flags.remove( '-stdlib=libc++' )
-    except ValueError:
-      pass
+    #try:
+      #final_flags.remove( '-stdlib=libc++' )
+    #except ValueError:
+      #pass
   else:
+    config_file = open('configure.in')
+    for line in config_file.readlines():
+      if line.find('INCLUDE') >= 0:
+        ex_in_path = line.split('=')[-1]
+        if(len(ex_in_path) > 0):
+          flags.append('-I')
+          flags.append(ex_in_path.strip())
     relative_to = DirectoryOfThisScript()
     final_flags = MakeRelativePathsInFlagsAbsolute( flags, relative_to )
 

@@ -49,7 +49,6 @@ class DataNode : public DagNode {
 template<typename Data, typename Op>
 class OpNode : public DagNode {
   typedef DataNode<Data, Op> DNode;
-
  public:
   OpNode() {}
   NodeTypes Type() const { return DagNode::OP_NODE; }

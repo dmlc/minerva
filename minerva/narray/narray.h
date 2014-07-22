@@ -38,11 +38,14 @@ class NArray {
   friend class Convolution;
   friend class MinervaSystem;
  public:
-  static NArray Constant(const Scale& size, float val,
-      const Scale& numparts = Scale::kNullScale);
-  static NArray Randn(const Scale& size, float mu, float var,
-      const Scale& numparts = Scale::kNullScale);
+  static NArray Constant(const Scale& size, float val, 
+      const NVector<PartInfo>& = NVector<PartInfo>());
+  static NArray Randn(const Scale& size, float mu, float var, 
+      const NVector<PartInfo>& = NVector<PartInfo>());
+  static NArray Constant(const Scale& size, float val, const Scale& );
+  static NArray Randn(const Scale& size, float mu, float var, const Scale& );
   NArray();
+  ~NArray();
  public:
   // element-wise
   friend NArray operator + (NArray, NArray);
@@ -88,10 +91,12 @@ class NArray {
   // customize operator
   static std::vector<NArray> Compute(std::vector<NArray> params,
       std::vector<Scale> result_sizes, LogicalComputeFn* fn);
-  static NArray Generate(const Scale& size, LogicalDataGenFn* fn);
+  static NArray Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<PartInfo>& parts);
+  static NArray Generate(const Scale& size, LogicalDataGenFn* fn, const Scale& numparts);
 
   // system
   void Eval();
+  NArray RePartition(const NVector<PartInfo>& partitions);
 
  private:
   NArray(LogicalDataNode* node);

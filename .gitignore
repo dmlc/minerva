@@ -34,3 +34,6 @@ tags
 # Vagrant files
 .vagrant
 Vagrantfile
+
+# configure file
+configure.in

@@ -4,7 +4,7 @@
 
 namespace minerva {
 
-enum ClosureType {
+/*enum ClosureType {
   ARITHMETIC = 0,
   ARITHMETIC_CONST,
   ELEWISE,
@@ -12,7 +12,7 @@ enum ClosureType {
   REDUCTION,
   CONV,
   // TODO how to generate this when adding new closure types ?
-};
+};*/
 
 enum ArithmeticType {
   ADD = 0,
@@ -40,7 +40,7 @@ struct ArithmeticClosure {
 struct ArithmeticConstClosure {
   ArithmeticType type;
   float val;
-  int side; // 0 is left, 1 is right
+  int side; // 0 is left const, 1 is right const
 };
 
 struct ElewiseClosure {
@@ -65,13 +65,10 @@ struct ConvInfo {
 
 struct RandnClosure {
   float mu, var;
-  Scale numparts;
 };
 
 struct FillClosure {
   float val;
-  Scale numparts;
 };
 
 } // end of namespace minerva
-

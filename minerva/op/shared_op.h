@@ -1,23 +1,26 @@
 #pragma once
-#include "shared.h"
-#include "closure.h"
 #include <sstream>
 #include <vector>
 
+#include "logical.h"
+#include "physical.h"
+#include "closure.h"
+
 namespace minerva {
+
+class SharedDataGenFn : public LogicalDataGenFn, public PhysicalDataGenFn {
+};
+
+class SharedComputeFn : public LogicalComputeFn, public PhysicalComputeFn {
+};
 
 ///////////////////////////////////////////////////
 // Data generate functions
 ///////////////////////////////////////////////////
 class RandnOp : public SharedDataGenFn, public ClosureTrait<RandnClosure> {
  public:
-  NVector<Chunk> Expand(const Scale& size) {
-    NVector<Scale> partsizes = size.EquallySplit(closure.numparts);
-    NVector<Chunk> rst_chunks = partsizes.Map<Chunk>(
-      [&] (const Scale& size)->Chunk {
-        return Chunk::Randn(size, closure.mu, closure.var);
-      });
-    return rst_chunks;
+  Chunk Expand(const Scale& size) {
+    return Chunk::Randn(size, closure.mu, closure.var);
   }
   std::string Name() const {
     return ":randn";
@@ -26,13 +29,8 @@ class RandnOp : public SharedDataGenFn, public ClosureTrait<RandnClosure> {
 
 class FillOp : public SharedDataGenFn, public ClosureTrait<FillClosure> {
  public:
-  NVector<Chunk> Expand(const Scale& size) {
-    NVector<Scale> partsizes = size.EquallySplit(closure.numparts);
-    NVector<Chunk> rst_chunks = partsizes.Map<Chunk>(
-      [&] (const Scale& size)->Chunk {
-        return Chunk::Constant(size, closure.val);
-      });
-    return rst_chunks;
+  Chunk Expand(const Scale& size) {
+    return Chunk::Constant(size, closure.val);
   }
   std::string Name() const {
     std::stringstream ss;
@@ -59,11 +57,13 @@ class MatMultOp : public SharedComputeFn {
     NVector<Chunk> c({m, n});
     for(int i = 0 ; i < m; ++i) {
       for(int j = 0; j < n; ++j) {
-        int row = a[{i, 0}].Size(0);
-        int col = b[{0, j}].Size(1);
-        c[{i, j}] = Chunk::Constant({row, col}, 0.0);
         for(int l = 0; l < k; ++l) {
-          c[{i, j}] += a[{i, l}] * b[{l, j}];
+          if(l == 0) {
+            c[{i, j}] = a[{i, l}] * b[{l, j}];
+          }
+          else {
+            c[{i, j}] += a[{i, l}] * b[{l, j}];
+          }
         }
       }
     }
@@ -95,9 +95,14 @@ class ElewiseOp : public SharedComputeFn,
   public ClosureTrait<ElewiseClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
-    //TODO
-    assert(false);
-    return std::vector<NVector<Chunk>>();
+    NVector<Chunk> ret = inputs[0].Map<Chunk>(
+        [&] (const Chunk& ch) {
+          ElewiseOp* elewise_op = new ElewiseOp;
+          elewise_op->closure = closure;
+          return Chunk::Compute({ch}, {ch.Size()}, elewise_op)[0];
+        }
+      );
+    return {ret};
   }
   std::string Name() const {
     switch(closure.type) {
@@ -106,6 +111,7 @@ class ElewiseOp : public SharedComputeFn,
       case SIGMOID:  return "sigmoid";
       case NEGATIVE: return "-";
     };
+    return "NA";
   }
 };
 
@@ -129,6 +135,7 @@ class ArithmeticOp : public SharedComputeFn,
       case MULT:  return ".*";
       case DIV:   return "./";
     };
+    return "NA";
   }
 };
 
