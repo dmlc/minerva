@@ -24,6 +24,7 @@ class LogicalDataGenFn : public BasicFn {
 class LogicalComputeFn : public BasicFn {
  public:
   virtual std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) = 0;
+  virtual ~LogicalComputeFn() {}
 };
 
 struct LogicalData {

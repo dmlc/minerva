@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common/scale.h"
+#include "impl/impl.h"
 
 namespace minerva {
 
@@ -14,7 +15,7 @@ const Place kUnknownPlace = {-1, -1, -1};
 
 struct OpNodeContext {
   Place place;
-  int impl_type; // -1 is dynamic, 0 is basic, 1 is MKL, 2 is CUDA
+  IMPL_TYPE impl_type; // -1 is dynamic, 0 is basic, 1 is MKL, 2 is CUDA
 };
 
 struct DataNodeContext {

@@ -5,19 +5,32 @@
 #include "logical.h"
 #include "physical.h"
 #include "closure.h"
+#include "impl/bundle.h"
 
 namespace minerva {
 
-class SharedDataGenFn : public LogicalDataGenFn, public PhysicalDataGenFn {
+template<class C>
+class SharedDataGenFnWithClosure :
+  public LogicalDataGenFn, public PhysicalDataGenFn, public ClosureTrait<C> {
+ public:
+  void Execute(DataShard output, IMPL_TYPE impl_type) {
+    FnBundle<C>::Call(output, ClosureTrait<C>::closure, impl_type);
+  }
 };
 
-class SharedComputeFn : public LogicalComputeFn, public PhysicalComputeFn {
+template<class C>
+class SharedComputeFnWithClosure :
+  public LogicalComputeFn, public PhysicalComputeFn, public ClosureTrait<C> {
+ public:
+  void Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) {
+    FnBundle<C>::Call(inputs, outputs, ClosureTrait<C>::closure, impl_type);
+  }
 };
 
 ///////////////////////////////////////////////////
 // Data generate functions
 ///////////////////////////////////////////////////
-class RandnOp : public SharedDataGenFn, public ClosureTrait<RandnClosure> {
+class RandnOp : public SharedDataGenFnWithClosure<RandnClosure> {
  public:
   Chunk Expand(const Scale& size) {
     return Chunk::Randn(size, closure.mu, closure.var);
@@ -27,7 +40,7 @@ class RandnOp : public SharedDataGenFn, public ClosureTrait<RandnClosure> {
   }
 };
 
-class FillOp : public SharedDataGenFn, public ClosureTrait<FillClosure> {
+class FillOp : public SharedDataGenFnWithClosure<FillClosure> {
  public:
   Chunk Expand(const Scale& size) {
     return Chunk::Constant(size, closure.val);
@@ -43,7 +56,7 @@ class FillOp : public SharedDataGenFn, public ClosureTrait<FillClosure> {
 // Compute functions
 ///////////////////////////////////////////////////
 
-class MatMultOp : public SharedComputeFn {
+class MatMultOp : public SharedComputeFnWithClosure<MatMultClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     NVector<Chunk> a = inputs[0];
@@ -74,7 +87,7 @@ class MatMultOp : public SharedComputeFn {
   }
 };
 
-class TransOp : public SharedComputeFn {
+class TransOp : public SharedComputeFnWithClosure<TransposeClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     NVector<Chunk> in = inputs[0];
@@ -91,8 +104,7 @@ class TransOp : public SharedComputeFn {
   }
 };
 
-class ElewiseOp : public SharedComputeFn,
-  public ClosureTrait<ElewiseClosure> {
+class ElewiseOp : public SharedComputeFnWithClosure<ElewiseClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     NVector<Chunk> ret = inputs[0].Map<Chunk>(
@@ -115,15 +127,16 @@ class ElewiseOp : public SharedComputeFn,
   }
 };
 
-class ArithmeticOp : public SharedComputeFn,
-  public ClosureTrait<ArithmeticClosure> {
+class ArithmeticOp : public SharedComputeFnWithClosure<ArithmeticClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     NVector<Chunk> a = inputs[0], b = inputs[1];
     NVector<Chunk> ret = NVector<Chunk>::ZipMap(a, b,
         [&] (const Chunk& c1, const Chunk& c2) {
           assert(c1.Size() == c2.Size());
-          return Chunk::Compute({c1, c2}, {c1.Size()}, "arithmetic", NewClosureBase(closure))[0];
+          ArithmeticOp* arith_op = new ArithmeticOp;
+          arith_op->closure = closure;
+          return Chunk::Compute({c1, c2}, {c1.Size()}, arith_op)[0];
         }
       );
     return {ret};
@@ -139,14 +152,15 @@ class ArithmeticOp : public SharedComputeFn,
   }
 };
 
-class ArithmeticConstOp : public SharedComputeFn,
-  public ClosureTrait<ArithmeticConstClosure> {
+class ArithmeticConstOp : public SharedComputeFnWithClosure<ArithmeticConstClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     NVector<Chunk>& a = inputs[0];
     NVector<Chunk> ret = a.Map<Chunk>(
         [&] (const Chunk& c) {
-          return Chunk::Compute({c}, {c.Size()}, "arithmeticConstant", NewClosureBase(closure))[0];
+          ArithmeticConstOp* aconst_op = new ArithmeticConstOp;
+          aconst_op->closure = closure;
+          return Chunk::Compute({c}, {c.Size()}, aconst_op)[0];
         }
       );
     return {ret};

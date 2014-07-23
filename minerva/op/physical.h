@@ -1,7 +1,8 @@
 #pragma once
 #include "common/scale.h"
-#include "context.h"
+#include "impl/impl.h"
 #include "op.h"
+#include "context.h"
 
 namespace minerva {
 
@@ -22,7 +23,7 @@ struct PhysicalData {
 
 struct PhysicalOp {
   Place place;
-  int impl_type;
+  IMPL_TYPE impl_type;
   PhysicalComputeFn* compute_fn;
 };
 
@@ -48,42 +49,33 @@ class DataShard {
  private:
   PhysicalData& data_info_;
 };
+typedef std::vector<DataShard> DataList;
 
 class PhysicalDataGenFn : public BasicFn {
  public:
-  virtual void Execute(DataShard output, int impl_type) = 0;
+  virtual void Execute(DataShard output, IMPL_TYPE impl_type) = 0;
 };
 
 class PhysicalComputeFn : public BasicFn {
  public:
-  virtual void Execute(std::vector<DataShard> inputs, 
-      std::vector<DataShard> outputs, int impl_type) = 0;
+  virtual void Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) = 0;
 };
 
-template<class T>
-class BundleTrait {
- protected:
-  T fn_bundle_;
-};
-
-template<class B, class C>
-class PhyDataGenFnTempl :
-  public PhysicalDataGenFn,
-  public BundleTrait<B>, public ClosureTrait<C> {
+template<class C>
+class PhyDataGenFnWithClosure :
+  public PhysicalDataGenFn, public ClosureTrait<C> {
  public:
-  void Execute(DataShard output, int impl_type) {
-    BundleTrait<B>::fn_bundle_[impl_type](output, ClosureTrait<C>::closure);
+  void Execute(DataShard output, IMPL_TYPE impl_type) {
+    FnBundle<C>::Call(output, ClosureTrait<C>::closure, impl_type);
   }
 };
 
-template<class B, class C>
-class PhyComputeFnTempl :
-  public PhysicalComputeFn,
-  public BundleTrait<B>, public ClosureTrait<C> {
+template<class C>
+class PhyComputeFnWithClosure :
+  public PhysicalComputeFn, public ClosureTrait<C> {
  public:
-  void Execute(std::vector<DataShard> inputs, 
-      std::vector<DataShard> outputs, int impl_type) {
-    BundleTrait<B>::fn_bundle_[impl_type](inputs, outputs, ClosureTrait<C>::closure);
+  void Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) {
+    FnBundle<C>::Call(inputs, outputs, ClosureTrait<C>::closure, impl_type);
   }
 };
 
