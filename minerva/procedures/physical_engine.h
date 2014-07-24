@@ -1,7 +1,6 @@
 #pragma once
 #include "procedures/dag_procedure.h"
 #include "procedures/thread_pool.h"
-#include "op/runner_wrapper.h"
 #include "common/common.h"
 #include <functional>
 #include <string>
@@ -42,18 +41,18 @@ class PhysicalEngine: public PhysicalDagProcedure {
   // TODO use reference to reduce overhead
   PhysicalEngine();
   ~PhysicalEngine();
-  PhysicalEngine& RegisterRunner(std::string, RunnerWrapper::Runner);
-  RunnerWrapper::ID GetRunnerID(std::string);
-  const RunnerWrapper& GetRunnerWrapper(RunnerWrapper::ID);
+  //PhysicalEngine& RegisterRunner(std::string, RunnerWrapper::Runner);
+  //RunnerWrapper::ID GetRunnerID(std::string);
+  //const RunnerWrapper& GetRunnerWrapper(RunnerWrapper::ID);
   void Process(PhysicalDag&, std::vector<uint64_t>&);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(PhysicalEngine);
   void Init();
   void LoadBuiltinRunners();
-  std::unordered_map<RunnerWrapper::ID, RunnerWrapper> runners_;
-  std::unordered_map<std::string, RunnerWrapper::ID> reverse_lookup_;
-  RunnerWrapper::ID index_ = 0;
+  //std::unordered_map<RunnerWrapper::ID, RunnerWrapper> runners_;
+  //std::unordered_map<std::string, RunnerWrapper::ID> reverse_lookup_;
+  //RunnerWrapper::ID index_ = 0;
 
   void CommitDagChanges();
   std::unordered_set<DagNode*> FindRootNodes(const std::vector<uint64_t>&);

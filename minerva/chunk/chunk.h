@@ -1,12 +1,9 @@
 #pragma once
 #include "common/scale.h"
 #include "common/nvector.h"
+#include "dag/physical_dag.h"
 
 namespace minerva {
-
-class PhysicalDataNode;
-class PhysicalComputeFn;
-class PhysicalDataGenFn;
 
 class Chunk {
   friend class ChunkElewise;
@@ -33,13 +30,12 @@ class Chunk {
   friend Chunk operator / (float, Chunk);
   void operator += (Chunk );
   void operator -= (Chunk );
-  void operator *= (Chunk );
   void operator /= (Chunk );
   void operator += (float );
   void operator -= (float );
   void operator *= (float );
   void operator /= (float );
-  void operator - ();
+  Chunk operator - ();
   // Matrix multiplication
   friend Chunk operator * (Chunk, Chunk); // Matrix multiplication
 
@@ -50,8 +46,8 @@ class Chunk {
   NVector<Chunk> Split(const NVector<Scale>& partsizes);
 
   // customized operations
-  static std::vector<Chunk> Compute(std::vector<Chunk> params,
-      std::vector<Scale> result_sizes, PhysicalComputeFn* fn);
+  static std::vector<Chunk> Compute(const std::vector<Chunk>& params,
+      const std::vector<Scale>& result_sizes, PhysicalComputeFn* fn);
   static Chunk Generate(const Scale& result_size, PhysicalDataGenFn* fn);
 
  private:
@@ -63,6 +59,7 @@ class ChunkElewise {
   static Chunk Exp(Chunk);
   static Chunk Ln(Chunk);
   static Chunk Sigmoid(Chunk);
+  static Chunk Mult(Chunk, Chunk);
 };
 
 } // end of namespace minerva
