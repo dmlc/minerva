@@ -1,38 +1,49 @@
 #pragma once
-
 #include <sstream>
-#include "shared.h"
+#include <vector>
+
+#include "logical.h"
+#include "physical.h"
 #include "closure.h"
+#include "impl/bundle.h"
 
 namespace minerva {
+
+template<class C>
+class SharedDataGenFnWithClosure :
+  public LogicalDataGenFn, public PhysicalDataGenFn, public ClosureTrait<C> {
+ public:
+  void Execute(DataShard output, IMPL_TYPE impl_type) {
+    FnBundle<C>::Call(output, ClosureTrait<C>::closure, impl_type);
+  }
+};
+
+template<class C>
+class SharedComputeFnWithClosure :
+  public LogicalComputeFn, public PhysicalComputeFn, public ClosureTrait<C> {
+ public:
+  void Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) {
+    FnBundle<C>::Call(inputs, outputs, ClosureTrait<C>::closure, impl_type);
+  }
+};
 
 ///////////////////////////////////////////////////
 // Data generate functions
 ///////////////////////////////////////////////////
-class RandnOp : public SharedDataGenFn, public ClosureTrait<RandnClosure> {
+class RandnOp : public SharedDataGenFnWithClosure<RandnClosure> {
  public:
-  NVector<Chunk> Expand(const Scale& size) {
-    NVector<Scale> partsizes = size.EquallySplit(closure.numparts);
-    NVector<Chunk> rst_chunks = partsizes.Map<Chunk>(
-      [&] (const Scale& size)->Chunk {
-        return Chunk::Randn(size, closure.mu, closure.var);
-      });
-    return rst_chunks;
+  Chunk Expand(const Scale& size) {
+    return Chunk::Randn(size, closure.mu, closure.var);
   }
   std::string Name() const {
     return ":randn";
   }
 };
 
-class FillOp : public SharedDataGenFn, public ClosureTrait<FillClosure> {
+class FillOp : public SharedDataGenFnWithClosure<FillClosure> {
  public:
-  NVector<Chunk> Expand(const Scale& size) {
-    NVector<Scale> partsizes = size.EquallySplit(closure.numparts);
-    NVector<Chunk> rst_chunks = partsizes.Map<Chunk>(
-      [&] (const Scale& size)->Chunk {
-        return Chunk::Constant(size, closure.val);
-      });
-    return rst_chunks;
+  Chunk Expand(const Scale& size) {
+    return Chunk::Constant(size, closure.val);
   }
   std::string Name() const {
     std::stringstream ss;
@@ -45,7 +56,7 @@ class FillOp : public SharedDataGenFn, public ClosureTrait<FillClosure> {
 // Compute functions
 ///////////////////////////////////////////////////
 
-class MatMultOp : public SharedComputeFn {
+class MatMultOp : public SharedComputeFnWithClosure<MatMultClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     NVector<Chunk> a = inputs[0];
@@ -76,7 +87,7 @@ class MatMultOp : public SharedComputeFn {
   }
 };
 
-class TransOp : public SharedComputeFn {
+class TransOp : public SharedComputeFnWithClosure<TransposeClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     NVector<Chunk> in = inputs[0];
@@ -93,8 +104,7 @@ class TransOp : public SharedComputeFn {
   }
 };
 
-class ElewiseOp : public SharedComputeFn,
-  public ClosureTrait<ElewiseClosure> {
+class ElewiseOp : public SharedComputeFnWithClosure<ElewiseClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     NVector<Chunk> ret = inputs[0].Map<Chunk>(
@@ -117,14 +127,14 @@ class ElewiseOp : public SharedComputeFn,
   }
 };
 
-class ArithmicOp : public SharedComputeFn,
-  public ClosureTrait<ArithmicClosure> {
+class ArithmeticOp : public SharedComputeFnWithClosure<ArithmeticClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     NVector<Chunk> a = inputs[0], b = inputs[1];
     NVector<Chunk> ret = NVector<Chunk>::ZipMap(a, b,
         [&] (const Chunk& c1, const Chunk& c2) {
-          ArithmicOp* arith_op = new ArithmicOp;
+          assert(c1.Size() == c2.Size());
+          ArithmeticOp* arith_op = new ArithmeticOp;
           arith_op->closure = closure;
           return Chunk::Compute({c1, c2}, {c1.Size()}, arith_op)[0];
         }
@@ -142,16 +152,15 @@ class ArithmicOp : public SharedComputeFn,
   }
 };
 
-class ArithmicConstOp : public SharedComputeFn,
-  public ClosureTrait<ArithmicConstClosure> {
+class ArithmeticConstOp : public SharedComputeFnWithClosure<ArithmeticConstClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     NVector<Chunk>& a = inputs[0];
     NVector<Chunk> ret = a.Map<Chunk>(
         [&] (const Chunk& c) {
-          ArithmicConstOp* arith_const_op = new ArithmicConstOp;
-          arith_const_op->closure = closure;
-          return Chunk::Compute({c}, {c.Size()}, arith_const_op)[0];
+          ArithmeticConstOp* aconst_op = new ArithmeticConstOp;
+          aconst_op->closure = closure;
+          return Chunk::Compute({c}, {c.Size()}, aconst_op)[0];
         }
       );
     return {ret};

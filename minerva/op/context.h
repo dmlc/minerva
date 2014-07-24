@@ -1,42 +1,41 @@
 #pragma once
 
+#include "common/scale.h"
+#include "impl/impl.h"
+
 namespace minerva {
 
 struct Place {
   int procid;
   int device_type; // 0 is CPU, 1 is GPU
   int device_id; // which core or which GPU
-  Place(): procid(0), device_type(0), device_id(0) {}
 };
+
+const Place kUnknownPlace = {-1, -1, -1};
 
 struct OpNodeContext {
   Place place;
-  int impl_type; // -1 is dynamic, 0 is basic, 1 is MKL, 2 is CUDA
-  OpNodeContext(): impl_type(0) {}
+  IMPL_TYPE impl_type; // -1 is dynamic, 0 is basic, 1 is MKL, 2 is CUDA
 };
 
 struct DataNodeContext {
-  bool transpose;
-  DataNodeContext(): transpose(false) {}
+  Place place;
+  //bool transpose;
 };
 
-class GlobalContext {
- public:
-  static void SetOpPlace(const Place& place) {
-    current_place_ = place;
-  }
-  static Place GetOpPlace() {
-    return current_place_;
-  }
-  static void SetOpImpl(int impl) {
-    current_impl_ = impl;
-  }
-  static int GetOpImpl() {
-    return current_impl_;
-  }
- private:
-  static Place current_place_;
-  static int current_impl_;
+struct PartInfo {
+  Place place;
+  Scale size;
 };
+
+inline bool operator == (const Place& p1, const Place& p2) {
+  return p1.procid == p2.procid 
+    && p1.device_id == p2.device_id
+    && p1.device_type == p2.device_type;
+}
+
+inline bool operator == (const PartInfo& pi1, const PartInfo& pi2) {
+  return pi1.place == pi2.place && pi1.size == pi2.size;
+}
 
 } // end of namespace minerva

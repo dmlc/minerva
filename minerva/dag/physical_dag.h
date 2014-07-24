@@ -2,6 +2,7 @@
 
 #include "dag.h"
 #include "op/physical.h"
+#include <string>
 
 namespace minerva {
 
@@ -14,6 +15,18 @@ class DagHelper<PhysicalData, PhysicalOp> {
     if(d.data_gen_fn != NULL) {
       ss << d.data_gen_fn->Name();
     }
+    return ss.str();
+  }
+  static std::string OpToString(const PhysicalOp& o) {
+    return o.compute_fn->Name();
+  }
+};
+
+class DataIdPrinter {
+ public:
+  static std::string DataToString(const PhysicalData& d) {
+    std::stringstream ss;
+    ss << d.data_id;
     return ss.str();
   }
   static std::string OpToString(const PhysicalOp& o) {

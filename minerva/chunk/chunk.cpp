@@ -1,10 +1,11 @@
-#include <cassert>
 #include <functional>
 #include <cstdio>
 #include <cstdlib>
 
+#include <glog/logging.h>
+
 #include "chunk.h"
-#include "dag/dag.h"
+#include "dag/physical_dag.h"
 #include "op/physical_op.h"
 #include "system/minerva_system.h"
 
@@ -12,72 +13,65 @@ using namespace std;
 
 namespace minerva {
 
-/*void MatrixMultiply(vector<DataNode*> inputs, vector<DataNode*> outputs) {
-  cout << "Do matrix multiply" << endl;
-  float* a = DataStore::Instance().GetData(inputs[0]->data_id(), DataStore::CPU);
-  float* b = DataStore::Instance().GetData(inputs[1]->data_id(), DataStore::CPU);
-  float* c = DataStore::Instance().GetData(outputs[0]->data_id(), DataStore::CPU);
-  int m = outputs[0]->meta().size[0];
-  int n = outputs[0]->meta().size[1];
-  int k = inputs[0]->meta().size[1];
-  for(int i = 0; i < m; ++i)
-    for(int j = 0; j < n; ++j) {
-      c[i * n + j] = 0.0;
-      for(int l = 0; l < k; ++l)
-        c[i * n + j] += a[i * k + l] * b[l * n + j];
-    }
-}
-void MatrixAdd(vector<DataNode*> inputs, DataNode* output) {
-  cout << "Do matrix addition" << endl;
-  vector<float*> inptrs;
-  for(auto innode : inputs)
-    inptrs.push_back(DataStore::Instance().GetData(innode->data_id(), DataStore::CPU));
-  float* outptrs = DataStore::Instance().GetData(output->data_id(), DataStore::CPU);
-  size_t len = output->meta().length;
-  for(size_t i = 0; i < len; ++i) {
-    outptrs[i] = 0.0;
-    for(size_t j = 0; j < inptrs.size(); ++j)
-      outptrs[i] += inptrs[j][i];
-  }
-}
-void FillConstant(DataNode* out, float val) {
-  cout << "Do filling constants" << endl;
-  float* a = DataStore::Instance().GetData(out->data_id(), DataStore::CPU);
-  size_t len = out->meta().length;
-  for(size_t i = 0; i < len; ++i)
-    a[i] = val;
-}*/
-
-Chunk::Chunk(): data_node_(NULL) {
-}
-Chunk::Chunk(PhysicalDataNode* node): data_node_(node) {
-}
-Chunk::Chunk(const Chunk& other): data_node_(other.data_node_) {
+Chunk::Chunk(): data_node_(NULL) { }
+Chunk::Chunk(PhysicalDataNode* node): data_node_(node) { }
+Chunk::Chunk(const Chunk& other): data_node_(other.data_node_) { }
+Chunk& Chunk::operator = (const Chunk& other) {
+  data_node_ = other.data_node_;
+  return *this;
 }
 
-std::vector<Chunk> Chunk::Compute(std::vector<Chunk> params,
-    std::vector<Scale> result_sizes, PhysicalComputeFn* fn) {
-  PhysicalDag& pdag = MinervaSystem::Instance().physical_dag();
-  std::vector<Chunk> rst;
-  std::vector<PhysicalDataNode*> rst_data_nodes;
-  for(Scale size : result_sizes) {
-    PhysicalDataNode* rst_node = pdag.NewDataNode(PhysicalData(size));
+/////////////////////////////////////////////////////////
+// General interface for customized operations
+/////////////////////////////////////////////////////////
+std::vector<Chunk> Chunk::Compute(const std::vector<Chunk>& params,
+      const std::vector<Scale>& result_sizes, PhysicalComputeFn* fn) {
+  auto& ms = MinervaSystem::Instance();
+  auto& pdag = ms.physical_dag();
+  vector<Chunk> rst;
+  vector<PhysicalDataNode*> rst_data_nodes;
+  for (auto& size: result_sizes) {
+    PhysicalData phy_data;
+    // TODO how to set place ?
+    phy_data.size = size;
+    phy_data.data_gen_fn = NULL;
+    auto rst_node = pdag.NewDataNode(phy_data);
+    // generate data id
+    rst_node->data_.data_id = ms.data_store().GenerateDataID();
     rst.push_back(Chunk(rst_node));
     rst_data_nodes.push_back(rst_node);
   }
-  std::vector<PhysicalDataNode*> param_data_nodes;
-  for(Chunk ch : params) {
+  vector<PhysicalDataNode*> param_data_nodes;
+  for (auto& ch: params) {
     param_data_nodes.push_back(ch.data_node());
   }
-  pdag.NewOpNode(param_data_nodes, rst_data_nodes, {fn});
+  PhysicalOp phy_op;
+  // TODO how to set place ?
+  phy_op.impl_type = BASIC;
+  phy_op.compute_fn = fn;
+  pdag.NewOpNode(param_data_nodes, rst_data_nodes, phy_op);
   return rst;
 }
+
 Chunk Chunk::Generate(const Scale& result_size, PhysicalDataGenFn* fn) {
-  PhysicalDag& pdag = MinervaSystem::Instance().physical_dag();
-  PhysicalData pdata(result_size);
-  pdata.data_gen_fn = fn;
-  PhysicalDataNode* rst_node = pdag.NewDataNode(pdata);
+  auto& ms = MinervaSystem::Instance();
+  auto& pdag = ms.physical_dag();
+  PhysicalData phy_data;
+  phy_data.size = result_size;
+  phy_data.data_gen_fn = fn;
+  PhysicalDataNode* rst_node = pdag.NewDataNode(phy_data);
+  // generate data id
+  rst_node->data_.data_id = ms.data_store().GenerateDataID();
   return Chunk(rst_node);
+}
+
+/////////////////////////////////////////////////////////
+// Data generator
+/////////////////////////////////////////////////////////
+Chunk Chunk::Constant(const Scale& size, float val) {
+  FillOp* fill_op = new FillOp;
+  fill_op->closure = {val};
+  return Chunk::Generate(size, fill_op);
 }
 
 Chunk Chunk::Randn(const Scale& size, float mu, float var) {
@@ -86,62 +80,40 @@ Chunk Chunk::Randn(const Scale& size, float mu, float var) {
   return Chunk::Generate(size, randn_op);
 }
 
-Chunk Chunk::Constant(const Scale& size, float val) {
-  FillOp* fill_op = new FillOp;
-  fill_op->closure = {val};
-  return Chunk::Generate(size, fill_op);
-}
-
+/////////////////////////////////////////////////////////
+// matrix multiply
+/////////////////////////////////////////////////////////
 Chunk operator * (Chunk a, Chunk b) {
-  // validity
-  assert(a.Size().NumDims() == 2 && b.Size().NumDims() == 2);
-  assert(a.Size(1) == b.Size(0));
-  Scale newsize = {a.Size(0), b.Size(1)};
+  CHECK_EQ(a.Size().NumDims(), 2) << "matmult only performs on 2d data";
+  CHECK_EQ(b.Size().NumDims(), 2) << "matmult only performs on 2d data";
+  CHECK_EQ(a.Size(1), b.Size(0)) << "matmult dimension unmatch";
+  Scale new_size{a.Size(0), b.Size(1)};
   MatMultOp* matmult_op = new MatMultOp;
-  return Chunk::Compute({a, b}, {newsize}, matmult_op)[0];
+  return Chunk::Compute({a, b}, {new_size}, matmult_op)[0];
 }
 
-Chunk& Chunk::operator = (const Chunk& other) {
-  data_node_ = other.data_node_;
-  return *this;
-}
-
-/*void Chunk::Eval() {
-  vector<uint64_t> targets{data_node_->node_id()};
-  DagEngine::Instance().Process(Dag::Instance(), targets);
-}
-
-void Chunk::Print() {
-  Eval();
-  float *p = DataStore::Instance().GetData(data_node_->data_id(), DataStore::CPU);
-  cout << "Size: " << data_node_->meta().size << endl;
-  cout << "Data: [";
-  size_t end = std::min(data_node_->meta().length, 10ul);
-  for(size_t i = 0; i < end; ++i)
-    cout << p[i] << " ";
-  cout << "]" << endl;
-}*/
-
+/////////////////////////////////////////////////////////
+// shape
+/////////////////////////////////////////////////////////
 Scale Chunk::Size() const {
   return data_node_->data_.size;
 }
+
 int Chunk::Size(int dim) const {
   return data_node_->data_.size[dim];
 }
+
 Chunk Chunk::Trans() {
-  // validity
-  assert(Size().NumDims() == 2);
-  Scale newsize = {Size(1), Size(0)};
+  CHECK_EQ(Size().NumDims(), 2) << "transpose only performs on 2d data";
+  Scale new_size = {Size(1), Size(0)};
   TransOp* trans_op = new TransOp;
-  return Chunk::Compute({*this}, {newsize}, trans_op)[0];
+  return Chunk::Compute({*this}, {new_size}, trans_op)[0];
 }
-Chunk Chunk::Merge(const NVector<Chunk>& partitions) {
-  // TODO
-  return Chunk();
-}
-NVector<Chunk> Chunk::Split(const Scale& numparts) {
+
+NVector<Chunk> Chunk::Split(const NVector<Scale>& partsizes) {
   // TODO
   return NVector<Chunk>();
 }
 
 } // end of namespace minerva
+

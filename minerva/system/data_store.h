@@ -21,7 +21,6 @@ class DataStore {
 
  private:
   DISALLOW_COPY_AND_ASSIGN(DataStore);
-  uint64_t data_id_gen_;
   std::map<uint64_t, float*> data_pointers_;
 };
 

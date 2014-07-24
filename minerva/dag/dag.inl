@@ -44,28 +44,13 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
 }
 
 template<class D, class O>
-DagNode* Dag<D, O>::GetNode(uint64_t nid) const {
-  auto pos = index_to_node_.find(nid);
-  return pos == index_to_node_.end() ? NULL : pos->second;
-}
-
-template<class D, class O>
-typename Dag<D, O>::ONode* Dag<D, O>::GetOpNode(uint64_t nid) const {
-  return dynamic_cast<ONode*>(GetNode(nid));
-}
-
-template<class D, class O>
-typename Dag<D, O>::DNode* Dag<D, O>::GetDataNode(uint64_t nid) const {
-  return dynamic_cast<DNode*>(GetNode(nid));
-}
-
-template<class D, class O>
 uint64_t Dag<D, O>::NewIndex() {
   static uint64_t index_counter = 0;
   return index_counter++;
 }
 
 template<class D, class O>
+template<class NodePrinter>
 std::string Dag<D, O>::PrintDag() const {
   std::ostringstream out;
   out << "digraph G {" << std::endl;
@@ -74,14 +59,14 @@ std::string Dag<D, O>::PrintDag() const {
     if (i.second->Type() == DagNode::OP_NODE) {
       out << "ellipse";
       Dag<D, O>::ONode* onode = dynamic_cast<Dag<D, O>::ONode*>(i.second);
-      out << " label=\"" << DagHelper<D, O>::OpToString(onode->op_) << "\"";
+      out << " label=\"" << NodePrinter::OpToString(onode->op_) << "\"";
     } else {
       out << "box";
       Dag<D, O>::DNode* dnode = dynamic_cast<Dag<D, O>::DNode*>(i.second);
-      out << " label=\"" << DagHelper<D, O>::DataToString(dnode->data_) << "\"";
+      out << " label=\"" << NodePrinter::DataToString(dnode->data_) << "\"";
     }
     out << "];" << std::endl;
-    for (auto j: i.second->successors()) {
+    for (auto j: i.second->successors_) {
       out << "  " << i.first << " -> " << j->node_id_ << ";" << std::endl;
     }
   }

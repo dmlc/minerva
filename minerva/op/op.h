@@ -16,4 +16,4 @@ class ClosureTrait {
   T closure;
 };
 
-}
+} // end of namespace minerva

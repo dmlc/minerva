@@ -1,10 +1,8 @@
 #pragma once
-
-#include <vector>
-
 #include "common/scale.h"
-#include "context.h"
+#include "impl/impl.h"
 #include "op.h"
+#include "context.h"
 
 namespace minerva {
 
@@ -12,29 +10,73 @@ struct PhysicalData;
 struct PhysicalOp;
 class PhysicalDataGenFn;
 class PhysicalComputeFn;
+class DataShard;
 
+/////////////////////////////////////////////
+// Physical dag data structures
+/////////////////////////////////////////////
 struct PhysicalData {
-  Scale size, offset, chunk_index;
-  //DataNodeContext context; // TODO how to set context ?
+  Scale size, offset, offset_index;
   uint64_t data_id;
   PhysicalDataGenFn* data_gen_fn;
-  PhysicalData() {}
-  PhysicalData(const Scale& size): size(size), data_id(0), data_gen_fn(NULL) {}
 };
 
 struct PhysicalOp {
-  //OpNodeContext context; // TODO how to set context ?
-  //OpExecutor* executor; // TODO [jermaine] I think we don't need to set the function pointer here, because there might be several types of implementation for a single function which needs to be determined later.
+  Place place;
+  IMPL_TYPE impl_type;
   PhysicalComputeFn* compute_fn;
 };
 
+/////////////////////////////////////////////
+// Execute function structures
+/////////////////////////////////////////////
+/**
+ * A wrapper class for physical data
+ */
+class DataShard {
+ public:
+  DataShard(PhysicalData& );
+  // return data untransformed (NO memory copy)
+  float* GetCpuData();
+  float* GetGpuData();
+  // return data transformed (may incur memory copy !!!)
+  float* GetTransformedCpuData();
+  float* GetTransformedGpuData();
+  // Getters
+  Scale Size() const { return data_info_.size; }
+  Scale Offset() const { return data_info_.offset; }
+  Scale OffsetIndex() const { return data_info_.offset_index; }
+ private:
+  PhysicalData& data_info_;
+};
+typedef std::vector<DataShard> DataList;
+
 class PhysicalDataGenFn : public BasicFn {
+ public:
+  virtual void Execute(DataShard output, IMPL_TYPE impl_type) = 0;
 };
 
 class PhysicalComputeFn : public BasicFn {
  public:
-  //virtual void Execute(std::vector<PhysicalData> inputs,
-      //std::vector<PhysicalData> outputs, PhysicalOp& op) = 0;
+  virtual void Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) = 0;
+};
+
+template<class C>
+class PhyDataGenFnWithClosure :
+  public PhysicalDataGenFn, public ClosureTrait<C> {
+ public:
+  void Execute(DataShard output, IMPL_TYPE impl_type) {
+    FnBundle<C>::Call(output, ClosureTrait<C>::closure, impl_type);
+  }
+};
+
+template<class C>
+class PhyComputeFnWithClosure :
+  public PhysicalComputeFn, public ClosureTrait<C> {
+ public:
+  void Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) {
+    FnBundle<C>::Call(inputs, outputs, ClosureTrait<C>::closure, impl_type);
+  }
 };
 
 } // end of namespace minerva

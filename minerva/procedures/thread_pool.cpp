@@ -1,6 +1,5 @@
 #include "procedures/thread_pool.h"
-#include "procedures/dag_engine.h"
-#include "common/concurrent_blocking_queue.h"
+#include "procedures/physical_engine.h"
 #include <cstdio>
 #include <thread>
 #include <functional>
@@ -9,7 +8,7 @@ using namespace std;
 
 namespace minerva {
 
-ThreadPool::ThreadPool(size_t size, DagEngine* engine): engine_(engine) {
+ThreadPool::ThreadPool(size_t size, PhysicalEngine* engine): engine_(engine) {
   while (size--) {
     workers_.push_back(thread(&ThreadPool::SimpleWorker, this, engine_));
   }
@@ -21,9 +20,9 @@ ThreadPool::~ThreadPool() {
   }
 }
 
-void ThreadPool::SimpleWorker(DagEngine* engine) {
+void ThreadPool::SimpleWorker(PhysicalEngine* engine) {
   while (true) {
-    DagEngine::TaskPair task;
+    PhysicalEngine::TaskPair task;
     bool exit_now = engine->GetNewTask(this_thread::get_id(), task);
     if (exit_now) {
       return;

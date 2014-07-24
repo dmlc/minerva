@@ -1,12 +1,13 @@
 #include "data_store.h"
 #include <cstdlib>
 #include <cstddef>
+#include <cassert>
 
 using namespace std;
 
 namespace minerva {
 
-DataStore::DataStore(): data_id_gen_(0) {
+DataStore::DataStore() {
 }
 
 DataStore::~DataStore() {
@@ -16,11 +17,13 @@ DataStore::~DataStore() {
 }
 
 uint64_t DataStore::GenerateDataID() {
-  return data_id_gen_++;
+  static uint64_t data_id_gen = 0;
+  return ++data_id_gen;
 }
 
 bool DataStore::CreateData(uint64_t id, MemTypes type, size_t size) {
   // TODO Allocate according to MemTypes
+  assert(id); // Not allocated
   auto ptr = data_pointers_.find(id);
   if (ptr != data_pointers_.end()) {
     FreeData(id, type); // Free existing storage
@@ -31,6 +34,7 @@ bool DataStore::CreateData(uint64_t id, MemTypes type, size_t size) {
 }
 
 float* DataStore::GetData(uint64_t id, MemTypes type) {
+  assert(id); // Not allocated
   auto ptr = data_pointers_.find(id);
   if (ptr == data_pointers_.end()) {
     return nullptr;
@@ -39,6 +43,7 @@ float* DataStore::GetData(uint64_t id, MemTypes type) {
 }
 
 void DataStore::FreeData(uint64_t id, MemTypes type) {
+  assert(id); // Not allocated
   auto ptr = data_pointers_.find(id);
   if (ptr == data_pointers_.end()) {
     return;

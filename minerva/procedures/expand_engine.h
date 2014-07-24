@@ -7,6 +7,7 @@ namespace minerva {
 class ExpandEngine : public LogicalDagProcedure {
  public:
   void Process(LogicalDag& dag, std::vector<uint64_t>& nodes);
+  std::vector<uint64_t> GetPhysicalNodes(uint64_t);
  private:
   void ExpandNode(LogicalDag& dag, uint64_t lnid);
   void MakeMapping(LogicalDag::DNode* ldnode, const NVector<Chunk>& chunks);

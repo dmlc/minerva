@@ -32,6 +32,6 @@ BOOST_PYTHON_MODULE(libowl) {
     .def(bp::self / float())
     .def("trans", &m::NArray::Trans)
   ;
-  bp::def("random_randn", &m::NArray::Randn);
+  //bp::def("random_randn", &m::NArray::Randn); // TODO [by jermaine] Not compiling
   bp::def("logical_dag", &logical_dag);
 }
