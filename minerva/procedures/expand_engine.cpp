@@ -1,7 +1,9 @@
-#include "expand_engine.h"
-#include "system/minerva_system.h"
 #include <iostream>
 #include <vector>
+#include <glog/logging.h>
+
+#include "expand_engine.h"
+#include "system/minerva_system.h"
 
 using namespace std;
 
@@ -15,7 +17,7 @@ void ExpandEngine::Process(LogicalDag& dag, std::vector<uint64_t>& nodes) {
 
 vector<uint64_t> ExpandEngine::GetPhysicalNodes(uint64_t id) {
   auto it = lnode_to_pnode_.find(id);
-  assert(it != lnode_to_pnode_.end());
+  CHECK(it != lnode_to_pnode_.end()) << "invalid physical nid: " << id;
   return it->second.ToVector();
 }
 
@@ -30,18 +32,20 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
       LogicalDag::DNode* dnode = dynamic_cast<LogicalDag::DNode*>(curnode);
       // call expand function to generate data
       LogicalDataGenFn* fn = dnode->data_.data_gen_fn;
-      assert(fn != NULL);
-      cout << "Logical datagen function: " << fn->Name() << endl;
-      NVector<Chunk> chunks = dnode->data_.partitions.Map<Chunk>(
-          [fn] (const PartInfo& partinfo) {
-            return fn->Expand(partinfo.size);
-          }
-        );
-      MakeMapping(dnode, chunks);
+      if(fn != NULL) {
+        LOG(INFO) << "Expand logical datagen function: " << fn->Name();
+        NVector<Chunk> chunks = dnode->data_.partitions.Map<Chunk>(
+            [fn] (const PartInfo& partinfo) {
+              return fn->Expand(partinfo.size);
+            }
+          );
+        MakeMapping(dnode, chunks);
+      }
     }
     else { // op node
       LogicalDag::ONode* onode = dynamic_cast<LogicalDag::ONode*>(curnode);
       LogicalComputeFn* fn = onode->op_.compute_fn;
+      CHECK_NOTNULL(fn);
       // make input chunks
       std::vector<NVector<Chunk>> in_chunks;
       for(LogicalDag::DNode* dn : onode->inputs_) {
@@ -56,16 +60,11 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
         );
       }
       // call expand function
-      cout << "Logical compute function: " << fn->Name() << endl;
+      LOG(INFO) << "Expand logical compute function: " << fn->Name();
       std::vector<NVector<Chunk>> rst_chunks = fn->Expand(in_chunks);
       // check output validity
-      if(rst_chunks.size() != onode->outputs_.size()) {
-        cout << "Expand function error: Wrong numbers of results" << endl;
-        cout << "Expected: " << onode->outputs_.size() << endl;
-        cout << "Returns: " << rst_chunks.size() << endl;
-        cout << "Function name: " << fn->Name() << endl;
-        assert(false);
-      }
+      CHECK_EQ(rst_chunks.size(), onode->outputs_.size()) 
+        << "Expand function error: #output unmatched. Function name: " << fn->Name();
       for(size_t i = 0; i < rst_chunks.size(); ++i) {
         MakeMapping(onode->outputs_[i], rst_chunks[i]);
       }
@@ -76,17 +75,15 @@ void ExpandEngine::MakeMapping(LogicalDag::DNode* ldnode, const NVector<Chunk>& 
   // check size
   NVector<Scale> chunk_sizes = chunks.Map<Scale>( [] (const Chunk& ch) { return ch.Size(); } );
   Scale merged_size = Scale::Merge(chunk_sizes);
-  if(ldnode->data_.size != merged_size) {
-    cout << "Expand function error: Unmatched return size" << endl;
-    cout << "Expected: " << ldnode->data_.size << endl;
-    cout << "Returned: " << merged_size << endl;
-    assert(false);
-  }
+  CHECK_EQ(ldnode->data_.size, merged_size)
+    << "Expand function error: partition size unmatched!\n"
+    << "Expected: " << ldnode->data_.size << "\n"
+    << "Got: " << merged_size;
   // offset & offset_index
   // TODO
   // insert mapping
   lnode_to_pnode_[ldnode->node_id_] = chunks.Map<uint64_t>(
-      [] (const Chunk& ch) {
+      [&] (const Chunk& ch) {
         return ch.data_node()->node_id_;
       }
     );

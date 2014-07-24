@@ -50,6 +50,7 @@ uint64_t Dag<D, O>::NewIndex() {
 }
 
 template<class D, class O>
+template<class NodePrinter>
 std::string Dag<D, O>::PrintDag() const {
   std::ostringstream out;
   out << "digraph G {" << std::endl;
@@ -58,11 +59,11 @@ std::string Dag<D, O>::PrintDag() const {
     if (i.second->Type() == DagNode::OP_NODE) {
       out << "ellipse";
       Dag<D, O>::ONode* onode = dynamic_cast<Dag<D, O>::ONode*>(i.second);
-      out << " label=\"" << DagHelper<D, O>::OpToString(onode->op_) << "\"";
+      out << " label=\"" << NodePrinter::OpToString(onode->op_) << "\"";
     } else {
       out << "box";
       Dag<D, O>::DNode* dnode = dynamic_cast<Dag<D, O>::DNode*>(i.second);
-      out << " label=\"" << DagHelper<D, O>::DataToString(dnode->data_) << "\"";
+      out << " label=\"" << NodePrinter::DataToString(dnode->data_) << "\"";
     }
     out << "];" << std::endl;
     for (auto j: i.second->successors_) {

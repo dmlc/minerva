@@ -22,6 +22,18 @@ class DagHelper<PhysicalData, PhysicalOp> {
   }
 };
 
+class DataIdPrinter {
+ public:
+  static std::string DataToString(const PhysicalData& d) {
+    std::stringstream ss;
+    ss << d.data_id;
+    return ss.str();
+  }
+  static std::string OpToString(const PhysicalOp& o) {
+    return o.compute_fn->Name();
+  }
+};
+
 typedef Dag<PhysicalData, PhysicalOp> PhysicalDag;
 typedef PhysicalDag::DNode PhysicalDataNode;
 typedef PhysicalDag::ONode PhysicalOpNode;

@@ -32,13 +32,14 @@ void PhysicalEngine::Process(PhysicalDag&, std::vector<uint64_t>& targets) {
   {
     // Waiting execution to complete
     for (auto i: targets) {
+      LOG(INFO) << "Wait for node (id=" << i << ") finish.";
       unique_lock<mutex> lock(node_states_mutex_);
       if (node_states_[i].state != NodeState::kComplete) {
         node_states_[i].on_complete->wait(lock);
       }
       delete node_states_[i].on_complete;
       node_states_[i].on_complete = 0;
-      printf("Target complete received\n");
+      LOG(INFO) << "Node (id=" << i << ") complete.";
     }
   }
 }
@@ -130,7 +131,6 @@ void PhysicalEngine::NodeRunner(DagNode* node) {
     LOG(INFO) << "Execute compute fn: " << op.compute_fn->Name();
     op.compute_fn->Execute(input, output, BASIC); // TODO decide impl_type
   } else { // DataNode
-    printf("Working on DATA %u\n", (unsigned int) dynamic_cast<PhysicalDataNode*>(node)->data_.data_id);
     if (node->predecessors_.empty()) { // Headless data node
       PhysicalData& data = dynamic_cast<PhysicalDataNode*>(node)->data_;
       ms.data_store().CreateData(data.data_id, DataStore::CPU, data.size.Prod()); // allocate space
@@ -155,7 +155,7 @@ void PhysicalEngine::NodeRunner(DagNode* node) {
     }
     node_states_[node->node_id_].state = NodeState::kComplete;
     if (node_states_[node->node_id_].on_complete) {
-      printf("Target complete %u\n", (unsigned int) dynamic_cast<PhysicalDataNode*>(node)->data_.data_id);
+      //printf("Target complete %u\n", (unsigned int) dynamic_cast<PhysicalDataNode*>(node)->data_.data_id);
       node_states_[node->node_id_].on_complete->notify_all();
     }
   }
@@ -169,5 +169,4 @@ bool PhysicalEngine::GetNewTask(thread::id id, TaskPair& task) {
   return task_queue_.Pop(task);
 }
 
-}
-
+} // end of namespace minerva

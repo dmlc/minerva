@@ -17,7 +17,8 @@ DataStore::~DataStore() {
 }
 
 uint64_t DataStore::GenerateDataID() {
-  return ++data_id_gen_;
+  static uint64_t data_id_gen = 0;
+  return ++data_id_gen;
 }
 
 bool DataStore::CreateData(uint64_t id, MemTypes type, size_t size) {

@@ -26,7 +26,8 @@ Chunk& Chunk::operator = (const Chunk& other) {
 /////////////////////////////////////////////////////////
 std::vector<Chunk> Chunk::Compute(const std::vector<Chunk>& params,
       const std::vector<Scale>& result_sizes, PhysicalComputeFn* fn) {
-  auto& pdag = MinervaSystem::Instance().physical_dag();
+  auto& ms = MinervaSystem::Instance();
+  auto& pdag = ms.physical_dag();
   vector<Chunk> rst;
   vector<PhysicalDataNode*> rst_data_nodes;
   for (auto& size: result_sizes) {
@@ -35,6 +36,8 @@ std::vector<Chunk> Chunk::Compute(const std::vector<Chunk>& params,
     phy_data.size = size;
     phy_data.data_gen_fn = NULL;
     auto rst_node = pdag.NewDataNode(phy_data);
+    // generate data id
+    rst_node->data_.data_id = ms.data_store().GenerateDataID();
     rst.push_back(Chunk(rst_node));
     rst_data_nodes.push_back(rst_node);
   }
@@ -51,11 +54,14 @@ std::vector<Chunk> Chunk::Compute(const std::vector<Chunk>& params,
 }
 
 Chunk Chunk::Generate(const Scale& result_size, PhysicalDataGenFn* fn) {
-  auto& pdag = MinervaSystem::Instance().physical_dag();
+  auto& ms = MinervaSystem::Instance();
+  auto& pdag = ms.physical_dag();
   PhysicalData phy_data;
   phy_data.size = result_size;
   phy_data.data_gen_fn = fn;
   PhysicalDataNode* rst_node = pdag.NewDataNode(phy_data);
+  // generate data id
+  rst_node->data_.data_id = ms.data_store().GenerateDataID();
   return Chunk(rst_node);
 }
 

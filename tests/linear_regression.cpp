@@ -6,7 +6,8 @@
 using namespace std;
 using namespace minerva;
 
-int main() {
+int main(int argc, char** argv) {
+  MinervaSystem::Instance().Initialize(argc, argv);
   int n = 10; // num samples
   int k = 8; // num features
   NArray x = NArray::Randn({n, k}, 0.0, 1.0, {2, 1});
@@ -23,7 +24,7 @@ int main() {
   fout_ldag.close();
   theta.Eval();
   ofstream fout_pdag("pdag.txt");
-  fout_pdag << MinervaSystem::Instance().physical_dag().PrintDag() << endl;
+  fout_pdag << MinervaSystem::Instance().physical_dag().PrintDag<DataIdPrinter>() << endl;
   fout_pdag.close();
   return 0;
 }
