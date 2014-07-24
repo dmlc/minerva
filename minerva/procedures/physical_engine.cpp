@@ -1,8 +1,10 @@
-#include "procedures/physical_engine.h"
-#include "op/op.h"
-#include "system/minerva_system.h"
 #include <random>
 #include <queue>
+#include <glog/logging.h>
+
+#include "procedures/physical_engine.h"
+#include "op/physical.h"
+#include "system/minerva_system.h"
 
 #define THREAD_NUM 4
 
@@ -10,38 +12,14 @@ using namespace std;
 
 namespace minerva {
 
+MinervaSystem& ms = MinervaSystem::Instance();
+
 PhysicalEngine::PhysicalEngine(): thread_pool_(THREAD_NUM, this) {
   Init();
 }
 
 PhysicalEngine::~PhysicalEngine() {
   task_queue_.SignalForKill();
-}
-
-PhysicalEngine& PhysicalEngine::RegisterRunner(string name, RunnerWrapper::Runner runner) {
-  assert(reverse_lookup_.find(name) == reverse_lookup_.end());
-  RunnerWrapper runner_wrapper;
-  RunnerWrapper::ID index = ++index_;
-  runner_wrapper.name = name;
-  runner_wrapper.runner = runner;
-  runners_[index] = runner_wrapper;
-  reverse_lookup_[name] = index;
-  return *this;
-}
-
-RunnerWrapper::ID PhysicalEngine::GetRunnerID(string name) {
-  auto it = reverse_lookup_.find(name);
-  if (it == reverse_lookup_.end()) {
-    cout << name << " not defined";
-  }
-  assert(it != reverse_lookup_.end());
-  return it->second;
-}
-
-const RunnerWrapper& PhysicalEngine::GetRunnerWrapper(RunnerWrapper::ID id) {
-  auto it = runners_.find(id);
-  assert(it != runners_.end());
-  return it->second;
 }
 
 void PhysicalEngine::Process(PhysicalDag&, std::vector<uint64_t>& targets) {
@@ -66,150 +44,12 @@ void PhysicalEngine::Process(PhysicalDag&, std::vector<uint64_t>& targets) {
 }
 
 void PhysicalEngine::Init() {
-  LoadBuiltinRunners();
   // Then we can load user defined runners
-}
-
-#define LAMBDA_SIG \
-  [](RunnerWrapper::Operands inputs, RunnerWrapper::Operands outputs, ClosureBase* closure_base)
-
-void PhysicalEngine::LoadBuiltinRunners() {
-  RegisterRunner("fill", [](RunnerWrapper::Operands inputs, RunnerWrapper::Operands outputs, ClosureBase* closure_base) {
-    assert(inputs.size() == 0); // This is how we define generators for now
-    assert(outputs.size() == 1);
-    auto& closure = GetClosureFromBase<FillClosure>(closure_base); // Do runtime checking of type
-    size_t size = outputs[0]->size.Prod();
-    auto data = MinervaSystem::Instance().data_store().GetData(outputs[0]->data_id, DataStore::CPU);
-    for (size_t i = 0; i < size; ++i) {
-      data[i] = closure.val;
-    }
-  });
-  RegisterRunner("randn", [](RunnerWrapper::Operands inputs, RunnerWrapper::Operands outputs, ClosureBase* closure_base) {
-    assert(inputs.size() == 0);
-    assert(outputs.size() == 1);
-    auto& closure = GetClosureFromBase<RandnClosure>(closure_base);
-    size_t size = outputs[0]->size.Prod();
-    auto data = MinervaSystem::Instance().data_store().GetData(outputs[0]->data_id, DataStore::CPU);
-    default_random_engine generator;
-    normal_distribution<float> distribution(closure.mu, closure.var); // TODO only float for now
-    for (size_t i = 0; i < size; ++i) {
-      data[i] = distribution(generator);
-    }
-  });
-  RegisterRunner("matMult", LAMBDA_SIG {
-    assert(inputs.size() == 2);
-    assert(outputs.size() == 1);
-    auto& left = *inputs[0];
-    auto& right = *inputs[1];
-    auto& res = *outputs[0];
-    auto left_data = MinervaSystem::Instance().data_store().GetData(left.data_id, DataStore::CPU);
-    auto right_data = MinervaSystem::Instance().data_store().GetData(right.data_id, DataStore::CPU);
-    auto res_data = MinervaSystem::Instance().data_store().GetData(res.data_id, DataStore::CPU);
-    int m = res.size[0];
-    int n = res.size[1];
-    int o = left.size[1];
-    for (int i = 0; i < m; ++i) {
-      for (int j = 0; j < n; ++j) {
-        res_data[i * n + j] = 0;
-        for (int k = 0; k < o; ++k) {
-          res_data[i * n + j] += left_data[i * o + k] * right_data[k * n + j];
-        }
-      }
-    }
-  });
-  RegisterRunner("arithmetic", LAMBDA_SIG {
-    assert(inputs.size() == 2);
-    assert(outputs.size() == 1);
-    auto& closure = GetClosureFromBase<ArithmeticClosure>(closure_base);
-    auto& left = *inputs[0];
-    auto& right = *inputs[1];
-    auto& res = *outputs[0];
-    auto left_data = MinervaSystem::Instance().data_store().GetData(left.data_id, DataStore::CPU);
-    auto right_data = MinervaSystem::Instance().data_store().GetData(right.data_id, DataStore::CPU);
-    auto res_data = MinervaSystem::Instance().data_store().GetData(res.data_id, DataStore::CPU);
-    size_t size = res.size.Prod();
-    if (closure.type == ADD) {
-      for (size_t i = 0; i < size; ++i) {
-        res_data[i] = left_data[i] + right_data[i];
-      }
-    } else if (closure.type == SUB) {
-      for (size_t i = 0; i < size; ++i) {
-        res_data[i] = left_data[i] - right_data[i];
-      }
-    } else if (closure.type == MULT) {
-      for (size_t i = 0; i < size; ++i) {
-        res_data[i] = left_data[i] * right_data[i];
-      }
-    } else if (closure.type == DIV) {
-      for (size_t i = 0; i < size; ++i) {
-        res_data[i] = left_data[i] / right_data[i];
-      }
-    } else {
-      assert(false);
-    }
-  });
-  RegisterRunner("arithmeticConstant", LAMBDA_SIG {
-    assert(inputs.size() == 1);
-    assert(outputs.size() == 1);
-    auto& closure = GetClosureFromBase<ArithmeticConstClosure>(closure_base);
-    float val = closure.val;
-    auto& in = *inputs[0];
-    auto& res = *outputs[0];
-    auto in_data = MinervaSystem::Instance().data_store().GetData(in.data_id, DataStore::CPU);
-    auto res_data = MinervaSystem::Instance().data_store().GetData(res.data_id, DataStore::CPU);
-    size_t size = res.size.Prod();
-    if (closure.type == ADD) {
-      for (size_t i = 0; i < size; ++i) {
-        res_data[i] = in_data[i] + val;
-      }
-    } else if (closure.type == SUB) {
-      if (!closure.side) {
-        for (size_t i = 0; i < size; ++i) {
-          res_data[i] = val - in_data[i];
-        }
-      } else {
-        for (size_t i = 0; i < size; ++i) {
-          res_data[i] = in_data[i] - val;
-        }
-      }
-    } else if (closure.type == MULT) {
-      for (size_t i = 0; i < size; ++i) {
-        res_data[i] = in_data[i] * val;
-      }
-    } else if (closure.type == DIV) {
-      if (!closure.side) {
-        for (size_t i = 0; i < size; ++i) {
-          res_data[i] = val / in_data[i];
-        }
-      } else {
-        for (size_t i = 0; i < size; ++i) {
-          res_data[i] = in_data[i] / val;
-        }
-      }
-    } else {
-      assert(false);
-    }
-  });
-  RegisterRunner("trans", LAMBDA_SIG {
-    assert(inputs.size() == 1);
-    assert(outputs.size() == 1);
-    auto& in = *inputs[0];
-    auto& res = *outputs[0];
-    auto in_data = MinervaSystem::Instance().data_store().GetData(in.data_id, DataStore::CPU);
-    auto res_data = MinervaSystem::Instance().data_store().GetData(res.data_id, DataStore::CPU);
-    int m = res.size[0];
-    int n = res.size[1];
-    for (int i = 0; i < m; ++i) {
-      for (int j = 0; j < n; ++j) {
-        res_data[i * n + j] = in_data[j * m + i];
-      }
-    }
-  });
 }
 
 void PhysicalEngine::CommitDagChanges() {
   lock_guard<mutex> lock(node_states_mutex_);
-  auto& dag = MinervaSystem::Instance().physical_dag();
+  auto& dag = ms.physical_dag();
   // Create NodeState for new nodes. Only new nodes are inserted.
   for (auto& i: dag.index_to_node_) {
     if (node_states_.find(i.first) == node_states_.end()) {
@@ -224,7 +64,7 @@ void PhysicalEngine::CommitDagChanges() {
 
 unordered_set<DagNode*> PhysicalEngine::FindRootNodes(const vector<uint64_t>& targets) {
   lock_guard<mutex> lock(node_states_mutex_);
-  auto& dag = MinervaSystem::Instance().physical_dag();
+  auto& dag = ms.physical_dag();
   queue<uint64_t> ready_node_queue;
   unordered_set<DagNode*> ready_to_execute;
   for (auto i: targets) {
@@ -273,27 +113,31 @@ unordered_set<DagNode*> PhysicalEngine::FindRootNodes(const vector<uint64_t>& ta
 
 void PhysicalEngine::NodeRunner(DagNode* node) {
   if (node->Type() == DagNode::OP_NODE) { // OpNode
-    printf("Working on OP\n");
-    vector<PhysicalData*> input;
-    vector<PhysicalData*> output;
-    for (auto i: node->predecessors_) {
-      input.push_back(&(dynamic_cast<PhysicalDataNode*>(i)->data_));
+    vector<DataShard> input;
+    vector<DataShard> output;
+    PhysicalOpNode* phy_op_node = dynamic_cast<PhysicalOpNode*>(node);
+    for (auto n: phy_op_node->inputs_) {
+      PhysicalData& in_data = dynamic_cast<PhysicalDataNode*>(n)->data_;
+      input.push_back(DataShard(in_data));
     }
-    for (auto i: node->successors_) { // Allocate storage for each successor
-      auto& n = dynamic_cast<PhysicalDataNode*>(i)->data_;
-      MinervaSystem::Instance().data_store().CreateData(n.data_id, DataStore::CPU, n.size.Prod());
-      output.push_back(&n);
+    for (auto n: phy_op_node->outputs_) { // Allocate storage for all outputs
+      PhysicalData& out_data = dynamic_cast<PhysicalDataNode*>(n)->data_;
+      ms.data_store().CreateData(out_data.data_id, DataStore::CPU, out_data.size.Prod());
+      output.push_back(DataShard(out_data));
     }
-    auto& op = dynamic_cast<PhysicalOpNode*>(node)->op_;
-    auto runner_wrapper = GetRunnerWrapper(op.runner_id);
-    runner_wrapper.runner(input, output, op.closure);
+    // call compute function
+    PhysicalOp& op = phy_op_node->op_;
+    LOG(INFO) << "Execute compute fn: " << op.compute_fn->Name();
+    op.compute_fn->Execute(input, output, BASIC); // TODO decide impl_type
   } else { // DataNode
     printf("Working on DATA %u\n", (unsigned int) dynamic_cast<PhysicalDataNode*>(node)->data_.data_id);
-    if (!node->predecessors_.size()) { // Headless data node
-      auto& data = dynamic_cast<PhysicalDataNode*>(node)->data_;
-      MinervaSystem::Instance().data_store().CreateData(data.data_id, DataStore::CPU, data.size.Prod());
-      auto& runner_wrapper = GetRunnerWrapper(data.generator_id);
-      runner_wrapper.runner({}, {&data}, data.closure);
+    if (node->predecessors_.empty()) { // Headless data node
+      PhysicalData& data = dynamic_cast<PhysicalDataNode*>(node)->data_;
+      ms.data_store().CreateData(data.data_id, DataStore::CPU, data.size.Prod()); // allocate space
+      // call data gen function
+      DataShard output(data);
+      LOG(INFO) << "Execute data gen fn: " << data.data_gen_fn->Name();
+      data.data_gen_fn->Execute(output, BASIC); // TODO decide impl_type
     }
   }
   {

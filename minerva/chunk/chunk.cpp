@@ -50,7 +50,7 @@ std::vector<Chunk> Chunk::Compute(const std::vector<Chunk>& params,
   return rst;
 }
 
-Chunk Generate(const Scale& result_size, PhysicalDataGenFn* fn) {
+Chunk Chunk::Generate(const Scale& result_size, PhysicalDataGenFn* fn) {
   auto& pdag = MinervaSystem::Instance().physical_dag();
   PhysicalData phy_data;
   phy_data.size = result_size;
@@ -77,7 +77,7 @@ Chunk Chunk::Randn(const Scale& size, float mu, float var) {
 /////////////////////////////////////////////////////////
 // matrix multiply
 /////////////////////////////////////////////////////////
-Chunk operator * (const Chunk& a, const Chunk& b) {
+Chunk operator * (Chunk a, Chunk b) {
   CHECK_EQ(a.Size().NumDims(), 2) << "matmult only performs on 2d data";
   CHECK_EQ(b.Size().NumDims(), 2) << "matmult only performs on 2d data";
   CHECK_EQ(a.Size(1), b.Size(0)) << "matmult dimension unmatch";
