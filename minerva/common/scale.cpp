@@ -54,8 +54,24 @@ Scale operator / (const Scale& sc1, const Scale& sc2) {
 }
 
 bool Scale::IncrOne(const Scale& max) {
-  for(size_t i = 0; i < NumDims(); ++i) {
-    if(vec_[i] + 1 < max[i]) {
+  for (size_t i = 0; i < NumDims(); ++i) {
+    if (vec_[i] + 1 < max[i]) {
+      ++vec_[i];
+      return true;
+    } else {
+      vec_[i] = 0;
+    }
+  }
+  return false;
+}
+
+bool Scale::IncrWithOneDimensionFixed(const Scale& max, size_t fix) {
+  size_t num = NumDims();
+  for (size_t i = 0; i < num; ++i) {
+    if (num == fix) {
+      continue;
+    }
+    if (vec_[i] + 1 < max[i]) {
       ++vec_[i];
       return true;
     } else {

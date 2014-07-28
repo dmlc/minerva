@@ -69,6 +69,7 @@ class Scale {
   std::string ToString() const;
 
   bool IncrOne(const Scale&);
+  bool IncrWithOneDimensionFixed(const Scale&, size_t);
   NVector<Scale> EquallySplit(const Scale& numparts) const;
   static Scale Merge(const NVector<Scale>& partsizes);
  private:
