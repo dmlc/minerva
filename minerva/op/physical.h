@@ -35,7 +35,8 @@ struct PhysicalOp {
  */
 class DataShard {
  public:
-  DataShard(PhysicalData& );
+  DataShard(const PhysicalData& );
+  DataShard(const DataShard& other);
   // return data untransformed (NO memory copy)
   float* GetCpuData();
   float* GetGpuData();
@@ -47,7 +48,7 @@ class DataShard {
   Scale Offset() const { return data_info_.offset; }
   Scale OffsetIndex() const { return data_info_.offset_index; }
  private:
-  PhysicalData& data_info_;
+  const PhysicalData& data_info_;
 };
 typedef std::vector<DataShard> DataList;
 

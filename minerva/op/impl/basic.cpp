@@ -176,12 +176,15 @@ void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_si
     Scale& copy_size = shard_copy_size[shard_index];
     Scale shard_copy_start = Scale::Origin(num_dims);
     ScaleRange localrange = ScaleRange::MakeRangeFromOrigin(ds.Size());
+    cout << "grange=" << globalrange << " lrange=" << localrange << endl;
     do {
+      cout << "off=" << ds.Offset() << " start=" << shard_copy_start << endl;
       size_t srcoff = localrange.Flatten(shard_copy_start);
       size_t dstoff = globalrange.Flatten(ds.Offset() + shard_copy_start);
       size_t len = copy_size.Prod();
+      cout << "srcoff=" << srcoff << " dstoff=" << dstoff << " len=" << len << endl;
       // do copy
-      memcpy(dest + dstoff, ds.GetCpuData() + srcoff, len);
+      memcpy(dest + dstoff, ds.GetCpuData() + srcoff, len * sizeof(float));
       // incr copy_start
       shard_copy_start = shard_copy_start + copy_size;
       for(size_t i = 0; i < num_dims; ++i)

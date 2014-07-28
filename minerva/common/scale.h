@@ -142,9 +142,11 @@ class ScaleRange {
 		assert(IsInRange(sc));
 		Scale off = sc - start_;
 		Scale interval = end_ - start_;
+    size_t stride = 1;
 		size_t ret = 0;
 		for(size_t i = 0; i < off.NumDims(); ++i) {
-			ret = ret * interval[i] + off[i];
+			ret += off[i] * stride;
+      stride *= interval[i];
 		}
 		return ret;
 	}

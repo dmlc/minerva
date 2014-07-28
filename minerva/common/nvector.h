@@ -48,7 +48,7 @@ public:
   template<class U, class Fn>
   NVector<U> Map(Fn fn) const {
     std::vector<U> newdata;
-    for(T d : data_) {
+    for(const T& d : data_) {
       newdata.push_back(fn(d));
     }
     return NVector<U>(newdata, range_);
