@@ -53,14 +53,14 @@ Scale operator / (const Scale& sc1, const Scale& sc2) {
 	return Scale(vec);
 }
 
-bool IncrOne(Scale& pos, const Scale& max) {
-  for(size_t i = 0; i < pos.NumDims(); ++i) {
-    if(pos[i] + 1 < max[i]) {
-      ++pos[i];
+bool Scale::IncrOne(const Scale& max) {
+  for(size_t i = 0; i < NumDims(); ++i) {
+    if(vec_[i] + 1 < max[i]) {
+      ++vec_[i];
       return true;
+    } else {
+      vec_[i] = 0;
     }
-    else
-      pos[i] = 0;
   }
   return false;
 }
@@ -78,7 +78,7 @@ NVector<Scale> Scale::EquallySplit(const Scale& numparts) const {
       }
     }
     rst[pos] = size;
-  } while(IncrOne(pos, numparts));
+  } while(pos.IncrOne(numparts));
   return rst;
 }
 
