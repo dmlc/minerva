@@ -22,7 +22,7 @@ PhysicalEngine::~PhysicalEngine() {
   task_queue_.SignalForKill();
 }
 
-void PhysicalEngine::Process(PhysicalDag&, std::vector<uint64_t>& targets) {
+void PhysicalEngine::Process(PhysicalDag&, const std::vector<uint64_t>& targets) {
   // TODO Ignoring PhysicalDag, use MinervaSystem instead
   CommitDagChanges();
   auto ready_to_execute = FindRootNodes(targets);

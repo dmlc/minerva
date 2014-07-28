@@ -16,5 +16,7 @@ extern void Reduction(DataList&, DataList&, ReductionClosure& );
 extern void Randn(DataShard&, RandnClosure& );
 extern void Fill(DataShard&, FillClosure& );
 
+extern void Assemble(NVector<DataShard>&, float*, const Scale&);
+
 } // end of namespace basic
 } // end of namespace minerva

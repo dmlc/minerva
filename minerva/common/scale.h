@@ -70,6 +70,7 @@ class Scale {
 
   NVector<Scale> EquallySplit(const Scale& numparts) const;
   static Scale Merge(const NVector<Scale>& partsizes);
+  static bool IncrOne(Scale& pos, const Scale& max);
  private:
 	std::vector<int> vec_;
 };
@@ -94,6 +95,9 @@ class ScaleRange {
 	static ScaleRange MakeRange(const Scale& st, const Scale& ed) {
 		return ValidRange(st, ed) ? ScaleRange(st, ed) : kNullRange;
 	}
+  static ScaleRange MakeRangeFromOrigin(const Scale& len) {
+    return ScaleRange(Scale::Origin(len.NumDims()), len);
+  }
 	static ScaleRange Intersect(const ScaleRange& r1, const ScaleRange& r2) {
 		if(r1.NumDims() != r2.NumDims()) return kNullRange;
 		std::vector<int> new_st, new_ed;

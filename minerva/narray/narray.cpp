@@ -104,9 +104,6 @@ NArray NArray::Trans() {
   return NArray::Compute({*this}, {newsize}, trans_op)[0];
 }
 
-void NArray::Eval() {
-  MinervaSystem::Instance().Eval(*this);
-}
 
 NArray NArray::RePartition(const NVector<PartInfo>& partitions) {
   if(partitions == data_node_->data_.partitions) {
@@ -121,6 +118,15 @@ NArray NArray::RePartition(const NVector<PartInfo>& partitions) {
   PartitionOp* part_op = new PartitionOp;
   part_op->closure = {partitions};
   return Compute({*this}, {this->Size()}, part_op)[0];
+}
+
+void NArray::Eval() {
+  MinervaSystem::Instance().Eval(*this);
+}
+
+float* NArray::Get() {
+  Eval();
+  return MinervaSystem::Instance().GetValue(*this);
 }
 
 } // end of namespace minerva

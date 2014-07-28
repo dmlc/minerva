@@ -9,16 +9,16 @@ using namespace std;
 
 namespace minerva {
 
-void ExpandEngine::Process(LogicalDag& dag, std::vector<uint64_t>& nodes) {
+void ExpandEngine::Process(LogicalDag& dag, const std::vector<uint64_t>& nodes) {
   for(uint64_t nid : nodes) {
     ExpandNode(dag, nid);
   }
 }
 
-vector<uint64_t> ExpandEngine::GetPhysicalNodes(uint64_t id) {
+NVector<uint64_t> ExpandEngine::GetPhysicalNodes(uint64_t id) const {
   auto it = lnode_to_pnode_.find(id);
   CHECK(it != lnode_to_pnode_.end()) << "invalid physical nid: " << id;
-  return it->second.ToVector();
+  return it->second;
 }
 
 void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {

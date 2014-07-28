@@ -53,7 +53,7 @@ Scale operator / (const Scale& sc1, const Scale& sc2) {
 	return Scale(vec);
 }
 
-bool IncrOne(Scale& pos, const Scale& max) {
+bool Scale::IncrOne(Scale& pos, const Scale& max) {
   for(size_t i = 0; i < pos.NumDims(); ++i) {
     if(pos[i] + 1 < max[i]) {
       ++pos[i];
