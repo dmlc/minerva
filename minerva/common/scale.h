@@ -67,6 +67,15 @@ class Scale {
   size_t NumDims() const { return vec_.size(); }
   int Prod() const;
   std::string ToString() const;
+  int get(int col) const {
+    return vec_[col];
+  }
+  std::vector<int>::const_iterator begin() const {
+    return vec_.begin();
+  }
+  std::vector<int>::const_iterator end() const {
+    return vec_.end();
+  }
 
   bool IncrOne(const Scale&);
   bool IncrWithOneDimensionFixed(const Scale&, size_t);
