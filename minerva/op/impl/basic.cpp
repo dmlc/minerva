@@ -1,5 +1,6 @@
 #include "basic.h"
 
+#include <cmath>
 #include <glog/logging.h>
 
 using namespace std;
@@ -94,6 +95,33 @@ void ArithmeticConst(DataList& inputs, DataList& outputs, ArithmeticConstClosure
 }
 
 void Elewise(DataList& inputs, DataList& outputs, ElewiseClosure& closure) {
+  CHECK_EQ(inputs.size(), 1) << "(elewise) #inputs is wrong!";
+  CHECK_EQ(outputs.size(), 1) << "(elewise) #outputs is wrong!";
+  float* in_data = inputs[0].GetCpuData();
+  float* res_data = outputs[0].GetCpuData();
+  int length = outputs[0].Size().Prod();
+  switch(closure.type) {
+    case EXP:
+      for (int i = 0; i < length; ++i) {
+        res_data[i] = exp(in_data[i]);
+      }
+      break;
+    case LN:
+      for (int i = 0; i < length; ++i) {
+        res_data[i] = log(in_data[i]);
+      }
+      break;
+    case SIGMOID:
+      for (int i = 0; i < length; ++i) {
+        res_data[i] = 1 / (1 + exp(-in_data[i]));
+      }
+      break;
+    case NEGATIVE:
+      for (int i = 0; i < length; ++i) {
+        res_data[i] = -in_data[i];
+      }
+      break;
+  }
 }
 
 void MatMult(DataList& inputs, DataList& outputs, MatMultClosure& closure) {
