@@ -158,8 +158,12 @@ void Transpose(DataList& inputs, DataList& outputs, TransposeClosure& closure) {
 }
 
 void Reduction(DataList& inputs, DataList& outputs, ReductionClosure& closure) {
-  // TODO
-  assert(false);
+  CHECK_EQ(inputs.size(), 1) << "(reduction) #inputs is wrong!";
+  CHECK_EQ(outputs.size(), 1) << "(reduction) #outputs is wrong!";
+  float* in_data = inputs[0].GetCpuData();
+  float* res_data = outputs[0].GetCpuData();
+  for (auto i: closure.dims_to_reduce) {
+  }
 }
 
 
