@@ -223,8 +223,8 @@ void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_si
       shard_copy_start = shard_copy_start + copy_size;
       for(size_t i = 0; i < num_dims; ++i)
         shard_copy_start[i] -= 1; // similar to "end = start + len - 1"
-    } while(Scale::IncrOne(shard_copy_start, ds.Size()));
-  } while(Scale::IncrOne(shard_index, num_shards));
+    } while(shard_copy_start.IncrOne(ds.Size()));
+  } while(shard_index.IncrOne(num_shards));
   cout << "copy times: " << copy_times << endl;
 }
 
