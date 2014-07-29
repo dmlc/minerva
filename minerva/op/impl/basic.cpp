@@ -171,26 +171,29 @@ void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_si
   // Copy each shard to dest
   Scale shard_index = Scale::Origin(num_dims);
   ScaleRange globalrange = ScaleRange::MakeRangeFromOrigin(dest_size);
+  int copy_times = 0;
   do {
     DataShard& ds = data_shards[shard_index];
     Scale& copy_size = shard_copy_size[shard_index];
     Scale shard_copy_start = Scale::Origin(num_dims);
     ScaleRange localrange = ScaleRange::MakeRangeFromOrigin(ds.Size());
-    cout << "grange=" << globalrange << " lrange=" << localrange << endl;
+    //cout << "grange=" << globalrange << " lrange=" << localrange << endl;
     do {
-      cout << "off=" << ds.Offset() << " start=" << shard_copy_start << endl;
+      //cout << "off=" << ds.Offset() << " start=" << shard_copy_start << endl;
       size_t srcoff = localrange.Flatten(shard_copy_start);
       size_t dstoff = globalrange.Flatten(ds.Offset() + shard_copy_start);
       size_t len = copy_size.Prod();
-      cout << "srcoff=" << srcoff << " dstoff=" << dstoff << " len=" << len << endl;
+      //cout << "srcoff=" << srcoff << " dstoff=" << dstoff << " len=" << len << endl;
       // do copy
       memcpy(dest + dstoff, ds.GetCpuData() + srcoff, len * sizeof(float));
+      ++copy_times;
       // incr copy_start
       shard_copy_start = shard_copy_start + copy_size;
       for(size_t i = 0; i < num_dims; ++i)
         shard_copy_start[i] -= 1; // similar to "end = start + len - 1"
     } while(Scale::IncrOne(shard_copy_start, ds.Size()));
   } while(Scale::IncrOne(shard_index, num_shards));
+  cout << "copy times: " << copy_times << endl;
 }
 
 } // end of namespace basic
