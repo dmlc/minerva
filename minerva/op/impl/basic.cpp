@@ -193,7 +193,7 @@ void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_si
         shard_copy_start[i] -= 1; // similar to "end = start + len - 1"
     } while(Scale::IncrOne(shard_copy_start, ds.Size()));
   } while(Scale::IncrOne(shard_index, num_shards));
-  cout << "copy times: " << copy_times << endl;
+  VLOG(1) << "copy times in assemble: " << copy_times;
 }
 
 } // end of namespace basic

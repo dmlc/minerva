@@ -1,5 +1,6 @@
 #include "scale.h"
 #include "nvector.h"
+#include <glog/logging.h>
 
 namespace minerva {
 
@@ -25,28 +26,28 @@ std::string Scale::ToString() const {
 }
 
 Scale operator + (const Scale& sc1, const Scale& sc2) {
-	assert(sc1.NumDims() == sc2.NumDims());
+	CHECK_EQ(sc1.NumDims(), sc2.NumDims()) << "dimension mismatch";
 	std::vector<int> vec;
 	for(size_t i = 0; i < sc1.NumDims(); ++i)
 		vec.push_back(sc1[i] + sc2[i]);
 	return Scale(vec);
 }
 Scale operator - (const Scale& sc1, const Scale& sc2) {
-	assert(sc1.NumDims() == sc2.NumDims());
+	CHECK_EQ(sc1.NumDims(), sc2.NumDims()) << "dimension mismatch";
 	std::vector<int> vec;
 	for(size_t i = 0; i < sc1.NumDims(); ++i)
 		vec.push_back(sc1[i] - sc2[i]);
 	return Scale(vec);
 }
 Scale operator * (const Scale& sc1, const Scale& sc2) {
-	assert(sc1.NumDims() == sc2.NumDims());
+	CHECK_EQ(sc1.NumDims(), sc2.NumDims()) << "dimension mismatch";
 	std::vector<int> vec;
 	for(size_t i = 0; i < sc1.NumDims(); ++i)
 		vec.push_back(sc1[i] * sc2[i]);
 	return Scale(vec);
 }
 Scale operator / (const Scale& sc1, const Scale& sc2) {
-	assert(sc1.NumDims() == sc2.NumDims());
+	CHECK_EQ(sc1.NumDims(), sc2.NumDims()) << "dimension mismatch";
 	std::vector<int> vec;
 	for(size_t i = 0; i < sc1.NumDims(); ++i)
 		vec.push_back(sc1[i] / sc2[i]);
@@ -66,7 +67,7 @@ bool Scale::IncrOne(Scale& pos, const Scale& max) {
 }
 
 NVector<Scale> Scale::EquallySplit(const Scale& numparts) const {
-  assert(numparts.NumDims() == NumDims());
+  CHECK_EQ(numparts.NumDims(), NumDims()) << "partition dimension is wrong";
   NVector<Scale> rst(numparts);
   Scale partsize = *this / numparts;
   Scale pos = Scale::Origin(NumDims());

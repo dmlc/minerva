@@ -97,6 +97,7 @@ class NArray {
   // system
   void Eval();
   float* Get();
+  void ToFile(const std::string& filename);
   NArray RePartition(const NVector<PartInfo>& partitions);
 
  private:

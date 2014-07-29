@@ -1,6 +1,8 @@
 #include "narray.h"
 #include "op/logical_op.h"
 #include "system/minerva_system.h"
+#include <fstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -127,6 +129,14 @@ void NArray::Eval() {
 float* NArray::Get() {
   Eval();
   return MinervaSystem::Instance().GetValue(*this);
+}
+
+void NArray::ToFile(const std::string& filename) {
+  float* value = Get();
+  ofstream fout(filename.c_str());
+  for(int i = 0; i < Size().Prod(); ++i)
+    fout << setprecision(4) << value[i] << "\t";
+  fout.close();
 }
 
 } // end of namespace minerva

@@ -67,16 +67,25 @@ class Scale {
 	size_t NumDims() const { return vec_.size(); }
 	int Prod() const;
   std::string ToString() const;
-
   NVector<Scale> EquallySplit(const Scale& numparts) const;
   static Scale Merge(const NVector<Scale>& partsizes);
   static bool IncrOne(Scale& pos, const Scale& max);
+  template<class Fn> Scale Map(Fn fn) const;
  private:
 	std::vector<int> vec_;
 };
 
 inline std::ostream& operator << (std::ostream& os, const Scale& sc) {
   return os << sc.ToString();
+}
+
+template<class Fn>
+Scale Scale::Map(Fn fn) const {
+  Scale ret;
+  for(size_t i = 0; i < vec_.size(); ++i) {
+    ret.vec_.push_back(fn(vec_[i]));
+  }
+  return ret;
 }
 
 class ScaleRange {

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <tuple>
 #include <glog/logging.h>
 
 #include "expand_engine.h"
@@ -71,7 +72,10 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
     }
   }
 }
+
 void ExpandEngine::MakeMapping(LogicalDag::DNode* ldnode, const NVector<Chunk>& chunks) {
+  Scale numparts = chunks.Size();
+  size_t numdims = numparts.NumDims();
   // check size
   NVector<Scale> chunk_sizes = chunks.Map<Scale>( [] (const Chunk& ch) { return ch.Size(); } );
   Scale merged_size = Scale::Merge(chunk_sizes);
@@ -80,7 +84,18 @@ void ExpandEngine::MakeMapping(LogicalDag::DNode* ldnode, const NVector<Chunk>& 
     << "Expected: " << ldnode->data_.size << "\n"
     << "Got: " << merged_size;
   // offset & offset_index
-  // TODO
+  Scale pos = Scale::Origin(numdims);
+  do {
+    auto& phy_data = chunks[pos].data_node()->data_;
+    phy_data.offset_index = pos;
+    Scale upleftpos = pos.Map([] (int x) { return max(x - 1, 0); });
+    if(upleftpos == pos) {
+      phy_data.offset = pos; // the offset of the first chunk is zero
+    } else {
+      auto& upleft_phy_data = chunks[upleftpos].data_node()->data_;
+      phy_data.offset = upleft_phy_data.offset + upleft_phy_data.size;
+    }
+  } while(Scale::IncrOne(pos, numparts));
   // insert mapping
   lnode_to_pnode_[ldnode->node_id_] = chunks.Map<uint64_t>(
       [&] (const Chunk& ch) {

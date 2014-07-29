@@ -34,6 +34,18 @@ class DataIdPrinter {
   }
 };
 
+class OffsetPrinter {
+ public:
+  static std::string DataToString(const PhysicalData& d) {
+    std::stringstream ss;
+    ss << d.offset;
+    return ss.str();
+  }
+  static std::string OpToString(const PhysicalOp& o) {
+    return o.compute_fn->Name();
+  }
+};
+
 typedef Dag<PhysicalData, PhysicalOp> PhysicalDag;
 typedef PhysicalDag::DNode PhysicalDataNode;
 typedef PhysicalDag::ONode PhysicalOpNode;
