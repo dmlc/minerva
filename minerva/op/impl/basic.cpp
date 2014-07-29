@@ -163,10 +163,30 @@ void Reduction(DataList& inputs, DataList& outputs, ReductionClosure& closure) {
   CHECK_EQ(outputs.size(), 1) << "(reduction) #outputs is wrong!";
   float* in_data = inputs[0].GetCpuData();
   float* res_data = outputs[0].GetCpuData();
-  for (auto i: closure.dims_to_reduce) {
-  }
-}
+  auto in_max = inputs[0].Size();
+  auto in_range = ScaleRange::MakeRangeFromOrigin(in_max);
+  auto res_max = outputs[0].Size();
+  auto res_range = ScaleRange::MakeRangeFromOrigin(res_max);
+  auto accumulator = Scale::Origin(max.NumDims());
+  do {
+    auto cur = accumulator;
+    float tmp = in_data[in_range.Flatten(cur)];
+    while (tmp.IncrWithOneDimensionFixed(in_max, closure.dims_to_reduce)) {
 
+
+
+  } while (accumulator.IncrDimensions(res_max, closure.dims_to_reduce);
+
+
+
+    oo
+  auto tmp = max;
+  tmp[i] = 1;
+  auto range = ScaleRange::MakeRange(accumulator, tmp);
+  do {
+    range.flatten(accumulator);
+  } while (accumulator.IncrWithOneDimensionFixed(max, i);
+}
 
 void Randn(DataShard& output, RandnClosure& closure) {
   int length = output.Size().Prod();

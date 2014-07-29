@@ -76,9 +76,17 @@ class Scale {
   std::vector<int>::const_iterator end() const {
     return vec_.end();
   }
-
+  bool Contains(int a) const {
+    for (auto i: vec_) {
+      if (a == i) {
+        return true;
+      }
+    }
+    return false;
+  }
   bool IncrOne(const Scale&);
-  bool IncrWithOneDimensionFixed(const Scale&, size_t);
+  bool IncrWithDimensionsFixed(const Scale&, const Scale&);
+  bool IncrDimensions(const Scale&, const Scale&);
   NVector<Scale> EquallySplit(const Scale& numparts) const;
   static Scale Merge(const NVector<Scale>& partsizes);
   static bool IncrOne(Scale& pos, const Scale& max);

@@ -65,10 +65,26 @@ bool Scale::IncrOne(const Scale& max) {
   return false;
 }
 
-bool Scale::IncrWithOneDimensionFixed(const Scale& max, size_t fix) {
+bool Scale::IncrWithDimensionsFixed(const Scale& max, const Scale& fix) {
   size_t num = NumDims();
   for (size_t i = 0; i < num; ++i) {
-    if (num == fix) {
+    if (fix.Containes(i)) {
+      continue;
+    }
+    if (vec_[i] + 1 < max[i]) {
+      ++vec_[i];
+      return true;
+    } else {
+      vec_[i] = 0;
+    }
+  }
+  return false;
+}
+
+bool Scale::IncrDimensions(const Scale& max, const Scale& fix) {
+  size_t num = NumDims();
+  for (size_t i = 0; i < num; ++i) {
+    if (!fix.Containes(i)) {
       continue;
     }
     if (vec_[i] + 1 < max[i]) {
