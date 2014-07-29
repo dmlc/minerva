@@ -128,17 +128,17 @@ void PhysicalEngine::NodeRunner(DagNode* node) {
     }
     // call compute function
     PhysicalOp& op = phy_op_node->op_;
-    LOG(INFO) << "Execute compute fn: " << op.compute_fn->Name();
+    LOG(INFO) << "Execute node#" << node->node_id_ << " compute fn: " << op.compute_fn->Name();
     op.compute_fn->Execute(input, output, BASIC); // TODO decide impl_type
   } else { // DataNode
-    if (node->predecessors_.empty()) { // Headless data node
+    /*if (node->predecessors_.empty()) { // Headless data node
       PhysicalData& data = dynamic_cast<PhysicalDataNode*>(node)->data_;
       ms.data_store().CreateData(data.data_id, DataStore::CPU, data.size.Prod()); // allocate space
       // call data gen function
       DataShard output(data);
       LOG(INFO) << "Execute data gen fn: " << data.data_gen_fn->Name();
       data.data_gen_fn->Execute(output, BASIC); // TODO decide impl_type
-    }
+    }*/
   }
   {
     lock_guard<mutex> lock(node_states_mutex_);

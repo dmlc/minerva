@@ -136,9 +136,10 @@ void Reduction(DataList& inputs, DataList& outputs, ReductionClosure& closure) {
 }
 
 
-void Randn(DataShard& output, RandnClosure& closure) {
-  int length = output.Size().Prod();
-  float* data = output.GetCpuData();
+void Randn(DataList& output, RandnClosure& closure) {
+  CHECK_EQ(output.size(), 1) << "wrong number of randn output";
+  int length = output[0].Size().Prod();
+  float* data = output[0].GetCpuData();
   default_random_engine generator;
   normal_distribution<float> distribution(closure.mu, closure.var); // TODO only float for now
   for (int i = 0; i < length; ++i) {
@@ -146,9 +147,10 @@ void Randn(DataShard& output, RandnClosure& closure) {
   }
 }
 
-void Fill(DataShard& output, FillClosure& closure) {
-  int length = output.Size().Prod();
-  float* data = output.GetCpuData();
+void Fill(DataList& output, FillClosure& closure) {
+  CHECK_EQ(output.size(), 1) << "wrong number of fill constant output";
+  int length = output[0].Size().Prod();
+  float* data = output[0].GetCpuData();
   for (int i = 0; i < length; ++i) {
     data[i] = closure.val;
   }

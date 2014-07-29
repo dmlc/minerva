@@ -12,9 +12,9 @@ class DagHelper<PhysicalData, PhysicalOp> {
   static std::string DataToString(const PhysicalData& d) {
     std::stringstream ss;
     ss << d.size; 
-    if(d.data_gen_fn != NULL) {
-      ss << d.data_gen_fn->Name();
-    }
+    //if(d.data_gen_fn != NULL) {
+      //ss << d.data_gen_fn->Name();
+    //}
     return ss.str();
   }
   static std::string OpToString(const PhysicalOp& o) {

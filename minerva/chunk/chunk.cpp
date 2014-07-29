@@ -34,7 +34,6 @@ std::vector<Chunk> Chunk::Compute(const std::vector<Chunk>& params,
     PhysicalData phy_data;
     // TODO how to set place ?
     phy_data.size = size;
-    phy_data.data_gen_fn = NULL;
     auto rst_node = pdag.NewDataNode(phy_data);
     // generate data id
     rst_node->data_.data_id = ms.data_store().GenerateDataID();
@@ -53,7 +52,7 @@ std::vector<Chunk> Chunk::Compute(const std::vector<Chunk>& params,
   return rst;
 }
 
-Chunk Chunk::Generate(const Scale& result_size, PhysicalDataGenFn* fn) {
+/*Chunk Chunk::Generate(const Scale& result_size, PhysicalDataGenFn* fn) {
   auto& ms = MinervaSystem::Instance();
   auto& pdag = ms.physical_dag();
   PhysicalData phy_data;
@@ -63,7 +62,7 @@ Chunk Chunk::Generate(const Scale& result_size, PhysicalDataGenFn* fn) {
   // generate data id
   rst_node->data_.data_id = ms.data_store().GenerateDataID();
   return Chunk(rst_node);
-}
+}*/
 
 /////////////////////////////////////////////////////////
 // Data generator
@@ -71,13 +70,13 @@ Chunk Chunk::Generate(const Scale& result_size, PhysicalDataGenFn* fn) {
 Chunk Chunk::Constant(const Scale& size, float val) {
   FillOp* fill_op = new FillOp;
   fill_op->closure = {val};
-  return Chunk::Generate(size, fill_op);
+  return Chunk::Compute({}, {size}, fill_op)[0];
 }
 
 Chunk Chunk::Randn(const Scale& size, float mu, float var) {
   RandnOp* randn_op = new RandnOp;
   randn_op->closure = {mu, var};
-  return Chunk::Generate(size, randn_op);
+  return Chunk::Compute({}, {size}, randn_op)[0];
 }
 
 /////////////////////////////////////////////////////////

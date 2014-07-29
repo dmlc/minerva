@@ -35,11 +35,10 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
       LogicalDataGenFn* fn = dnode->data_.data_gen_fn;
       if(fn != NULL) {
         LOG(INFO) << "Expand logical datagen function: " << fn->Name();
-        NVector<Chunk> chunks = dnode->data_.partitions.Map<Chunk>(
-            [fn] (const PartInfo& partinfo) {
-              return fn->Expand(partinfo.size);
-            }
+        NVector<Scale> partsizes = dnode->data_.partitions.Map<Scale>(
+            [] (const PartInfo& pi) { return pi.size; }
           );
+        NVector<Chunk> chunks = fn->Expand(partsizes);
         MakeMapping(dnode, chunks);
       }
     }
