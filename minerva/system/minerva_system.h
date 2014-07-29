@@ -20,6 +20,7 @@ class MinervaSystem : public Singleton<MinervaSystem> {
   DataStore& data_store() { return data_store_; }
   PhysicalEngine& physical_engine() { return physical_engine_; }
   void Eval(NArray narr);
+  float* GetValue(NArray narr);
 
  private:
   LogicalDag logical_dag_;

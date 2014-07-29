@@ -96,6 +96,7 @@ class NArray {
 
   // system
   void Eval();
+  float* Get();
   NArray RePartition(const NVector<PartInfo>& partitions);
 
  private:

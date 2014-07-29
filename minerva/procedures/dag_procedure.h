@@ -8,7 +8,7 @@ namespace minerva {
 template<class DagType>
 class DagProcedure {
  public:
-  virtual void Process(DagType&, std::vector<uint64_t>&) = 0;
+  virtual void Process(DagType&, const std::vector<uint64_t>&) = 0;
 };
 
 class LogicalDagProcedure : public DagProcedure<LogicalDag> { };

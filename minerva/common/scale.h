@@ -81,6 +81,7 @@ class Scale {
   bool IncrWithOneDimensionFixed(const Scale&, size_t);
   NVector<Scale> EquallySplit(const Scale& numparts) const;
   static Scale Merge(const NVector<Scale>& partsizes);
+  static bool IncrOne(Scale& pos, const Scale& max);
  private:
   std::vector<int> vec_;
 };
@@ -114,7 +115,6 @@ class ScaleRange {
     }
     return MakeRange(Scale(new_st), Scale(new_ed));
   }
-
   ScaleRange() {}
   ScaleRange(const ScaleRange& other): start_(other.start_), end_(other.end_) {}
   ScaleRange operator = (const ScaleRange& other) {
@@ -128,7 +128,6 @@ class ScaleRange {
   bool operator != (const ScaleRange& other) const  {
     return ! (*this == other);
   }
-
   size_t NumDims() const { return start_.NumDims(); }
   size_t Area() const {
     size_t area = 1;
@@ -149,9 +148,11 @@ class ScaleRange {
     assert(IsInRange(sc));
     Scale off = sc - start_;
     Scale interval = end_ - start_;
+    size_t stride = 1;
     size_t ret = 0;
     for(size_t i = 0; i < off.NumDims(); ++i) {
-      ret = ret * interval[i] + off[i];
+      ret += off[i] * stride;
+      stride *= interval[i];
     }
     return ret;
   }

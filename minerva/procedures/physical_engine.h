@@ -42,7 +42,7 @@ class PhysicalEngine: public PhysicalDagProcedure {
   // TODO use reference to reduce overhead
   PhysicalEngine();
   ~PhysicalEngine();
-  void Process(PhysicalDag&, std::vector<uint64_t>&);
+  void Process(PhysicalDag&, const std::vector<uint64_t>&);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(PhysicalEngine);

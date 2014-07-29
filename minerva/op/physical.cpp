@@ -7,7 +7,8 @@ namespace minerva {
 
 DataStore& dstore = MinervaSystem::Instance().data_store();
 
-DataShard::DataShard(PhysicalData& d): data_info_(d) {}
+DataShard::DataShard(const PhysicalData& d): data_info_(d) {}
+DataShard::DataShard(const DataShard& other): data_info_(other.data_info_) {}
 
 // return data untransformed (NO memory copy)
 float* DataShard::GetCpuData() {
