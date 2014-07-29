@@ -16,6 +16,7 @@ class Reduction;
 class Convolution;
 
 class MinervaSystem;
+class IFileLoader;
 
 class Elewise {
  public:
@@ -95,6 +96,9 @@ class NArray {
   static NArray Generate(const Scale& size, LogicalDataGenFn* fn, const Scale& numparts);
 
   // system
+  template<class FileLoader>
+  static NArray LoadFromFile(const Scale& size, const std::string& fname);
+  static NArray LoadFromFile(const Scale& size, IFileLoader* loader);
   void Eval();
   float* Get();
   void ToFile(const std::string& filename);
