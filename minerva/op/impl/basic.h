@@ -13,8 +13,8 @@ extern void MatMult(DataList&, DataList&, MatMultClosure& );
 extern void Transpose(DataList&, DataList&, TransposeClosure& );
 extern void Reduction(DataList&, DataList&, ReductionClosure& );
 
-extern void Randn(DataShard&, RandnClosure& );
-extern void Fill(DataShard&, FillClosure& );
+extern void Randn(DataList&, RandnClosure& );
+extern void Fill(DataList&, FillClosure& );
 
 extern void Assemble(NVector<DataShard>&, float*, const Scale&);
 

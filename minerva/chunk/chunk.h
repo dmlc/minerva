@@ -48,7 +48,7 @@ class Chunk {
   // customized operations
   static std::vector<Chunk> Compute(const std::vector<Chunk>& params,
       const std::vector<Scale>& result_sizes, PhysicalComputeFn* fn);
-  static Chunk Generate(const Scale& result_size, PhysicalDataGenFn* fn);
+  //static Chunk Generate(const Scale& result_size, PhysicalDataGenFn* fn);
 
  private:
   PhysicalDataNode* data_node_; // Set up in constructor

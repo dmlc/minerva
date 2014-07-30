@@ -1,7 +1,7 @@
 #include "data_store.h"
 #include <cstdlib>
 #include <cstddef>
-#include <cassert>
+#include <glog/logging.h>
 
 using namespace std;
 
@@ -23,7 +23,9 @@ uint64_t DataStore::GenerateDataID() {
 
 bool DataStore::CreateData(uint64_t id, MemTypes type, size_t size) {
   // TODO Allocate according to MemTypes
-  assert(id); // Not allocated
+  std::lock_guard<std::mutex> lck(access_mutex_);
+  LOG_IF(WARNING, data_pointers_.find(id) != data_pointers_.end())
+    << "data_id(" << id << ") has already been created";
   auto ptr = data_pointers_.find(id);
   if (ptr != data_pointers_.end()) {
     FreeData(id, type); // Free existing storage
@@ -34,18 +36,20 @@ bool DataStore::CreateData(uint64_t id, MemTypes type, size_t size) {
 }
 
 float* DataStore::GetData(uint64_t id, MemTypes type) {
-  assert(id); // Not allocated
+  std::lock_guard<std::mutex> lck(access_mutex_);
   auto ptr = data_pointers_.find(id);
   if (ptr == data_pointers_.end()) {
+    LOG(WARNING) << "data_id(" << id << ") was not created!";
     return nullptr;
   }
   return ptr->second;
 }
 
 void DataStore::FreeData(uint64_t id, MemTypes type) {
-  assert(id); // Not allocated
+  std::lock_guard<std::mutex> lck(access_mutex_);
   auto ptr = data_pointers_.find(id);
   if (ptr == data_pointers_.end()) {
+    LOG(WARNING) << "data_id(" << id << ") was not created!";
     return;
   }
   free(ptr->second);
@@ -53,4 +57,3 @@ void DataStore::FreeData(uint64_t id, MemTypes type) {
 }
 
 } // end of namespace minerva
-

@@ -28,7 +28,7 @@ class FnBundle {
 #define INSTALL_DATAGEN_FN(closure_name, basic_fn, mkl_fn, cuda_fn) \
   template<> class FnBundle<closure_name> {\
    public:\
-    static void Call(DataShard& d, closure_name& c, IMPL_TYPE it) {\
+    static void Call(DataList& d, closure_name& c, IMPL_TYPE it) {\
       switch(it) {\
         case BASIC: basic_fn(d, c); break;\
         case MKL: mkl_fn(d, c); break;\
