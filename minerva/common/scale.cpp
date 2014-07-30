@@ -68,7 +68,7 @@ bool Scale::IncrOne(const Scale& max) {
 bool Scale::IncrWithDimensionsFixed(const Scale& max, const Scale& fix) {
   size_t num = NumDims();
   for (size_t i = 0; i < num; ++i) {
-    if (fix.Containes(i)) {
+    if (fix.Contains(i)) {
       continue;
     }
     if (vec_[i] + 1 < max[i]) {
@@ -84,7 +84,7 @@ bool Scale::IncrWithDimensionsFixed(const Scale& max, const Scale& fix) {
 bool Scale::IncrDimensions(const Scale& max, const Scale& fix) {
   size_t num = NumDims();
   for (size_t i = 0; i < num; ++i) {
-    if (!fix.Containes(i)) {
+    if (!fix.Contains(i)) {
       continue;
     }
     if (vec_[i] + 1 < max[i]) {

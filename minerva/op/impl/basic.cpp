@@ -167,7 +167,7 @@ void Reduction(DataList& inputs, DataList& outputs, ReductionClosure& closure) {
   auto in_range = ScaleRange::MakeRangeFromOrigin(in_max);
   auto res_max = outputs[0].Size();
   auto res_range = ScaleRange::MakeRangeFromOrigin(res_max);
-  auto accumulator = Scale::Origin(max.NumDims());
+  auto accumulator = Scale::Origin(in_max.NumDims());
   do {
     auto cur = accumulator;
     float tmp = in_data[in_range.Flatten(cur)];
