@@ -38,6 +38,7 @@ template <typename T> class ConcurrentBlockingQueue {
     return rv;
   }
   void SignalForKill() {
+    std::unique_lock<std::mutex> lock(mutex_);
     exit_now_.Write(true);
     cv_.notify_all();
   }
