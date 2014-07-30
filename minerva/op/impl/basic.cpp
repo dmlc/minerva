@@ -173,6 +173,7 @@ void Reduction(DataList& inputs, DataList& outputs, ReductionClosure& closure) {
     float tmp = in_data[in_range.Flatten(cur)];
     while (cur.IncrDimensions(in_max, closure.dims_to_reduce)) {
       float tmp2 = in_data[in_range.Flatten(cur)];
+      // TODO Moving switch out of loop to optimize
       switch (closure.type) {
         case SUM:
           tmp += tmp2;
