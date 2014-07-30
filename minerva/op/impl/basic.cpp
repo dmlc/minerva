@@ -171,21 +171,21 @@ void Reduction(DataList& inputs, DataList& outputs, ReductionClosure& closure) {
   do {
     auto cur = accumulator;
     float tmp = in_data[in_range.Flatten(cur)];
-    while (tmp.IncrWithOneDimensionFixed(in_max, closure.dims_to_reduce)) {
-
-
-
-  } while (accumulator.IncrDimensions(res_max, closure.dims_to_reduce);
-
-
-
-    oo
-  auto tmp = max;
-  tmp[i] = 1;
-  auto range = ScaleRange::MakeRange(accumulator, tmp);
-  do {
-    range.flatten(accumulator);
-  } while (accumulator.IncrWithOneDimensionFixed(max, i);
+    while (cur.IncrDimensions(in_max, closure.dims_to_reduce)) {
+      float tmp2 = in_data[in_range.Flatten(cur)];
+      switch (closure.type) {
+        case SUM:
+          tmp += tmp2;
+          break;
+        case MAX:
+          if (tmp < tmp2) {
+            tmp = tmp2;
+          }
+          break;
+      }
+    }
+    res_data[res_range.Flatten(accumulator)] = tmp;
+  } while (accumulator.IncrWithDimensionsFixed(res_max, closure.dims_to_reduce));
 }
 
 void Randn(DataShard& output, RandnClosure& closure) {
