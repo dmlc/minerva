@@ -3,6 +3,7 @@
 #include <map>
 #include <cstdint>
 #include <cstddef>
+#include <mutex>
 
 namespace minerva {
 
@@ -21,6 +22,7 @@ class DataStore {
 
  private:
   DISALLOW_COPY_AND_ASSIGN(DataStore);
+  std::mutex access_mutex_;
   std::map<uint64_t, float*> data_pointers_;
 };
 
