@@ -106,11 +106,12 @@ void MatMult(DataList& inputs, DataList& outputs, MatMultClosure& closure) {
   int m = outputs[0].Size()[0];
   int n = outputs[0].Size()[1];
   int o = inputs[0].Size()[1];
+  // ATTENTION: the data is column major !!
   for (int i = 0; i < m; ++i) {
     for (int j = 0; j < n; ++j) {
-      res_data[i * n + j] = 0;
+      res_data[i + j * m] = 0;
       for (int k = 0; k < o; ++k) {
-        res_data[i * n + j] += left_data[i * o + k] * right_data[k * n + j];
+        res_data[i + j * m] += left_data[i + k * m] * right_data[k + j * o];
       }
     }
   }
@@ -125,7 +126,7 @@ void Transpose(DataList& inputs, DataList& outputs, TransposeClosure& closure) {
   int n = outputs[0].Size()[1];
   for (int i = 0; i < m; ++i) {
     for (int j = 0; j < n; ++j) {
-      res_data[i * n + j] = in_data[j * m + i];
+      res_data[i + j * m] = in_data[j + i * n];
     }
   }
 }
