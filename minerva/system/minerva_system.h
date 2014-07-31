@@ -31,4 +31,3 @@ class MinervaSystem : public Singleton<MinervaSystem> {
 };
 
 } // end of namespace minerva
-

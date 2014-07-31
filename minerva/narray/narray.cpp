@@ -1,6 +1,7 @@
 #include "narray.h"
 #include "op/logical_op.h"
 #include "system/minerva_system.h"
+#include "io/file_loader.h"
 #include <fstream>
 #include <iomanip>
 
@@ -137,6 +138,12 @@ void NArray::ToFile(const std::string& filename) {
   for(int i = 0; i < Size().Prod(); ++i)
     fout << setprecision(4) << value[i] << "\t";
   fout.close();
+}
+
+NArray NArray::LoadFromFile(const Scale& size, const std::string& fname, IFileLoader* loader, const Scale& numparts) {
+  FileLoaderOp* loader_op = new FileLoaderOp;
+  loader_op->closure = {loader, fname};
+  return NArray::Generate(size, loader_op, numparts);
 }
 
 } // end of namespace minerva

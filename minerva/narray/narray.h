@@ -45,6 +45,7 @@ class NArray {
       const NVector<PartInfo>& = NVector<PartInfo>());
   static NArray Constant(const Scale& size, float val, const Scale& );
   static NArray Randn(const Scale& size, float mu, float var, const Scale& );
+  static NArray LoadFromFile(const Scale& size, const std::string& fname, IFileLoader* loader, const Scale& numparts);
   NArray();
   ~NArray();
  public:
@@ -96,9 +97,6 @@ class NArray {
   static NArray Generate(const Scale& size, LogicalDataGenFn* fn, const Scale& numparts);
 
   // system
-  template<class FileLoader>
-  static NArray LoadFromFile(const Scale& size, const std::string& fname);
-  static NArray LoadFromFile(const Scale& size, IFileLoader* loader);
   void Eval();
   float* Get();
   void ToFile(const std::string& filename);
