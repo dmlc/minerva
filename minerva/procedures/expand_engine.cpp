@@ -84,15 +84,17 @@ void ExpandEngine::MakeMapping(LogicalDag::DNode* ldnode, const NVector<Chunk>& 
     << "Got: " << merged_size;
   // offset & offset_index
   Scale pos = Scale::Origin(numdims);
+  chunks[pos].data_node()->data_.offset = pos; // the offset of first chunk is zero
   do {
     auto& phy_data = chunks[pos].data_node()->data_;
     phy_data.offset_index = pos;
     Scale upleftpos = pos.Map([] (int x) { return max(x - 1, 0); });
-    if(upleftpos == pos) {
-      phy_data.offset = pos; // the offset of the first chunk is zero
-    } else {
-      auto& upleft_phy_data = chunks[upleftpos].data_node()->data_;
-      phy_data.offset = upleft_phy_data.offset + upleft_phy_data.size;
+    auto& upleft_phy_data = chunks[upleftpos].data_node()->data_;
+    phy_data.offset = upleft_phy_data.offset + upleft_phy_data.size;
+    for(size_t i = 0; i < numdims; ++i) {
+      if(pos[i] == 0) { // if the index of this dimension is 0, then so does the offset
+        phy_data.offset[i] = 0;
+      }
     }
   } while(Scale::IncrOne(pos, numparts));
   // insert mapping

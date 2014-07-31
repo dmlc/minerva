@@ -36,9 +36,6 @@ void SimpleFileLoader::Load(const std::string& fname, const Scale& size, DataLis
   size_t numdims = size.NumDims();
   Scale dststart = Scale::Origin(numdims);
   for(DataShard& ds : out_shards) {
-    cout << "from: srcsize=" << size << " srcstart=" << ds.Offset() << endl;
-    cout << "to:   dstsize=" << ds.Size() << " dststart=" << dststart << endl;
-    cout << "copy size=" << ds.Size() << endl;
     basic::NCopy(ptr, size, ds.Offset(), ds.GetCpuData(), ds.Size(), dststart, ds.Size());
   }
 }
