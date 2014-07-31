@@ -207,6 +207,9 @@ void Fill(DataShard& output, FillClosure& closure) {
   }
 }
 
+void Assemble(DataList& inputs, DataList& outputs, AssembleClosure& closure) {
+}
+
 void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_size) {
   Scale num_shards = data_shards.Size();
   size_t num_dims = num_shards.NumDims();
