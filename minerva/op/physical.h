@@ -8,7 +8,6 @@ namespace minerva {
 
 struct PhysicalData;
 struct PhysicalOp;
-class PhysicalDataGenFn;
 class PhysicalComputeFn;
 class DataShard;
 
@@ -18,7 +17,6 @@ class DataShard;
 struct PhysicalData {
   Scale size, offset, offset_index;
   uint64_t data_id;
-  PhysicalDataGenFn* data_gen_fn;
 };
 
 struct PhysicalOp {
@@ -52,23 +50,9 @@ class DataShard {
 };
 typedef std::vector<DataShard> DataList;
 
-class PhysicalDataGenFn : public BasicFn {
- public:
-  virtual void Execute(DataShard output, IMPL_TYPE impl_type) = 0;
-};
-
 class PhysicalComputeFn : public BasicFn {
  public:
   virtual void Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) = 0;
-};
-
-template<class C>
-class PhyDataGenFnWithClosure :
-  public PhysicalDataGenFn, public ClosureTrait<C> {
- public:
-  void Execute(DataShard output, IMPL_TYPE impl_type) {
-    FnBundle<C>::Call(output, ClosureTrait<C>::closure, impl_type);
-  }
 };
 
 template<class C>

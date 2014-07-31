@@ -134,11 +134,12 @@ void MatMult(DataList& inputs, DataList& outputs, MatMultClosure& closure) {
   int m = outputs[0].Size()[0];
   int n = outputs[0].Size()[1];
   int o = inputs[0].Size()[1];
+  // ATTENTION: the data is column major !!
   for (int i = 0; i < m; ++i) {
     for (int j = 0; j < n; ++j) {
-      res_data[i * n + j] = 0;
+      res_data[i + j * m] = 0;
       for (int k = 0; k < o; ++k) {
-        res_data[i * n + j] += left_data[i * o + k] * right_data[k * n + j];
+        res_data[i + j * m] += left_data[i + k * m] * right_data[k + j * o];
       }
     }
   }
@@ -153,7 +154,7 @@ void Transpose(DataList& inputs, DataList& outputs, TransposeClosure& closure) {
   int n = outputs[0].Size()[1];
   for (int i = 0; i < m; ++i) {
     for (int j = 0; j < n; ++j) {
-      res_data[i * n + j] = in_data[j * m + i];
+      res_data[i + j * m] = in_data[j + i * n];
     }
   }
 }
@@ -189,9 +190,10 @@ void Reduction(DataList& inputs, DataList& outputs, ReductionClosure& closure) {
   } while (accumulator.IncrWithDimensionsFixed(res_max, closure.dims_to_reduce));
 }
 
-void Randn(DataShard& output, RandnClosure& closure) {
-  int length = output.Size().Prod();
-  float* data = output.GetCpuData();
+void Randn(DataList& output, RandnClosure& closure) {
+  CHECK_EQ(output.size(), 1) << "wrong number of randn output";
+  int length = output[0].Size().Prod();
+  float* data = output[0].GetCpuData();
   default_random_engine generator;
   normal_distribution<float> distribution(closure.mu, closure.var); // TODO only float for now
   for (int i = 0; i < length; ++i) {
@@ -199,21 +201,19 @@ void Randn(DataShard& output, RandnClosure& closure) {
   }
 }
 
-void Fill(DataShard& output, FillClosure& closure) {
-  int length = output.Size().Prod();
-  float* data = output.GetCpuData();
+void Fill(DataList& output, FillClosure& closure) {
+  CHECK_EQ(output.size(), 1) << "wrong number of fill constant output";
+  int length = output[0].Size().Prod();
+  float* data = output[0].GetCpuData();
   for (int i = 0; i < length; ++i) {
     data[i] = closure.val;
   }
 }
 
-void Assemble(DataList& inputs, DataList& outputs, AssembleClosure& closure) {
-}
-
-void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_size) {
+/*void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_size) {
   Scale num_shards = data_shards.Size();
   size_t num_dims = num_shards.NumDims();
-  NVector<Scale> shard_copy_size = data_shards.Map<Scale>(
+  NVector<Scale> shard_copysize = data_shards.Map<Scale>(
       [&] (const DataShard& ds) {
         Scale ret = Scale::Constant(num_dims, 1);
         for(size_t i = 0; i < num_dims; ++i) {
@@ -230,7 +230,7 @@ void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_si
   int copy_times = 0;
   do {
     DataShard& ds = data_shards[shard_index];
-    Scale& copy_size = shard_copy_size[shard_index];
+    Scale& copysize = shard_copysize[shard_index];
     Scale shard_copy_start = Scale::Origin(num_dims);
     ScaleRange localrange = ScaleRange::MakeRangeFromOrigin(ds.Size());
     //cout << "grange=" << globalrange << " lrange=" << localrange << endl;
@@ -238,18 +238,65 @@ void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_si
       //cout << "off=" << ds.Offset() << " start=" << shard_copy_start << endl;
       size_t srcoff = localrange.Flatten(shard_copy_start);
       size_t dstoff = globalrange.Flatten(ds.Offset() + shard_copy_start);
-      size_t len = copy_size.Prod();
+      size_t len = copysize.Prod();
       //cout << "srcoff=" << srcoff << " dstoff=" << dstoff << " len=" << len << endl;
       // do copy
       memcpy(dest + dstoff, ds.GetCpuData() + srcoff, len * sizeof(float));
       ++copy_times;
       // incr copy_start
-      shard_copy_start = shard_copy_start + copy_size;
+      shard_copy_start = shard_copy_start + copysize;
       for(size_t i = 0; i < num_dims; ++i)
         shard_copy_start[i] -= 1; // similar to "end = start + len - 1"
-    } while(shard_copy_start.IncrOne(ds.Size()));
-  } while(shard_index.IncrOne(num_shards));
-  cout << "copy times: " << copy_times << endl;
+    } while(Scale::IncrOne(shard_copy_start, ds.Size()));
+  } while(Scale::IncrOne(shard_index, num_shards));
+  VLOG(1) << "copy times in assemble: " << copy_times;
+}*/
+
+void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_size) {
+  size_t numdims = dest_size.NumDims();
+  Scale srcstart = Scale::Origin(numdims);
+  data_shards.Foreach(
+      [&] (DataShard& ds) {
+        NCopy(ds.GetCpuData(), ds.Size(), srcstart, dest, dest_size, ds.Offset(), ds.Size());
+      }
+    );
+}
+
+void NCopy(float* src, const Scale& srcsize, const Scale& srcstart,
+    float* dst, const Scale& dstsize, const Scale& dststart,
+    const Scale& copysize) {
+  size_t numdims = srcsize.NumDims();
+  CHECK_EQ(srcstart.NumDims(), numdims) << "copy error: wrong #dims";
+  CHECK_EQ(copysize.NumDims(), numdims) << "copy error: wrong #dims";
+  CHECK_EQ(dstsize.NumDims(), numdims) << "copy error: wrong #dims";
+  CHECK_EQ(dststart.NumDims(), numdims) << "copy error: wrong #dims";
+  Scale srcend = srcstart + copysize;
+  Scale dstend = dststart + copysize;
+  CHECK_LE(dstend, dstsize) << "copy error: not enough dest space";
+  Scale percopysize = Scale::Constant(numdims, 1);
+  for(size_t i = 0; i < numdims; ++i) {
+    percopysize[i] = copysize[i];
+    if(!(srcstart[i] == 0 && srcend[i] == srcsize[i]
+          && dststart[i] == 0 && dstend[i] == dstsize[i])) {
+      // remainings are non-contigous parts
+      break;
+    }
+  }
+  Scale copystart = Scale::Origin(numdims);
+  ScaleRange srcrange = ScaleRange::MakeRangeFromOrigin(srcsize);
+  ScaleRange dstrange = ScaleRange::MakeRangeFromOrigin(dstsize);
+  int copytimes = 0;
+  int percopylen = percopysize.Prod();
+  do {
+    size_t srcoff = srcrange.Flatten(srcstart + copystart);
+    size_t dstoff = dstrange.Flatten(dststart + copystart);
+    // do memcopy
+    memcpy(dst + dstoff, src + srcoff, percopylen * sizeof(float));
+    ++copytimes;
+    // incr copy_start
+    copystart = copystart + percopysize - 1; // similar to "end = start + len - 1"
+  } while(Scale::IncrOne(copystart, copysize));
+  VLOG(1) << "Copy times in NCopy:" << copytimes;
 }
 
 } // end of namespace basic

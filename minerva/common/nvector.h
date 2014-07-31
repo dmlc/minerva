@@ -17,6 +17,9 @@ public:
 		data_.resize(range_.Area());
 	}
   NVector(const std::vector<T>& d, const ScaleRange& r): data_(d), range_(r) {}
+  NVector(const std::vector<T>& d, const Scale& size): data_(d) {
+    range_ = ScaleRange::MakeRangeFromOrigin(size);
+  }
 	NVector(const NVector& other): data_(other.data_), range_(other.range_) {}
 	const T& operator[] (const Scale& idx) const {
 		return data_[range_.Flatten(idx)];
@@ -61,6 +64,12 @@ public:
       newdata.push_back(fn(nv1.data_[i], nv2.data_[i]));
     }
     return NVector<T>(newdata, nv1.range_);
+  }
+  template<class Fn>
+  void Foreach(Fn fn) {
+    for(T& d: data_) {
+      fn(d);
+    }
   }
 private:
 	std::vector<T> data_;

@@ -20,8 +20,8 @@ void Test1() {
   uint64_t id2 = dstore.GenerateDataID();
   dstore.CreateData(id1, DataStore::CPU, s1.Prod());
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
-  PhysicalData d1{s1, {0, 0}, {0, 0}, id1, 0};
-  PhysicalData d2{s2, {0, 0}, {0, 0}, id2, 0};
+  PhysicalData d1{s1, {0, 0}, {0, 0}, id1};
+  PhysicalData d2{s2, {0, 0}, {0, 0}, id2};
   DataList in{DataShard(d1)};
   DataList out{DataShard(d2)};
   ReductionClosure closure{SUM, Scale{0}};
@@ -45,8 +45,8 @@ void Test2() {
   uint64_t id2 = dstore.GenerateDataID();
   dstore.CreateData(id1, DataStore::CPU, s1.Prod());
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
-  PhysicalData d1{s1, {0, 0}, {0, 0}, id1, 0};
-  PhysicalData d2{s2, {0, 0}, {0, 0}, id2, 0};
+  PhysicalData d1{s1, {0, 0}, {0, 0}, id1};
+  PhysicalData d2{s2, {0, 0}, {0, 0}, id2};
   DataList in{DataShard(d1)};
   DataList out{DataShard(d2)};
   ReductionClosure closure{SUM, Scale{1}};

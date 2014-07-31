@@ -11,10 +11,11 @@ namespace minerva {
 
 template<class C>
 class SharedDataGenFnWithClosure :
-  public LogicalDataGenFn, public PhysicalDataGenFn, public ClosureTrait<C> {
+  public LogicalDataGenFn, public PhysicalComputeFn, public ClosureTrait<C> {
  public:
-  void Execute(DataShard output, IMPL_TYPE impl_type) {
-    FnBundle<C>::Call(output, ClosureTrait<C>::closure, impl_type);
+  void Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) {
+    // inputs should be empty list
+    FnBundle<C>::Call(outputs, ClosureTrait<C>::closure, impl_type);
   }
 };
 
@@ -32,8 +33,11 @@ class SharedComputeFnWithClosure :
 ///////////////////////////////////////////////////
 class RandnOp : public SharedDataGenFnWithClosure<RandnClosure> {
  public:
-  Chunk Expand(const Scale& size) {
-    return Chunk::Randn(size, closure.mu, closure.var);
+  NVector<Chunk> Expand(const NVector<Scale>& part_sizes) {
+    return part_sizes.Map<Chunk>(
+        [&] (const Scale& psize) { 
+          return Chunk::Randn(psize, closure.mu, closure.var);
+        });
   }
   std::string Name() const {
     return ":randn";
@@ -42,8 +46,11 @@ class RandnOp : public SharedDataGenFnWithClosure<RandnClosure> {
 
 class FillOp : public SharedDataGenFnWithClosure<FillClosure> {
  public:
-  Chunk Expand(const Scale& size) {
-    return Chunk::Constant(size, closure.val);
+  NVector<Chunk> Expand(const NVector<Scale>& part_sizes) {
+    return part_sizes.Map<Chunk>(
+        [&] (const Scale& psize) { 
+          return Chunk::Constant(psize, closure.val);
+        });
   }
   std::string Name() const {
     std::stringstream ss;

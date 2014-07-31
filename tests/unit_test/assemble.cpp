@@ -30,10 +30,10 @@ void Test1() {
   Fill(dstore.GetData(id3, DataStore::CPU), 3, s3.Prod());
   Fill(dstore.GetData(id4, DataStore::CPU), 4, s4.Prod());
   NVector<PhysicalData> dvec({2, 2});
-  dvec[oi1] = {s1, o1, oi1, id1, NULL};
-  dvec[oi2] = {s2, o2, oi2, id2, NULL};
-  dvec[oi3] = {s3, o3, oi3, id3, NULL};
-  dvec[oi4] = {s4, o4, oi4, id4, NULL};
+  dvec[oi1] = {s1, o1, oi1, id1};
+  dvec[oi2] = {s2, o2, oi2, id2};
+  dvec[oi3] = {s3, o3, oi3, id3};
+  dvec[oi4] = {s4, o4, oi4, id4};
   float * rst = new float[srst.Prod()];
   NVector<DataShard> ds = dvec.Map<DataShard>([] (const PhysicalData& pd) { return DataShard(pd); });
   // assemble
@@ -62,8 +62,8 @@ void Test2() {
   Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
   Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
   NVector<PhysicalData> dvec({2, 1, 1});
-  dvec[oi1] = {s1, o1, oi1, id1, NULL};
-  dvec[oi2] = {s2, o2, oi2, id2, NULL};
+  dvec[oi1] = {s1, o1, oi1, id1};
+  dvec[oi2] = {s2, o2, oi2, id2};
   float * rst = new float[srst.Prod()];
   NVector<DataShard> ds = dvec.Map<DataShard>([] (const PhysicalData& pd) { return DataShard(pd); });
   // assemble
@@ -92,8 +92,8 @@ void Test3() {
   Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
   Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
   NVector<PhysicalData> dvec(numparts);
-  dvec[oi1] = {s1, o1, oi1, id1, NULL};
-  dvec[oi2] = {s2, o2, oi2, id2, NULL};
+  dvec[oi1] = {s1, o1, oi1, id1};
+  dvec[oi2] = {s2, o2, oi2, id2};
   float * rst = new float[srst.Prod()];
   NVector<DataShard> ds = dvec.Map<DataShard>([] (const PhysicalData& pd) { return DataShard(pd); });
   // assemble
@@ -122,8 +122,8 @@ void Test4() {
   Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
   Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
   NVector<PhysicalData> dvec(numparts);
-  dvec[oi1] = {s1, o1, oi1, id1, NULL};
-  dvec[oi2] = {s2, o2, oi2, id2, NULL};
+  dvec[oi1] = {s1, o1, oi1, id1};
+  dvec[oi2] = {s2, o2, oi2, id2};
   float * rst = new float[srst.Prod()];
   NVector<DataShard> ds = dvec.Map<DataShard>([] (const PhysicalData& pd) { return DataShard(pd); });
   // assemble

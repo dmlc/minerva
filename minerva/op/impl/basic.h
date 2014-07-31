@@ -13,10 +13,15 @@ extern void MatMult(DataList&, DataList&, MatMultClosure& );
 extern void Transpose(DataList&, DataList&, TransposeClosure& );
 extern void Reduction(DataList&, DataList&, ReductionClosure& );
 
-extern void Randn(DataShard&, RandnClosure& );
-extern void Fill(DataShard&, FillClosure& );
+extern void Randn(DataList&, RandnClosure& );
+extern void Fill(DataList&, FillClosure& );
 
 extern void Assemble(NVector<DataShard>&, float*, const Scale&);
+
+extern void NCopy(
+    float* src, const Scale& srcsize, const Scale& srcstart,
+    float* dst, const Scale& dstsize, const Scale& dststart,
+    const Scale& copysize);
 
 } // end of namespace basic
 } // end of namespace minerva

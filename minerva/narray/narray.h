@@ -14,8 +14,10 @@ class NArray;
 class Elewise;
 class Reduction;
 class Convolution;
+struct FileFormat;
 
 class MinervaSystem;
+class IFileLoader;
 
 class Elewise {
  public:
@@ -32,6 +34,10 @@ class Convolution {
   static NArray GetGrad(NArray act_low, NArray sen_high, const ConvInfo& convinfo);
 };
 
+struct FileFormat {
+  bool binary; // whether output in binary
+};
+
 class NArray {
   friend class Elewise;
   friend class Reduction;
@@ -44,6 +50,8 @@ class NArray {
       const NVector<PartInfo>& = NVector<PartInfo>());
   static NArray Constant(const Scale& size, float val, const Scale& );
   static NArray Randn(const Scale& size, float mu, float var, const Scale& );
+  static NArray LoadFromFile(const Scale& size, const std::string& fname, IFileLoader* loader,
+      const Scale& numparts);
   NArray();
   ~NArray();
  public:
@@ -97,6 +105,7 @@ class NArray {
   // system
   void Eval();
   float* Get();
+  void ToFile(const std::string& filename, const FileFormat& );
   NArray RePartition(const NVector<PartInfo>& partitions);
 
  private:
