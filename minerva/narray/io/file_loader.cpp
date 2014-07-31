@@ -2,6 +2,7 @@
 #include <glog/logging.h>
 
 #include "file_loader.h"
+#include "op/impl/basic.h"
 
 using namespace std;
 
@@ -9,7 +10,7 @@ namespace minerva {
 
 void FileLoaderOp::Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) {
   CHECK_EQ(impl_type, BASIC) << "file loader operator only has basic implementation";
-  closure.loader->Load(closure.fname, outputs);
+  closure.loader->Load(closure.fname, closure.size, outputs);
 }
 
 NVector<Chunk> FileLoaderOp::Expand(const NVector<Scale>& part_sizes) {
@@ -25,16 +26,21 @@ std::string FileLoaderOp::Name() const {
   return ss.str();
 }
 
-void SimpleFileLoader::Load(const std::string& fname, DataList& out_shards) {
-  int totalsize = 0;
-  for(DataShard& ds : out_shards) {
-    totalsize += ds.Size().Prod();
-  }
-  float* total_contents = new float[totalsize]; // TODO should allocate use data_store
+void SimpleFileLoader::Load(const std::string& fname, const Scale& size, DataList& out_shards) {
+  size_t numvalue = size.Prod();
+  float* ptr = new float[numvalue]; // TODO should use data_store
   ifstream fin(fname.c_str());
-  fin.read(reinterpret_cast<char*>(total_contents), totalsize * sizeof(float));
+  fin.read(reinterpret_cast<char*>(ptr), numvalue * sizeof(float));
   fin.close();
   // partition the file content
+  size_t numdims = size.NumDims();
+  Scale dststart = Scale::Origin(numdims);
+  for(DataShard& ds : out_shards) {
+    cout << "from: srcsize=" << size << " srcstart=" << ds.Offset() << endl;
+    cout << "to:   dstsize=" << ds.Size() << " dststart=" << dststart << endl;
+    cout << "copy size=" << ds.Size() << endl;
+    basic::NCopy(ptr, size, ds.Offset(), ds.GetCpuData(), ds.Size(), dststart, ds.Size());
+  }
 }
 
 } // end of namespace minerva

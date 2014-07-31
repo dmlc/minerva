@@ -156,7 +156,7 @@ void Fill(DataList& output, FillClosure& closure) {
   }
 }
 
-void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_size) {
+/*void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_size) {
   Scale num_shards = data_shards.Size();
   size_t num_dims = num_shards.NumDims();
   NVector<Scale> shard_copysize = data_shards.Map<Scale>(
@@ -196,6 +196,16 @@ void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_si
     } while(Scale::IncrOne(shard_copy_start, ds.Size()));
   } while(Scale::IncrOne(shard_index, num_shards));
   VLOG(1) << "copy times in assemble: " << copy_times;
+}*/
+
+void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_size) {
+  size_t numdims = dest_size.NumDims();
+  Scale srcstart = Scale::Origin(numdims);
+  data_shards.Foreach(
+      [&] (DataShard& ds) {
+        NCopy(ds.GetCpuData(), ds.Size(), srcstart, dest, dest_size, ds.Offset(), ds.Size());
+      }
+    );
 }
 
 void NCopy(float* src, const Scale& srcsize, const Scale& srcstart,
@@ -213,8 +223,10 @@ void NCopy(float* src, const Scale& srcsize, const Scale& srcstart,
   for(size_t i = 0; i < numdims; ++i) {
     percopysize[i] = copysize[i];
     if(!(srcstart[i] == 0 && srcend[i] == srcsize[i]
-          && dststart[i] == 0 && dstend[i] == dstsize[i])) // remainings are non-contigous parts
+          && dststart[i] == 0 && dstend[i] == dstsize[i])) {
+      // remainings are non-contigous parts
       break;
+    }
   }
   Scale copystart = Scale::Origin(numdims);
   ScaleRange srcrange = ScaleRange::MakeRangeFromOrigin(srcsize);
@@ -230,7 +242,7 @@ void NCopy(float* src, const Scale& srcsize, const Scale& srcstart,
     // incr copy_start
     copystart = copystart + percopysize - 1; // similar to "end = start + len - 1"
   } while(Scale::IncrOne(copystart, copysize));
-  cout << "Copy times in NCopy:" << copytimes << endl;
+  VLOG(1) << "Copy times in NCopy:" << copytimes;
 }
 
 } // end of namespace basic

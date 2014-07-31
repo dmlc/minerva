@@ -9,13 +9,14 @@ class NArray;
 
 class IFileLoader {
  public:
-  virtual void Load(const std::string& fname, DataList& out_shards) = 0;
+  virtual void Load(const std::string& fname, const Scale& size, DataList& out_shards) = 0;
   virtual ~IFileLoader() {}
 };
 
 struct FileLoaderClosure {
-  IFileLoader* loader;
   std::string fname;
+  Scale size;
+  IFileLoader* loader;
 };
 
 class FileLoaderOp :
@@ -30,7 +31,7 @@ class FileLoaderOp :
 
 class SimpleFileLoader : public IFileLoader {
  public:
-  void Load(const std::string& fname, DataList& out_shards);
+  void Load(const std::string& fname, const Scale& size, DataList& out_shards);
 };
 
 }

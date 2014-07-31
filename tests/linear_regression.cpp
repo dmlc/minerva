@@ -22,7 +22,8 @@ int main(int argc, char** argv) {
   ofstream fout_ldag("ldag.txt");
   fout_ldag << MinervaSystem::Instance().logical_dag().PrintDag() << endl;
   fout_ldag.close();
-  theta.ToFile("theta.out");
+  FileFormat format; format.binary = false;
+  theta.ToFile("theta.out", format);
   //theta.Eval();
   ofstream fout_pdag("pdag.txt");
   fout_pdag << MinervaSystem::Instance().physical_dag().PrintDag<DataIdPrinter>() << endl;
