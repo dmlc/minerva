@@ -9,9 +9,21 @@ using namespace std;
 
 namespace minerva {
 
+// public constructor
 NArray::NArray(): data_node_(NULL) {}
+NArray::NArray(const NArray& other): data_node_(other.data_node_) {
+  // TODO rc stuffs
+}
+NArray::~NArray() {
+  // TODO rc stuffs
+}
+NArray& NArray::operator = (const NArray& other) {
+  data_node_ = other.data_node_;
+  // TODO rc stuffs
+  return *this;
+}
+// private constructor
 NArray::NArray(LogicalDataNode* node): data_node_(node) {}
-NArray::~NArray() {}
 
 std::vector<NArray> NArray::Compute(std::vector<NArray> params, 
     std::vector<Scale> result_sizes, LogicalComputeFn* fn) {
