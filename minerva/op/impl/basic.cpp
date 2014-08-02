@@ -210,47 +210,15 @@ void Fill(DataList& output, FillClosure& closure) {
   }
 }
 
-/*void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_size) {
-  Scale num_shards = data_shards.Size();
-  size_t num_dims = num_shards.NumDims();
-  NVector<Scale> shard_copysize = data_shards.Map<Scale>(
-      [&] (const DataShard& ds) {
-        Scale ret = Scale::Constant(num_dims, 1);
-        for(size_t i = 0; i < num_dims; ++i) {
-          ret[i] = ds.Size()[i];
-          if(num_shards[i] != 1)
-            break;
-        }
-        return ret;
-      }
-    );
-  // Copy each shard to dest
-  Scale shard_index = Scale::Origin(num_dims);
-  ScaleRange globalrange = ScaleRange::MakeRangeFromOrigin(dest_size);
-  int copy_times = 0;
-  do {
-    DataShard& ds = data_shards[shard_index];
-    Scale& copysize = shard_copysize[shard_index];
-    Scale shard_copy_start = Scale::Origin(num_dims);
-    ScaleRange localrange = ScaleRange::MakeRangeFromOrigin(ds.Size());
-    //cout << "grange=" << globalrange << " lrange=" << localrange << endl;
-    do {
-      //cout << "off=" << ds.Offset() << " start=" << shard_copy_start << endl;
-      size_t srcoff = localrange.Flatten(shard_copy_start);
-      size_t dstoff = globalrange.Flatten(ds.Offset() + shard_copy_start);
-      size_t len = copysize.Prod();
-      //cout << "srcoff=" << srcoff << " dstoff=" << dstoff << " len=" << len << endl;
-      // do copy
-      memcpy(dest + dstoff, ds.GetCpuData() + srcoff, len * sizeof(float));
-      ++copy_times;
-      // incr copy_start
-      shard_copy_start = shard_copy_start + copysize;
-      for(size_t i = 0; i < num_dims; ++i)
-        shard_copy_start[i] -= 1; // similar to "end = start + len - 1"
-    } while(Scale::IncrOne(shard_copy_start, ds.Size()));
-  } while(Scale::IncrOne(shard_index, num_shards));
-  VLOG(1) << "copy times in assemble: " << copy_times;
-}*/
+void Assemble(DataList& inputs, DataList& outputs, AssembleClosure& closure) {
+  CHECK_EQ(outputs.size(), 1) << "wrong number of assemble output";
+  size_t numdims = outputs[0].Size().NumDims();
+  float* dest = outputs[0].GetCpuData();
+  Scale srcstart = Scale::Origin(numdims);
+  for (auto& i: inputs) {
+    NCopy(i.GetCpuData(), i.Size(), srcstart, dest, outputs[0].Size(), i.Offset(), i.Size());
+  }
+}
 
 void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_size) {
   size_t numdims = dest_size.NumDims();

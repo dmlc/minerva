@@ -33,6 +33,9 @@ enum ReductionType {
   MAX,
 };
 
+struct AssembleClosure {
+};
+
 struct ArithmeticClosure {
   ArithmeticType type;
 };
