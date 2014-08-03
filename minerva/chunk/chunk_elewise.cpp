@@ -1,6 +1,7 @@
 #include "chunk.h"
 #include "op/closure.h"
 #include "op/physical_op.h"
+#include "op/shared_op.h"
 
 #include <glog/logging.h>
 

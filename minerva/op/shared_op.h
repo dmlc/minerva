@@ -1,9 +1,11 @@
 #pragma once
 #include <sstream>
 #include <vector>
+#include <glog/logging.h>
 
 #include "logical.h"
 #include "physical.h"
+#include "physical_op.h"
 #include "closure.h"
 #include "impl/bundle.h"
 
@@ -35,7 +37,7 @@ class RandnOp : public SharedDataGenFnWithClosure<RandnClosure> {
  public:
   NVector<Chunk> Expand(const NVector<Scale>& part_sizes) {
     return part_sizes.Map<Chunk>(
-        [&] (const Scale& psize) { 
+        [&] (const Scale& psize) {
           return Chunk::Randn(psize, closure.mu, closure.var);
         });
   }
@@ -48,7 +50,7 @@ class FillOp : public SharedDataGenFnWithClosure<FillClosure> {
  public:
   NVector<Chunk> Expand(const NVector<Scale>& part_sizes) {
     return part_sizes.Map<Chunk>(
-        [&] (const Scale& psize) { 
+        [&] (const Scale& psize) {
           return Chunk::Constant(psize, closure.val);
         });
   }
@@ -108,6 +110,51 @@ class TransOp : public SharedComputeFnWithClosure<TransposeClosure> {
   }
   std::string Name() const {
     return "trans";
+  }
+};
+
+class ReductionOp : public SharedComputeFnWithClosure<ReductionClosure> {
+ public:
+  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+    CHECK_EQ(inputs.size(), 1) << "reduction #input wrong";
+    NVector<Chunk> individual_reduce = inputs[0].Map<Chunk>(
+      [&] (const Chunk& ch) {
+        ReductionOp* op = new ReductionOp;
+        op->closure = closure;
+        Scale size = ch.Size();
+        for (auto i: closure.dims_to_reduce) {
+          size[i] = 1;
+        }
+        Chunk res = Chunk::Compute({ch}, {ch.Size()}, op)[0];
+        for (auto i: closure.dims_to_reduce) {
+          res.data_node()->data_.offset[i] = res.data_node()->data_.offset_index[i];
+        }
+        return res;
+      }
+    );
+    Scale res_size = Scale::Merge(individual_reduce.Map<Scale>(
+      [&] (const Chunk& ch) {
+        return ch.Size();
+      }
+    ));
+    AssembleOp* assemble_op = new AssembleOp;
+    Chunk merged = Chunk::Compute(individual_reduce.ToVector(), {res_size}, assemble_op)[0];
+    ReductionOp* reduction_op = new ReductionOp;
+    reduction_op->closure = closure;
+    Scale size = merged.Size();
+    for (auto i: closure.dims_to_reduce) {
+      size[i] = 1;
+    }
+    return {NVector<Chunk>({Chunk::Compute({merged}, {size}, reduction_op)[0]}, Scale::Constant(size.NumDims(), 1))};
+  }
+  std::string Name() const {
+   switch (closure.type) {
+     case SUM:
+       return "sum";
+     case MAX:
+       return "max";
+   }
+   return "reduction N/A";
   }
 };
 

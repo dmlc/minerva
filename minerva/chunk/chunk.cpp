@@ -7,6 +7,7 @@
 #include "chunk.h"
 #include "dag/physical_dag.h"
 #include "op/physical_op.h"
+#include "op/shared_op.h"
 #include "system/minerva_system.h"
 
 using namespace std;
