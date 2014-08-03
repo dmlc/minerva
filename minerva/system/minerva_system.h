@@ -11,6 +11,7 @@
 namespace minerva {
 
 class MinervaSystem : public Singleton<MinervaSystem> {
+  friend class NArray;
  public:
   MinervaSystem() {}
   void Initialize(int argc, char** argv);
@@ -19,8 +20,14 @@ class MinervaSystem : public Singleton<MinervaSystem> {
   PhysicalDag& physical_dag() { return physical_dag_; }
   DataStore& data_store() { return data_store_; }
   PhysicalEngine& physical_engine() { return physical_engine_; }
-  void Eval(NArray narr);
-  float* GetValue(NArray narr);
+
+  void Eval(NArray& narr);
+  float* GetValue(NArray& narr);
+
+ private:
+  void LoadBuiltinDagMonitors();
+  void IncrExternRC(LogicalDag::DNode* , int amount = 1);
+  void IncrRC(LogicalDag::DNode* , int amount = 1);
 
  private:
   LogicalDag logical_dag_;

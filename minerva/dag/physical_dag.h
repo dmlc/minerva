@@ -12,13 +12,15 @@ class DagHelper<PhysicalData, PhysicalOp> {
   static std::string DataToString(const PhysicalData& d) {
     std::stringstream ss;
     ss << d.size; 
-    //if(d.data_gen_fn != NULL) {
-      //ss << d.data_gen_fn->Name();
-    //}
     return ss.str();
   }
   static std::string OpToString(const PhysicalOp& o) {
     return o.compute_fn->Name();
+  }
+  static void FreeData(PhysicalData& d) {
+  }
+  static void FreeOp(PhysicalOp& o) {
+    delete o.compute_fn;
   }
 };
 
@@ -49,5 +51,6 @@ class OffsetPrinter {
 typedef Dag<PhysicalData, PhysicalOp> PhysicalDag;
 typedef PhysicalDag::DNode PhysicalDataNode;
 typedef PhysicalDag::ONode PhysicalOpNode;
+class PhysicalDagMonitor : public DagMonitor<PhysicalDag> {};
 
 }

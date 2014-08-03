@@ -32,7 +32,7 @@ struct NodeState {
   std::condition_variable* on_complete;
 };
 
-class PhysicalEngine: public PhysicalDagProcedure {
+class PhysicalEngine: public PhysicalDagProcedure, public PhysicalDagMonitor {
   friend class ThreadPool;
 
  public:
@@ -43,21 +43,22 @@ class PhysicalEngine: public PhysicalDagProcedure {
   PhysicalEngine();
   ~PhysicalEngine();
   void Process(PhysicalDag&, const std::vector<uint64_t>&);
+  NodeState& GetNodeState(uint64_t );
+  void OnCreateNode(DagNode* node);
+  void OnDeleteNode(DagNode* node);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(PhysicalEngine);
   void Init();
-  void CommitDagChanges();
   std::unordered_set<DagNode*> FindRootNodes(const std::vector<uint64_t>&);
   void NodeRunner(DagNode*);
   void AppendTask(Task, Callback);
   bool GetNewTask(std::thread::id, TaskPair&);
 
-  std::unordered_map<uint64_t, NodeState> node_states_;
   std::mutex node_states_mutex_;
+  std::unordered_map<uint64_t, NodeState> node_states_;
   ConcurrentBlockingQueue<TaskPair> task_queue_;
   ThreadPool thread_pool_;
 };
 
 }
-

@@ -25,12 +25,13 @@ uint64_t DataStore::GenerateDataID() {
   return ++data_id_gen;
 }
 
-bool DataStore::CreateData(uint64_t id, MemTypes type, size_t length) {
+bool DataStore::CreateData(uint64_t id, MemTypes type, size_t length, int rc) {
   lock_guard<mutex> lck(access_mutex_);
   DataState& ds = data_states_[id];
   CHECK_EQ(ds.data_ptrs[type], static_cast<float*>(NULL)) << "id=" << id << " has already been created!";
   CHECK(ds.length == 0 || ds.length == length) << "id=" << id << " allocated length mismatch!";
   ds.length = length;
+  ds.reference_count = rc;
   ds.data_ptrs[type] = (float*) calloc(length, sizeof(float)); // TODO should call different alloc functions
   return true;
 }
@@ -43,9 +44,7 @@ float* DataStore::GetData(uint64_t id, MemTypes type) {
 }
 
 void DataStore::IncrReferenceCount(uint64_t id, int amount) {
-  lock_guard<mutex> lck(access_mutex_);
-  CHECK(CheckValidity(id)) << "id=" << id << " was not created!";
-  data_states_[id].reference_count += amount;
+  DecrReferenceCount(id, -amount);
 }
 
 void DataStore::DecrReferenceCount(uint64_t id, int amount) {
@@ -72,6 +71,7 @@ inline bool DataStore::CheckValidity(uint64_t id) const {
 }
 
 void DataStore::GC(uint64_t id) {
+  LOG(INFO) << "GC data with id=" << id;
   DataState& ds = data_states_[id];
   for(float* ptr : ds.data_ptrs) {
     if(ptr != NULL) {

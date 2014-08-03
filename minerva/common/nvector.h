@@ -71,6 +71,8 @@ public:
       fn(d);
     }
   }
+  typename std::vector<T>::const_iterator begin() const { return data_.begin(); }
+  typename std::vector<T>::const_iterator end() const { return data_.end(); }
 private:
 	std::vector<T> data_;
 	ScaleRange range_;

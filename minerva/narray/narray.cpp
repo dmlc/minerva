@@ -9,35 +9,50 @@ using namespace std;
 
 namespace minerva {
 
-// public constructor
+static MinervaSystem& ms = MinervaSystem::Instance();
+
+////////////////////////////////////////////////////
+// constructors & destructors
+////////////////////////////////////////////////////
+// public
 NArray::NArray(): data_node_(NULL) {}
 NArray::NArray(const NArray& other): data_node_(other.data_node_) {
-  // TODO rc stuffs
+  ms.IncrExternRC(data_node_);
 }
 NArray::~NArray() {
-  // TODO rc stuffs
+  if(data_node_ != NULL)
+    ms.IncrExternRC(data_node_, -1);
 }
 NArray& NArray::operator = (const NArray& other) {
+  auto old_dnode = data_node_;
   data_node_ = other.data_node_;
-  // TODO rc stuffs
+  ms.IncrExternRC(data_node_, 1);
+  ms.IncrExternRC(old_dnode, -1);
   return *this;
 }
-// private constructor
-NArray::NArray(LogicalDataNode* node): data_node_(node) {}
+// private
+NArray::NArray(LogicalDataNode* node): data_node_(node) {
+  ms.IncrExternRC(data_node_);
+}
 
+////////////////////////////////////////////////////
+// computation methods
+////////////////////////////////////////////////////
 std::vector<NArray> NArray::Compute(std::vector<NArray> params, 
     std::vector<Scale> result_sizes, LogicalComputeFn* fn) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
   std::vector<NArray> rst;
   std::vector<LogicalDataNode*> rst_data_nodes;
   for(Scale size : result_sizes) {
-    LogicalDataNode* rst_node = ldag.NewDataNode({size, NULL});
+    LogicalData ldata(size);
+    LogicalDataNode* rst_node = ldag.NewDataNode(ldata);
     rst.push_back(NArray(rst_node));
     rst_data_nodes.push_back(rst_node);
   }
   std::vector<LogicalDataNode*> param_data_nodes;
   for(NArray p : params) {
     param_data_nodes.push_back(p.data_node_);
+    ms.IncrRC(p.data_node_, rst.size());
   }
   ldag.NewOpNode(param_data_nodes, rst_data_nodes, {fn});
   return rst;
@@ -45,7 +60,9 @@ std::vector<NArray> NArray::Compute(std::vector<NArray> params,
   
 NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<PartInfo>& parts) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
-  LogicalDataNode* rst_node = ldag.NewDataNode({size, fn, parts});
+  LogicalData ldata(size, fn);
+  ldata.partitions = parts;
+  LogicalDataNode* rst_node = ldag.NewDataNode(ldata);
   return NArray(rst_node);
 }
 

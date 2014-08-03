@@ -16,10 +16,17 @@ void ExpandEngine::Process(LogicalDag& dag, const std::vector<uint64_t>& nodes) 
   }
 }
 
-NVector<uint64_t> ExpandEngine::GetPhysicalNodes(uint64_t id) const {
-  auto it = lnode_to_pnode_.find(id);
-  CHECK(it != lnode_to_pnode_.end()) << "invalid physical nid: " << id;
-  return it->second;
+bool ExpandEngine::IsExpanded(uint64_t lnode_id) const {
+  return lnode_to_pnode_.find(lnode_id) != lnode_to_pnode_.end();
+}
+
+const NVector<uint64_t>& ExpandEngine::GetPhysicalNodes(uint64_t id) const {
+  CHECK(IsExpanded(id)) << "invalid physical nid: " << id;
+  return lnode_to_pnode_.find(id)->second;
+}
+  
+void ExpandEngine::OnDeleteDataNode(LogicalDataNode* ldnode) {
+  lnode_to_pnode_.erase(ldnode->node_id());
 }
 
 void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
@@ -27,7 +34,7 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
     DagNode* curnode = dag.GetNode(lnid);
     //cout << "Try expand nodeid=" << lnid << " " << curnode->Type() << endl;
     for(DagNode* pred : curnode->predecessors_) {
-      ExpandNode(dag, pred->node_id_);
+      ExpandNode(dag, pred->node_id());
     }
     if(curnode->Type() == DagNode::DATA_NODE) { // data node
       LogicalDag::DNode* dnode = dynamic_cast<LogicalDag::DNode*>(curnode);
@@ -49,7 +56,7 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
       // make input chunks
       std::vector<NVector<Chunk>> in_chunks;
       for(LogicalDag::DNode* dn : onode->inputs_) {
-        NVector<uint64_t> mapped_pnode_ids = lnode_to_pnode_[dn->node_id_];
+        NVector<uint64_t> mapped_pnode_ids = lnode_to_pnode_[dn->node_id()];
         in_chunks.push_back(
           mapped_pnode_ids.Map<Chunk>(
             [] (const uint64_t& nid) {
@@ -96,11 +103,12 @@ void ExpandEngine::MakeMapping(LogicalDag::DNode* ldnode, const NVector<Chunk>& 
         phy_data.offset[i] = 0;
       }
     }
+    phy_data.extern_rc = ldnode->data_.extern_rc; // set external rc
   } while(Scale::IncrOne(pos, numparts));
   // insert mapping
-  lnode_to_pnode_[ldnode->node_id_] = chunks.Map<uint64_t>(
+  lnode_to_pnode_[ldnode->node_id()] = chunks.Map<uint64_t>(
       [&] (const Chunk& ch) {
-        return ch.data_node()->node_id_;
+        return ch.data_node()->node_id();
       }
     );
 }

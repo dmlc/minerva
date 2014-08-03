@@ -5,6 +5,15 @@
 using namespace minerva;
 using namespace std;
 
+PhysicalData MakeData(Scale s, Scale o, Scale oi, uint64_t id) {
+  PhysicalData pdata;
+  pdata.size = s;
+  pdata.offset = o;
+  pdata.offset_index = oi;
+  pdata.data_id = id;
+  return pdata;
+}
+
 void Fill(float* arr, float val, size_t len) {
   for(size_t i = 0; i < len; ++i) arr[i] = val;
 }
@@ -30,10 +39,10 @@ void Test1() {
   Fill(dstore.GetData(id3, DataStore::CPU), 3, s3.Prod());
   Fill(dstore.GetData(id4, DataStore::CPU), 4, s4.Prod());
   NVector<PhysicalData> dvec({2, 2});
-  dvec[oi1] = {s1, o1, oi1, id1};
-  dvec[oi2] = {s2, o2, oi2, id2};
-  dvec[oi3] = {s3, o3, oi3, id3};
-  dvec[oi4] = {s4, o4, oi4, id4};
+  dvec[oi1] = MakeData(s1, o1, oi1, id1);
+  dvec[oi2] = MakeData(s2, o2, oi2, id2);
+  dvec[oi3] = MakeData(s3, o3, oi3, id3);
+  dvec[oi4] = MakeData(s4, o4, oi4, id4);
   float * rst = new float[srst.Prod()];
   NVector<DataShard> ds = dvec.Map<DataShard>([] (const PhysicalData& pd) { return DataShard(pd); });
   // assemble
@@ -62,8 +71,8 @@ void Test2() {
   Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
   Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
   NVector<PhysicalData> dvec({2, 1, 1});
-  dvec[oi1] = {s1, o1, oi1, id1};
-  dvec[oi2] = {s2, o2, oi2, id2};
+  dvec[oi1] = MakeData(s1, o1, oi1, id1);
+  dvec[oi2] = MakeData(s2, o2, oi2, id2);
   float * rst = new float[srst.Prod()];
   NVector<DataShard> ds = dvec.Map<DataShard>([] (const PhysicalData& pd) { return DataShard(pd); });
   // assemble
@@ -92,8 +101,8 @@ void Test3() {
   Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
   Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
   NVector<PhysicalData> dvec(numparts);
-  dvec[oi1] = {s1, o1, oi1, id1};
-  dvec[oi2] = {s2, o2, oi2, id2};
+  dvec[oi1] = MakeData(s1, o1, oi1, id1);
+  dvec[oi2] = MakeData(s2, o2, oi2, id2);
   float * rst = new float[srst.Prod()];
   NVector<DataShard> ds = dvec.Map<DataShard>([] (const PhysicalData& pd) { return DataShard(pd); });
   // assemble
@@ -122,8 +131,8 @@ void Test4() {
   Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
   Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
   NVector<PhysicalData> dvec(numparts);
-  dvec[oi1] = {s1, o1, oi1, id1};
-  dvec[oi2] = {s2, o2, oi2, id2};
+  dvec[oi1] = MakeData(s1, o1, oi1, id1);
+  dvec[oi2] = MakeData(s2, o2, oi2, id2);
   float * rst = new float[srst.Prod()];
   NVector<DataShard> ds = dvec.Map<DataShard>([] (const PhysicalData& pd) { return DataShard(pd); });
   // assemble

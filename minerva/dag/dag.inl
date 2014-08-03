@@ -2,23 +2,46 @@
 #include <functional>
 #include <queue>
 #include <sstream>
+#include <glog/logging.h>
 
 namespace minerva {
 
 template<class D, class O>
-Dag<D, O>::~Dag() {
-  for (auto i: index_to_node_) {
-    delete i.second;
-  }
+DataNode<D, O>::~DataNode() {
+  DagHelper<D, O>::FreeData(data_);
 }
+
+template<class D, class O>
+OpNode<D, O>::~OpNode() {
+  DagHelper<D, O>::FreeOp(op_);
+}
+
+template<class D, class O>
+Dag<D, O>::~Dag() {
+  // TODO currently no deletion in destructor
+  /*for (auto i: index_to_node_) {
+    delete i.second;
+  }*/
+}
+
+template<class D, class O>
+uint64_t Dag<D, O>::NewIndex() {
+  static uint64_t index_counter = 0;
+  return index_counter++;
+}
+
 
 template<class D, class O>
 typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
   typedef Dag<D, O>::DNode DNode;
   DNode* ret = new DNode;
   ret->data_ = data;
-  ret->node_id_ = NewIndex();
-  index_to_node_.insert(std::make_pair(ret->node_id_, ret));
+  ret->set_node_id(NewIndex());
+  index_to_node_.insert(std::make_pair(ret->node_id(), ret));
+  // notify monitors
+  for(auto mon : monitors_) {
+    mon->OnCreateNode(ret);
+  }
   return ret;
 }
 
@@ -29,8 +52,8 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
   typedef OpNode<D, O> ONode;
   ONode* ret = new ONode;
   ret->op_ = op;
-  ret->node_id_ = NewIndex();
-  index_to_node_.insert(std::make_pair(ret->node_id_, ret));
+  ret->set_node_id(NewIndex());
+  index_to_node_.insert(std::make_pair(ret->node_id(), ret));
   for(auto in : inputs) {
     ret->AddParent(in);
   }
@@ -40,13 +63,57 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
   ret->inputs_ = inputs;
   ret->outputs_ = outputs;
 
+  // notify monitors
+  for(auto mon : monitors_) {
+    mon->OnCreateNode(ret);
+  }
   return ret;
 }
 
 template<class D, class O>
-uint64_t Dag<D, O>::NewIndex() {
-  static uint64_t index_counter = 0;
-  return index_counter++;
+void Dag<D, O>::DeleteNode(uint64_t id) {
+  DagNode* node = GetNode(id);
+  // notify the monitors
+  for(auto mon : monitors_) {
+    mon->OnDeleteNode(node);
+  }
+  // delete the node in successors
+  for(DagNode* succ : node->successors_) {
+    succ->predecessors_.erase(node);
+  }
+  // delete the node in predecessors
+  for(DagNode* pred : node->predecessors_) {
+    pred->successors_.erase(node);
+  }
+  // delete the node in container
+  index_to_node_.erase(id);
+  delete node;
+}
+
+template<class D, class O>
+bool Dag<D, O>::ExistNode(uint64_t id) const {
+  return index_to_node_.find(id) != index_to_node_.end();
+}
+
+template<class D, class O>
+DagNode* Dag<D, O>::GetNode(uint64_t nid) const {
+  CHECK(ExistNode(nid)) << "nid=" << nid << " not found in dag!";
+  return index_to_node_.find(nid)->second;
+}
+
+template<class D, class O>
+typename Dag<D, O>::ONode* Dag<D, O>::GetOpNode(uint64_t nid) const {
+  return CHECK_NOTNULL(dynamic_cast<ONode*>(GetNode(nid)));
+}
+
+template<class D, class O>
+typename Dag<D, O>::DNode* Dag<D, O>::GetDataNode(uint64_t nid) const {
+  return CHECK_NOTNULL(dynamic_cast<DNode*>(GetNode(nid)));
+}
+
+template<class D, class O>
+void Dag<D, O>::RegisterMonitor(DagMonitor<Dag<D, O>>* m) {
+  monitors_.push_back(m);
 }
 
 template<class D, class O>
@@ -67,11 +134,35 @@ std::string Dag<D, O>::PrintDag() const {
     }
     out << "];" << std::endl;
     for (auto j: i.second->successors_) {
-      out << "  " << i.first << " -> " << j->node_id_ << ";" << std::endl;
+      out << "  " << i.first << " -> " << j->node_id() << ";" << std::endl;
     }
   }
   out << "}";
   return out.str();
+}
+
+template<class DagType>
+void DagMonitor<DagType>::OnCreateNode(DagNode* node) {
+  switch(node->Type()) {
+    case DagNode::OP_NODE:
+      OnCreateOpNode(dynamic_cast<typename DagType::ONode*>(node));
+      break;
+    case DagNode::DATA_NODE:
+      OnCreateDataNode(dynamic_cast<typename DagType::DNode*>(node));
+      break;
+  };
+}
+
+template<class DagType>
+void DagMonitor<DagType>::OnDeleteNode(DagNode* node) {
+  switch(node->Type()) {
+    case DagNode::OP_NODE:
+      OnDeleteOpNode(dynamic_cast<typename DagType::ONode*>(node));
+      break;
+    case DagNode::DATA_NODE:
+      OnDeleteDataNode(dynamic_cast<typename DagType::DNode*>(node));
+      break;
+  };
 }
 
 } // end of namespace minerva

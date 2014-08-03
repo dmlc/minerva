@@ -5,12 +5,6 @@ using namespace std;
 
 namespace minerva {
 
-DagNode::DagNode() {
-}
-
-DagNode::~DagNode() {
-}
-
 void DagNode::AddParent(DagNode* p) {
   p->successors_.insert(this);
   predecessors_.insert(p);
