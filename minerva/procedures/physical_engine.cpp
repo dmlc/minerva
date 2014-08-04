@@ -24,6 +24,7 @@ PhysicalEngine::~PhysicalEngine() {
 
 void PhysicalEngine::Process(PhysicalDag&, const std::vector<uint64_t>& targets) {
   // TODO Ignoring PhysicalDag, use MinervaSystem instead
+  last_executed_nodes_.clear();
   auto ready_to_execute = FindRootNodes(targets);
   for (auto i: ready_to_execute) {
     AppendTask(i, bind(&PhysicalEngine::NodeRunner, this, placeholders::_1));
@@ -150,6 +151,8 @@ void PhysicalEngine::NodeRunner(DagNode* node) {
       //printf("Target complete %u\n", (unsigned int) dynamic_cast<PhysicalDataNode*>(node)->data_.data_id);
       node_states_[node->node_id()].on_complete->notify_all();
     }
+    // cache this node
+    last_executed_nodes_.insert(node->node_id());
   }
 }
 

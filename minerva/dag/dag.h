@@ -84,6 +84,7 @@ class DagMonitor {
   virtual void OnCreateOpNode(typename DagType::ONode* ) {}
   virtual void OnDeleteDataNode(typename DagType::DNode* ) {}
   virtual void OnDeleteOpNode(typename DagType::ONode* ) {}
+  virtual void OnCreateEdge(DagNode* from, DagNode* to) {}
 };
 
 template<class Data, class Op>

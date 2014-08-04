@@ -52,7 +52,6 @@ std::vector<NArray> NArray::Compute(std::vector<NArray> params,
   std::vector<LogicalDataNode*> param_data_nodes;
   for(NArray p : params) {
     param_data_nodes.push_back(p.data_node_);
-    ms.IncrRC(p.data_node_, rst.size());
   }
   ldag.NewOpNode(param_data_nodes, rst_data_nodes, {fn});
   return rst;

@@ -47,6 +47,8 @@ class PhysicalEngine: public PhysicalDagProcedure, public PhysicalDagMonitor {
   void OnCreateNode(DagNode* node);
   void OnDeleteNode(DagNode* node);
 
+  const std::unordered_set<uint64_t>& last_executed_nodes() const { return last_executed_nodes_; }
+
  private:
   DISALLOW_COPY_AND_ASSIGN(PhysicalEngine);
   void Init();
@@ -59,6 +61,7 @@ class PhysicalEngine: public PhysicalDagProcedure, public PhysicalDagMonitor {
   std::unordered_map<uint64_t, NodeState> node_states_;
   ConcurrentBlockingQueue<TaskPair> task_queue_;
   ThreadPool thread_pool_;
+  std::unordered_set<uint64_t> last_executed_nodes_;
 };
 
 }

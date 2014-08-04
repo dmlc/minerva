@@ -4,13 +4,13 @@ using namespace minerva;
 using namespace std;
 
 void Test() {
-  NArray narr = NArray::Constant({10, 8}, 0.0, {2, 1});
+  NArray narr = NArray::Constant({10, 8}, 0.0, {1, 1});
   for(int i = 0; i < 10; ++i) {
     cout << "####iter " << i << endl;
     narr += 1;
     narr.Eval();
-    //cout << MinervaSystem::Instance().logical_dag().PrintDag<ExternRCPrinter>() << endl;
-    //cout << MinervaSystem::Instance().physical_dag().PrintDag<ExternRCPrinter>() << endl;
+    cout << MinervaSystem::Instance().logical_dag().PrintDag() << endl;
+    cout << MinervaSystem::Instance().physical_dag().PrintDag() << endl;
   }
   float* val = narr.Get();
   for(int i = 0; i < 5; ++i)

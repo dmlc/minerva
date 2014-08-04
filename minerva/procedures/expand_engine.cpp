@@ -11,6 +11,7 @@ using namespace std;
 namespace minerva {
 
 void ExpandEngine::Process(LogicalDag& dag, const std::vector<uint64_t>& nodes) {
+  last_expanded_nodes_.clear();
   for(uint64_t nid : nodes) {
     ExpandNode(dag, nid);
   }
@@ -76,6 +77,8 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
         MakeMapping(onode->outputs_[i], rst_chunks[i]);
       }
     }
+    // cache this node
+    last_expanded_nodes_.insert(lnid);
   }
 }
 

@@ -43,11 +43,11 @@ float* DataStore::GetData(uint64_t id, MemTypes type) {
   return data_states_[id].data_ptrs[type];
 }
 
-void DataStore::IncrReferenceCount(uint64_t id, int amount) {
-  DecrReferenceCount(id, -amount);
+bool DataStore::IncrReferenceCount(uint64_t id, int amount) {
+  return DecrReferenceCount(id, -amount);
 }
 
-void DataStore::DecrReferenceCount(uint64_t id, int amount) {
+bool DataStore::DecrReferenceCount(uint64_t id, int amount) {
   lock_guard<mutex> lck(access_mutex_);
   CHECK(CheckValidity(id)) << "id=" << id << " was not created!";
   DataState& ds = data_states_[id];
@@ -56,7 +56,9 @@ void DataStore::DecrReferenceCount(uint64_t id, int amount) {
   if(ds.reference_count == 0) {
     // do GC
     GC(id);
+    return true;
   }
+  return false;
 }
   
 int DataStore::GetReferenceCount(uint64_t id) const {
