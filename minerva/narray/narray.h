@@ -12,7 +12,6 @@ namespace minerva {
 
 class NArray;
 class Elewise;
-class Reduction;
 class Convolution;
 struct FileFormat;
 
@@ -40,7 +39,6 @@ struct FileFormat {
 
 class NArray {
   friend class Elewise;
-  friend class Reduction;
   friend class Convolution;
   friend class MinervaSystem;
  public:
