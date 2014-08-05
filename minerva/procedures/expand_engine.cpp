@@ -11,10 +11,13 @@ using namespace std;
 namespace minerva {
 
 void ExpandEngine::Process(LogicalDag& dag, const std::vector<uint64_t>& nodes) {
-  last_expanded_nodes_.clear();
+  GCNodes(dag);
   for(uint64_t nid : nodes) {
     ExpandNode(dag, nid);
   }
+  cout << dag.PrintDag() << endl;
+  GCNodes(dag);
+  cout << dag.PrintDag() << endl;
 }
 
 bool ExpandEngine::IsExpanded(uint64_t lnode_id) const {
@@ -30,8 +33,39 @@ void ExpandEngine::OnDeleteDataNode(LogicalDataNode* ldnode) {
   lnode_to_pnode_.erase(ldnode->node_id());
 }
 
+void ExpandEngine::GCNodes(LogicalDag& dag) {
+  for(uint64_t nid : node_states_.GetNodesOfState(NodeState::kCompleted)) {
+    DagNode* node = dag.GetNode(nid);
+    switch(node->Type()) {
+    case DagNode::OP_NODE:
+      node_states_.ChangeState(nid, NodeState::kDead);// op nodes are just GCed
+      break;
+    case DagNode::DATA_NODE:
+      LogicalDataNode* dnode = dynamic_cast<LogicalDataNode*>(node);
+      int dep_count = dnode->data_.extern_rc;
+      for(DagNode* succ : node->successors_) {
+        NodeState succ_state = node_states_.GetState(succ->node_id());
+        if(succ_state == NodeState::kBirth || succ_state == NodeState::kReady) {
+          ++dep_count;
+        }
+      }
+      if(dep_count == 0) {
+        node_states_.ChangeState(nid, NodeState::kDead);
+      }
+      break;
+    }
+  }
+  // delete node of kDead state 
+  for(uint64_t nid : node_states_.GetNodesOfState(NodeState::kDead)) {
+    dag.DeleteNode(nid);
+  }
+}
+
 void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
-  if(lnode_to_pnode_.find(lnid) == lnode_to_pnode_.end()) { // haven't been expanded yet
+  if(!IsExpanded(lnid)) { // haven't been expanded yet
+    CHECK_EQ(node_states_.GetState(lnid), NodeState::kBirth);
+    node_states_.ChangeState(lnid, NodeState::kReady);
+
     DagNode* curnode = dag.GetNode(lnid);
     //cout << "Try expand nodeid=" << lnid << " " << curnode->Type() << endl;
     for(DagNode* pred : curnode->predecessors_) {
@@ -41,7 +75,7 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
       LogicalDag::DNode* dnode = dynamic_cast<LogicalDag::DNode*>(curnode);
       // call expand function to generate data
       LogicalDataGenFn* fn = dnode->data_.data_gen_fn;
-      if(fn != NULL) {
+      if(fn != nullptr) {
         LOG(INFO) << "Expand logical datagen function: " << fn->Name();
         NVector<Scale> partsizes = dnode->data_.partitions.Map<Scale>(
             [] (const PartInfo& pi) { return pi.size; }
@@ -77,8 +111,7 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
         MakeMapping(onode->outputs_[i], rst_chunks[i]);
       }
     }
-    // cache this node
-    last_expanded_nodes_.insert(lnid);
+    node_states_.ChangeState(lnid, NodeState::kCompleted);
   }
 }
 

@@ -61,10 +61,30 @@ bool DataStore::DecrReferenceCount(uint64_t id, int amount) {
   return false;
 }
   
+bool DataStore::SetReferenceCount(uint64_t id, int rc) {
+  lock_guard<mutex> lck(access_mutex_);
+  CHECK(CheckValidity(id)) << "id=" << id << " was not created!";
+  CHECK(rc >= 0) << "invalid rc value: " << rc;
+  DataState& ds = data_states_[id];
+  ds.reference_count = rc;
+  if(ds.reference_count == 0) {
+    // do GC
+    GC(id);
+    return true;
+  }
+  return false;
+}
+  
 int DataStore::GetReferenceCount(uint64_t id) const {
   lock_guard<mutex> lck(access_mutex_);
   CHECK(CheckValidity(id)) << "id=" << id << " was not created!";
   return data_states_.find(id)->second.reference_count;
+}
+  
+void DataStore::FreeData(uint64_t id) {
+  lock_guard<mutex> lck(access_mutex_);
+  CHECK(CheckValidity(id)) << "id=" << id << " was not created!";
+  GC(id);
 }
 
 /* similar to ExistData, but without lock protection. Only for private usage. */

@@ -11,6 +11,7 @@
 
 #include "procedures/dag_procedure.h"
 #include "procedures/thread_pool.h"
+#include "procedures/state.h"
 #include "common/common.h"
 
 namespace minerva {
@@ -22,15 +23,13 @@ namespace minerva {
  * 3. PhysicalEngine is responsible for GC.
  */
 
-struct NodeState {
+/*struct NodeState {
   enum State {
     kNoNeed, // No need to execute
     kReady, // Need to execute
     kComplete
   } state;
-  size_t dependency_counter;
-  std::condition_variable* on_complete;
-};
+};*/
 
 class PhysicalEngine: public PhysicalDagProcedure, public PhysicalDagMonitor {
   friend class ThreadPool;
@@ -40,28 +39,35 @@ class PhysicalEngine: public PhysicalDagProcedure, public PhysicalDagMonitor {
   typedef std::function<void(Task)> Callback;
   typedef std::pair<Task, Callback> TaskPair;
   // TODO use reference to reduce overhead
-  PhysicalEngine();
+  PhysicalEngine(NodeStateMap<PhysicalDag>& ns);
   ~PhysicalEngine();
   void Process(PhysicalDag&, const std::vector<uint64_t>&);
-  NodeState& GetNodeState(uint64_t );
   void OnCreateNode(DagNode* node);
   void OnDeleteNode(DagNode* node);
 
-  const std::unordered_set<uint64_t>& last_executed_nodes() const { return last_executed_nodes_; }
+  //const std::unordered_set<uint64_t>& last_executed_nodes() const { return last_executed_nodes_; }
+
+ private:
+  struct RuntimeState {
+    int dependency_counter;
+    std::condition_variable* on_complete;
+  };
 
  private:
   DISALLOW_COPY_AND_ASSIGN(PhysicalEngine);
   void Init();
-  std::unordered_set<DagNode*> FindRootNodes(const std::vector<uint64_t>&);
+  std::unordered_set<DagNode*> FindRootNodes(PhysicalDag& dag, const std::vector<uint64_t>&);
   void NodeRunner(DagNode*);
   void AppendTask(Task, Callback);
   bool GetNewTask(std::thread::id, TaskPair&);
+  void GCNodes(PhysicalDag& );
 
   std::mutex node_states_mutex_;
-  std::unordered_map<uint64_t, NodeState> node_states_;
+  std::unordered_map<uint64_t, RuntimeState> rt_states_;
+  NodeStateMap<PhysicalDag>& node_states_;
+
   ConcurrentBlockingQueue<TaskPair> task_queue_;
   ThreadPool thread_pool_;
-  std::unordered_set<uint64_t> last_executed_nodes_;
 };
 
 }

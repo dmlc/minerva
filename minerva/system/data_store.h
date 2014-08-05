@@ -20,9 +20,11 @@ class DataStore {
   bool CreateData(uint64_t, MemTypes, size_t len, int rc = 0);
   float* GetData(uint64_t, MemTypes);
   bool ExistData(uint64_t ) const;
+  void FreeData(uint64_t );
   // return true if the RC is zero afterwards
   bool IncrReferenceCount(uint64_t, int amount = 1);
   bool DecrReferenceCount(uint64_t, int amount = 1);
+  bool SetReferenceCount(uint64_t, int );
   int GetReferenceCount(uint64_t ) const;
   //void FreeData(uint64_t, MemTypes);
 
