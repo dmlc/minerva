@@ -78,6 +78,18 @@ Chunk operator * (Chunk a, Chunk b) {
   MatMultOp* matmult_op = new MatMultOp;
   return Chunk::Compute({a, b}, {new_size}, matmult_op)[0];
 }
+/////////////////////////////////////////////////////////
+// reduction
+/////////////////////////////////////////////////////////
+Chunk Chunk::Reduce(const Scale& dims_to_reduce, ReductionType type) {
+  ReductionOp* op = new ReductionOp;
+  op->closure = {type, dims_to_reduce};
+  Scale rstsize = Size();
+  for (auto i: dims_to_reduce) {
+    rstsize[i] = 1;
+  }
+  return Compute({*this}, {rstsize}, op)[0];
+}
 
 /////////////////////////////////////////////////////////
 // shape
@@ -95,6 +107,37 @@ Chunk Chunk::Trans() {
   Scale new_size = {Size(1), Size(0)};
   TransOp* trans_op = new TransOp;
   return Chunk::Compute({*this}, {new_size}, trans_op)[0];
+}
+  
+Scale Chunk::ComputeOffset(NVector<Chunk> chunks) {
+  Scale numparts = chunks.Size();
+  size_t numdims = numparts.NumDims();
+  Scale pos = Scale::Origin(numdims);
+  chunks[pos].data_node()->data_.offset = pos; // the offset of first chunk is zero
+  Scale merged_size;
+  while(1) {
+    auto& phy_data = chunks[pos].data_node()->data_;
+    phy_data.offset_index = pos;
+    Scale upleftpos = pos.Map([] (int x) { return max(x - 1, 0); });
+    auto& upleft_phy_data = chunks[upleftpos].data_node()->data_;
+    phy_data.offset = upleft_phy_data.offset + upleft_phy_data.size;
+    for(size_t i = 0; i < numdims; ++i) {
+      if(pos[i] == 0) { // if the index of this dimension is 0, then so does the offset
+        phy_data.offset[i] = 0;
+      }
+    }
+    if(!Scale::IncrOne(pos, numparts)) {
+      merged_size = phy_data.offset + phy_data.size;
+      break;
+    }
+  }
+  return merged_size;
+}
+  
+Chunk Chunk::Merge(NVector<Chunk> parts) {
+  Scale rstsize = ComputeOffset(parts);
+  AssembleOp* assemble_op = new AssembleOp;
+  return Chunk::Compute(parts.ToVector(), {rstsize}, assemble_op)[0];
 }
 
 NVector<Chunk> Chunk::Split(const NVector<Scale>& partsizes) {

@@ -22,7 +22,7 @@ class ExpandEngine : public LogicalDagProcedure, public LogicalDagMonitor {
 
  private:
   void ExpandNode(LogicalDag& dag, uint64_t lnid);
-  void MakeMapping(LogicalDag::DNode* ldnode, const NVector<Chunk>& chunks);
+  void MakeMapping(LogicalDag::DNode* ldnode, NVector<Chunk>& chunks);
 
  private:
   NodeStateMap<LogicalDag>& node_states_;

@@ -5,7 +5,6 @@
 
 #include "logical.h"
 #include "physical.h"
-#include "physical_op.h"
 #include "closure.h"
 #include "impl/bundle.h"
 
@@ -118,34 +117,16 @@ class ReductionOp : public SharedComputeFnWithClosure<ReductionClosure> {
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
     CHECK_EQ(inputs.size(), 1) << "reduction #input wrong";
     NVector<Chunk> individual_reduce = inputs[0].Map<Chunk>(
-      [&] (const Chunk& ch) {
-        ReductionOp* op = new ReductionOp;
-        op->closure = closure;
-        Scale size = ch.Size();
-        for (auto i: closure.dims_to_reduce) {
-          size[i] = 1;
-        }
-        Chunk res = Chunk::Compute({ch}, {ch.Size()}, op)[0];
-        for (auto i: closure.dims_to_reduce) {
-          res.data_node()->data_.offset[i] = res.data_node()->data_.offset_index[i];
-        }
-        return res;
+      [&] (Chunk ch) {
+        return ch.Reduce(closure.dims_to_reduce, closure.type);
       }
     );
-    Scale res_size = Scale::Merge(individual_reduce.Map<Scale>(
-      [&] (const Chunk& ch) {
-        return ch.Size();
-      }
-    ));
-    AssembleOp* assemble_op = new AssembleOp;
-    Chunk merged = Chunk::Compute(individual_reduce.ToVector(), {res_size}, assemble_op)[0];
-    ReductionOp* reduction_op = new ReductionOp;
-    reduction_op->closure = closure;
-    Scale size = merged.Size();
-    for (auto i: closure.dims_to_reduce) {
-      size[i] = 1;
-    }
-    return {NVector<Chunk>({Chunk::Compute({merged}, {size}, reduction_op)[0]}, Scale::Constant(size.NumDims(), 1))};
+    Chunk merged = Chunk::Merge(individual_reduce);
+    Scale merged_size = merged.Size();
+    Scale num_rst_parts = Scale::Constant(merged_size.NumDims(), 1);
+    NVector<Chunk> rst(num_rst_parts);
+    rst[num_rst_parts - 1] = merged.Reduce(closure.dims_to_reduce, closure.type);
+    return {rst};
   }
   std::string Name() const {
    switch (closure.type) {

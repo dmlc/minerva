@@ -2,6 +2,7 @@
 #include "common/scale.h"
 #include "common/nvector.h"
 #include "dag/physical_dag.h"
+#include "op/closure.h"
 
 namespace minerva {
 
@@ -38,17 +39,20 @@ class Chunk {
   Chunk operator - ();
   // Matrix multiplication
   friend Chunk operator * (Chunk, Chunk); // Matrix multiplication
-
+  // reduction
+  Chunk Reduce(const Scale& dims_to_reduce, ReductionType );
+  // shape
   Scale Size() const;
   int Size(int) const;
   Chunk Trans();
-  static Chunk Merge(const NVector<Chunk>& );
+
+  static Scale ComputeOffset(NVector<Chunk> ); // return merged size
+  static Chunk Merge(NVector<Chunk> );
   NVector<Chunk> Split(const NVector<Scale>& partsizes);
 
   // customized operations
   static std::vector<Chunk> Compute(const std::vector<Chunk>& params,
       const std::vector<Scale>& result_sizes, PhysicalComputeFn* fn);
-  //static Chunk Generate(const Scale& result_size, PhysicalDataGenFn* fn);
 
  private:
   PhysicalDataNode* data_node_; // Set up in constructor
