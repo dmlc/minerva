@@ -38,6 +38,7 @@ void SimpleFileLoader::Load(const std::string& fname, const Scale& size, DataLis
   for(DataShard& ds : out_shards) {
     basic::NCopy(ptr, size, ds.Offset(), ds.GetCpuData(), ds.Size(), dststart, ds.Size());
   }
+  delete[] ptr;
 }
 
 } // end of namespace minerva
