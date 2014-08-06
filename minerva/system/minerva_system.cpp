@@ -39,12 +39,15 @@ void MinervaSystem::Eval(NArray& narr) {
 
 float* MinervaSystem::GetValue(NArray& narr) {
   NVector<uint64_t> phy_nid = expand_engine_.GetPhysicalNodes(narr.data_node_->node_id());
-  NVector<DataShard> data_shards = phy_nid.Map<DataShard>(
-      [&] (uint64_t id) { return DataShard(physical_dag_.GetDataNode(id)->data_); }
-    );
-  float* rst_ptr = new float[narr.Size().Prod()];
-  basic::Assemble(data_shards, rst_ptr, narr.Size());
-  return rst_ptr;
+  float* rstptr = new float[narr.Size().Prod()];
+  Scale srcstart = Scale::Origin(narr.Size().NumDims());
+  for(uint64_t nid : phy_nid) {
+    PhysicalData& pdata = physical_dag_.GetDataNode(nid)->data_;
+    float* srcptr = data_store_.GetData(pdata.data_id, DataStore::CPU);
+    basic::NCopy(srcptr, pdata.size, srcstart,
+        rstptr, narr.Size(), pdata.offset, pdata.size);
+  }
+  return rstptr;
 }
 
 void MinervaSystem::IncrExternRC(LogicalDag::DNode* dnode, int amount) {
