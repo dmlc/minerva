@@ -132,16 +132,20 @@ float* NArray::Get() {
   return MinervaSystem::Instance().GetValue(*this);
 }
 
-void NArray::ToFile(const std::string& filename, const FileFormat& format) {
+void NArray::ToStream(ostream& out, const FileFormat& format) {
   float* value = Get();
-  ofstream fout(filename.c_str());
   if(format.binary) {
-    fout.write(reinterpret_cast<char*>(value), Size().Prod() * sizeof(float));
+    out.write(reinterpret_cast<char*>(value), Size().Prod() * sizeof(float));
+  } else {
+    for (int i = 0; i < Size().Prod(); ++i) {
+      out << setprecision(4) << value[i] << "\t";
+    }
   }
-  else {
-    for(int i = 0; i < Size().Prod(); ++i)
-      fout << setprecision(4) << value[i] << "\t";
-  }
+}
+
+void NArray::ToFile(const std::string& filename, const FileFormat& format) {
+  ofstream fout(filename.c_str());
+  ToStream(fout, format);
   fout.close();
 }
 
