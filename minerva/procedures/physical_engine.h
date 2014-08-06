@@ -44,6 +44,7 @@ class PhysicalEngine: public PhysicalDagProcedure, public PhysicalDagMonitor {
   void Process(PhysicalDag&, const std::vector<uint64_t>&);
   void OnCreateNode(DagNode* node);
   void OnDeleteNode(DagNode* node);
+  void GCNodes(PhysicalDag& );
 
   //const std::unordered_set<uint64_t>& last_executed_nodes() const { return last_executed_nodes_; }
 
@@ -60,7 +61,6 @@ class PhysicalEngine: public PhysicalDagProcedure, public PhysicalDagMonitor {
   void NodeRunner(DagNode*);
   void AppendTask(Task, Callback);
   bool GetNewTask(std::thread::id, TaskPair&);
-  void GCNodes(PhysicalDag& );
 
   std::mutex node_states_mutex_;
   std::unordered_map<uint64_t, RuntimeState> rt_states_;

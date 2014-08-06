@@ -18,11 +18,11 @@ class ExpandEngine : public LogicalDagProcedure, public LogicalDagMonitor {
     return last_expanded_nodes_;
   }*/
   void OnDeleteDataNode(LogicalDataNode* );
+  void GCNodes(LogicalDag& dag);
 
  private:
   void ExpandNode(LogicalDag& dag, uint64_t lnid);
   void MakeMapping(LogicalDag::DNode* ldnode, const NVector<Chunk>& chunks);
-  void GCNodes(LogicalDag& dag);
 
  private:
   NodeStateMap<LogicalDag>& node_states_;

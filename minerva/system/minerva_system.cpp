@@ -26,10 +26,13 @@ void MinervaSystem::LoadBuiltinDagMonitors() {
 }
 
 void MinervaSystem::Eval(NArray& narr) {
+  // logical dag
+  expand_engine_.GCNodes(logical_dag_);// GC useless logical nodes
   std::vector<uint64_t> id_to_eval = {narr.data_node_->node_id()};
-  // convert logical dag to physical dag
   expand_engine_.Process(logical_dag_, id_to_eval);
-  // do real computation
+
+  // physical dag
+  physical_engine_.GCNodes(physical_dag_);// GC useless physical nodes
   auto physical_nodes = expand_engine_.GetPhysicalNodes(narr.data_node_->node_id());
   physical_engine_.Process(physical_dag_, physical_nodes.ToVector());
 }

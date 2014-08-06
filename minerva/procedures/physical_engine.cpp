@@ -22,8 +22,6 @@ PhysicalEngine::~PhysicalEngine() {
 }
 
 void PhysicalEngine::Process(PhysicalDag& dag, const std::vector<uint64_t>& targets) {
-  cout << dag.PrintDag() << endl;
-  GCNodes(dag);
   auto ready_to_execute = FindRootNodes(dag, targets);
   for (auto i: ready_to_execute) {
     AppendTask(i, bind(&PhysicalEngine::NodeRunner, this, placeholders::_1));
@@ -41,7 +39,6 @@ void PhysicalEngine::Process(PhysicalDag& dag, const std::vector<uint64_t>& targ
       LOG(INFO) << "Node (id=" << tgtid << ") complete.";
     }
   }
-  GCNodes(dag);
 }
 
 void PhysicalEngine::Init() {
@@ -76,11 +73,11 @@ unordered_set<DagNode*> PhysicalEngine::FindRootNodes(PhysicalDag& dag, const ve
     RuntimeState& rts = rt_states_[curid];
     auto node = dag.GetNode(curid);;
     rts.dependency_counter = 0;
-    for (auto i: node->predecessors_) {
-      switch (node_states_.GetState(curid)) {
+    for (auto pred: node->predecessors_) {
+      switch (node_states_.GetState(pred->node_id())) {
         // Count dependency and recursively search predecessors
         case NodeState::kBirth:
-          ready_node_queue.push(i->node_id());
+          ready_node_queue.push(pred->node_id());
         case NodeState::kReady:
           ++rts.dependency_counter;
           break;

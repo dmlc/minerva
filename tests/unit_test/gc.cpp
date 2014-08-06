@@ -9,8 +9,8 @@ void Test() {
     cout << "####iter " << i << endl;
     narr += 1;
     narr.Eval();
-    cout << MinervaSystem::Instance().logical_dag().PrintDag() << endl;
-    cout << MinervaSystem::Instance().physical_dag().PrintDag() << endl;
+    //cout << MinervaSystem::Instance().logical_dag().PrintDag() << endl;
+    //cout << MinervaSystem::Instance().physical_dag().PrintDag() << endl;
   }
   float* val = narr.Get();
   for(int i = 0; i < 5; ++i)

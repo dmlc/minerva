@@ -11,13 +11,9 @@ using namespace std;
 namespace minerva {
 
 void ExpandEngine::Process(LogicalDag& dag, const std::vector<uint64_t>& nodes) {
-  GCNodes(dag);
   for(uint64_t nid : nodes) {
     ExpandNode(dag, nid);
   }
-  cout << dag.PrintDag() << endl;
-  GCNodes(dag);
-  cout << dag.PrintDag() << endl;
 }
 
 bool ExpandEngine::IsExpanded(uint64_t lnode_id) const {
