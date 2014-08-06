@@ -53,6 +53,8 @@ class NArray {
   static NArray LoadFromFile(const Scale& size, const std::string& fname, IFileLoader* loader,
       const Scale& numparts);
   NArray();
+  NArray(const NArray& );
+  NArray& operator = (const NArray& );
   ~NArray();
  public:
   // element-wise

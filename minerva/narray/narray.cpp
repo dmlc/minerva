@@ -9,17 +9,43 @@ using namespace std;
 
 namespace minerva {
 
-NArray::NArray(): data_node_(NULL) {}
-NArray::NArray(LogicalDataNode* node): data_node_(node) {}
-NArray::~NArray() {}
+static MinervaSystem& ms = MinervaSystem::Instance();
 
+////////////////////////////////////////////////////
+// constructors & destructors
+////////////////////////////////////////////////////
+// public
+NArray::NArray(): data_node_(NULL) {}
+NArray::NArray(const NArray& other): data_node_(other.data_node_) {
+  ms.IncrExternRC(data_node_);
+}
+NArray::~NArray() {
+  if(data_node_ != NULL)
+    ms.IncrExternRC(data_node_, -1);
+}
+NArray& NArray::operator = (const NArray& other) {
+  auto old_dnode = data_node_;
+  data_node_ = other.data_node_;
+  ms.IncrExternRC(data_node_, 1);
+  ms.IncrExternRC(old_dnode, -1);
+  return *this;
+}
+// private
+NArray::NArray(LogicalDataNode* node): data_node_(node) {
+  ms.IncrExternRC(data_node_);
+}
+
+////////////////////////////////////////////////////
+// computation methods
+////////////////////////////////////////////////////
 std::vector<NArray> NArray::Compute(std::vector<NArray> params, 
     std::vector<Scale> result_sizes, LogicalComputeFn* fn) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
   std::vector<NArray> rst;
   std::vector<LogicalDataNode*> rst_data_nodes;
   for(Scale size : result_sizes) {
-    LogicalDataNode* rst_node = ldag.NewDataNode({size, NULL});
+    LogicalData ldata(size);
+    LogicalDataNode* rst_node = ldag.NewDataNode(ldata);
     rst.push_back(NArray(rst_node));
     rst_data_nodes.push_back(rst_node);
   }
@@ -33,7 +59,9 @@ std::vector<NArray> NArray::Compute(std::vector<NArray> params,
   
 NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<PartInfo>& parts) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
-  LogicalDataNode* rst_node = ldag.NewDataNode({size, fn, parts});
+  LogicalData ldata(size, fn);
+  ldata.partitions = parts;
+  LogicalDataNode* rst_node = ldag.NewDataNode(ldata);
   return NArray(rst_node);
 }
 

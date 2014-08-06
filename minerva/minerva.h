@@ -1,3 +1,4 @@
+#include "dag/dag_printer.h"
 #include "narray/narray.h"
 #include "narray/io/db_loader.h"
 #include "narray/io/file_loader.h"

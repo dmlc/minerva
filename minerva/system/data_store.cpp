@@ -11,8 +11,12 @@ DataStore::DataStore() {
 }
 
 DataStore::~DataStore() {
-  for (auto& i: data_pointers_) {
-    free(i.second);
+  for (auto& i: data_states_) {
+    for(float* ptr : i.second.data_ptrs) {
+      if(ptr != NULL) { // TODO should call different free functions
+        free(ptr);
+      }
+    }
   }
 }
 
@@ -21,32 +25,86 @@ uint64_t DataStore::GenerateDataID() {
   return ++data_id_gen;
 }
 
-bool DataStore::CreateData(uint64_t id, MemTypes type, size_t size) {
-  // TODO Allocate according to MemTypes
-  std::lock_guard<std::mutex> lck(access_mutex_);
-  LOG_IF(WARNING, data_pointers_.find(id) != data_pointers_.end())
-    << "data_id(" << id << ") has already been created";
-  auto ptr = data_pointers_.find(id);
-  if (ptr != data_pointers_.end()) {
-    FreeData(id, type); // Free existing storage
-  }
-  float* data = (float*) calloc(size, sizeof(float));
-  data_pointers_[id] = data;
+bool DataStore::CreateData(uint64_t id, MemTypes type, size_t length, int rc) {
+  lock_guard<mutex> lck(access_mutex_);
+  DataState& ds = data_states_[id];
+  CHECK_EQ(ds.data_ptrs[type], static_cast<float*>(NULL)) << "id=" << id << " has already been created!";
+  CHECK(ds.length == 0 || ds.length == length) << "id=" << id << " allocated length mismatch!";
+  ds.length = length;
+  ds.reference_count = rc;
+  ds.data_ptrs[type] = (float*) calloc(length, sizeof(float)); // TODO should call different alloc functions
   return true;
 }
 
 float* DataStore::GetData(uint64_t id, MemTypes type) {
-  std::lock_guard<std::mutex> lck(access_mutex_);
-  auto ptr = data_pointers_.find(id);
-  if (ptr == data_pointers_.end()) {
-    LOG(WARNING) << "data_id(" << id << ") was not created!";
-    return nullptr;
-  }
-  return ptr->second;
+  lock_guard<mutex> lck(access_mutex_);
+  DataState& ds = data_states_[id];
+  CHECK_NE(ds.data_ptrs[type], static_cast<float*>(NULL)) << "id=" << id << " was not created!";
+  return data_states_[id].data_ptrs[type];
 }
 
-void DataStore::FreeData(uint64_t id, MemTypes type) {
-  std::lock_guard<std::mutex> lck(access_mutex_);
+bool DataStore::IncrReferenceCount(uint64_t id, int amount) {
+  return DecrReferenceCount(id, -amount);
+}
+
+bool DataStore::DecrReferenceCount(uint64_t id, int amount) {
+  lock_guard<mutex> lck(access_mutex_);
+  CHECK(CheckValidity(id)) << "id=" << id << " was not created!";
+  DataState& ds = data_states_[id];
+  CHECK_GE(ds.reference_count, amount) << "decrease rc more than it has";
+  ds.reference_count -= amount;
+  if(ds.reference_count == 0) {
+    // do GC
+    GC(id);
+    return true;
+  }
+  return false;
+}
+  
+bool DataStore::SetReferenceCount(uint64_t id, int rc) {
+  lock_guard<mutex> lck(access_mutex_);
+  CHECK(CheckValidity(id)) << "id=" << id << " was not created!";
+  CHECK(rc >= 0) << "invalid rc value: " << rc;
+  DataState& ds = data_states_[id];
+  ds.reference_count = rc;
+  if(ds.reference_count == 0) {
+    // do GC
+    GC(id);
+    return true;
+  }
+  return false;
+}
+  
+int DataStore::GetReferenceCount(uint64_t id) const {
+  lock_guard<mutex> lck(access_mutex_);
+  CHECK(CheckValidity(id)) << "id=" << id << " was not created!";
+  return data_states_.find(id)->second.reference_count;
+}
+  
+void DataStore::FreeData(uint64_t id) {
+  lock_guard<mutex> lck(access_mutex_);
+  CHECK(CheckValidity(id)) << "id=" << id << " was not created!";
+  GC(id);
+}
+
+/* similar to ExistData, but without lock protection. Only for private usage. */
+inline bool DataStore::CheckValidity(uint64_t id) const {
+  return data_states_.find(id) != data_states_.end();
+}
+
+void DataStore::GC(uint64_t id) {
+  LOG(INFO) << "GC data with id=" << id;
+  DataState& ds = data_states_[id];
+  for(float* ptr : ds.data_ptrs) {
+    if(ptr != NULL) {
+      free(ptr); // TODO should call different free functions
+    }
+  }
+  data_states_.erase(id);
+}
+
+/*void DataStore::FreeData(uint64_t id, MemTypes type) {
+  lock_guard<mutex> lck(access_mutex_);
   auto ptr = data_pointers_.find(id);
   if (ptr == data_pointers_.end()) {
     LOG(WARNING) << "data_id(" << id << ") was not created!";
@@ -54,6 +112,6 @@ void DataStore::FreeData(uint64_t id, MemTypes type) {
   }
   free(ptr->second);
   data_pointers_.erase(ptr);
-}
+}*/
 
 } // end of namespace minerva

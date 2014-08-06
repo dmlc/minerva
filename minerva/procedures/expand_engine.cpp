@@ -16,24 +16,62 @@ void ExpandEngine::Process(LogicalDag& dag, const std::vector<uint64_t>& nodes) 
   }
 }
 
-NVector<uint64_t> ExpandEngine::GetPhysicalNodes(uint64_t id) const {
-  auto it = lnode_to_pnode_.find(id);
-  CHECK(it != lnode_to_pnode_.end()) << "invalid physical nid: " << id;
-  return it->second;
+bool ExpandEngine::IsExpanded(uint64_t lnode_id) const {
+  return lnode_to_pnode_.find(lnode_id) != lnode_to_pnode_.end();
+}
+
+const NVector<uint64_t>& ExpandEngine::GetPhysicalNodes(uint64_t id) const {
+  CHECK(IsExpanded(id)) << "invalid physical nid: " << id;
+  return lnode_to_pnode_.find(id)->second;
+}
+  
+void ExpandEngine::OnDeleteDataNode(LogicalDataNode* ldnode) {
+  lnode_to_pnode_.erase(ldnode->node_id());
+}
+
+void ExpandEngine::GCNodes(LogicalDag& dag) {
+  for(uint64_t nid : node_states_.GetNodesOfState(NodeState::kCompleted)) {
+    DagNode* node = dag.GetNode(nid);
+    switch(node->Type()) {
+    case DagNode::OP_NODE:
+      node_states_.ChangeState(nid, NodeState::kDead);// op nodes are just GCed
+      break;
+    case DagNode::DATA_NODE:
+      LogicalDataNode* dnode = dynamic_cast<LogicalDataNode*>(node);
+      int dep_count = dnode->data_.extern_rc;
+      for(DagNode* succ : node->successors_) {
+        NodeState succ_state = node_states_.GetState(succ->node_id());
+        if(succ_state == NodeState::kBirth || succ_state == NodeState::kReady) {
+          ++dep_count;
+        }
+      }
+      if(dep_count == 0) {
+        node_states_.ChangeState(nid, NodeState::kDead);
+      }
+      break;
+    }
+  }
+  // delete node of kDead state 
+  for(uint64_t nid : node_states_.GetNodesOfState(NodeState::kDead)) {
+    dag.DeleteNode(nid);
+  }
 }
 
 void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
-  if(lnode_to_pnode_.find(lnid) == lnode_to_pnode_.end()) { // haven't been expanded yet
+  if(!IsExpanded(lnid)) { // haven't been expanded yet
+    CHECK_EQ(node_states_.GetState(lnid), NodeState::kBirth);
+    node_states_.ChangeState(lnid, NodeState::kReady);
+
     DagNode* curnode = dag.GetNode(lnid);
     //cout << "Try expand nodeid=" << lnid << " " << curnode->Type() << endl;
     for(DagNode* pred : curnode->predecessors_) {
-      ExpandNode(dag, pred->node_id_);
+      ExpandNode(dag, pred->node_id());
     }
     if(curnode->Type() == DagNode::DATA_NODE) { // data node
       LogicalDag::DNode* dnode = dynamic_cast<LogicalDag::DNode*>(curnode);
       // call expand function to generate data
       LogicalDataGenFn* fn = dnode->data_.data_gen_fn;
-      if(fn != NULL) {
+      if(fn != nullptr) {
         LOG(INFO) << "Expand logical datagen function: " << fn->Name();
         NVector<Scale> partsizes = dnode->data_.partitions.Map<Scale>(
             [] (const PartInfo& pi) { return pi.size; }
@@ -49,7 +87,7 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
       // make input chunks
       std::vector<NVector<Chunk>> in_chunks;
       for(LogicalDag::DNode* dn : onode->inputs_) {
-        NVector<uint64_t> mapped_pnode_ids = lnode_to_pnode_[dn->node_id_];
+        NVector<uint64_t> mapped_pnode_ids = lnode_to_pnode_[dn->node_id()];
         in_chunks.push_back(
           mapped_pnode_ids.Map<Chunk>(
             [] (const uint64_t& nid) {
@@ -69,6 +107,7 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
         MakeMapping(onode->outputs_[i], rst_chunks[i]);
       }
     }
+    node_states_.ChangeState(lnid, NodeState::kCompleted);
   }
 }
 
@@ -96,11 +135,12 @@ void ExpandEngine::MakeMapping(LogicalDag::DNode* ldnode, const NVector<Chunk>& 
         phy_data.offset[i] = 0;
       }
     }
+    phy_data.extern_rc = ldnode->data_.extern_rc; // set external rc
   } while(Scale::IncrOne(pos, numparts));
   // insert mapping
-  lnode_to_pnode_[ldnode->node_id_] = chunks.Map<uint64_t>(
+  lnode_to_pnode_[ldnode->node_id()] = chunks.Map<uint64_t>(
       [&] (const Chunk& ch) {
-        return ch.data_node()->node_id_;
+        return ch.data_node()->node_id();
       }
     );
 }

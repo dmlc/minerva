@@ -12,9 +12,8 @@ using namespace std;
 
 namespace minerva {
 
-MinervaSystem& ms = MinervaSystem::Instance();
-
-PhysicalEngine::PhysicalEngine(): thread_pool_(THREAD_NUM, this) {
+PhysicalEngine::PhysicalEngine(NodeStateMap<PhysicalDag>& ns):
+  node_states_(ns), thread_pool_(THREAD_NUM, this) {
   Init();
 }
 
@@ -22,24 +21,22 @@ PhysicalEngine::~PhysicalEngine() {
   task_queue_.SignalForKill();
 }
 
-void PhysicalEngine::Process(PhysicalDag&, const std::vector<uint64_t>& targets) {
-  // TODO Ignoring PhysicalDag, use MinervaSystem instead
-  CommitDagChanges();
-  auto ready_to_execute = FindRootNodes(targets);
+void PhysicalEngine::Process(PhysicalDag& dag, const std::vector<uint64_t>& targets) {
+  auto ready_to_execute = FindRootNodes(dag, targets);
   for (auto i: ready_to_execute) {
     AppendTask(i, bind(&PhysicalEngine::NodeRunner, this, placeholders::_1));
   }
   {
     // Waiting execution to complete
-    for (auto i: targets) {
-      LOG(INFO) << "Wait for node (id=" << i << ") finish.";
+    for (auto tgtid: targets) {
+      LOG(INFO) << "Wait for node (id=" << tgtid << ") finish.";
       unique_lock<mutex> lock(node_states_mutex_);
-      if (node_states_[i].state != NodeState::kComplete) {
-        node_states_[i].on_complete->wait(lock);
+      if (node_states_.GetState(tgtid) != NodeState::kCompleted) {
+        rt_states_[tgtid].on_complete->wait(lock);
       }
-      delete node_states_[i].on_complete;
-      node_states_[i].on_complete = 0;
-      LOG(INFO) << "Node (id=" << i << ") complete.";
+      delete rt_states_[tgtid].on_complete;
+      rt_states_[tgtid].on_complete = nullptr;
+      LOG(INFO) << "Node (id=" << tgtid << ") complete.";
     }
   }
 }
@@ -48,46 +45,41 @@ void PhysicalEngine::Init() {
   // Then we can load user defined runners
 }
 
-void PhysicalEngine::CommitDagChanges() {
+void PhysicalEngine::OnCreateNode(DagNode* node) {
   lock_guard<mutex> lock(node_states_mutex_);
-  auto& dag = ms.physical_dag();
-  // Create NodeState for new nodes. Only new nodes are inserted.
-  for (auto& i: dag.index_to_node_) {
-    if (node_states_.find(i.first) == node_states_.end()) {
-      NodeState n;
-      n.state = NodeState::kNoNeed;
-      n.dependency_counter = 0;
-      n.on_complete = 0;
-      node_states_.insert(make_pair(i.first, n));
-    }
-  }
+  RuntimeState ns{0, NULL};
+  rt_states_.insert(make_pair(node->node_id(), ns));
 }
 
-unordered_set<DagNode*> PhysicalEngine::FindRootNodes(const vector<uint64_t>& targets) {
+void PhysicalEngine::OnDeleteNode(DagNode* node) {
   lock_guard<mutex> lock(node_states_mutex_);
-  auto& dag = ms.physical_dag();
+  rt_states_.erase(node->node_id());
+}
+
+unordered_set<DagNode*> PhysicalEngine::FindRootNodes(PhysicalDag& dag, const vector<uint64_t>& targets) {
+  lock_guard<mutex> lock(node_states_mutex_);
   queue<uint64_t> ready_node_queue;
   unordered_set<DagNode*> ready_to_execute;
-  for (auto i: targets) {
+  for (uint64_t tgtid: targets) {
     // Don't push complete nodes
-    if (node_states_[i].state != NodeState::kComplete) {
-      ready_node_queue.push(i);
+    if (node_states_.GetState(tgtid) != NodeState::kCompleted) {
+      ready_node_queue.push(tgtid);
     }
   }
   while (!ready_node_queue.empty()) {
-    uint64_t cur = ready_node_queue.front();
+    uint64_t curid = ready_node_queue.front();
     ready_node_queue.pop();
-    auto& it = node_states_[cur];
-    auto node = dag.index_to_node_[cur];
-    it.state = NodeState::kReady;
-    it.dependency_counter = 0;
-    for (auto i: node->predecessors_) {
-      switch (node_states_[i->node_id_].state) {
+    node_states_.ChangeState(curid, NodeState::kReady);
+    RuntimeState& rts = rt_states_[curid];
+    auto node = dag.GetNode(curid);;
+    rts.dependency_counter = 0;
+    for (auto pred: node->predecessors_) {
+      switch (node_states_.GetState(pred->node_id())) {
         // Count dependency and recursively search predecessors
-        case NodeState::kNoNeed:
-          ready_node_queue.push(i->node_id_);
+        case NodeState::kBirth:
+          ready_node_queue.push(pred->node_id());
         case NodeState::kReady:
-          ++it.dependency_counter;
+          ++rts.dependency_counter;
           break;
         default:
           break;
@@ -96,23 +88,56 @@ unordered_set<DagNode*> PhysicalEngine::FindRootNodes(const vector<uint64_t>& ta
     // All successors of OpNode will be set ready. Successor of an incomplete OpNode could not be complete.
     if (node->Type() == DagNode::OP_NODE) {
       for (auto i: node->successors_) {
-        node_states_[i->node_id_].state = NodeState::kReady;
+        node_states_.ChangeState(i->node_id(), NodeState::kReady);
       }
     }
     // All predecessors are complete, or there are no predecessors at all
-    if (!it.dependency_counter) {
+    if (rts.dependency_counter == 0) {
       ready_to_execute.insert(node);
     }
   }
-  for (auto i: targets) {
-    if (node_states_[i].state != NodeState::kComplete) {
-      node_states_[i].on_complete = new condition_variable;
+  for (uint64_t tgtid: targets) {
+    if (node_states_.GetState(tgtid) != NodeState::kCompleted) {
+      rt_states_[tgtid].on_complete = new condition_variable;
     }
   }
   return ready_to_execute;
 }
 
+void PhysicalEngine::GCNodes(PhysicalDag& dag) {
+  for(uint64_t nid : node_states_.GetNodesOfState(NodeState::kCompleted)) {
+    DagNode* node = dag.GetNode(nid);
+    switch(node->Type()) {
+    case DagNode::OP_NODE:
+      node_states_.ChangeState(nid, NodeState::kDead);// op nodes are just GCed
+      break;
+    case DagNode::DATA_NODE:
+      PhysicalDataNode* dnode = dynamic_cast<PhysicalDataNode*>(node);
+      int dep_count = dnode->data_.extern_rc;
+      for(DagNode* succ : node->successors_) {
+        NodeState succ_state = node_states_.GetState(succ->node_id());
+        if(succ_state == NodeState::kBirth || succ_state == NodeState::kReady) {
+          ++dep_count;
+        }
+      }
+      if(dep_count == 0) {
+        node_states_.ChangeState(nid, NodeState::kDead);
+      }
+      DataStore& ds = MinervaSystem::Instance().data_store();
+      if(ds.ExistData(dnode->data_.data_id)) {
+        ds.SetReferenceCount(dnode->data_.data_id, dep_count);
+      }
+      break;
+    }
+  }
+  for(uint64_t nid : node_states_.GetNodesOfState(NodeState::kDead)) {
+    dag.DeleteNode(nid);
+  }
+}
+
 void PhysicalEngine::NodeRunner(DagNode* node) {
+  MinervaSystem& ms = MinervaSystem::Instance();
+  uint64_t nid = node->node_id();
   if (node->Type() == DagNode::OP_NODE) { // OpNode
     vector<DataShard> input;
     vector<DataShard> output;
@@ -123,40 +148,35 @@ void PhysicalEngine::NodeRunner(DagNode* node) {
     }
     for (auto n: phy_op_node->outputs_) { // Allocate storage for all outputs
       PhysicalData& out_data = dynamic_cast<PhysicalDataNode*>(n)->data_;
-      ms.data_store().CreateData(out_data.data_id, DataStore::CPU, out_data.size.Prod());
+      int rc = out_data.extern_rc + n->successors_.size();
+      ms.data_store().CreateData(out_data.data_id, DataStore::CPU, out_data.size.Prod(), rc);
       output.push_back(DataShard(out_data));
     }
     // call compute function
     PhysicalOp& op = phy_op_node->op_;
-    LOG(INFO) << "Execute node#" << node->node_id_ << " compute fn: " << op.compute_fn->Name();
+    LOG(INFO) << "Execute node#" << nid << " compute fn: " << op.compute_fn->Name();
     op.compute_fn->Execute(input, output, BASIC); // TODO decide impl_type
-  } else { // DataNode
-    /*if (node->predecessors_.empty()) { // Headless data node
-      PhysicalData& data = dynamic_cast<PhysicalDataNode*>(node)->data_;
-      ms.data_store().CreateData(data.data_id, DataStore::CPU, data.size.Prod()); // allocate space
-      // call data gen function
-      DataShard output(data);
-      LOG(INFO) << "Execute data gen fn: " << data.data_gen_fn->Name();
-      data.data_gen_fn->Execute(output, BASIC); // TODO decide impl_type
-    }*/
-  }
+    for (auto n: phy_op_node->predecessors_) {// de-refer predecessor's data
+      PhysicalData& in_data = dynamic_cast<PhysicalDataNode*>(n)->data_;
+      ms.data_store().DecrReferenceCount(in_data.data_id);
+    }
+  } 
+  // trigger successors
   {
     lock_guard<mutex> lock(node_states_mutex_);
-    auto succ = node->successors_;
-    for (auto i: succ) {
-      auto state = node_states_.find(i->node_id_);
-      if (state == node_states_.end()) { // New nodes, not committed yet
-        continue;
-      }
+    for (auto succ: node->successors_) {
+      NodeState state = node_states_.GetState(succ->node_id());
+      RuntimeState& rts = rt_states_[succ->node_id()];
+      CHECK_GE(--rts.dependency_counter, 0) << "";
       // Append node if all predecessors are finished
-      if (state->second.state == NodeState::kReady && !(--state->second.dependency_counter)) {
-        AppendTask(i, bind(&PhysicalEngine::NodeRunner, this, placeholders::_1));
+      if (state == NodeState::kReady && rts.dependency_counter == 0) {
+        AppendTask(succ, bind(&PhysicalEngine::NodeRunner, this, placeholders::_1));
       }
     }
-    node_states_[node->node_id_].state = NodeState::kComplete;
-    if (node_states_[node->node_id_].on_complete) {
+    node_states_.ChangeState(nid, NodeState::kCompleted);
+    if (rt_states_[nid].on_complete != nullptr) {
       //printf("Target complete %u\n", (unsigned int) dynamic_cast<PhysicalDataNode*>(node)->data_.data_id);
-      node_states_[node->node_id_].on_complete->notify_all();
+      rt_states_[nid].on_complete->notify_all();
     }
   }
 }
