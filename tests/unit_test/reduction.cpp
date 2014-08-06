@@ -1,16 +1,8 @@
+#include <iostream>
 #include <minerva.h>
 
 using namespace minerva;
 using namespace std;
-
-void GenRandmat() {
-  NArray na = NArray::Randn({4, 6}, 0.0, 1.0, {2, 2});
-  FileFormat format;
-  format.binary = false;
-  na.ToFile("randmat.txt", format);
-  format.binary = true;
-  na.ToFile("randmat.dat", format);
-}
 
 void LoadAndOutput() {
   SimpleFileLoader loader;
@@ -25,7 +17,16 @@ void LoadAndOutput() {
 }
 
 void Test1() {
-  NArray na = NArray::Constant
+  Scale size{5, 3};
+  float* data = new float[size.Prod()];
+  for (int i = 0; i < size.Prod(); ++i) {
+    data[i] = i;
+  }
+  NArray na = NArray::LoadFromArray(size, data, {2, 2});
+  FileFormat format;
+  format.binary = false;
+  na.ToStream(cout, format);
+  delete[] data;
 }
 
 int main(int argc, char** argv) {

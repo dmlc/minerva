@@ -51,6 +51,7 @@ class NArray {
   static NArray Randn(const Scale& size, float mu, float var, const Scale& );
   static NArray LoadFromFile(const Scale& size, const std::string& fname, IFileLoader* loader,
       const Scale& numparts);
+  static NArray LoadFromArray(const Scale&, float*, const Scale&);
   NArray();
   ~NArray();
  public:
