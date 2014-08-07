@@ -115,7 +115,8 @@ class TransOp : public SharedComputeFnWithClosure<TransposeClosure> {
 class ReductionOp : public SharedComputeFnWithClosure<ReductionClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
-    CHECK_EQ(inputs.size(), 1) << "reduction #input wrong";
+    LOG(INFO) << "ReductionOp::Expand" << std::endl;
+    CHECK_EQ(inputs.size(), 1) << "Reduction #input wrong";
     NVector<Chunk> individual_reduce = inputs[0].Map<Chunk>(
       [&] (Chunk ch) {
         return ch.Reduce(closure.dims_to_reduce, closure.type);
