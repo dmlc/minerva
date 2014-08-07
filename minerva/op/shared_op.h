@@ -2,32 +2,13 @@
 #include <sstream>
 #include <vector>
 #include <glog/logging.h>
-
+#include "op/shared_fn.h"
 #include "logical.h"
 #include "physical.h"
 #include "closure.h"
 #include "impl/bundle.h"
 
 namespace minerva {
-
-template<class C>
-class SharedDataGenFnWithClosure :
-  public LogicalDataGenFn, public PhysicalComputeFn, public ClosureTrait<C> {
- public:
-  void Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) {
-    // inputs should be empty list
-    FnBundle<C>::Call(outputs, ClosureTrait<C>::closure, impl_type);
-  }
-};
-
-template<class C>
-class SharedComputeFnWithClosure :
-  public LogicalComputeFn, public PhysicalComputeFn, public ClosureTrait<C> {
- public:
-  void Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) {
-    FnBundle<C>::Call(inputs, outputs, ClosureTrait<C>::closure, impl_type);
-  }
-};
 
 ///////////////////////////////////////////////////
 // Data generate functions
