@@ -21,6 +21,7 @@ void Fill(float* arr, float val, size_t len) {
 void Test1() {
   cout << "Test 2D assemble" << endl;
   // prepare
+  // make input
   DataStore& dstore = MinervaSystem::Instance().data_store();
   Scale s1 = {2, 3}, s2 = {2, 3}, s3 = {2, 3}, s4 = {2, 3};
   Scale o1 = {0, 0}, o2 = {0, 3}, o3 = {2, 0}, o4 = {2, 3};
@@ -38,17 +39,24 @@ void Test1() {
   Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
   Fill(dstore.GetData(id3, DataStore::CPU), 3, s3.Prod());
   Fill(dstore.GetData(id4, DataStore::CPU), 4, s4.Prod());
-  NVector<PhysicalData> dvec({2, 2});
-  dvec[oi1] = MakeData(s1, o1, oi1, id1);
-  dvec[oi2] = MakeData(s2, o2, oi2, id2);
-  dvec[oi3] = MakeData(s3, o3, oi3, id3);
-  dvec[oi4] = MakeData(s4, o4, oi4, id4);
-  float * rst = new float[srst.Prod()];
-  NVector<DataShard> ds = dvec.Map<DataShard>([] (const PhysicalData& pd) { return DataShard(pd); });
+  vector<PhysicalData> dvec;
+  dvec.push_back(MakeData(s1, o1, oi1, id1));
+  dvec.push_back(MakeData(s2, o2, oi2, id2));
+  dvec.push_back(MakeData(s3, o3, oi3, id3));
+  dvec.push_back(MakeData(s4, o4, oi4, id4));
+  vector<DataShard> inds;
+  for_each(dvec.begin(), dvec.end(), [&] (PhysicalData& pd) { inds.push_back(DataShard(pd)); });
+  // make output
+  uint64_t rstid = dstore.GenerateDataID();
+  dstore.CreateData(rstid, DataStore::CPU, srst.Prod());
+  PhysicalData rstpd; rstpd.size = srst; rstpd.data_id = rstid;
+  vector<DataShard> outds{DataShard(rstpd)};
   // assemble
-  basic::Assemble(ds, rst, srst);
+  AssembleClosure ac;
+  basic::Assemble(inds, outds, ac);
 
   // print
+  float* rst = outds[0].GetCpuData();
   for(int i = 0; i < srst[0]; ++i) {
     for(int j = 0; j < srst[1]; ++j) {
       cout << rst[i + srst[0] * j] << " ";
@@ -60,6 +68,7 @@ void Test1() {
 void Test2() {
   cout << "Test 3D assemble (split in 1st dim)" << endl;
   DataStore& dstore = MinervaSystem::Instance().data_store();
+  // make input
   Scale s1 = {2, 6, 8}, s2 = {2, 6, 8};
   Scale o1 = {0, 0, 0}, o2 = {2, 0, 0};
   Scale oi1 = {0, 0, 0}, oi2 = {1, 0, 0};
@@ -70,14 +79,22 @@ void Test2() {
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
   Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
   Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
-  NVector<PhysicalData> dvec({2, 1, 1});
-  dvec[oi1] = MakeData(s1, o1, oi1, id1);
-  dvec[oi2] = MakeData(s2, o2, oi2, id2);
-  float * rst = new float[srst.Prod()];
-  NVector<DataShard> ds = dvec.Map<DataShard>([] (const PhysicalData& pd) { return DataShard(pd); });
+  vector<PhysicalData> dvec;
+  dvec.push_back(MakeData(s1, o1, oi1, id1));
+  dvec.push_back(MakeData(s2, o2, oi2, id2));
+  vector<DataShard> inds;
+  for_each(dvec.begin(), dvec.end(), [&] (PhysicalData& pd) { inds.push_back(DataShard(pd)); });
+  // make output
+  uint64_t rstid = dstore.GenerateDataID();
+  dstore.CreateData(rstid, DataStore::CPU, srst.Prod());
+  PhysicalData rstpd; rstpd.size = srst; rstpd.data_id = rstid;
+  vector<DataShard> outds{DataShard(rstpd)};
   // assemble
-  basic::Assemble(ds, rst, srst);
+  AssembleClosure ac;
+  basic::Assemble(inds, outds, ac);
+
   // print
+  float* rst = outds[0].GetCpuData();
   for(int i = 0; i < 4; ++i) {
     for(int j = 0; j < 6; ++j) {
       cout << rst[i + j * 4] << " ";
@@ -89,6 +106,7 @@ void Test2() {
 void Test3() {
   cout << "Test 3D assemble (split in 2nd dim)" << endl;
   DataStore& dstore = MinervaSystem::Instance().data_store();
+  // make input
   Scale s1 = {4, 3, 8}, s2 = {4, 3, 8};
   Scale o1 = {0, 0, 0}, o2 = {0, 3, 0};
   Scale oi1 = {0, 0, 0}, oi2 = {0, 1, 0};
@@ -100,14 +118,22 @@ void Test3() {
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
   Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
   Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
-  NVector<PhysicalData> dvec(numparts);
-  dvec[oi1] = MakeData(s1, o1, oi1, id1);
-  dvec[oi2] = MakeData(s2, o2, oi2, id2);
-  float * rst = new float[srst.Prod()];
-  NVector<DataShard> ds = dvec.Map<DataShard>([] (const PhysicalData& pd) { return DataShard(pd); });
+  vector<PhysicalData> dvec;
+  dvec.push_back(MakeData(s1, o1, oi1, id1));
+  dvec.push_back(MakeData(s2, o2, oi2, id2));
+  vector<DataShard> inds;
+  for_each(dvec.begin(), dvec.end(), [&] (PhysicalData& pd) { inds.push_back(DataShard(pd)); });
+  // make output
+  uint64_t rstid = dstore.GenerateDataID();
+  dstore.CreateData(rstid, DataStore::CPU, srst.Prod());
+  PhysicalData rstpd; rstpd.size = srst; rstpd.data_id = rstid;
+  vector<DataShard> outds{DataShard(rstpd)};
   // assemble
-  basic::Assemble(ds, rst, srst);
+  AssembleClosure ac;
+  basic::Assemble(inds, outds, ac);
+
   // print
+  float* rst = outds[0].GetCpuData();
   for(int i = 0; i < 4; ++i) {
     for(int j = 0; j < 6; ++j) {
       cout << rst[i + j * 4] << " ";
@@ -119,6 +145,7 @@ void Test3() {
 void Test4() {
   cout << "Test 3D assemble (split in 3rd dim)" << endl;
   DataStore& dstore = MinervaSystem::Instance().data_store();
+  // make input
   Scale s1 = {4, 6, 4}, s2 = {4, 6, 4};
   Scale o1 = {0, 0, 0}, o2 = {0, 0, 4};
   Scale oi1 = {0, 0, 0}, oi2 = {0, 0, 1};
@@ -130,14 +157,22 @@ void Test4() {
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
   Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
   Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
-  NVector<PhysicalData> dvec(numparts);
-  dvec[oi1] = MakeData(s1, o1, oi1, id1);
-  dvec[oi2] = MakeData(s2, o2, oi2, id2);
-  float * rst = new float[srst.Prod()];
-  NVector<DataShard> ds = dvec.Map<DataShard>([] (const PhysicalData& pd) { return DataShard(pd); });
+  vector<PhysicalData> dvec;
+  dvec.push_back(MakeData(s1, o1, oi1, id1));
+  dvec.push_back(MakeData(s2, o2, oi2, id2));
+  vector<DataShard> inds;
+  for_each(dvec.begin(), dvec.end(), [&] (PhysicalData& pd) { inds.push_back(DataShard(pd)); });
+  // make output
+  uint64_t rstid = dstore.GenerateDataID();
+  dstore.CreateData(rstid, DataStore::CPU, srst.Prod());
+  PhysicalData rstpd; rstpd.size = srst; rstpd.data_id = rstid;
+  vector<DataShard> outds{DataShard(rstpd)};
   // assemble
-  basic::Assemble(ds, rst, srst);
+  AssembleClosure ac;
+  basic::Assemble(inds, outds, ac);
+
   // print
+  float* rst = outds[0].GetCpuData();
   cout << "front: " << endl;
   for(int i = 0; i < 4; ++i) {
     for(int j = 0; j < 6; ++j) {
