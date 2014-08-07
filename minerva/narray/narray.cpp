@@ -2,6 +2,7 @@
 #include "op/logical_op.h"
 #include "system/minerva_system.h"
 #include "io/file_loader.h"
+#include "io/array_loader.h"
 #include <fstream>
 #include <iomanip>
 
@@ -38,7 +39,7 @@ NArray::NArray(LogicalDataNode* node): data_node_(node) {
 ////////////////////////////////////////////////////
 // computation methods
 ////////////////////////////////////////////////////
-std::vector<NArray> NArray::Compute(std::vector<NArray> params, 
+std::vector<NArray> NArray::Compute(std::vector<NArray> params,
     std::vector<Scale> result_sizes, LogicalComputeFn* fn) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
   std::vector<NArray> rst;
@@ -56,7 +57,7 @@ std::vector<NArray> NArray::Compute(std::vector<NArray> params,
   ldag.NewOpNode(param_data_nodes, rst_data_nodes, {fn});
   return rst;
 }
-  
+
 NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<PartInfo>& parts) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
   LogicalData ldata(size, fn);
@@ -67,7 +68,7 @@ NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<P
 
 NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const Scale& numparts) {
   NVector<Scale> partsizes = size.EquallySplit(numparts);
-  return Generate(size, fn, 
+  return Generate(size, fn,
       partsizes.Map<PartInfo>(
         [] (const Scale& size) { return PartInfo{kUnknownPlace, size}; }
       )
@@ -142,7 +143,7 @@ NArray NArray::RePartition(const NVector<PartInfo>& partitions) {
     return *this;
   }
   // new partition plan
-  Scale total_size = Scale::Merge( 
+  Scale total_size = Scale::Merge(
       partitions.Map<Scale>( [] (const PartInfo& pi) { return pi.size; } )
     );
   assert(total_size == data_node_->data_.size); // validity
@@ -160,16 +161,20 @@ float* NArray::Get() {
   return MinervaSystem::Instance().GetValue(*this);
 }
 
-void NArray::ToFile(const std::string& filename, const FileFormat& format) {
+void NArray::ToStream(ostream& out, const FileFormat& format) {
   float* value = Get();
-  ofstream fout(filename.c_str());
   if(format.binary) {
-    fout.write(reinterpret_cast<char*>(value), Size().Prod() * sizeof(float));
+    out.write(reinterpret_cast<char*>(value), Size().Prod() * sizeof(float));
+  } else {
+    for (int i = 0; i < Size().Prod(); ++i) {
+      out << setprecision(4) << value[i] << "\t";
+    }
   }
-  else {
-    for(int i = 0; i < Size().Prod(); ++i)
-      fout << setprecision(4) << value[i] << "\t";
-  }
+}
+
+void NArray::ToFile(const std::string& filename, const FileFormat& format) {
+  ofstream fout(filename.c_str());
+  ToStream(fout, format);
   fout.close();
 }
 
@@ -177,6 +182,12 @@ NArray NArray::LoadFromFile(const Scale& size, const std::string& fname,
     IFileLoader* loader, const Scale& numparts) {
   FileLoaderOp* loader_op = new FileLoaderOp;
   loader_op->closure = {fname, size, loader};
+  return NArray::Generate(size, loader_op, numparts);
+}
+
+NArray NArray::LoadFromArray(const Scale& size, float* array, const Scale& numparts) {
+  ArrayLoaderOp* loader_op = new ArrayLoaderOp;
+  loader_op->closure = {array, size};
   return NArray::Generate(size, loader_op, numparts);
 }
 

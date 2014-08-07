@@ -1,8 +1,8 @@
 #pragma once
-
+#include <string>
 #include "dag.h"
 #include "op/physical.h"
-#include <string>
+#include "op/physical_fn.h"
 
 namespace minerva {
 
@@ -11,7 +11,7 @@ class DagHelper<PhysicalData, PhysicalOp> {
  public:
   static std::string DataToString(const PhysicalData& d) {
     std::stringstream ss;
-    ss << d.size; 
+    ss << d.size;
     return ss.str();
   }
   static std::string OpToString(const PhysicalOp& o) {

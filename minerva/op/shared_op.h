@@ -2,32 +2,13 @@
 #include <sstream>
 #include <vector>
 #include <glog/logging.h>
-
+#include "op/shared_fn.h"
 #include "logical.h"
 #include "physical.h"
 #include "closure.h"
 #include "impl/bundle.h"
 
 namespace minerva {
-
-template<class C>
-class SharedDataGenFnWithClosure :
-  public LogicalDataGenFn, public PhysicalComputeFn, public ClosureTrait<C> {
- public:
-  void Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) {
-    // inputs should be empty list
-    FnBundle<C>::Call(outputs, ClosureTrait<C>::closure, impl_type);
-  }
-};
-
-template<class C>
-class SharedComputeFnWithClosure :
-  public LogicalComputeFn, public PhysicalComputeFn, public ClosureTrait<C> {
- public:
-  void Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) {
-    FnBundle<C>::Call(inputs, outputs, ClosureTrait<C>::closure, impl_type);
-  }
-};
 
 ///////////////////////////////////////////////////
 // Data generate functions
@@ -115,7 +96,8 @@ class TransOp : public SharedComputeFnWithClosure<TransposeClosure> {
 class ReductionOp : public SharedComputeFnWithClosure<ReductionClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
-    CHECK_EQ(inputs.size(), 1) << "reduction #input wrong";
+    LOG(INFO) << "ReductionOp::Expand" << std::endl;
+    CHECK_EQ(inputs.size(), 1) << "Reduction #input wrong";
     NVector<Chunk> individual_reduce = inputs[0].Map<Chunk>(
       [&] (Chunk ch) {
         return ch.Reduce(closure.dims_to_reduce, closure.type);
