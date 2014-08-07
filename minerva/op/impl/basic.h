@@ -1,7 +1,6 @@
 #pragma once
-
+#include "op/physical_fn.h"
 #include "op/closure.h"
-#include "op/physical.h"
 
 namespace minerva {
 namespace basic {

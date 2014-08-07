@@ -1,10 +1,8 @@
 #pragma once
-
 #include <iostream>
 #include <map>
-
-#include "basic.h"
-#include "impl.h"
+#include "op/impl/basic.h"
+#include "op/impl/impl.h"
 
 namespace minerva {
 
@@ -27,7 +25,5 @@ INSTALL_COMPUTE_FN(AssembleClosure, basic::Assemble, NO_IMPL, NO_IMPL);
 
 INSTALL_DATAGEN_FN(RandnClosure, basic::Randn, NO_IMPL, NO_IMPL);
 INSTALL_DATAGEN_FN(FillClosure, basic::Fill, NO_IMPL, NO_IMPL);
-
-#undef NO_IMPL
 
 }
