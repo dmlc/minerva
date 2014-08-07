@@ -13,7 +13,8 @@ void Test1() {
   NArray na = NArray::LoadFromArray(size, data, {2, 2});
   FileFormat format;
   format.binary = false;
-  na.ToStream(cout, format);
+  NArray na2 = na.Max(1);
+  na2.ToStream(cout, format);
   delete[] data;
 }
 

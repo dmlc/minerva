@@ -43,9 +43,9 @@ class NArray {
   friend class Convolution;
   friend class MinervaSystem;
  public:
-  static NArray Constant(const Scale& size, float val, 
+  static NArray Constant(const Scale& size, float val,
       const NVector<PartInfo>& = NVector<PartInfo>());
-  static NArray Randn(const Scale& size, float mu, float var, 
+  static NArray Randn(const Scale& size, float mu, float var,
       const NVector<PartInfo>& = NVector<PartInfo>());
   static NArray Constant(const Scale& size, float val, const Scale& );
   static NArray Randn(const Scale& size, float mu, float var, const Scale& );
@@ -78,23 +78,23 @@ class NArray {
   NArray operator - ();
   // matmult
   friend NArray operator * (NArray, NArray);
-  // lazy reductions
-  NArray Sum(int dim);
-  NArray Sum(const Scale& dims);
-  NArray Max(int dim);
-  NArray Max(const Scale& dims);
-  NArray MaxIndex(int dim);
-  NArray MaxIndex(const Scale& dims);
-  // non-lazy reductions
-  float Sum();
-  float Max();
-  int CountZero();
   // shape
   Scale Size();
   int Size(int dim);
   NArray Tile(const Scale& times);
   NArray Reshape(const Scale& dims);
   NArray Trans();
+  // Lazy reductions
+  NArray Sum(int dim);
+  NArray Sum(const Scale& dims);
+  NArray Max(int dim);
+  NArray Max(const Scale& dims);
+  NArray MaxIndex(int dim); // TODO
+  NArray MaxIndex(const Scale& dims); // TODO
+  // Non-lazy reductions
+  float Sum(); // TODO
+  float Max(); // TODO
+  int CountZero(); // TODO
 
   // customize operator
   static std::vector<NArray> Compute(std::vector<NArray> params,
