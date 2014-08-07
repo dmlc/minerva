@@ -11,4 +11,10 @@ class AssembleOp: public PhyComputeFnWithClosure<AssembleClosure> {
   }
 };
 
+class SplitOp : public PhyComputeFnWithClosure<SplitClosure> {
+  std::string Name() const {
+    return "split";
+  }
+};
+
 }

@@ -11,6 +11,15 @@ void Fill(float* arr, float val, size_t len) {
   }
 }
 
+PhysicalData MakeData(Scale s, Scale o, Scale oi, uint64_t id) {
+  PhysicalData pdata;
+  pdata.size = s;
+  pdata.offset = o;
+  pdata.offset_index = oi;
+  pdata.data_id = id;
+  return pdata;
+}
+
 void Test1() {
   cout << "Test 2D reduction on first dimension" << endl;
   DataStore& dstore = MinervaSystem::Instance().data_store();
@@ -20,8 +29,8 @@ void Test1() {
   uint64_t id2 = dstore.GenerateDataID();
   dstore.CreateData(id1, DataStore::CPU, s1.Prod());
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
-  PhysicalData d1{s1, {0, 0}, {0, 0}, id1};
-  PhysicalData d2{s2, {0, 0}, {0, 0}, id2};
+  PhysicalData d1 = MakeData(s1, {0, 0}, {0, 0}, id1);
+  PhysicalData d2 = MakeData(s2, {0, 0}, {0, 0}, id2);
   DataList in{DataShard(d1)};
   DataList out{DataShard(d2)};
   ReductionClosure closure{SUM, Scale{0}};
@@ -45,8 +54,8 @@ void Test2() {
   uint64_t id2 = dstore.GenerateDataID();
   dstore.CreateData(id1, DataStore::CPU, s1.Prod());
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
-  PhysicalData d1{s1, {0, 0}, {0, 0}, id1};
-  PhysicalData d2{s2, {0, 0}, {0, 0}, id2};
+  PhysicalData d1 = MakeData(s1, {0, 0}, {0, 0}, id1);
+  PhysicalData d2 = MakeData(s2, {0, 0}, {0, 0}, id2);
   DataList in{DataShard(d1)};
   DataList out{DataShard(d2)};
   ReductionClosure closure{SUM, Scale{1}};

@@ -38,15 +38,12 @@ class PhysicalEngine: public PhysicalDagProcedure, public PhysicalDagMonitor {
   typedef DagNode* Task;
   typedef std::function<void(Task)> Callback;
   typedef std::pair<Task, Callback> TaskPair;
-  // TODO use reference to reduce overhead
   PhysicalEngine(NodeStateMap<PhysicalDag>& ns);
   ~PhysicalEngine();
   void Process(PhysicalDag&, const std::vector<uint64_t>&);
   void OnCreateNode(DagNode* node);
   void OnDeleteNode(DagNode* node);
   void GCNodes(PhysicalDag& );
-
-  //const std::unordered_set<uint64_t>& last_executed_nodes() const { return last_executed_nodes_; }
 
  private:
   struct RuntimeState {

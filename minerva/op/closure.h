@@ -74,4 +74,7 @@ struct FillClosure {
   float val;
 };
 
+struct SplitClosure {
+};
+
 } // end of namespace minerva

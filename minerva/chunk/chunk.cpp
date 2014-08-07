@@ -141,9 +141,11 @@ Chunk Chunk::Merge(NVector<Chunk> parts) {
 }
 
 NVector<Chunk> Chunk::Split(const NVector<Scale>& partsizes) {
-  // TODO
-  return NVector<Chunk>();
+  SplitOp* split_op = new SplitOp;
+  const auto& rstchunklst = Compute({*this}, partsizes.ToVector(), split_op);
+  NVector<Chunk> rstchunknvec(rstchunklst, partsizes.Size());
+  ComputeOffset(rstchunknvec);
+  return rstchunknvec;
 }
 
 } // end of namespace minerva
-

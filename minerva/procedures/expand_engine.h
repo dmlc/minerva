@@ -14,9 +14,6 @@ class ExpandEngine : public LogicalDagProcedure, public LogicalDagMonitor {
   bool IsExpanded(uint64_t lnode_id) const;
   const NVector<uint64_t>& GetPhysicalNodes(uint64_t) const;
 
-  /*const std::unordered_set<uint64_t>& last_expanded_nodes() const {
-    return last_expanded_nodes_;
-  }*/
   void OnDeleteDataNode(LogicalDataNode* );
   void GCNodes(LogicalDag& dag);
 

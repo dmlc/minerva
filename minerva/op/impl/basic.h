@@ -17,7 +17,7 @@ extern void Randn(DataList&, RandnClosure& );
 extern void Fill(DataList&, FillClosure& );
 
 extern void Assemble(DataList&, DataList&, AssembleClosure&);
-extern void Assemble(NVector<DataShard>&, float*, const Scale&);
+extern void Split(DataList&, DataList&, SplitClosure&);
 
 extern void NCopy(
     float* src, const Scale& srcsize, const Scale& srcstart,

@@ -216,18 +216,23 @@ void Assemble(DataList& inputs, DataList& outputs, AssembleClosure& closure) {
   float* dest = outputs[0].GetCpuData();
   Scale srcstart = Scale::Origin(numdims);
   for (auto& i: inputs) {
-    NCopy(i.GetCpuData(), i.Size(), srcstart, dest, outputs[0].Size(), i.Offset(), i.Size());
+    NCopy(i.GetCpuData(), i.Size(), srcstart,
+        dest, outputs[0].Size(), i.Offset(),
+        i.Size());
   }
 }
 
-void Assemble(NVector<DataShard>& data_shards, float* dest, const Scale& dest_size) {
-  size_t numdims = dest_size.NumDims();
-  Scale srcstart = Scale::Origin(numdims);
-  data_shards.Foreach(
-      [&] (DataShard& ds) {
-        NCopy(ds.GetCpuData(), ds.Size(), srcstart, dest, dest_size, ds.Offset(), ds.Size());
-      }
-    );
+void Split(DataList& inputs, DataList& outputs, SplitClosure& closure) {
+  CHECK_EQ(inputs.size(), 1) << "wrong number of split input";
+  DataShard& inds = inputs[0];
+  size_t numdims = inds.Size().NumDims();
+  float* src = inds.GetCpuData();
+  Scale dststart = Scale::Origin(numdims);
+  for(DataShard& outds : outputs) {
+    NCopy(src, inds.Size(), outds.Offset(),
+        outds.GetCpuData(), outds.Size(), dststart,
+        outds.Size());
+  }
 }
 
 void NCopy(float* src, const Scale& srcsize, const Scale& srcstart,
