@@ -1,4 +1,5 @@
 #include <glog/logging.h>
+#include <gflags/gflags.h>
 //#include <fstream>
 
 #include "minerva_system.h"
@@ -10,12 +11,13 @@ namespace minerva {
 
 void MinervaSystem::Initialize(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
   LoadBuiltinDagMonitors();
 }
 void MinervaSystem::Finalize() {
 }
 
-MinervaSystem::MinervaSystem(): expand_engine_(lnode_states_), physical_engine_(pnode_states_) {
+MinervaSystem::MinervaSystem() {
 }
 
 void MinervaSystem::LoadBuiltinDagMonitors() {
@@ -26,15 +28,17 @@ void MinervaSystem::LoadBuiltinDagMonitors() {
 }
 
 void MinervaSystem::Eval(NArray& narr) {
+  LOG(INFO) << "Evaluation start...";
   // logical dag
-  expand_engine_.GCNodes(logical_dag_);// GC useless logical nodes
+  expand_engine_.GCNodes(logical_dag_, lnode_states_);// GC useless logical nodes
   std::vector<uint64_t> id_to_eval = {narr.data_node_->node_id()};
-  expand_engine_.Process(logical_dag_, id_to_eval);
+  expand_engine_.Process(logical_dag_, lnode_states_, id_to_eval);
 
   // physical dag
-  physical_engine_.GCNodes(physical_dag_);// GC useless physical nodes
+  physical_engine_.GCNodes(physical_dag_, pnode_states_);// GC useless physical nodes
   auto physical_nodes = expand_engine_.GetPhysicalNodes(narr.data_node_->node_id());
-  physical_engine_.Process(physical_dag_, physical_nodes.ToVector());
+  physical_engine_.Process(physical_dag_, pnode_states_, physical_nodes.ToVector());
+  LOG(INFO) << "Evaluation completed!";
 }
 
 float* MinervaSystem::GetValue(NArray& narr) {

@@ -10,9 +10,10 @@ using namespace std;
 
 namespace minerva {
 
-void ExpandEngine::Process(LogicalDag& dag, const std::vector<uint64_t>& nodes) {
+void ExpandEngine::Process(LogicalDag& dag, NodeStateMap<LogicalDag>& node_states,
+    const std::vector<uint64_t>& nodes) {
   for(uint64_t nid : nodes) {
-    ExpandNode(dag, nid);
+    ExpandNode(dag, node_states, nid);
   }
 }
 
@@ -29,43 +30,44 @@ void ExpandEngine::OnDeleteDataNode(LogicalDataNode* ldnode) {
   lnode_to_pnode_.erase(ldnode->node_id());
 }
 
-void ExpandEngine::GCNodes(LogicalDag& dag) {
-  for(uint64_t nid : node_states_.GetNodesOfState(NodeState::kCompleted)) {
+void ExpandEngine::GCNodes(LogicalDag& dag, NodeStateMap<LogicalDag>& node_states) {
+  for(uint64_t nid : node_states.GetNodesOfState(NodeState::kCompleted)) {
     DagNode* node = dag.GetNode(nid);
     switch(node->Type()) {
     case DagNode::OP_NODE:
-      node_states_.ChangeState(nid, NodeState::kDead);// op nodes are just GCed
+      node_states.ChangeState(nid, NodeState::kDead);// op nodes are just GCed
       break;
     case DagNode::DATA_NODE:
       LogicalDataNode* dnode = dynamic_cast<LogicalDataNode*>(node);
       int dep_count = dnode->data_.extern_rc;
       for(DagNode* succ : node->successors_) {
-        NodeState succ_state = node_states_.GetState(succ->node_id());
+        NodeState succ_state = node_states.GetState(succ->node_id());
         if(succ_state == NodeState::kBirth || succ_state == NodeState::kReady) {
           ++dep_count;
         }
       }
       if(dep_count == 0) {
-        node_states_.ChangeState(nid, NodeState::kDead);
+        node_states.ChangeState(nid, NodeState::kDead);
       }
       break;
     }
   }
   // delete node of kDead state 
-  for(uint64_t nid : node_states_.GetNodesOfState(NodeState::kDead)) {
+  for(uint64_t nid : node_states.GetNodesOfState(NodeState::kDead)) {
     dag.DeleteNode(nid);
   }
 }
 
-void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
+void ExpandEngine::ExpandNode(LogicalDag& dag, NodeStateMap<LogicalDag>& node_states, 
+    uint64_t lnid) {
   if(!IsExpanded(lnid)) { // haven't been expanded yet
-    CHECK_EQ(node_states_.GetState(lnid), NodeState::kBirth);
-    node_states_.ChangeState(lnid, NodeState::kReady);
+    CHECK_EQ(node_states.GetState(lnid), NodeState::kBirth);
+    node_states.ChangeState(lnid, NodeState::kReady);
 
     DagNode* curnode = dag.GetNode(lnid);
     //cout << "Try expand nodeid=" << lnid << " " << curnode->Type() << endl;
     for(DagNode* pred : curnode->predecessors_) {
-      ExpandNode(dag, pred->node_id());
+      ExpandNode(dag, node_states, pred->node_id());
     }
     if(curnode->Type() == DagNode::DATA_NODE) { // data node
       LogicalDag::DNode* dnode = dynamic_cast<LogicalDag::DNode*>(curnode);
@@ -107,7 +109,7 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, uint64_t lnid) {
         MakeMapping(onode->outputs_[i], rst_chunks[i]);
       }
     }
-    node_states_.ChangeState(lnid, NodeState::kCompleted);
+    node_states.ChangeState(lnid, NodeState::kCompleted);
   }
 }
 

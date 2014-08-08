@@ -1,8 +1,8 @@
 #pragma once
 #include <iostream>
 #include <map>
-#include "op/impl/basic.h"
-#include "op/impl/impl.h"
+#include "basic.h"
+#include "impl.h"
 
 namespace minerva {
 
