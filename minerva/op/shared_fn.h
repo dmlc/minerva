@@ -7,7 +7,7 @@ namespace minerva {
 template<class Closure>
 class SharedDataGenFnWithClosure: public LogicalDataGenFn, public PhysicalComputeFn, public ClosureTrait<Closure> {
  public:
-  void Execute(DataList&, DataList& outputs, IMPL_TYPE impl_type) {
+  void Execute(DataList&, DataList& outputs, ImplType impl_type) {
     FnBundle<Closure>::Call(outputs, ClosureTrait<Closure>::closure, impl_type);
   }
 };

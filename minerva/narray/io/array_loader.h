@@ -14,7 +14,7 @@ struct ArrayLoaderClosure {
 
 class ArrayLoaderOp: public LogicalDataGenFn, public PhysicalComputeFn, public ClosureTrait<ArrayLoaderClosure> {
  public:
-  void Execute(DataList&, DataList&, IMPL_TYPE);
+  void Execute(DataList&, DataList&, ImplType);
   NVector<Chunk> Expand(const NVector<Scale>&);
   std::string Name() const;
 };

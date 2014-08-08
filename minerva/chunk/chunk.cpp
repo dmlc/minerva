@@ -46,7 +46,7 @@ std::vector<Chunk> Chunk::Compute(const std::vector<Chunk>& params,
   }
   PhysicalOp phy_op;
   // TODO how to set place ?
-  phy_op.impl_type = BASIC;
+  phy_op.impl_type = ImplType::kNA;
   phy_op.compute_fn = fn;
   pdag.NewOpNode(param_data_nodes, rst_data_nodes, phy_op);
   return rst;
