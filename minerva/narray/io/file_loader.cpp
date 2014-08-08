@@ -9,7 +9,7 @@ using namespace std;
 namespace minerva {
 
 void FileLoaderOp::Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) {
-  CHECK_EQ(impl_type, BASIC) << "file loader operator only has basic implementation";
+  CHECK_EQ(impl_type, IMPL_TYPE::BASIC) << "file loader operator only has basic implementation";
   closure.loader->Load(closure.fname, closure.size, outputs);
 }
 

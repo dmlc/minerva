@@ -17,7 +17,7 @@ void MinervaSystem::Initialize(int argc, char** argv) {
 void MinervaSystem::Finalize() {
 }
 
-MinervaSystem::MinervaSystem() {
+MinervaSystem::MinervaSystem(): impl_decider_(NULL) {
 }
 
 void MinervaSystem::LoadBuiltinDagMonitors() {
@@ -25,6 +25,11 @@ void MinervaSystem::LoadBuiltinDagMonitors() {
   logical_dag_.RegisterMonitor(&expand_engine_);
   physical_dag_.RegisterMonitor(&pnode_states_);
   physical_dag_.RegisterMonitor(&physical_engine_);
+}
+  
+void MinervaSystem::SetImplDecider(PhysicalDagProcedure* decider) {
+  if(impl_decider_ != NULL) {
+  }
 }
 
 void MinervaSystem::Eval(NArray& narr) {
