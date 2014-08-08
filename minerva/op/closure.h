@@ -61,6 +61,11 @@ struct ReductionClosure {
   Scale dims_to_reduce;
 };
 
+struct NormArithmeticClosure {
+  ArithmeticType type;
+  Scale dims_to_replicate;
+};
+
 struct ConvInfo {
   int numfilters;
   Scale filtersize, stride, paddingsize;

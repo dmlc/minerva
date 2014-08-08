@@ -200,4 +200,30 @@ class ArithmeticConstOp : public SharedComputeFnWithClosure<ArithmeticConstClosu
   }
 };
 
+class NormArithmeticOp: public SharedComputeFnWithClosure<NormArithmeticClosure> {
+ public:
+  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+  }
+  std::string Name() const {
+    std::stringstream ss;
+    switch (closure.type) {
+      case ADD:
+        ss << "+";
+        break;
+      case SUB:
+        ss << "-";
+        break;
+      case MULT:
+        ss << ".*";
+        break;
+      case DIV:
+        ss << "./";
+        break;
+    }
+    ss << " norm";
+    return ss.str();
+  }
+};
+
+
 } // end of namespace minerva

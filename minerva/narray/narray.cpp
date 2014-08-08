@@ -118,14 +118,28 @@ int NArray::Size(int dim) {
   return data_node_->data_.size[dim];
 }
 
-NArray NArray::Tile(const Scale& times) {
+NArray NArray::Reshape(const Scale& dims) {
   // TODO
   return NArray();
 }
 
-NArray NArray::Reshape(const Scale& dims) {
-  // TODO
-  return NArray();
+// Replicate matrix
+NArray NArray::NormArithmetic(NArray rhs, ArithmeticType type) {
+  auto& lhs = *this;
+  CHECK_EQ(lhs.Size().NumDims(), rhs.Size().NumDims()) << "NormArithmetic #dimension mismatch";
+  vector<int> dims_to_replicate;
+  // Dimensions to replicate
+  for (size_t i = 0; i < lhs.Size().NumDims(); ++i) {
+    if (lhs.Size()[i] == rhs.Size()[i]) {
+      continue;
+    } else if (rhs.Size()[i] != 1) {
+      CHECK(false) << "NormArithmetic cannot replicate a dimension that is not 1";
+    } else {
+      dims_to_replicate.push_back(i);
+    }
+  }
+  NormArithmeticOp* op = new NormArithmeticOp;
+  return NArray::Compute({lhs, rhs}, {lhs.Size()}, op)[0];
 }
 
 NArray NArray::Trans() {
@@ -191,4 +205,5 @@ NArray NArray::LoadFromArray(const Scale& size, float* array, const Scale& numpa
   return NArray::Generate(size, loader_op, numparts);
 }
 
-} // end of namespace minerva
+}
+
