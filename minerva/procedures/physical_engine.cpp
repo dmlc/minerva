@@ -159,7 +159,7 @@ void PhysicalEngine::NodeRunner(DagNode* node, NodeStateMap<PhysicalDag>& node_s
     // call compute function
     PhysicalOp& op = phy_op_node->op_;
     LOG(INFO) << "Execute node#" << nid << " compute fn: " << op.compute_fn->Name();
-    op.compute_fn->Execute(input, output, ImplType::BASIC); // TODO decide impl_type
+    op.compute_fn->Execute(input, output, ImplType::kBasic); // TODO decide impl_type
     for (auto n: phy_op_node->predecessors_) {// de-refer predecessor's data
       PhysicalData& in_data = dynamic_cast<PhysicalDataNode*>(n)->data_;
       ms.data_store().DecrReferenceCount(in_data.data_id);

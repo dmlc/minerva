@@ -4,18 +4,18 @@
 namespace minerva {
 
 enum class ImplType {
-  NA = 0,
-  BASIC,
-  MKL,
-  CUDA,
+  kNA = 0,
+  kBasic,
+  kMkl,
+  kCuda,
 };
 
 inline std::ostream& operator << (std::ostream& os, ImplType t) {
   switch(t) {
-    case ImplType::NA: return os << "N/A";
-    case ImplType::BASIC: return os << "Basic";
-    case ImplType::MKL: return os << "Mkl";
-    case ImplType::CUDA: return os << "Cuda";
+    case ImplType::kNA: return os << "N/A";
+    case ImplType::kBasic: return os << "Basic";
+    case ImplType::kMkl: return os << "Mkl";
+    case ImplType::kCuda: return os << "Cuda";
     default: return os << "Unknown impl type";
   }
 }
@@ -29,9 +29,9 @@ class FnBundle {
    public:\
     static void Call(DataList& i, DataList& o, closure_name& c, ImplType it) {\
       switch(it) {\
-        case ImplType::BASIC: basic_fn(i, o, c); break;\
-        case ImplType::MKL: mkl_fn(i, o, c); break;\
-        case ImplType::CUDA: cuda_fn(i, o, c); break;\
+        case ImplType::kBasic: basic_fn(i, o, c); break;\
+        case ImplType::kMkl: mkl_fn(i, o, c); break;\
+        case ImplType::kCuda: cuda_fn(i, o, c); break;\
         default: NO_IMPL(i, o, c); break;\
       }\
     }\
@@ -42,9 +42,9 @@ class FnBundle {
    public:\
     static void Call(DataList& d, closure_name& c, ImplType it) {\
       switch(it) {\
-        case ImplType::BASIC: basic_fn(d, c); break;\
-        case ImplType::MKL: mkl_fn(d, c); break;\
-        case ImplType::CUDA: cuda_fn(d, c); break;\
+        case ImplType::kBasic: basic_fn(d, c); break;\
+        case ImplType::kMkl: mkl_fn(d, c); break;\
+        case ImplType::kCuda: cuda_fn(d, c); break;\
         default: NO_IMPL(d, c); break;\
       }\
     }\
