@@ -24,7 +24,7 @@ class FileLoaderOp :
   public PhysicalComputeFn,
   public ClosureTrait<FileLoaderClosure> {
  public:
-  void Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type);
+  void Execute(DataList& inputs, DataList& outputs, ImplType impl_type);
   NVector<Chunk> Expand(const NVector<Scale>& part_sizes);
   std::string Name() const;
 };

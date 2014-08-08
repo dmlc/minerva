@@ -17,7 +17,7 @@ struct PhysicalData {
 
 struct PhysicalOp {
   Place place;
-  IMPL_TYPE impl_type;
+  ImplType impl_type;
   PhysicalComputeFn* compute_fn;
 };
 

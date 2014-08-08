@@ -15,7 +15,7 @@ const Place kUnknownPlace = {-1, -1, -1};
 
 struct OpNodeContext {
   Place place;
-  IMPL_TYPE impl_type; // -1 is dynamic, 0 is basic, 1 is MKL, 2 is CUDA
+  ImplType impl_type; // -1 is dynamic, 0 is basic, 1 is MKL, 2 is CUDA
 };
 
 struct DataNodeContext {

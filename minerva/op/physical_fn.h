@@ -27,13 +27,13 @@ typedef std::vector<DataShard> DataList;
 
 class PhysicalComputeFn: public BasicFn {
  public:
-  virtual void Execute(DataList&, DataList&, IMPL_TYPE) = 0;
+  virtual void Execute(DataList&, DataList&, ImplType) = 0;
 };
 
 template<class Closure>
 class PhyComputeFnWithClosure: public PhysicalComputeFn, public ClosureTrait<Closure> {
  public:
-  void Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) {
+  void Execute(DataList& inputs, DataList& outputs, ImplType impl_type) {
     FnBundle<Closure>::Call(inputs, outputs, ClosureTrait<Closure>::closure, impl_type);
   }
 };

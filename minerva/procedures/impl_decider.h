@@ -6,7 +6,7 @@ namespace minerva {
 
 class SimpleImplDecider : public PhysicalDagProcedure {
  public:
-  SimpleImplDecider(IMPL_TYPE type): type(type) {}
+  SimpleImplDecider(ImplType type): type(type) {}
   virtual void Process(PhysicalDag& dag, NodeStateMap<PhysicalDag>& states,
       const std::vector<uint64_t>&) {
     auto birth_node_set = states.GetNodesOfState(NodeState::kBirth);
@@ -19,7 +19,7 @@ class SimpleImplDecider : public PhysicalDagProcedure {
     }
   }
  private:
-  IMPL_TYPE type;
+  ImplType type;
 };
 
 namespace decider {
