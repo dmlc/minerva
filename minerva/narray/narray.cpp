@@ -139,6 +139,8 @@ NArray NArray::NormArithmetic(NArray rhs, ArithmeticType type) {
     }
   }
   NormArithmeticOp* op = new NormArithmeticOp;
+  op->closure.type = type;
+  op->closure.dims_to_replicate = dims_to_replicate;
   return NArray::Compute({lhs, rhs}, {lhs.Size()}, op)[0];
 }
 
