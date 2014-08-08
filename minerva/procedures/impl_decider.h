@@ -22,7 +22,4 @@ class SimpleImplDecider : public PhysicalDagProcedure {
   ImplType type;
 };
 
-namespace decider {
-}
-
 }

@@ -1,18 +1,38 @@
 #include <glog/logging.h>
 #include <gflags/gflags.h>
+#include <cstdlib>
 //#include <fstream>
 
 #include "minerva_system.h"
 #include "op/impl/basic.h"
+#include "procedures/impl_decider.h"
 
 using namespace std;
 
+/////////////////////// flag definitions //////////////////////
+static bool IsValidImplType(const char* flag, const std::string& value) {
+  return strcmp(flag, "basic") || strcmp(flag, "mkl") || strcmp(flag, "cuda");
+}
+DEFINE_string(impl, "basic", "use basic|mkl|cuda kernels");
+static const bool impl_valid = gflags::RegisterFlagValidator(&FLAGS_impl, &IsValidImplType);
+
+/////////////////////// member function definitions //////////////////////
 namespace minerva {
 
 void MinervaSystem::Initialize(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   LoadBuiltinDagMonitors();
+  static SimpleImplDecider all_basic_impl(ImplType::kBasic);
+  static SimpleImplDecider all_mkl_impl(ImplType::kMkl);
+  static SimpleImplDecider all_cuda_impl(ImplType::kCuda);
+  if (FLAGS_impl == "mkl") {
+    impl_decider_ = &all_mkl_impl;
+  } else if (FLAGS_impl == "cuda") {
+    impl_decider_ = &all_cuda_impl;
+  } else {
+    impl_decider_ = &all_basic_impl;
+  }
 }
 void MinervaSystem::Finalize() {
 }
@@ -28,8 +48,7 @@ void MinervaSystem::LoadBuiltinDagMonitors() {
 }
   
 void MinervaSystem::SetImplDecider(PhysicalDagProcedure* decider) {
-  if(impl_decider_ != NULL) {
-  }
+  impl_decider_ = decider;
 }
 
 void MinervaSystem::Eval(NArray& narr) {
@@ -40,9 +59,14 @@ void MinervaSystem::Eval(NArray& narr) {
   expand_engine_.Process(logical_dag_, lnode_states_, id_to_eval);
 
   // physical dag
-  physical_engine_.GCNodes(physical_dag_, pnode_states_);// GC useless physical nodes
   auto physical_nodes = expand_engine_.GetPhysicalNodes(narr.data_node_->node_id());
+  // 1. decide impl type
+  impl_decider_->Process(physical_dag_, pnode_states_, physical_nodes.ToVector());
+  // 2. gc useless physical nodes
+  physical_engine_.GCNodes(physical_dag_, pnode_states_);// GC useless physical nodes
+  // 3. do computation
   physical_engine_.Process(physical_dag_, pnode_states_, physical_nodes.ToVector());
+
   LOG(INFO) << "Evaluation completed!";
 }
 
