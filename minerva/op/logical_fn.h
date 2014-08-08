@@ -39,4 +39,3 @@ class LogicalComputeFnTemp<1, 2>: public LogicalComputeFn {
 };
 
 }
-

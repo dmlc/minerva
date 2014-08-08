@@ -23,4 +23,3 @@ struct LogicalOp {
 };
 
 }// end of namespace minerva
-

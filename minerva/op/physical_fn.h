@@ -39,4 +39,3 @@ class PhyComputeFnWithClosure: public PhysicalComputeFn, public ClosureTrait<Clo
 };
 
 }
-
