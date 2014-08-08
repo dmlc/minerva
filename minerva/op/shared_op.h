@@ -244,4 +244,3 @@ class NormArithmeticOp: public SharedComputeFnWithClosure<NormArithmeticClosure>
 
 }
 
-
