@@ -236,7 +236,43 @@ void Split(DataList& inputs, DataList& outputs, SplitClosure& closure) {
 }
 
 void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& closure) {
-  // TODO;
+  CHECK_EQ(inputs.size(), 2) << "NormArithmetic kernel wrong #input";
+  CHECK_EQ(outputs.size(), 1) << "NormArithmetic kernel wrong #output";
+  auto lhs_size = inputs[0].Size();
+  auto rhs_size = inputs[1].Size();
+  CHECK_EQ(lhs_size, outputs[0].Size()) << "NormArithmetic kernel output size mismatch";
+  for (size_t i = 0; i < lhs_size.NumDims(); ++i) {
+    if (rhs_size[i] != 1 && rhs_size[i] != lhs_size[i]) {
+      CHECK(false) << "NormArithmetic kernel size mismatch";
+    }
+  }
+  auto lhs_range = ScaleRange::MakeRangeFromOrigin(lhs_size);
+  auto rhs_range = ScaleRange::MakeRangeFromOrigin(rhs_size);
+  auto lhs_data = inputs[0].GetCpuData();
+  auto rhs_data = inputs[1].GetCpuData();
+  auto res_data = outputs[0].GetCpuData();
+  auto iterator = Scale::Origin(lhs_size.NumDims());
+  do {
+    auto iterator_rhs = iterator;
+    for (auto i: closure.dims_to_replicate) {
+      iterator_rhs[i] = 0;
+    }
+    size_t flatten = lhs_range.Flatten(iterator);
+    switch (closure.type) {
+      case ADD:
+        res_data[flatten] = lhs_data[flatten] + rhs_data[rhs_range.Flatten(iterator_rhs)];
+        break;
+      case SUB:
+        res_data[flatten] = lhs_data[flatten] - rhs_data[rhs_range.Flatten(iterator_rhs)];
+        break;
+      case MULT:
+        res_data[flatten] = lhs_data[flatten] * rhs_data[rhs_range.Flatten(iterator_rhs)];
+        break;
+      case DIV:
+        res_data[flatten] = lhs_data[flatten] / rhs_data[rhs_range.Flatten(iterator_rhs)];
+        break;
+    }
+  } while (iterator.IncrOne(lhs_size));
 }
 
 void NCopy(float* src, const Scale& srcsize, const Scale& srcstart,
