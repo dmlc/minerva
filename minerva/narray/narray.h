@@ -83,7 +83,6 @@ class NArray {
   // shape
   Scale Size();
   int Size(int dim);
-  NArray Tile(const Scale& times);
   NArray Reshape(const Scale& dims);
   NArray Trans();
   // Lazy reductions
@@ -93,6 +92,8 @@ class NArray {
   NArray Max(const Scale& dims);
   NArray MaxIndex(int dim); // TODO
   NArray MaxIndex(const Scale& dims); // TODO
+  // Replicate matrix
+  NArray NormArithmetic(NArray, ArithmeticType);
   // Non-lazy reductions
   float Sum(); // TODO
   float Max(); // TODO

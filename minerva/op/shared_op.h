@@ -200,4 +200,47 @@ class ArithmeticConstOp : public SharedComputeFnWithClosure<ArithmeticConstClosu
   }
 };
 
-} // end of namespace minerva
+class NormArithmeticOp: public SharedComputeFnWithClosure<NormArithmeticClosure> {
+ public:
+  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+    NVector<Chunk>& lhs = inputs[0];
+    NVector<Chunk>& rhs = inputs[1];
+    NVector<Chunk> res(lhs.Size());
+    // TODO How to verify that the parition is the same on dimensions that don't need to be replicated?
+    // Let's put this work into kernel for now
+    auto iterator_max = lhs.Size();
+    auto iterator = Scale::Origin(iterator_max.NumDims());
+    do {
+      auto iterator_rhs = iterator;
+      for (auto i: closure.dims_to_replicate) {
+        iterator_rhs[i] = 0;
+      }
+      NormArithmeticOp* op = new NormArithmeticOp;
+      op->closure = closure;
+      res[iterator] = Chunk::Compute({lhs[iterator], rhs[iterator_rhs]}, {lhs[iterator].Size()}, op)[0];
+    } while (iterator.IncrOne(iterator_max));
+    return {res};
+  }
+  std::string Name() const {
+    std::stringstream ss;
+    switch (closure.type) {
+      case ADD:
+        ss << "+";
+        break;
+      case SUB:
+        ss << "-";
+        break;
+      case MULT:
+        ss << ".*";
+        break;
+      case DIV:
+        ss << "./";
+        break;
+    }
+    ss << " norm";
+    return ss.str();
+  }
+};
+
+}
+

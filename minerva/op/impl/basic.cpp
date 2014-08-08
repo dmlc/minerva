@@ -235,6 +235,10 @@ void Split(DataList& inputs, DataList& outputs, SplitClosure& closure) {
   }
 }
 
+void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& closure) {
+  // TODO;
+}
+
 void NCopy(float* src, const Scale& srcsize, const Scale& srcstart,
     float* dst, const Scale& dstsize, const Scale& dststart,
     const Scale& copysize) {

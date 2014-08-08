@@ -11,12 +11,12 @@ extern void Elewise(DataList&, DataList&, ElewiseClosure& );
 extern void MatMult(DataList&, DataList&, MatMultClosure& );
 extern void Transpose(DataList&, DataList&, TransposeClosure& );
 extern void Reduction(DataList&, DataList&, ReductionClosure& );
+extern void Assemble(DataList&, DataList&, AssembleClosure&);
+extern void Split(DataList&, DataList&, SplitClosure&);
+extern void NormArithmetic(DataList&, DataList&, NormArithmeticClosure&);
 
 extern void Randn(DataList&, RandnClosure& );
 extern void Fill(DataList&, FillClosure& );
-
-extern void Assemble(DataList&, DataList&, AssembleClosure&);
-extern void Split(DataList&, DataList&, SplitClosure&);
 
 extern void NCopy(
     float* src, const Scale& srcsize, const Scale& srcstart,
