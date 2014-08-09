@@ -23,6 +23,7 @@ class MinervaSystem :
   DataStore& data_store() { return data_store_; }
   PhysicalEngine& physical_engine() { return physical_engine_; }
 
+  void SetImplDecider(PhysicalDagProcedure* );
   void Eval(NArray& narr);
   float* GetValue(NArray& narr);
 
@@ -40,6 +41,8 @@ class MinervaSystem :
   PhysicalEngine physical_engine_;
 
   DataStore data_store_;
+
+  PhysicalDagProcedure* impl_decider_;
 };
 
 } // end of namespace minerva

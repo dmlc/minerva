@@ -6,8 +6,8 @@ using namespace std;
 
 namespace minerva {
 
-void ArrayLoaderOp::Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) {
-  CHECK_EQ(impl_type, BASIC) << "vector loader only has basic implementation";
+void ArrayLoaderOp::Execute(DataList& inputs, DataList& outputs, ImplType impl_type) {
+  CHECK_EQ(impl_type, ImplType::kBasic) << "vector loader only has basic implementation";
   Scale dst_start = Scale::Origin(closure.size.NumDims());
   for (auto& ds: outputs) {
     basic::NCopy(closure.data, closure.size, ds.Offset(), ds.GetCpuData(), ds.Size(), dst_start, ds.Size());

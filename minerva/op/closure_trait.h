@@ -9,4 +9,3 @@ class ClosureTrait {
 };
 
 } // end of namespace minerva
-

@@ -8,8 +8,8 @@ using namespace std;
 
 namespace minerva {
 
-void FileLoaderOp::Execute(DataList& inputs, DataList& outputs, IMPL_TYPE impl_type) {
-  CHECK_EQ(impl_type, BASIC) << "file loader operator only has basic implementation";
+void FileLoaderOp::Execute(DataList& inputs, DataList& outputs, ImplType impl_type) {
+  CHECK_EQ(impl_type, ImplType::kBasic) << "file loader operator only has basic implementation";
   closure.loader->Load(closure.fname, closure.size, outputs);
 }
 

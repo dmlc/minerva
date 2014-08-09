@@ -33,5 +33,6 @@ int main(int argc, char** argv) {
   theta.ToFile("theta_trained.txt", format);
   format.binary = true;
   theta.ToFile("theta_trained.dat", format);
+  cout << "linear regression finished." << endl;
   return 0;
 }

@@ -34,4 +34,3 @@ float* DataShard::GetTransformedGpuData() {
 }
 
 }
-
