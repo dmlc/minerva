@@ -102,6 +102,17 @@ void DataStore::GC(uint64_t id) {
   }
   data_states_.erase(id);
 }
+  
+size_t DataStore::GetTotalBytes(MemTypes memtype) const {
+  size_t total_bytes = 0;
+  for(auto it : data_states_) {
+    const DataState& ds = it.second;
+    if(ds.data_ptrs[memtype] != nullptr) {
+      total_bytes += ds.length * sizeof(float);
+    }
+  }
+  return total_bytes;
+}
 
 /*void DataStore::FreeData(uint64_t id, MemTypes type) {
   lock_guard<mutex> lck(access_mutex_);

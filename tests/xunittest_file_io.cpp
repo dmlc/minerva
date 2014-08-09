@@ -25,7 +25,7 @@ void LoadAndOutput() {
 }
 
 int main(int argc, char** argv) {
-  MinervaSystem::Instance().Initialize(argc, argv);
+  MinervaSystem::Instance().Initialize(&argc, &argv);
   //GenRandmat();
   LoadAndOutput();
   return 0;

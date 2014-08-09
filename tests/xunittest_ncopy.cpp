@@ -50,7 +50,7 @@ void Test1(Scale srcsize, Scale srcst, Scale dstsize, Scale dstst, Scale copysiz
 }
 
 int main(int argc, char** argv) {
-  MinervaSystem::Instance().Initialize(argc, argv);
+  MinervaSystem::Instance().Initialize(&argc, &argv);
   Test1({4, 5}, {0, 0}, {5, 6}, {0, 0}, {4, 5});
   Test1({4, 5}, {0, 0}, {4, 6}, {0, 0}, {4, 5});
   Test1({4, 5}, {0, 0}, {4, 6}, {0, 1}, {4, 5});

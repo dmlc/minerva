@@ -9,9 +9,9 @@ using namespace std;
 
 namespace minerva {
 
-void MinervaSystem::Initialize(int argc, char** argv) {
-  google::InitGoogleLogging(argv[0]);
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+void MinervaSystem::Initialize(int* argc, char*** argv) {
+  google::InitGoogleLogging((*argv)[0]);
+  gflags::ParseCommandLineFlags(argc, argv, true);
   LoadBuiltinDagMonitors();
 }
 void MinervaSystem::Finalize() {

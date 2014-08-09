@@ -102,6 +102,7 @@ class Dag {
   DagNode* GetNode(uint64_t ) const;
   ONode* GetOpNode(uint64_t ) const;
   DNode* GetDataNode(uint64_t ) const;
+  size_t NumNodes() const;
 
   // TODO use unordered_map instead
   typedef std::map<uint64_t, DagNode*> ContainerType;
