@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <glog/logging.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -251,6 +252,16 @@ void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& 
   auto lhs_data = inputs[0].GetCpuData();
   auto rhs_data = inputs[1].GetCpuData();
   auto res_data = outputs[0].GetCpuData();
+  // Memory copy
+  memcpy(res_data, lhs_data, lhs_size.Prod() * sizeof(float));
+  size_t single_iteration_size = 1;
+  for (size_t i = 0; i < lhs_size.NumDims(); ++i) {
+    if (!closure.dims_to_replicate.Contains(i)) {
+      break;
+    }
+    single_iteration_size *= lhs_size[i];
+  }
+
   auto iterator = Scale::Origin(lhs_size.NumDims());
   do {
     auto iterator_rhs = iterator;
