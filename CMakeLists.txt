@@ -24,5 +24,6 @@ link_directories(
 )
 
 add_subdirectory(minerva)
+add_subdirectory(apps)
 add_subdirectory(owl)
 add_subdirectory(tests)

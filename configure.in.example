@@ -12,28 +12,25 @@ CXXFLAGS=
 
 # path to search for mkl headers
 MKL_INCLUDE_PATH=
-# name of mkl libraries to link to
-MKL_LIBS=
 # path to link to mkl libraries
 MKL_LIB_PATH=
 
 # path to search for google-logger headers
 GLOG_INCLUDE_PATH=/home/jermaine/Downloads/glog-0.3.3/build/include
-# name of glog libraries to link to
-GLOG_LIBS=glog
 # path to link to google-logger libraries 
 GLOG_LIB_PATH=/home/jermaine/Downloads/glog-0.3.3/build/lib
 
 # path to search for google flags headers
 GFLAGS_INCLUDE_PATH=/home/jermaine/Downloads/gflags-2.1.1/build/include
-# name of gflags libraries to link to
-GFLAGS_LIBS=gflags
 # path to link to google flags libraries 
 GFLAGS_LIB_PATH=/home/jermaine/Downloads/gflags-2.1.1/build/lib
 
+# path to search for gtest headers
+GFLAGS_INCLUDE_PATH=/home/jermaine/Downloads/gtest-1.7.0/include
+# path to link to gtest libraries 
+GFLAGS_LIB_PATH=/home/jermaine/Downloads/gtest-1.7.0/build/
+
 # path to search for boost headers
 BOOST_INCLUDE_PATH=
-# name of boost libraries to link to
-BOOST_LIBS=
 # path to link to boost libraries
 BOOST_LIB_PATH=

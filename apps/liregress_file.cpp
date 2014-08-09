@@ -13,7 +13,7 @@ void Print(float* ptr) {
 }
 
 int main(int argc, char** argv) {
-  MinervaSystem::Instance().Initialize(argc, argv);
+  MinervaSystem::Instance().Initialize(&argc, &argv);
   int n = 10; // num samples
   int k = 8; // num features
   //NArray x = NArray::Randn({n, k}, 0.0, 1.0, {1, 2});
