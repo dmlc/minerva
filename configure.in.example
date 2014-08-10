@@ -26,9 +26,9 @@ GFLAGS_INCLUDE_PATH=/home/jermaine/Downloads/gflags-2.1.1/build/include
 GFLAGS_LIB_PATH=/home/jermaine/Downloads/gflags-2.1.1/build/lib
 
 # path to search for gtest headers
-GFLAGS_INCLUDE_PATH=/home/jermaine/Downloads/gtest-1.7.0/include
+GTEST_INCLUDE_PATH=/home/jermaine/Downloads/gtest-1.7.0/include
 # path to link to gtest libraries 
-GFLAGS_LIB_PATH=/home/jermaine/Downloads/gtest-1.7.0/build/
+GTEST_LIB_PATH=/home/jermaine/Downloads/gtest-1.7.0/build/
 
 # path to search for boost headers
 BOOST_INCLUDE_PATH=
