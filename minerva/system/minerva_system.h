@@ -16,7 +16,7 @@ class MinervaSystem :
   friend class NArray;
  public:
   MinervaSystem();
-  void Initialize(int argc, char** argv);
+  void Initialize(int* argc, char*** argv);
   void Finalize();
   LogicalDag& logical_dag() { return logical_dag_; }
   PhysicalDag& physical_dag() { return physical_dag_; }

@@ -120,6 +120,11 @@ typename Dag<D, O>::DNode* Dag<D, O>::GetDataNode(uint64_t nid) const {
 }
 
 template<class D, class O>
+size_t Dag<D, O>::NumNodes() const {
+  return index_to_node_.size();
+}
+
+template<class D, class O>
 void Dag<D, O>::RegisterMonitor(DagMonitor<Dag<D, O>>* m) {
   monitors_.push_back(m);
 }

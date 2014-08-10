@@ -18,7 +18,7 @@ void Test1() {
 }
 
 int main(int argc, char** argv) {
-  MinervaSystem::Instance().Initialize(argc, argv);
+  MinervaSystem::Instance().Initialize(&argc, &argv);
   Test1();
   return 0;
 }

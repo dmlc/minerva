@@ -190,7 +190,7 @@ void Test4() {
 }
 
 int main(int argc, char** argv) {
-  MinervaSystem::Instance().Initialize(argc, argv);
+  MinervaSystem::Instance().Initialize(&argc, &argv);
   Test1();
   Test2();
   Test3();

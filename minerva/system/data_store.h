@@ -27,6 +27,7 @@ class DataStore {
   bool SetReferenceCount(uint64_t, int );
   int GetReferenceCount(uint64_t ) const;
   //void FreeData(uint64_t, MemTypes);
+  size_t GetTotalBytes(MemTypes memtype) const;
 
  private:
   struct DataState {
