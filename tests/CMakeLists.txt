@@ -4,7 +4,9 @@ include_directories(
   ${MinervaLib_SOURCE_DIR}
 )
 
-add_library(unittest_main unittest_main.cpp)
+enable_testing()
+
+add_library(unittest_main STATIC unittest_main.cpp)
 target_link_libraries(unittest_main minerva gtest)
 
 set(unittest_list "")
@@ -21,6 +23,7 @@ foreach(test_src ${test_file_list})
       target_link_libraries(${test_name} unittest_main)
       add_dependencies(${test_name} minerva)
       list(APPEND unittest_list ${test_name})
+      add_test(${test_name} ${test_name})
     endif()
   else()
     add_executable(${test_name} ${test_src})
