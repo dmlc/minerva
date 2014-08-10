@@ -19,9 +19,9 @@ static const bool impl_valid = gflags::RegisterFlagValidator(&FLAGS_impl, &IsVal
 /////////////////////// member function definitions //////////////////////
 namespace minerva {
 
-void MinervaSystem::Initialize(int argc, char** argv) {
-  google::InitGoogleLogging(argv[0]);
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+void MinervaSystem::Initialize(int* argc, char*** argv) {
+  google::InitGoogleLogging((*argv)[0]);
+  gflags::ParseCommandLineFlags(argc, argv, true);
   LoadBuiltinDagMonitors();
   static SimpleImplDecider all_basic_impl(ImplType::kBasic);
   static SimpleImplDecider all_mkl_impl(ImplType::kMkl);
