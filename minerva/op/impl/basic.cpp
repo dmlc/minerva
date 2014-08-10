@@ -254,6 +254,7 @@ void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& 
   auto res_data = outputs[0].GetCpuData();
   // Memory copy
   memcpy(res_data, lhs_data, lhs_size.Prod() * sizeof(float));
+  // Reuse of single element per iteration
   size_t single_iteration_size = 1;
   for (size_t i = 0; i < lhs_size.NumDims(); ++i) {
     if (!closure.dims_to_replicate.Contains(i)) {
@@ -261,29 +262,33 @@ void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& 
     }
     single_iteration_size *= lhs_size[i];
   }
-
   auto iterator = Scale::Origin(lhs_size.NumDims());
-  do {
+  bool end = false;
+  while (!end) {
     auto iterator_rhs = iterator;
     for (auto i: closure.dims_to_replicate) {
       iterator_rhs[i] = 0;
     }
+    float cur = rhs_data[rhs_range.Flatten(iterator_rhs)];
     size_t flatten = lhs_range.Flatten(iterator);
-    switch (closure.type) {
-      case ADD:
-        res_data[flatten] = lhs_data[flatten] + rhs_data[rhs_range.Flatten(iterator_rhs)];
-        break;
-      case SUB:
-        res_data[flatten] = lhs_data[flatten] - rhs_data[rhs_range.Flatten(iterator_rhs)];
-        break;
-      case MULT:
-        res_data[flatten] = lhs_data[flatten] * rhs_data[rhs_range.Flatten(iterator_rhs)];
-        break;
-      case DIV:
-        res_data[flatten] = lhs_data[flatten] / rhs_data[rhs_range.Flatten(iterator_rhs)];
-        break;
+    for (size_t i = 0; i < single_iteration_size; ++i) {
+      switch (closure.type) {
+        case ADD:
+          res_data[flatten + i] += cur;
+          break;
+        case SUB:
+          res_data[flatten + i] -= cur;
+          break;
+        case MULT:
+          res_data[flatten + i] *= cur;
+          break;
+        case DIV:
+          res_data[flatten + i] /= cur;
+          break;
+      }
+      end = iterator.IncrOne(lhs_size);
     }
-  } while (iterator.IncrOne(lhs_size));
+  }
 }
 
 void NCopy(float* src, const Scale& srcsize, const Scale& srcstart,
