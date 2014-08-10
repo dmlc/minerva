@@ -9,7 +9,7 @@ class NArray;
 
 class IFileLoader {
  public:
-  virtual void Load(const std::string& fname, const Scale& size, DataList& out_shards) = 0;
+  virtual void Load(const std::string& fname, const Scale& size, DataList& out_shards) {}  // Not pure virtual for Python
   virtual ~IFileLoader() {}
 };
 
@@ -31,7 +31,7 @@ class FileLoaderOp :
 
 class SimpleFileLoader : public IFileLoader {
  public:
-  void Load(const std::string& fname, const Scale& size, DataList& out_shards);
+  virtual void Load(const std::string& fname, const Scale& size, DataList& out_shards);
 };
 
 }

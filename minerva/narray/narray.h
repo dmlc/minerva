@@ -109,7 +109,7 @@ class NArray {
   void Eval();
   float* Get();
   void ToStream(std::ostream&, const FileFormat&);
-  void ToFile(const std::string& filename, const FileFormat& );
+  void ToFile(const std::string& filename, const FileFormat&);
   NArray RePartition(const NVector<PartInfo>& partitions);
 
  private:
