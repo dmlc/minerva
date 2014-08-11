@@ -53,9 +53,17 @@ float NArray::Max() {
   // TODO
   return 0;
 }
+
 int NArray::CountZero() {
-  // TODO
-  return 0;
+  int* value = reinterpret_cast<int*>(Get());
+  int size = Size().Prod();
+  int counter = 0;
+  for (int i = 0; i < size; ++i) {
+    if (!value[i]) {
+      ++counter;
+    }
+  }
+  return counter;
 }
 
 } // end of namespace minerva
