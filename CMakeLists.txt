@@ -11,9 +11,9 @@ set(COMPILER_FLAGS "-std=c++11 -Wall -g -pthread -m64 -fPIC")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -march=native ${COMPILER_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -march=native -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0 ${COMPILER_FLAGS}")
 
-string(REPLACE "," ";" external_lib_list ${EXTERNAL_LIBS})
-string(REPLACE "," ";" external_lib_path_list ${EXTERNAL_LIB_PATH})
-string(REPLACE "," ";" external_include_path_list ${EXTERNAL_INCLUDE_PATH})
+string(REPLACE "," ";" external_lib_list "${EXTERNAL_LIBS}")
+string(REPLACE "," ";" external_lib_path_list "${EXTERNAL_LIB_PATH}")
+string(REPLACE "," ";" external_include_path_list "${EXTERNAL_INCLUDE_PATH}")
 
 include_directories(
   ${external_include_path_list}
