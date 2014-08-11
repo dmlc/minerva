@@ -264,8 +264,8 @@ void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& 
     single_iteration_size *= normalizer_size[i];
   }
   auto iterator = Scale::Origin(normalizer_size.NumDims());
-  bool end = false;
-  while (!end) {
+  bool no_end = true;
+  while (no_end) {
     auto iterator_normalizee = iterator;
     for (auto i: closure.dims_to_replicate) {
       iterator_normalizee[i] = 0;
@@ -287,7 +287,7 @@ void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& 
           res_data[flatten + i] /= cur;
           break;
       }
-      end = iterator.IncrOne(normalizer_size);
+      no_end = iterator.IncrOne(normalizer_size);
     }
   }
 }
