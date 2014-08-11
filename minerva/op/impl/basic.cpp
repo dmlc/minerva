@@ -239,39 +239,39 @@ void Split(DataList& inputs, DataList& outputs, SplitClosure& closure) {
 void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& closure) {
   CHECK_EQ(inputs.size(), 2) << "NormArithmetic kernel wrong #input";
   CHECK_EQ(outputs.size(), 1) << "NormArithmetic kernel wrong #output";
-  // Normalizer is the chunk with full size, normalizee is the chunk with reduced dimensions
-  auto normalizer_size = inputs[0].Size();
-  auto normalizee_size = inputs[1].Size();
-  CHECK_EQ(normalizer_size, outputs[0].Size()) << "NormArithmetic kernel output size mismatch";
-  for (size_t i = 0; i < normalizer_size.NumDims(); ++i) {
-    if (normalizee_size[i] != 1 && normalizee_size[i] != normalizer_size[i]) {
+  // Normalizee is the chunk with full size, normalizer is the chunk with reduced dimensions
+  auto normalizee_size = inputs[0].Size();
+  auto normalizer_size = inputs[1].Size();
+  CHECK_EQ(normalizee_size, outputs[0].Size()) << "NormArithmetic kernel output size mismatch";
+  for (size_t i = 0; i < normalizee_size.NumDims(); ++i) {
+    if (normalizer_size[i] != 1 && normalizer_size[i] != normalizee_size[i]) {
       CHECK(false) << "NormArithmetic kernel size mismatch";
     }
   }
-  auto normalizer_range = ScaleRange::MakeRangeFromOrigin(normalizer_size);
   auto normalizee_range = ScaleRange::MakeRangeFromOrigin(normalizee_size);
-  auto normalizer_data = inputs[0].GetCpuData();
-  auto normalizee_data = inputs[1].GetCpuData();
+  auto normalizer_range = ScaleRange::MakeRangeFromOrigin(normalizer_size);
+  auto normalizee_data = inputs[0].GetCpuData();
+  auto normalizer_data = inputs[1].GetCpuData();
   auto res_data = outputs[0].GetCpuData();
   // Memory copy
-  memcpy(res_data, normalizer_data, normalizer_size.Prod() * sizeof(float));
+  memcpy(res_data, normalizee_data, normalizee_size.Prod() * sizeof(float));
   // Reuse of single element per iteration
   size_t single_iteration_size = 1;
-  for (size_t i = 0; i < normalizer_size.NumDims(); ++i) {
+  for (size_t i = 0; i < normalizee_size.NumDims(); ++i) {
     if (!closure.dims_to_replicate.Contains(i)) {
       break;
     }
-    single_iteration_size *= normalizer_size[i];
+    single_iteration_size *= normalizee_size[i];
   }
-  auto iterator = Scale::Origin(normalizer_size.NumDims());
+  auto iterator = Scale::Origin(normalizee_size.NumDims());
   bool no_end = true;
   while (no_end) {
-    auto iterator_normalizee = iterator;
+    auto iterator_normalizer = iterator;
     for (auto i: closure.dims_to_replicate) {
-      iterator_normalizee[i] = 0;
+      iterator_normalizer[i] = 0;
     }
-    float cur = normalizee_data[normalizee_range.Flatten(iterator_normalizee)];
-    size_t flatten = normalizer_range.Flatten(iterator);
+    float cur = normalizer_data[normalizer_range.Flatten(iterator_normalizer)];
+    size_t flatten = normalizee_range.Flatten(iterator);
     for (size_t i = 0; i < single_iteration_size; ++i) {
       switch (closure.type) {
         case ADD:
@@ -287,7 +287,7 @@ void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& 
           res_data[flatten + i] /= cur;
           break;
       }
-      no_end = iterator.IncrOne(normalizer_size);
+      no_end = iterator.IncrOne(normalizee_size);
     }
   }
 }
