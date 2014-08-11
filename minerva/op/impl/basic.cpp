@@ -239,6 +239,7 @@ void Split(DataList& inputs, DataList& outputs, SplitClosure& closure) {
 void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& closure) {
   CHECK_EQ(inputs.size(), 2) << "NormArithmetic kernel wrong #input";
   CHECK_EQ(outputs.size(), 1) << "NormArithmetic kernel wrong #output";
+  // Normalizer is the chunk with full size, normalizee is the chunk with reduced dimensions
   auto normalizer_size = inputs[0].Size();
   auto normalizee_size = inputs[1].Size();
   CHECK_EQ(normalizer_size, outputs[0].Size()) << "NormArithmetic kernel output size mismatch";
