@@ -97,7 +97,7 @@ class NArray {
   // Non-lazy reductions
   float Sum(); // TODO
   float Max(); // TODO
-  int CountZero(); // TODO
+  int CountZero();
 
   // customize operator
   static std::vector<NArray> Compute(std::vector<NArray> params,
