@@ -8,7 +8,7 @@
 namespace minerva {
 
 struct PartitionClosure {
-  NVector<PartInfo> partitions;
+  NVector<Scale> partitions;
 };
 
 class PartitionOp :

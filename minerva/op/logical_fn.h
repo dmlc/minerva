@@ -8,7 +8,7 @@ namespace minerva {
 
 class LogicalDataGenFn: public BasicFn {
  public:
-  virtual NVector<Chunk> Expand(const NVector<Scale>&) = 0;
+  virtual NVector<Chunk> Expand(const NVector<Scale>& partition_shapes) = 0;
 };
 
 class LogicalComputeFn: public BasicFn {

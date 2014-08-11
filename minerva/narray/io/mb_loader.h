@@ -7,26 +7,23 @@ namespace minerva {
 
 class NArray;
 
-class IMiniBatchLoader {
+class OneFileMBLoader {
  public:
-  virtual void LoadNext(int stepsize) = 0;
-  virtual NArray GetData() = 0;
-  virtual NArray GetLabel() = 0;
-};
-
-class OneFileMBLoader : public IMiniBatchLoader {
- public:
-  OneFileMBLoader(const std::string& );
+  OneFileMBLoader(const std::string&, const Scale& sample_shape);
   ~OneFileMBLoader();
-  virtual void LoadNext(int stepsize);
-  virtual NArray GetData();
-  virtual NArray GetLabel();
+  virtual NArray LoadNext(int stepsize);
+  void set_partition_shapes_per_sample(const NVector<Scale>& ps) { partition_shapes_per_sample_ = ps; }
   int num_samples() const { return num_samples_; }
+
  protected:
-  std::string data_file_name_;
-  std::shared_ptr<std::ifstream> fin_ptr_;
-  int sample_start_index_;
+  // these members should not be modified once initialized
+  const std::string data_file_name_;
+  const Scale sample_shape_;
   int num_samples_, sample_length_;
+
+  // these are mutable members
+  NVector<Scale> partition_shapes_per_sample_;
+  int sample_start_index_;
 };
 
 }

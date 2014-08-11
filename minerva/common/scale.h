@@ -54,6 +54,7 @@ class Scale {
   Scale() {}
   Scale(const std::vector<int>& sc): vec_(sc) {} // allow implicit conversion
   Scale(const Scale& other): vec_(other.vec_) {}
+  Scale(Scale&& other): vec_(other.vec_) {}
   explicit Scale(int i1): vec_{i1} { }
   Scale(int i1, int i2): vec_{i1, i2} { }
   Scale(int i1, int i2, int i3): vec_{i1, i2, i3} { }
@@ -84,11 +85,16 @@ class Scale {
   }
   size_t NumDims() const { return vec_.size(); }
   int Prod() const;
-  std::string ToString() const;
+  template<class Fn> Scale Map(Fn fn) const;
+  Scale Concat(int val) const;
+
   NVector<Scale> EquallySplit(const Scale& numparts) const;
   static Scale Merge(const NVector<Scale>& partsizes);
   static bool IncrOne(Scale& pos, const Scale& max);
-  template<class Fn> Scale Map(Fn fn) const;
+
+  const std::vector<int>& ToVector() const { return vec_; }
+  std::string ToString() const;
+  NVector<Scale> ToNVector() const;
  private:
   std::vector<int> vec_;
 };
@@ -122,6 +128,7 @@ class ScaleRange {
  public:
   ScaleRange() {}
   ScaleRange(const ScaleRange& other): start_(other.start_), end_(other.end_) {}
+  ScaleRange(ScaleRange&& other): start_(other.start_), end_(other.end_) {}
   ScaleRange& operator = (const ScaleRange& other) {
     start_ = other.start_;
     end_ = other.end_;

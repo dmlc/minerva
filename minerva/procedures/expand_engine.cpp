@@ -75,10 +75,7 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, NodeStateMap<LogicalDag>& node_st
       LogicalDataGenFn* fn = dnode->data_.data_gen_fn;
       if(fn != nullptr) {
         LOG(INFO) << "Expand logical datagen function: " << fn->Name();
-        NVector<Scale> partsizes = dnode->data_.partitions.Map<Scale>(
-            [] (const PartInfo& pi) { return pi.size; }
-          );
-        NVector<Chunk> chunks = fn->Expand(partsizes);
+        NVector<Chunk> chunks = fn->Expand(dnode->data_.partitions);
         MakeMapping(dnode, chunks);
       }
     }

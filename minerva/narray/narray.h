@@ -44,9 +44,9 @@ class NArray {
   friend class MinervaSystem;
  public:
   static NArray Constant(const Scale& size, float val,
-      const NVector<PartInfo>& = NVector<PartInfo>());
+      const NVector<Scale>& = NVector<Scale>());
   static NArray Randn(const Scale& size, float mu, float var,
-      const NVector<PartInfo>& = NVector<PartInfo>());
+      const NVector<Scale>& = NVector<Scale>());
   static NArray Constant(const Scale& size, float val, const Scale& );
   static NArray Randn(const Scale& size, float mu, float var, const Scale& );
   static NArray LoadFromFile(const Scale& size, const std::string& fname, IFileLoader* loader,
@@ -102,7 +102,7 @@ class NArray {
   // customize operator
   static std::vector<NArray> Compute(std::vector<NArray> params,
       std::vector<Scale> result_sizes, LogicalComputeFn* fn);
-  static NArray Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<PartInfo>& parts);
+  static NArray Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<Scale>& parts);
   static NArray Generate(const Scale& size, LogicalDataGenFn* fn, const Scale& numparts);
 
   // system
@@ -110,7 +110,7 @@ class NArray {
   float* Get();
   void ToStream(std::ostream&, const FileFormat&);
   void ToFile(const std::string& filename, const FileFormat& );
-  NArray RePartition(const NVector<PartInfo>& partitions);
+  NArray RePartition(const NVector<Scale>& partitions);
 
  private:
   NArray(LogicalDataNode* node);
