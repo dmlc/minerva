@@ -10,7 +10,7 @@ namespace minerva {
 struct LogicalData {
   Scale size;
   LogicalDataGenFn* data_gen_fn;
-  NVector<PartInfo> partitions;
+  NVector<Scale> partitions;
   int extern_rc;
   LogicalData(): data_gen_fn(NULL), extern_rc(0) {}
   LogicalData(const Scale& s, LogicalDataGenFn* fn = NULL):

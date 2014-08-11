@@ -22,6 +22,12 @@ class NVector {
     range_ = ScaleRange::MakeRangeFromOrigin(size);
   }
   NVector(const NVector& other): data_(other.data_), range_(other.range_) {}
+  NVector(NVector&& other): data_(other.data_), range_(other.range_) {}
+  NVector& operator = (const NVector& other) {
+    data_ = other.data_;
+    range_ = other.range_;
+    return *this;
+  }
   // Operator
   const T& operator[] (const Scale& idx) const {
     return data_[range_.Flatten(idx)];

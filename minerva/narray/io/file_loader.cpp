@@ -16,17 +16,17 @@ void FileLoaderOp::Execute(DataList& inputs, DataList& outputs, ImplType impl_ty
 NVector<Chunk> FileLoaderOp::Expand(const NVector<Scale>& part_sizes) {
   FileLoaderOp* op = new FileLoaderOp;
   op->closure = closure;
-  const std::vector<Chunk>& ret_chunks = Chunk::Compute({}, part_sizes.ToVector(), op);
+  const vector<Chunk>& ret_chunks = Chunk::Compute({}, part_sizes.ToVector(), op);
   return NVector<Chunk>(ret_chunks, part_sizes.Size());
 }
 
-std::string FileLoaderOp::Name() const {
-  std::stringstream ss;
+string FileLoaderOp::Name() const {
+  stringstream ss;
   ss << "load(\"" << closure.fname << "\")";
   return ss.str();
 }
 
-void SimpleFileLoader::Load(const std::string& fname, const Scale& size, DataList& out_shards) {
+void SimpleFileLoader::Load(const string& fname, const Scale& size, DataList& out_shards) {
   size_t numvalue = size.Prod();
   float* ptr = new float[numvalue]; // TODO should use data_store
   ifstream fin(fname.c_str());

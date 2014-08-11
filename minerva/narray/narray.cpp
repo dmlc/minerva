@@ -58,7 +58,7 @@ std::vector<NArray> NArray::Compute(std::vector<NArray> params,
   return rst;
 }
 
-NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<PartInfo>& parts) {
+NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<Scale>& parts) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
   LogicalData ldata(size, fn);
   ldata.partitions = parts;
@@ -67,21 +67,16 @@ NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<P
 }
 
 NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const Scale& numparts) {
-  NVector<Scale> partsizes = size.EquallySplit(numparts);
-  return Generate(size, fn,
-      partsizes.Map<PartInfo>(
-        [] (const Scale& size) { return PartInfo{kUnknownPlace, size}; }
-      )
-   );
+  return Generate(size, fn, size.EquallySplit(numparts));
 }
 
-NArray NArray::Constant(const Scale& size, float val, const NVector<PartInfo>& parts) {
+NArray NArray::Constant(const Scale& size, float val, const NVector<Scale>& parts) {
   FillOp* fill_op = new FillOp;
   fill_op->closure = {val};
   return NArray::Generate(size, fill_op, parts);
 }
 
-NArray NArray::Randn(const Scale& size, float mu, float var, const NVector<PartInfo>& parts) {
+NArray NArray::Randn(const Scale& size, float mu, float var, const NVector<Scale>& parts) {
   RandnOp* randn_op = new RandnOp;
   randn_op->closure = {mu, var};
   return NArray::Generate(size, randn_op, parts);
@@ -153,19 +148,19 @@ NArray NArray::Trans() {
 }
 
 
-NArray NArray::RePartition(const NVector<PartInfo>& partitions) {
-  if(partitions == data_node_->data_.partitions) {
+NArray NArray::RePartition(const NVector<Scale>& partitions) {
+  /*if(partitions == data_node_->data_.partitions) {
     // partition is the same
     return *this;
   }
   // new partition plan
-  Scale total_size = Scale::Merge(
-      partitions.Map<Scale>( [] (const PartInfo& pi) { return pi.size; } )
-    );
+  Scale total_size = Scale::Merge(partitions);
   assert(total_size == data_node_->data_.size); // validity
   PartitionOp* part_op = new PartitionOp;
   part_op->closure = {partitions};
-  return Compute({*this}, {this->Size()}, part_op)[0];
+  return Compute({*this}, {this->Size()}, part_op)[0];*/
+  //TODO
+  return NArray();
 }
 
 void NArray::Eval() {

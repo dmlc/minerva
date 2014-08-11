@@ -159,6 +159,17 @@ Scale Scale::Merge(const NVector<Scale>& partsizes) {
   }
   return rst;
 }
+  
+Scale Scale::Concat(int val) const {
+  Scale ret(*this);
+  ret.vec_.push_back(val);
+  return ret;
+}
+  
+NVector<Scale> Scale::ToNVector() const {
+  Scale size = Scale::Constant(NumDims(), 1);
+  return NVector<Scale>({*this}, size);
+}
 
 ////////////////////////////////////////////////////////
 // method definitions for class: ScaleRange

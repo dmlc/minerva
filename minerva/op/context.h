@@ -23,19 +23,10 @@ struct DataNodeContext {
   //bool transpose;
 };
 
-struct PartInfo {
-  Place place;
-  Scale size;
-};
-
 inline bool operator == (const Place& p1, const Place& p2) {
   return p1.procid == p2.procid 
     && p1.device_id == p2.device_id
     && p1.device_type == p2.device_type;
-}
-
-inline bool operator == (const PartInfo& pi1, const PartInfo& pi2) {
-  return pi1.place == pi2.place && pi1.size == pi2.size;
 }
 
 } // end of namespace minerva
