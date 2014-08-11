@@ -67,9 +67,11 @@ void InitNetwork() {
 
 NArray Softmax(NArray m) {
   NArray maxval = m.Max(0);
-  NArray centered = m - maxval.Tile({m.Size(0), 1});
+  // NArray centered = m - maxval.Tile({m.Size(0), 1});
+  NArray centered = m.NormArithmetic(maxval, SUB);
   NArray class_normalizer = Elewise::Ln(Elewise::Exp(centered).Sum(0)) + maxval;
-  return Elewise::Exp(m - class_normalizer.Tile({m.Size(0), 1}));
+  // return Elewise::Exp(m - class_normalizer.Tile({m.Size(0), 1}));
+  return Elewise::Exp(m.NormArithmetic(class_normalizer, SUB));
 }
 
 void PrintTrainingAccuracy(NArray o, NArray t) {
@@ -98,7 +100,8 @@ void TrainNetwork() {
       acts[0] = loader.GetData();
       // FF
       for(int k = 1; k < num_layers; ++k) {
-        acts[k] = weights[k] * acts[k-1] + layers[k].bias.Tile({1, num_minibatches});
+        // acts[k] = weights[k] * acts[k-1] + layers[k].bias.Tile({1, num_minibatches});
+        acts[k] = (weights[k] * acts[k - 1]).NormArithmetic(layers[k].bias, ADD);
         acts[k] = Elewise::Sigmoid(acts[k]);
       }
       // Error
