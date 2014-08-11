@@ -105,11 +105,12 @@ unordered_set<DagNode*> PhysicalEngine::FindRootNodes(PhysicalDag& dag, NodeStat
 }
 
 void PhysicalEngine::GCNodes(PhysicalDag& dag, NodeStateMap<PhysicalDag>& node_states) {
-  for(uint64_t nid : node_states.GetNodesOfState(NodeState::kCompleted)) {
+  vector<uint64_t> dead_nodes, survived_nodes;
+  for(uint64_t nid : node_states.GetNodesOfState(NodeState::kNeedGC)) {
     DagNode* node = dag.GetNode(nid);
     switch(node->Type()) {
     case DagNode::OP_NODE:
-      node_states.ChangeState(nid, NodeState::kDead);// op nodes are just GCed
+      dead_nodes.push_back(nid); // op nodes are just GCed
       break;
     case DagNode::DATA_NODE:
       PhysicalDataNode* dnode = dynamic_cast<PhysicalDataNode*>(node);
@@ -121,7 +122,9 @@ void PhysicalEngine::GCNodes(PhysicalDag& dag, NodeStateMap<PhysicalDag>& node_s
         }
       }
       if(dep_count == 0) {
-        node_states.ChangeState(nid, NodeState::kDead);
+        dead_nodes.push_back(nid); // gc data that is no more needed
+      } else {
+        survived_nodes.push_back(nid); // there are still dependencies 
       }
       DataStore& ds = MinervaSystem::Instance().data_store();
       if(ds.ExistData(dnode->data_.data_id)) {
@@ -130,8 +133,16 @@ void PhysicalEngine::GCNodes(PhysicalDag& dag, NodeStateMap<PhysicalDag>& node_s
       break;
     }
   }
-  for(uint64_t nid : node_states.GetNodesOfState(NodeState::kDead)) {
+  cout << "#completed/#need_gc/#dead/#survived: " 
+    << node_states.GetNodesOfState(NodeState::kCompleted).size() 
+    << "/" << node_states.GetNodesOfState(NodeState::kNeedGC).size()
+    << "/" << dead_nodes.size()
+    << "/" << survived_nodes.size() << endl;
+  for(uint64_t nid : dead_nodes) {
     dag.DeleteNode(nid);
+  }
+  for(uint64_t nid : survived_nodes) {
+    node_states.ChangeState(nid, NodeState::kCompleted);
   }
 }
 
@@ -165,9 +176,22 @@ void PhysicalEngine::NodeRunner(DagNode* node, NodeStateMap<PhysicalDag>& node_s
       ms.data_store().DecrReferenceCount(in_data.data_id);
     }
   } 
-  // trigger successors
   {
     lock_guard<mutex> lock(node_states_mutex_);
+    // change states
+    if(node->Type() == DagNode::OP_NODE) {
+      node_states.ChangeState(nid, NodeState::kNeedGC); // the op node is executed thus could be GCed
+    } else {
+      PhysicalDataNode* pdnode = dynamic_cast<PhysicalDataNode*>(node);
+      if(pdnode->data_.extern_rc != 0) {
+        // the data node is completed but with external dependencies
+        node_states.ChangeState(nid, NodeState::kCompleted);
+      } else {
+        // the data node could be GCed
+        node_states.ChangeState(nid, NodeState::kNeedGC);
+      }
+    }
+    // trigger successors
     for (auto succ: node->successors_) {
       NodeState state = node_states.GetState(succ->node_id());
       RuntimeState& rts = rt_states_[succ->node_id()];
@@ -177,7 +201,7 @@ void PhysicalEngine::NodeRunner(DagNode* node, NodeStateMap<PhysicalDag>& node_s
         AppendTask(succ, node_states);
       }
     }
-    node_states.ChangeState(nid, NodeState::kCompleted);
+    // trigger on_complete hook
     if (rt_states_[nid].on_complete != nullptr) {
       //printf("Target complete %u\n", (unsigned int) dynamic_cast<PhysicalDataNode*>(node)->data_.data_id);
       rt_states_[nid].on_complete->notify_all();

@@ -31,11 +31,12 @@ void ExpandEngine::OnDeleteDataNode(LogicalDataNode* ldnode) {
 }
 
 void ExpandEngine::GCNodes(LogicalDag& dag, NodeStateMap<LogicalDag>& node_states) {
-  for(uint64_t nid : node_states.GetNodesOfState(NodeState::kCompleted)) {
+  vector<uint64_t> dead_nodes, survived_nodes;
+  for(uint64_t nid : node_states.GetNodesOfState(NodeState::kNeedGC)) {
     DagNode* node = dag.GetNode(nid);
     switch(node->Type()) {
     case DagNode::OP_NODE:
-      node_states.ChangeState(nid, NodeState::kDead);// op nodes are just GCed
+      dead_nodes.push_back(nid);// op nodes are just GCed
       break;
     case DagNode::DATA_NODE:
       LogicalDataNode* dnode = dynamic_cast<LogicalDataNode*>(node);
@@ -47,14 +48,19 @@ void ExpandEngine::GCNodes(LogicalDag& dag, NodeStateMap<LogicalDag>& node_state
         }
       }
       if(dep_count == 0) {
-        node_states.ChangeState(nid, NodeState::kDead);
+        dead_nodes.push_back(nid); // no longer needed
+      } else {
+        survived_nodes.push_back(nid);
       }
       break;
     }
   }
   // delete node of kDead state 
-  for(uint64_t nid : node_states.GetNodesOfState(NodeState::kDead)) {
+  for(uint64_t nid : dead_nodes) {
     dag.DeleteNode(nid);
+  }
+  for(uint64_t nid : survived_nodes) {
+    node_states.ChangeState(nid, NodeState::kCompleted);
   }
 }
 
@@ -77,6 +83,13 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, NodeStateMap<LogicalDag>& node_st
         LOG(INFO) << "Expand logical datagen function: " << fn->Name();
         NVector<Chunk> chunks = fn->Expand(dnode->data_.partitions);
         MakeMapping(dnode, chunks);
+      }
+      if(dnode->data_.extern_rc != 0) {
+        // the data node is expanded but with external dependencies
+        node_states.ChangeState(lnid, NodeState::kCompleted);
+      } else {
+        // the data node could be GCed
+        node_states.ChangeState(lnid, NodeState::kNeedGC);
       }
     }
     else { // op node
@@ -105,8 +118,8 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, NodeStateMap<LogicalDag>& node_st
       for(size_t i = 0; i < rst_chunks.size(); ++i) {
         MakeMapping(onode->outputs_[i], rst_chunks[i]);
       }
+      node_states.ChangeState(lnid, NodeState::kNeedGC); // the op node is expanded thus could be GCed
     }
-    node_states.ChangeState(lnid, NodeState::kCompleted);
   }
 }
 
