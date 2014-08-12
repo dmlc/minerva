@@ -113,6 +113,7 @@ void MinervaSystem::IncrExternRC(LogicalDag::DNode* dnode, int amount) {
       pnode->data_.extern_rc += amount;
       if(logical_node_is_dead) {
         pnode_states_.ChangeState(pdnode_id, NodeState::kDead);
+        data_store_.SetReferenceCount(pnode->data_.data_id, 0);
       }
     }
   }
