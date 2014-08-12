@@ -49,19 +49,14 @@ TEST_F(MiniBatchIOTest, NormalRead) {
   EXPECT_EQ(loader.num_samples(), num_samples);
 
   int sample_idx = 0;
-  NArray a1 = loader.LoadNext(10);
-  float* a1ptr = a1.Get();
-  for(int i = 0; i < 10; ++i,++sample_idx)
-    for(int j = 0; j < sample_length; ++j)
-      EXPECT_EQ(a1ptr[j + i * sample_length], sample_idx);
-  delete [] a1ptr;
-
-  NArray a2 = loader.LoadNext(10);
-  float* a2ptr = a2.Get();
-  for(int i = 0; i < 10; ++i,++sample_idx)
-    for(int j = 0; j < sample_length; ++j)
-      EXPECT_EQ(a2ptr[j + i * sample_length], sample_idx);
-  delete [] a2ptr;
+  for(int k = 0; k < num_samples / 10; ++k) {
+    NArray a1 = loader.LoadNext(10);
+    float* a1ptr = a1.Get();
+    for(int i = 0; i < 10; ++i,++sample_idx)
+      for(int j = 0; j < sample_length; ++j)
+        EXPECT_EQ(a1ptr[j + i * sample_length], sample_idx);
+    delete [] a1ptr;
+  }
 }
 
 TEST_F(MiniBatchIOTest, ReadWrapAround) {
