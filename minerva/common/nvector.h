@@ -74,16 +74,13 @@ class NVector {
     }
     return NVector<T>(newdata, nv1.range_);
   }
-  template<class Fn>
-  void Foreach(Fn fn) {
-    for (T& d: data_) {
-      fn(d);
-    }
-  }
   typename std::vector<T>::const_iterator begin() const { return data_.begin(); }
   typename std::vector<T>::const_iterator end() const { return data_.end(); }
   T get(int i) const {
     return data_[i];
+  }
+  void AugmentDim() {
+    range_ = ScaleRange::MakeRange(range_.start().Concat(1), range_.end().Concat(1));
   }
 
 private:

@@ -70,6 +70,7 @@ NArray OneFileMBLoader::LoadNext(int stepsize) {
   NVector<Scale> partition_shapes = partition_shapes_per_sample_.Map<Scale>(
       [stepsize] (const Scale& s) { return s.Concat(stepsize); }
       );
+  partition_shapes.AugmentDim();
   sample_start_index_ = (sample_start_index_ + stepsize) % num_samples_;
   return NArray::Generate(load_shape, op, partition_shapes);
 }
