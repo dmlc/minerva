@@ -1,18 +1,26 @@
 #include <random>
 #include <queue>
 #include <glog/logging.h>
+#include <gflags/gflags.h>
 
 #include "procedures/physical_engine.h"
 #include "op/physical.h"
 #include "system/minerva_system.h"
 
-#define THREAD_NUM 4
-
 using namespace std;
 
+/////////////////////// flag definitions //////////////////////
+static bool IsValidNumThreads(const char* flag, int n) {
+  return n > 0;
+}
+DEFINE_int32(numthreads, 2, "number of threads used in execution");
+static const bool numthreads_valid = gflags::RegisterFlagValidator(&FLAGS_numthreads, &IsValidNumThreads);
+DEFINE_bool(enable_execute, true, "enable concrete computation");
+
+/////////////////////// member function definitions //////////////////////
 namespace minerva {
 
-PhysicalEngine::PhysicalEngine(): thread_pool_(THREAD_NUM) {
+PhysicalEngine::PhysicalEngine(): thread_pool_(FLAGS_numthreads) {
   Init();
 }
 
@@ -141,8 +149,10 @@ void PhysicalEngine::NodeRunner(DagNode* node, NodeStateMap<PhysicalDag>& node_s
     }
     // call compute function
     PhysicalOp& op = phy_op_node->op_;
-    LOG(INFO) << "Execute node#" << nid << " compute fn: " << op.compute_fn->Name();
-    op.compute_fn->Execute(input, output, op.impl_type);
+    if(FLAGS_enable_execute) {
+      LOG(INFO) << "Execute node#" << nid << " compute fn: " << op.compute_fn->Name();
+      op.compute_fn->Execute(input, output, op.impl_type);
+    }
     for (auto n: phy_op_node->predecessors_) {// de-refer predecessor's data
       PhysicalDataNode* pred_dnode = dynamic_cast<PhysicalDataNode*>(n);
       PhysicalData& in_data = pred_dnode->data_;

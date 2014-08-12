@@ -15,7 +15,7 @@ class PartitionOp :
   public LogicalComputeFnTemp<1, 1>,
   public ClosureTrait<PartitionClosure> {
  public:
-  NVector<Chunk> ExpandReal(NVector<Chunk> input) {
+  NVector<Chunk> ExpandReal(const NVector<Chunk>& input) {
     // TODO
     return input;
   }

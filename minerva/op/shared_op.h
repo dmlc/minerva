@@ -47,7 +47,7 @@ class FillOp : public SharedDataGenFnWithClosure<FillClosure> {
 
 class MatMultOp : public SharedComputeFnWithClosure<MatMultClosure> {
  public:
-  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+  std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
     NVector<Chunk> a = inputs[0];
     NVector<Chunk> b = inputs[1];
     // validity
@@ -78,7 +78,7 @@ class MatMultOp : public SharedComputeFnWithClosure<MatMultClosure> {
 
 class TransOp : public SharedComputeFnWithClosure<TransposeClosure> {
  public:
-  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+  std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
     NVector<Chunk> in = inputs[0];
     assert(in.Size().NumDims() == 2);
     int row = in.Size(0), col = in.Size(1);
@@ -95,7 +95,7 @@ class TransOp : public SharedComputeFnWithClosure<TransposeClosure> {
 
 class ReductionOp : public SharedComputeFnWithClosure<ReductionClosure> {
  public:
-  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+  std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
     LOG(INFO) << "ReductionOp::Expand" << std::endl;
     CHECK_EQ(inputs.size(), 1) << "Reduction #input wrong";
     NVector<Chunk> individual_reduce = inputs[0].Map<Chunk>(
@@ -123,7 +123,7 @@ class ReductionOp : public SharedComputeFnWithClosure<ReductionClosure> {
 
 class ElewiseOp : public SharedComputeFnWithClosure<ElewiseClosure> {
  public:
-  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+  std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
     NVector<Chunk> ret = inputs[0].Map<Chunk>(
         [&] (const Chunk& ch) {
           ElewiseOp* elewise_op = new ElewiseOp;
@@ -146,7 +146,7 @@ class ElewiseOp : public SharedComputeFnWithClosure<ElewiseClosure> {
 
 class ArithmeticOp : public SharedComputeFnWithClosure<ArithmeticClosure> {
  public:
-  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
+  std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
     NVector<Chunk> a = inputs[0], b = inputs[1];
     NVector<Chunk> ret = NVector<Chunk>::ZipMap(a, b,
         [&] (const Chunk& c1, const Chunk& c2) {
@@ -171,8 +171,8 @@ class ArithmeticOp : public SharedComputeFnWithClosure<ArithmeticClosure> {
 
 class ArithmeticConstOp : public SharedComputeFnWithClosure<ArithmeticConstClosure> {
  public:
-  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
-    NVector<Chunk>& a = inputs[0];
+  std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
+    const NVector<Chunk>& a = inputs[0];
     NVector<Chunk> ret = a.Map<Chunk>(
         [&] (const Chunk& c) {
           ArithmeticConstOp* aconst_op = new ArithmeticConstOp;
@@ -202,9 +202,9 @@ class ArithmeticConstOp : public SharedComputeFnWithClosure<ArithmeticConstClosu
 
 class NormArithmeticOp: public SharedComputeFnWithClosure<NormArithmeticClosure> {
  public:
-  std::vector<NVector<Chunk>> Expand(std::vector<NVector<Chunk>> inputs) {
-    NVector<Chunk>& lhs = inputs[0];
-    NVector<Chunk>& rhs = inputs[1];
+  std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
+    const NVector<Chunk>& lhs = inputs[0];
+    const NVector<Chunk>& rhs = inputs[1];
     NVector<Chunk> res(lhs.Size());
     // TODO How to verify that the parition is the same on dimensions that don't need to be replicated?
     // Let's put this work into kernel for now
