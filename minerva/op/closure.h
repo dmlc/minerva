@@ -61,6 +61,10 @@ struct ReductionClosure {
   Scale dims_to_reduce;
 };
 
+struct MaxIndexClosure {
+  Scale dims;
+};
+
 struct NormArithmeticClosure {
   ArithmeticType type;
   Scale dims_to_replicate;

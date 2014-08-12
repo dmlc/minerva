@@ -90,8 +90,8 @@ class NArray {
   NArray Sum(const Scale& dims);
   NArray Max(int dim);
   NArray Max(const Scale& dims);
-  NArray MaxIndex(int dim); // TODO
-  NArray MaxIndex(const Scale& dims); // TODO
+  NArray MaxIndex(int dim);
+  NArray MaxIndex(const Scale& dims);
   // Replicate matrix
   NArray NormArithmetic(NArray, ArithmeticType);
   // Non-lazy reductions
