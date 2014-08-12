@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 #include <iostream>
 #include "dag/dag.h"
 
@@ -35,10 +36,10 @@ template<class DagType>
 class NodeStateMap : public DagMonitor<DagType> {
  public:
   NodeStateMap() {
-    state_sets_[NodeState::kBirth] = std::set<uint64_t>();
-    state_sets_[NodeState::kReady] = std::set<uint64_t>();
-    state_sets_[NodeState::kCompleted] = std::set<uint64_t>();
-    state_sets_[NodeState::kDead] = std::set<uint64_t>();
+    state_sets_[NodeState::kBirth] = std::unordered_set<uint64_t>();
+    state_sets_[NodeState::kReady] = std::unordered_set<uint64_t>();
+    state_sets_[NodeState::kCompleted] = std::unordered_set<uint64_t>();
+    state_sets_[NodeState::kDead] = std::unordered_set<uint64_t>();
   }
   void OnCreateNode(DagNode* n) {
     AddNode(n->node_id(), NodeState::kBirth);
@@ -57,7 +58,7 @@ class NodeStateMap : public DagMonitor<DagType> {
       state_sets_[to].insert(id);
     }
   }
-  const std::set<uint64_t>& GetNodesOfState(NodeState s) const {
+  const std::unordered_set<uint64_t>& GetNodesOfState(NodeState s) const {
     return state_sets_.find(s)->second;
   }
  private:
@@ -72,7 +73,7 @@ class NodeStateMap : public DagMonitor<DagType> {
   }
  private:
   std::unordered_map<uint64_t, NodeState> states_;
-  std::map<NodeState, std::set<uint64_t>> state_sets_;
+  std::map<NodeState, std::unordered_set<uint64_t>> state_sets_;
 };
 
 }

@@ -8,7 +8,7 @@
 using namespace std;
 using namespace minerva;
 
-TEST(PerfTest, LotsOfUnusedNArray) {
+TEST(PerfTest, DISABLED_LotsOfUnusedNArray) {
   vector<NArray> narrs;
   for(int i = 0; i < 1000; ++i) {
     narrs.push_back(NArray::Constant({10, 10}, i, {2, 2}));

@@ -1,5 +1,6 @@
 #pragma once
 #include "common/common.h"
+#include <unordered_map>
 #include <map>
 #include <cstdint>
 #include <cstddef>
@@ -42,7 +43,7 @@ class DataStore {
 
  private:
   mutable std::mutex access_mutex_;
-  std::map<uint64_t, DataState> data_states_;
+  std::unordered_map<uint64_t, DataState> data_states_;
 };
 
 inline bool DataStore::ExistData(uint64_t id) const {

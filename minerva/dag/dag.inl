@@ -47,8 +47,8 @@ typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
 
 template<class D, class O>
 typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
-    std::vector<DataNode<D, O>*> inputs,
-    std::vector<DataNode<D, O>*> outputs, const O& op) {
+    const std::vector<DataNode<D, O>*>& inputs,
+    const std::vector<DataNode<D, O>*>& outputs, const O& op) {
   typedef OpNode<D, O> ONode;
   ONode* ret = new ONode;
   ret->op_ = op;
