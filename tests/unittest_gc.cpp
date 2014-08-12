@@ -9,6 +9,8 @@ TEST(GCTest, EvalInLoop) {
   NArray narr = NArray::Constant({10, 8}, 0.0, {2, 2});
   for(int i = 0; i < 10; ++i) {
     narr += 1;
+    //cout << MinervaSystem::Instance().logical_dag().PrintDag<ExternRCPrinter>() << endl;
+    //cout << MinervaSystem::Instance().physical_dag().PrintDag() << endl;
     narr.Eval();
     EXPECT_EQ(ms.logical_dag().NumNodes(), 3) << "wrong #logical_nodes in iter#" << i;
     if(i == 0)
@@ -16,8 +18,6 @@ TEST(GCTest, EvalInLoop) {
     else
       EXPECT_EQ(ms.physical_dag().NumNodes(), 12) << "wrong #physical_nodes in iter#" << i;
     EXPECT_EQ(ms.data_store().GetTotalBytes(DataStore::CPU), 320) << "wrong memory usage in iter#" << i;
-    //cout << MinervaSystem::Instance().logical_dag().PrintDag() << endl;
-    //cout << MinervaSystem::Instance().physical_dag().PrintDag() << endl;
   }
   float* val = narr.Get();
   for(int i = 0; i < 80; ++i)

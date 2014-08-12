@@ -12,7 +12,6 @@ enum class NodeState {
   kBirth = 0,
   kReady,
   kCompleted,
-  kNeedGC,
   kDead,
   kNumStates,
 };
@@ -25,8 +24,6 @@ inline std::ostream& operator << (std::ostream& os, NodeState s) {
       return os << "Ready";
     case NodeState::kCompleted:
       return os << "Completed";
-    case NodeState::kNeedGC:
-      return os << "NeedGC";
     case NodeState::kDead:
       return os << "Dead";
     default:
@@ -41,7 +38,6 @@ class NodeStateMap : public DagMonitor<DagType> {
     state_sets_[NodeState::kBirth] = std::set<uint64_t>();
     state_sets_[NodeState::kReady] = std::set<uint64_t>();
     state_sets_[NodeState::kCompleted] = std::set<uint64_t>();
-    state_sets_[NodeState::kNeedGC] = std::set<uint64_t>();
     state_sets_[NodeState::kDead] = std::set<uint64_t>();
   }
   void OnCreateNode(DagNode* n) {
