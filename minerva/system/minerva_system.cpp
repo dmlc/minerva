@@ -84,14 +84,37 @@ float* MinervaSystem::GetValue(NArray& narr) {
 }
 
 void MinervaSystem::IncrExternRC(LogicalDag::DNode* dnode, int amount) {
-  dnode->data_.extern_rc += amount;
+  int result_extern_rc = dnode->data_.extern_rc + amount;
+  dnode->data_.extern_rc = result_extern_rc;
   uint64_t ldnode_id = dnode->node_id();
-  if(expand_engine_.IsExpanded(ldnode_id)) {
+  if(lnode_states_.GetState(ldnode_id) == NodeState::kCompleted) {
     // this means the node's physical data has been created
     // incr the extern_rc of its physical_node, and change the rc in data_store
-    for(uint64_t pnode_id : expand_engine_.GetPhysicalNodes(ldnode_id)) {
-      PhysicalDataNode* pnode = physical_dag_.GetDataNode(pnode_id);
+    bool logical_node_is_dead = false;
+    if(result_extern_rc == 0) {
+      LogicalDataNode* ldnode = logical_dag_.GetDataNode(ldnode_id);
+      int dep_count = 0;
+      for(DagNode* succ : ldnode->successors_) {
+        NodeState succ_state = lnode_states_.GetState(succ->node_id());
+        if(succ_state == NodeState::kBirth || succ_state == NodeState::kReady) {
+          ++dep_count;
+        }
+      }
+      if(dep_count == 0) {
+        // the node would no longer be needed, because:
+        // 1. Once its extern_rc drops to zero, it won't become positive again !
+        // 2. And there are no internal deps, so the node could be safely GCed.
+        lnode_states_.ChangeState(ldnode_id, NodeState::kDead);
+        logical_node_is_dead = true;
+      }
+    }
+    for(uint64_t pdnode_id : expand_engine_.GetPhysicalNodes(ldnode_id)) {
+      PhysicalDataNode* pnode = physical_dag_.GetDataNode(pdnode_id);
       pnode->data_.extern_rc += amount;
+      if(logical_node_is_dead) {
+        pnode_states_.ChangeState(pdnode_id, NodeState::kDead);
+        data_store_.SetReferenceCount(pnode->data_.data_id, 0);
+      }
     }
   }
 }

@@ -57,7 +57,7 @@ class NodeStateMap : public DagMonitor<DagType> {
       state_sets_[to].insert(id);
     }
   }
-  std::set<uint64_t> GetNodesOfState(NodeState s) const {
+  const std::set<uint64_t>& GetNodesOfState(NodeState s) const {
     return state_sets_.find(s)->second;
   }
  private:

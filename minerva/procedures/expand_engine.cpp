@@ -31,41 +31,22 @@ void ExpandEngine::OnDeleteDataNode(LogicalDataNode* ldnode) {
 }
 
 void ExpandEngine::GCNodes(LogicalDag& dag, NodeStateMap<LogicalDag>& node_states) {
-  for(uint64_t nid : node_states.GetNodesOfState(NodeState::kCompleted)) {
-    DagNode* node = dag.GetNode(nid);
-    switch(node->Type()) {
-    case DagNode::OP_NODE:
-      node_states.ChangeState(nid, NodeState::kDead);// op nodes are just GCed
-      break;
-    case DagNode::DATA_NODE:
-      LogicalDataNode* dnode = dynamic_cast<LogicalDataNode*>(node);
-      int dep_count = dnode->data_.extern_rc;
-      for(DagNode* succ : node->successors_) {
-        NodeState succ_state = node_states.GetState(succ->node_id());
-        if(succ_state == NodeState::kBirth || succ_state == NodeState::kReady) {
-          ++dep_count;
-        }
-      }
-      if(dep_count == 0) {
-        node_states.ChangeState(nid, NodeState::kDead);
-      }
-      break;
-    }
+  vector<uint64_t> dead_nodes;
+  for(uint64_t nid : node_states.GetNodesOfState(NodeState::kDead)) {
+    dead_nodes.push_back(nid);
   }
   // delete node of kDead state 
-  for(uint64_t nid : node_states.GetNodesOfState(NodeState::kDead)) {
+  for(uint64_t nid : dead_nodes) {
     dag.DeleteNode(nid);
   }
 }
 
 void ExpandEngine::ExpandNode(LogicalDag& dag, NodeStateMap<LogicalDag>& node_states, 
     uint64_t lnid) {
+  DagNode* curnode = dag.GetNode(lnid);
   if(!IsExpanded(lnid)) { // haven't been expanded yet
     CHECK_EQ(node_states.GetState(lnid), NodeState::kBirth);
     node_states.ChangeState(lnid, NodeState::kReady);
-
-    DagNode* curnode = dag.GetNode(lnid);
-    //cout << "Try expand nodeid=" << lnid << " " << curnode->Type() << endl;
     for(DagNode* pred : curnode->predecessors_) {
       ExpandNode(dag, node_states, pred->node_id());
     }
@@ -106,7 +87,20 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, NodeStateMap<LogicalDag>& node_st
         MakeMapping(onode->outputs_[i], rst_chunks[i]);
       }
     }
-    node_states.ChangeState(lnid, NodeState::kCompleted);
+  }
+
+  // change states
+  if(curnode->Type() == DagNode::OP_NODE) {
+    node_states.ChangeState(lnid, NodeState::kDead); // the op node is expanded thus could be GCed
+  } else {
+    LogicalDag::DNode* dnode = dynamic_cast<LogicalDag::DNode*>(curnode);
+    if(dnode->data_.extern_rc != 0) {
+      // the data node is expanded but with external dependencies
+      node_states.ChangeState(lnid, NodeState::kCompleted);
+    } else {
+      // the data node could be GCed
+      node_states.ChangeState(lnid, NodeState::kDead);
+    }
   }
 }
 
