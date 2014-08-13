@@ -94,14 +94,6 @@ Chunk Chunk::Reduce(const Scale& dims_to_reduce, ReductionType type) {
 /////////////////////////////////////////////////////////
 // shape
 /////////////////////////////////////////////////////////
-Scale Chunk::Size() const {
-  return data_node_->data_.size;
-}
-
-int Chunk::Size(int dim) const {
-  return data_node_->data_.size[dim];
-}
-
 Chunk Chunk::Trans() {
   CHECK_EQ(Size().NumDims(), 2) << "transpose only performs on 2d data";
   Scale new_size = {Size(1), Size(0)};
@@ -110,28 +102,24 @@ Chunk Chunk::Trans() {
 }
   
 Scale Chunk::ComputeOffset(NVector<Chunk> chunks) {
-  Scale numparts = chunks.Size();
+  const Scale& numparts = chunks.Size();
   size_t numdims = numparts.NumDims();
   Scale pos = Scale::Origin(numdims);
-  chunks[pos].data_node()->data_.offset = pos; // the offset of first chunk is zero
-  Scale merged_size;
   while(1) {
     auto& phy_data = chunks[pos].data_node()->data_;
+    phy_data.offset.Resize(numdims, 0);
     phy_data.offset_index = pos;
     Scale upleftpos = pos.Map([] (int x) { return max(x - 1, 0); });
     auto& upleft_phy_data = chunks[upleftpos].data_node()->data_;
-    phy_data.offset = upleft_phy_data.offset + upleft_phy_data.size;
     for(size_t i = 0; i < numdims; ++i) {
-      if(pos[i] == 0) { // if the index of this dimension is 0, then so does the offset
-        phy_data.offset[i] = 0;
+      if(pos[i] != 0) { // if the index of this dimension is 0, the offset should be 0 too
+        phy_data.offset[i] = upleft_phy_data.offset[i] + upleft_phy_data.size[i];
       }
     }
     if(!Scale::IncrOne(pos, numparts)) {
-      merged_size = phy_data.offset + phy_data.size;
-      break;
+      return phy_data.offset + phy_data.size;
     }
   }
-  return merged_size;
 }
   
 Chunk Chunk::Merge(NVector<Chunk> parts) {

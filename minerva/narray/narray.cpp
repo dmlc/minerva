@@ -105,14 +105,6 @@ NArray operator * (NArray lhs, NArray rhs) {
 }
 
 // shape
-Scale NArray::Size() {
-  return data_node_->data_.size;
-}
-
-int NArray::Size(int dim) {
-  return data_node_->data_.size[dim];
-}
-
 NArray NArray::Reshape(const Scale& dims) {
   // TODO
   return NArray();

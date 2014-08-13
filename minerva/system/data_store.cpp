@@ -93,7 +93,7 @@ inline bool DataStore::CheckValidity(uint64_t id) const {
 }
 
 void DataStore::GC(uint64_t id) {
-  LOG(INFO) << "GC data with id=" << id;
+  DLOG(INFO) << "GC data with id=" << id;
   DataState& ds = data_states_[id];
   for(float* ptr : ds.data_ptrs) {
     if(ptr != NULL) {

@@ -22,7 +22,7 @@ TEST(GCCorrectness, EvalInLoop) {
   }
   float* val = narr.Get();
   for(int i = 0; i < 80; ++i)
-    EXPECT_EQ(val[i], 10) << "value mismatch at i=" << i;
+    ASSERT_EQ(val[i], 10) << "value mismatch at i=" << i;
 }
 
 TEST(GCCorrectness, ScopedInstance) {

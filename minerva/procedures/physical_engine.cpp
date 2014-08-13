@@ -150,7 +150,7 @@ void PhysicalEngine::NodeRunner(DagNode* node, NodeStateMap<PhysicalDag>& node_s
     // call compute function
     PhysicalOp& op = phy_op_node->op_;
     if(FLAGS_enable_execute) {
-      LOG(INFO) << "Execute node#" << nid << " compute fn: " << op.compute_fn->Name();
+      DLOG(INFO) << "Execute node#" << nid << " compute fn: " << op.compute_fn->Name();
       op.compute_fn->Execute(input, output, op.impl_type);
     }
     for (auto n: phy_op_node->predecessors_) {// de-refer predecessor's data

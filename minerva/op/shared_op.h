@@ -96,7 +96,7 @@ class TransOp : public SharedComputeFnWithClosure<TransposeClosure> {
 class ReductionOp : public SharedComputeFnWithClosure<ReductionClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
-    LOG(INFO) << "ReductionOp::Expand";
+    DLOG(INFO) << "ReductionOp::Expand";
     CHECK_EQ(inputs.size(), 1) << "Reduction #input wrong";
     NVector<Chunk> individual_reduce = inputs[0].Map<Chunk>(
       [&] (Chunk ch) {
@@ -172,8 +172,9 @@ class ElewiseOp : public SharedComputeFnWithClosure<ElewiseClosure> {
 class ArithmeticOp : public SharedComputeFnWithClosure<ArithmeticClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
-    NVector<Chunk> a = inputs[0], b = inputs[1];
-    NVector<Chunk> ret = NVector<Chunk>::ZipMap(a, b,
+    const NVector<Chunk>& a = inputs[0];
+    const NVector<Chunk>& b = inputs[1];
+    const NVector<Chunk>& ret = NVector<Chunk>::ZipMap(a, b,
         [&] (const Chunk& c1, const Chunk& c2) {
           assert(c1.Size() == c2.Size());
           ArithmeticOp* arith_op = new ArithmeticOp;
@@ -198,7 +199,7 @@ class ArithmeticConstOp : public SharedComputeFnWithClosure<ArithmeticConstClosu
  public:
   std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
     const NVector<Chunk>& a = inputs[0];
-    NVector<Chunk> ret = a.Map<Chunk>(
+    const NVector<Chunk>& ret = a.Map<Chunk>(
         [&] (const Chunk& c) {
           ArithmeticConstOp* aconst_op = new ArithmeticConstOp;
           aconst_op->closure = closure;

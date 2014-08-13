@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 #include <iostream>
 #include "dag/dag.h"
 
@@ -13,8 +14,8 @@ enum class NodeState {
   kReady,
   kCompleted,
   kDead,
-  kNumStates,
 };
+const int kNumNodeStates = (int)NodeState::kDead + 1;
 
 inline std::ostream& operator << (std::ostream& os, NodeState s) {
   switch(s) {
@@ -35,10 +36,10 @@ template<class DagType>
 class NodeStateMap : public DagMonitor<DagType> {
  public:
   NodeStateMap() {
-    state_sets_[NodeState::kBirth] = std::set<uint64_t>();
-    state_sets_[NodeState::kReady] = std::set<uint64_t>();
-    state_sets_[NodeState::kCompleted] = std::set<uint64_t>();
-    state_sets_[NodeState::kDead] = std::set<uint64_t>();
+    //state_sets_[NodeState::kBirth] = std::unordered_set<uint64_t>();
+    //state_sets_[NodeState::kReady] = std::unordered_set<uint64_t>();
+    //state_sets_[NodeState::kCompleted] = std::unordered_set<uint64_t>();
+    //state_sets_[NodeState::kDead] = std::unordered_set<uint64_t>();
   }
   void OnCreateNode(DagNode* n) {
     AddNode(n->node_id(), NodeState::kBirth);
@@ -53,26 +54,26 @@ class NodeStateMap : public DagMonitor<DagType> {
     NodeState old = states_[id];
     if(old != to) {
       states_[id] = to;
-      state_sets_[old].erase(id);
-      state_sets_[to].insert(id);
+      state_sets_[(int)old].erase(id);
+      state_sets_[(int)to].insert(id);
     }
   }
-  const std::set<uint64_t>& GetNodesOfState(NodeState s) const {
-    return state_sets_.find(s)->second;
+  const std::unordered_set<uint64_t>& GetNodesOfState(NodeState s) const {
+    return state_sets_[(int)s];
   }
  private:
   void AddNode(uint64_t id, NodeState init_state) {
     states_[id] = init_state;
-    state_sets_[init_state].insert(id);
+    state_sets_[(int)init_state].insert(id);
   }
   void RemoveNode(uint64_t id) {
     NodeState s = states_[id];
     states_.erase(id);
-    state_sets_[s].erase(id);
+    state_sets_[(int)s].erase(id);
   }
  private:
   std::unordered_map<uint64_t, NodeState> states_;
-  std::map<NodeState, std::set<uint64_t>> state_sets_;
+  std::unordered_set<uint64_t> state_sets_[kNumNodeStates];
 };
 
 }

@@ -47,8 +47,8 @@ typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
 
 template<class D, class O>
 typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
-    std::vector<DataNode<D, O>*> inputs,
-    std::vector<DataNode<D, O>*> outputs, const O& op) {
+    const std::vector<DataNode<D, O>*>& inputs,
+    const std::vector<DataNode<D, O>*>& outputs, const O& op) {
   typedef OpNode<D, O> ONode;
   ONode* ret = new ONode;
   ret->op_ = op;
@@ -87,11 +87,11 @@ void Dag<D, O>::DeleteNode(uint64_t id) {
   }
   // delete the node in successors
   for(DagNode* succ : node->successors_) {
-    succ->predecessors_.erase(node);
+    succ->DeletePred(node);
   }
   // delete the node in predecessors
   for(DagNode* pred : node->predecessors_) {
-    pred->successors_.erase(node);
+    pred->DeleteSucc(node);
   }
   // delete the node in container
   index_to_node_.erase(id);

@@ -55,7 +55,7 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, NodeStateMap<LogicalDag>& node_st
       // call expand function to generate data
       LogicalDataGenFn* fn = dnode->data_.data_gen_fn;
       if(fn != nullptr) {
-        LOG(INFO) << "Expand logical datagen function: " << fn->Name();
+        DLOG(INFO) << "Expand logical datagen function: " << fn->Name();
         NVector<Chunk> chunks = fn->Expand(dnode->data_.partitions);
         MakeMapping(dnode, chunks);
       }
@@ -78,7 +78,7 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, NodeStateMap<LogicalDag>& node_st
         );
       }
       // call expand function
-      LOG(INFO) << "Expand logical compute function: " << fn->Name();
+      DLOG(INFO) << "Expand logical compute function: " << fn->Name();
       std::vector<NVector<Chunk>> rst_chunks = fn->Expand(in_chunks);
       // check output validity
       CHECK_EQ(rst_chunks.size(), onode->outputs_.size()) 

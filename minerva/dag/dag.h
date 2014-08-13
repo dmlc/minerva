@@ -8,6 +8,7 @@
 #include <initializer_list>
 #include <atomic>
 #include <string>
+#include <unordered_map>
 
 #include "common/common.h"
 #include "common/concurrent_blocking_queue.h"
@@ -23,15 +24,15 @@ class DagNode {
   virtual ~DagNode() {}
   void AddParent(DagNode*);
   void AddParents(std::initializer_list<DagNode*>);
-  bool DeleteParent(DagNode*);
+  bool DeleteSucc(DagNode*);
+  bool DeletePred(DagNode*);
   virtual NodeTypes Type() const = 0;
 
   uint64_t node_id() const { return node_id_; }
   void set_node_id(uint64_t id) { node_id_ = id; }
 
-  // TODO Use unordered version for quicker access
-  std::set<DagNode*> successors_;
-  std::set<DagNode*> predecessors_;
+  std::vector<DagNode*> successors_;
+  std::vector<DagNode*> predecessors_;
  private:
   uint64_t node_id_;
 };
@@ -95,8 +96,8 @@ class Dag {
   Dag() {}
   ~Dag();
   DNode* NewDataNode(const Data& data);
-  ONode* NewOpNode(std::vector<DNode*> inputs,
-      std::vector<DNode*> outputs, const Op& op);
+  ONode* NewOpNode(const std::vector<DNode*>& inputs,
+      const std::vector<DNode*>& outputs, const Op& op);
   void DeleteNode(uint64_t );
   bool ExistNode(uint64_t ) const;
   DagNode* GetNode(uint64_t ) const;
@@ -104,8 +105,7 @@ class Dag {
   DNode* GetDataNode(uint64_t ) const;
   size_t NumNodes() const;
 
-  // TODO use unordered_map instead
-  typedef std::map<uint64_t, DagNode*> ContainerType;
+  typedef std::unordered_map<uint64_t, DagNode*> ContainerType;
   ContainerType::iterator begin() { return index_to_node_.begin(); }
   ContainerType::iterator end() { return index_to_node_.end(); }
 
