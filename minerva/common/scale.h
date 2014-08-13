@@ -61,7 +61,6 @@ class Scale {
     prod_val_ = other.prod_val_;
     return *this;
   }
-
   int operator [] (size_t i) const { return vec_[i]; }
   int& operator [] (size_t i) { return vec_[i]; }
   bool operator == (const Scale& other) const {
@@ -157,6 +156,8 @@ class ScaleRange {
   Scale Dim() const { return end_ - start_; }
   size_t Area() const;
   size_t Flatten(const Scale& sc) const;
+  Scale start() const { return start_; }
+  Scale end() const { return end_; }
 
  private:
   ScaleRange(const Scale& st, const Scale& ed): start_(st), end_(ed) { }
