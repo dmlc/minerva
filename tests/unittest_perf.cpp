@@ -57,7 +57,7 @@ class AddOneManyTimesOp: public LogicalComputeFn, PhysicalComputeFn {
   std::string Name() const { return "+1:5000times"; }
 };
 
-TEST(PerfTest, LongChainInOne) {
+TEST(PerfTest, DISABLED_LongChainInOne) {
   NArray a = NArray::Constant({10, 10}, 0.0, {2, 2});
   NArray b = NArray::Compute({a}, {a.Size()}, new AddOneManyTimesOp)[0];
   b.Eval();

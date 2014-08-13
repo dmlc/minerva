@@ -57,6 +57,7 @@ void MinervaSystem::Eval(NArray& narr) {
   expand_engine_.GCNodes(logical_dag_, lnode_states_);// GC useless logical nodes
   std::vector<uint64_t> id_to_eval = {narr.data_node_->node_id()};
   expand_engine_.Process(logical_dag_, lnode_states_, id_to_eval);
+  //cout << physical_dag().PrintDag<OffsetPrinter>() << endl;
 
   // physical dag
   auto physical_nodes = expand_engine_.GetPhysicalNodes(narr.data_node_->node_id());

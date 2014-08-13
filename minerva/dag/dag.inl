@@ -87,11 +87,11 @@ void Dag<D, O>::DeleteNode(uint64_t id) {
   }
   // delete the node in successors
   for(DagNode* succ : node->successors_) {
-    succ->predecessors_.erase(node);
+    succ->DeletePred(node);
   }
   // delete the node in predecessors
   for(DagNode* pred : node->predecessors_) {
-    pred->successors_.erase(node);
+    pred->DeleteSucc(node);
   }
   // delete the node in container
   index_to_node_.erase(id);

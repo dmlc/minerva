@@ -107,7 +107,6 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, NodeStateMap<LogicalDag>& node_st
 void ExpandEngine::MakeMapping(LogicalDag::DNode* ldnode, NVector<Chunk>& chunks) {
   Scale numparts = chunks.Size();
   // check size & set offset, offset_index
-  // TODO how to make this faster ?
   Scale merged_size = Chunk::ComputeOffset(chunks);
   CHECK_EQ(ldnode->data_.size, merged_size)
     << "Expand function error: partition size unmatched!\n"

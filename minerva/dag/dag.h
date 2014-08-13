@@ -24,15 +24,15 @@ class DagNode {
   virtual ~DagNode() {}
   void AddParent(DagNode*);
   void AddParents(std::initializer_list<DagNode*>);
-  bool DeleteParent(DagNode*);
+  bool DeleteSucc(DagNode*);
+  bool DeletePred(DagNode*);
   virtual NodeTypes Type() const = 0;
 
   uint64_t node_id() const { return node_id_; }
   void set_node_id(uint64_t id) { node_id_ = id; }
 
-  // TODO Use unordered version for quicker access
-  std::set<DagNode*> successors_;
-  std::set<DagNode*> predecessors_;
+  std::vector<DagNode*> successors_;
+  std::vector<DagNode*> predecessors_;
  private:
   uint64_t node_id_;
 };

@@ -36,12 +36,13 @@ void PhysicalEngine::Process(PhysicalDag& dag, NodeStateMap<PhysicalDag>& node_s
   {
     // Waiting execution to complete
     for (uint64_t tgtid: targets) {
-      LOG(INFO) << "Wait for node (id=" << tgtid << ") finish.";
       unique_lock<mutex> lock(node_states_mutex_);
-      if (node_states.GetState(tgtid) != NodeState::kCompleted) {
+      LOG(INFO) << "Wait for node (id=" << tgtid << ") finish.";
+      if (node_states.GetState(tgtid) == NodeState::kReady) {
+        rt_states_[tgtid].on_complete = new condition_variable;
         rt_states_[tgtid].on_complete->wait(lock);
+        delete rt_states_[tgtid].on_complete;
       }
-      delete rt_states_[tgtid].on_complete;
       rt_states_[tgtid].on_complete = nullptr;
       LOG(INFO) << "Node (id=" << tgtid << ") complete.";
     }
@@ -106,11 +107,6 @@ unordered_set<DagNode*> PhysicalEngine::FindRootNodes(PhysicalDag& dag, NodeStat
       ready_to_execute.insert(node);
     }
   }
-  for (uint64_t tgtid: targets) {
-    if (node_states.GetState(tgtid) != NodeState::kCompleted) {
-      rt_states_[tgtid].on_complete = new condition_variable;
-    }
-  }
   return ready_to_execute;
 }
 
@@ -133,7 +129,9 @@ void PhysicalEngine::AppendTask(DagNode* node, NodeStateMap<PhysicalDag>& node_s
 void PhysicalEngine::NodeRunner(DagNode* node, NodeStateMap<PhysicalDag>& node_states) {
   MinervaSystem& ms = MinervaSystem::Instance();
   uint64_t nid = node->node_id();
-  if (node->Type() == DagNode::OP_NODE) { // OpNode
+  CHECK_EQ(node->Type(), DagNode::OP_NODE) << "Only op nodes are allowed in NodeRunner function";
+  //if (node->Type() == DagNode::OP_NODE) { // OpNode
+  {
     vector<DataShard> input;
     vector<DataShard> output;
     PhysicalOpNode* phy_op_node = dynamic_cast<PhysicalOpNode*>(node);
@@ -165,32 +163,36 @@ void PhysicalEngine::NodeRunner(DagNode* node, NodeStateMap<PhysicalDag>& node_s
   {
     lock_guard<mutex> lock(node_states_mutex_);
     // change states
-    if(node->Type() == DagNode::OP_NODE) {
-      node_states.ChangeState(nid, NodeState::kDead); // the op node is executed thus could be GCed
-    } else {
-      PhysicalDataNode* pdnode = dynamic_cast<PhysicalDataNode*>(node);
-      if(pdnode->data_.extern_rc != 0) {
-        // the data node is completed but with external dependencies
-        node_states.ChangeState(nid, NodeState::kCompleted);
-      } else {
-        // the data node could be GCed
-        node_states.ChangeState(nid, NodeState::kDead);
-      }
-    }
+    node_states.ChangeState(nid, NodeState::kDead); // the op node is executed thus could be GCed
     // trigger successors
     for (auto succ: node->successors_) {
-      NodeState state = node_states.GetState(succ->node_id());
-      RuntimeState& rts = rt_states_[succ->node_id()];
-      CHECK_GE(--rts.dependency_counter, 0) << "";
-      // Append node if all predecessors are finished
-      if (state == NodeState::kReady && rts.dependency_counter == 0) {
-        AppendTask(succ, node_states);
+      uint64_t succ_nid = succ->node_id();
+      LOG(INFO) << "trigger node#" << succ_nid;
+      CHECK_EQ(succ->Type(), DagNode::DATA_NODE) << "successors of op node must be data nodes";
+      CHECK_EQ(--rt_states_[succ_nid].dependency_counter, 0) << "dep_count of data_node should == 1";
+      PhysicalDataNode* succ_data_node = dynamic_cast<PhysicalDataNode*>(succ);
+      if(succ_data_node->data_.extern_rc != 0) {
+        // the data node is completed but with external dependencies
+        node_states.ChangeState(succ_nid, NodeState::kCompleted);
+      } else {
+        // the data node could be GCed
+        node_states.ChangeState(succ_nid, NodeState::kDead);
       }
-    }
-    // trigger on_complete hook
-    if (rt_states_[nid].on_complete != nullptr) {
-      //printf("Target complete %u\n", (unsigned int) dynamic_cast<PhysicalDataNode*>(node)->data_.data_id);
-      rt_states_[nid].on_complete->notify_all();
+      // trigger on_complete hook
+      if (rt_states_[succ_nid].on_complete != nullptr) {
+        //LOG(INFO) << "notify target node#" << succ_nid;
+        rt_states_[succ_nid].on_complete->notify_all();
+      }
+      for (auto next_op_node : succ->successors_) {
+        uint64_t next_op_nid = next_op_node->node_id();
+        RuntimeState& next_op_rts = rt_states_[next_op_nid];
+        CHECK_EQ(next_op_node->Type(), DagNode::OP_NODE) << "successors of data node must be op nodes";
+        CHECK_GE(--next_op_rts.dependency_counter, 0) << "dep_count is less than zero";
+        NodeState state = node_states.GetState(next_op_nid);
+        if(state == NodeState::kReady && next_op_rts.dependency_counter == 0) {
+          AppendTask(next_op_node, node_states);
+        }
+      }
     }
   }
 }
