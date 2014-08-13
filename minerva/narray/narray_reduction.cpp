@@ -38,12 +38,13 @@ NArray NArray::Max(const Scale& dims) {
 }
 
 NArray NArray::MaxIndex(int dim) {
-  return MaxIndex({dim});
+  auto size = Size();
+  size[dim] = 1;
+  MaxIndexOp* op = new MaxIndexOp;
+  op->closure.dim = dim;
+  return NArray::Compute({*this}, {size}, op)[0];
 }
-NArray NArray::MaxIndex(const Scale& dims) {
-  // TODO
-  return NArray();
-}
+
 // Non-lazy reduction
 float NArray::Sum() {
   // TODO

@@ -14,6 +14,7 @@ extern void Reduction(DataList&, DataList&, ReductionClosure& );
 extern void Assemble(DataList&, DataList&, AssembleClosure&);
 extern void Split(DataList&, DataList&, SplitClosure&);
 extern void NormArithmetic(DataList&, DataList&, NormArithmeticClosure&);
+extern void MaxIndex(DataList&, DataList&, MaxIndexClosure&);
 
 extern void Randn(DataList&, RandnClosure& );
 extern void Fill(DataList&, FillClosure& );
