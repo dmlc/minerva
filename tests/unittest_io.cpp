@@ -1,5 +1,6 @@
 #include <minerva.h>
 #include <gtest/gtest.h>
+#include <fstream>
 
 using namespace minerva;
 using namespace std;
@@ -21,5 +22,42 @@ TEST(NArrayFileIO, Correctness) {
   }
 }
 
-TEST(NArrayMiniBatchIO, Correctness) {
+class MiniBatchIOTest : public testing::Test {
+ protected:
+  static void SetUpTestCase() {
+    ofstream fout(mb_file_name.c_str());
+    fout.write((char*)&num_samples, 4);
+    fout.write((char*)&sample_length, 4);
+    for(int i = 0; i < num_samples; ++i) {
+      float val = i;
+      for(int j = 0; j < sample_length; ++j) {
+        fout.write((char*)&val, 4);
+      }
+    }
+  }
+  static void TearDownTestCase() {
+  }
+  static const string mb_file_name;
+  static const int num_samples, sample_length;
+};
+const string MiniBatchIOTest::mb_file_name = "test_mb.dat";
+const int MiniBatchIOTest::num_samples = 100;
+const int MiniBatchIOTest::sample_length = 10;
+
+TEST_F(MiniBatchIOTest, NormalRead) {
+  OneFileMBLoader loader(mb_file_name, {sample_length});
+  EXPECT_EQ(loader.num_samples(), num_samples);
+
+  int sample_idx = 0;
+  for(int k = 0; k < num_samples / 10; ++k) {
+    NArray a1 = loader.LoadNext(10);
+    float* a1ptr = a1.Get();
+    for(int i = 0; i < 10; ++i,++sample_idx)
+      for(int j = 0; j < sample_length; ++j)
+        EXPECT_EQ(a1ptr[j + i * sample_length], sample_idx);
+    delete [] a1ptr;
+  }
+}
+
+TEST_F(MiniBatchIOTest, ReadWrapAround) {
 }

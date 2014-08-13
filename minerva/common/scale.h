@@ -53,11 +53,11 @@ class Scale {
 
   Scale() {}
   Scale(const std::vector<int>& sc): vec_(sc) {} // allow implicit conversion
+  Scale(const std::initializer_list<int>& initlst) {
+    for(int i : initlst) vec_.push_back(i);
+  }
   Scale(const Scale& other): vec_(other.vec_) {}
   Scale(Scale&& other): vec_(other.vec_) {}
-  explicit Scale(int i1): vec_{i1} { }
-  Scale(int i1, int i2): vec_{i1, i2} { }
-  Scale(int i1, int i2, int i3): vec_{i1, i2, i3} { }
 
   int operator [] (size_t i) const { return vec_[i]; }
   int& operator [] (size_t i) { return vec_[i]; }
@@ -148,6 +148,8 @@ class ScaleRange {
   Scale Dim() const { return end_ - start_; }
   size_t Area() const;
   size_t Flatten(const Scale& sc) const;
+  Scale start() const { return start_; }
+  Scale end() const { return end_; }
 
  private:
   ScaleRange(const Scale& st, const Scale& ed): start_(st), end_(ed) { }
