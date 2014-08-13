@@ -292,6 +292,37 @@ void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& 
   }
 }
 
+void MaxIndex(DataList& inputs, DataList& outputs, MaxIndexClosure& closure) {
+  CHECK_EQ(inputs.size(), 1) << "basic::MaxIndex #input wrong";
+  CHECK_EQ(outputs.size(), 1) << "basic::MaxIndex #output wrong";
+  float* in_data = inputs[0].GetCpuData();
+  float* res_data = outputs[0].GetCpuData();
+  auto in_max = inputs[0].Size();
+  auto in_range = ScaleRange::MakeRangeFromOrigin(in_max);
+  auto res_max = outputs[0].Size();
+  auto res_range = ScaleRange::MakeRangeFromOrigin(res_max);
+  Scale dims{closure.dim};
+  // Interval and strike for a single iteration
+  int interval = 1;
+  for (int i = 0; i < closure.dim; ++i) {
+    interval *= inputs[0].Size()[i];
+  }
+  int strike = inputs[0].Size()[closure.dim];
+  auto iterator = Scale::Origin(in_max.NumDims());
+  do {
+    size_t offset = in_range.Flatten(iterator);
+    float cur_max = in_data[offset];
+    int index = 0;
+    for (int i = 0; i < strike; ++i) {
+      if (cur_max < in_data[offset + i * interval]) {
+        cur_max = in_data[offset + i * interval];
+        index = i;
+      }
+    }
+    res_data[res_range.Flatten(iterator)] = index;
+  } while (iterator.IncrWithDimensionsFixed(res_max, dims));
+}
+
 void NCopy(float* src, const Scale& srcsize, const Scale& srcstart,
     float* dst, const Scale& dstsize, const Scale& dststart,
     const Scale& copysize) {

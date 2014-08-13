@@ -96,7 +96,7 @@ class TransOp : public SharedComputeFnWithClosure<TransposeClosure> {
 class ReductionOp : public SharedComputeFnWithClosure<ReductionClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
-    LOG(INFO) << "ReductionOp::Expand" << std::endl;
+    LOG(INFO) << "ReductionOp::Expand";
     CHECK_EQ(inputs.size(), 1) << "Reduction #input wrong";
     NVector<Chunk> individual_reduce = inputs[0].Map<Chunk>(
       [&] (Chunk ch) {
@@ -118,6 +118,31 @@ class ReductionOp : public SharedComputeFnWithClosure<ReductionClosure> {
        return "max";
    }
    return "reduction N/A";
+  }
+};
+
+class MaxIndexOp : public SharedComputeFnWithClosure<MaxIndexClosure> {
+ public:
+  std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
+    LOG(INFO) << "MaxIndexOp::Expand";
+    CHECK_EQ(inputs.size(), 1) << "MaxIndex #input wrong";
+    Chunk merged;
+    if (inputs[0].Length() != 1) {
+      // Merge first
+      merged = Chunk::Merge(inputs[0]);
+    } else {
+      merged = inputs[0].ToVector()[0];
+    }
+    MaxIndexOp* op = new MaxIndexOp;
+    op->closure = closure;
+    auto size = merged.Size();
+    size[closure.dim] = 1;
+    NVector<Chunk> ret(Scale::Constant(merged.Size().NumDims(), 1));
+    ret[Scale::Origin(merged.Size().NumDims())] = Chunk::Compute({merged}, {size}, op)[0];
+    return {ret};
+  }
+  std::string Name() const {
+    return "max index";
   }
 };
 
