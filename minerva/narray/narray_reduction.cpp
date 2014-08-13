@@ -38,7 +38,7 @@ NArray NArray::Max(const Scale& dims) {
 }
 
 NArray NArray::MaxIndex(int dim) {
-  return MaxIndex(Scale(dim));
+  return MaxIndex(Scale{dim});
 }
 NArray NArray::MaxIndex(const Scale& dims) {
   // TODO

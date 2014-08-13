@@ -81,8 +81,8 @@ class NArray {
   // matmult
   friend NArray operator * (NArray, NArray);
   // shape
-  Scale Size();
-  int Size(int dim);
+  const Scale& Size() { return data_node_->data_.size; }
+  int Size(int dim) { return data_node_->data_.size[dim]; }
   NArray Reshape(const Scale& dims);
   NArray Trans();
   // Lazy reductions

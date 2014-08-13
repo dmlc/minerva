@@ -39,9 +39,9 @@ class AddOneManyTimesOp: public LogicalComputeFn, PhysicalComputeFn {
   void Execute(DataList& inputs, DataList& outputs, ImplType type) {
     float* src = inputs[0].GetCpuData();
     float* dst = outputs[0].GetCpuData();
-    for(int i = 0; i < inputs[0].Size().Prod(); ++i) {
-      dst[i] = src[i];
-      for(int j = 0; j < 5000; ++j) {
+    memcpy(dst, src, inputs[0].Size().Prod() * sizeof(float));
+    for(int j = 0; j < 5000; ++j) {
+      for(int i = 0; i < inputs[0].Size().Prod(); ++i) {
         dst[i] += 1;
       }
     }

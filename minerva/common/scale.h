@@ -52,12 +52,15 @@ class Scale {
   bool IncrDimensions(const Scale&, const Scale&);
 
   Scale() {}
-  Scale(const std::vector<int>& sc): vec_(sc) {} // allow implicit conversion
-  Scale(const Scale& other): vec_(other.vec_) {}
-  Scale(Scale&& other): vec_(other.vec_) {}
-  explicit Scale(int i1): vec_{i1} { }
-  Scale(int i1, int i2): vec_{i1, i2} { }
-  Scale(int i1, int i2, int i3): vec_{i1, i2, i3} { }
+  Scale(const std::initializer_list<int>& lst): vec_(lst) { Init(); } // allow implicit conversion
+  Scale(const std::vector<int>& sc): vec_(sc) { Init(); } // allow implicit conversion
+  Scale(const Scale& other): vec_(other.vec_), prod_val_(other.prod_val_) {}
+  Scale(Scale&& other): vec_(other.vec_), prod_val_(other.prod_val_) {}
+  Scale& operator = (const Scale& other) {
+    vec_ = other.vec_;
+    prod_val_ = other.prod_val_;
+    return *this;
+  }
 
   int operator [] (size_t i) const { return vec_[i]; }
   int& operator [] (size_t i) { return vec_[i]; }
@@ -66,10 +69,6 @@ class Scale {
   }
   bool operator != (const Scale& other) const {
     return vec_ != other.vec_;
-  }
-  Scale& operator = (const Scale& other) {
-    vec_ = other.vec_;
-    return *this;
   }
   bool operator < (const Scale& other) const {
     return vec_ < other.vec_;
@@ -84,7 +83,8 @@ class Scale {
     return vec_ >= other.vec_;
   }
   size_t NumDims() const { return vec_.size(); }
-  int Prod() const;
+  int Prod() const { return prod_val_; }
+  void Resize(size_t n, int val) { vec_.resize(n, val); }
   template<class Fn> Scale Map(Fn fn) const;
   Scale Concat(int val) const;
 
@@ -95,8 +95,17 @@ class Scale {
   const std::vector<int>& ToVector() const { return vec_; }
   std::string ToString() const;
   NVector<Scale> ToNVector() const;
+
+ private:
+  void Init() {
+    prod_val_ = vec_.empty() ? 0 : 1;
+    for(int i : vec_)
+      prod_val_ *= i;
+  }
+
  private:
   std::vector<int> vec_;
+  int prod_val_;
 };
 
 inline std::ostream& operator << (std::ostream& os, const Scale& sc) {

@@ -16,9 +16,9 @@ class DataShard {
   float* GetTransformedCpuData();
   float* GetTransformedGpuData();
   // Getters
-  Scale Size() const { return data_info_.size; }
-  Scale Offset() const { return data_info_.offset; }
-  Scale OffsetIndex() const { return data_info_.offset_index; }
+  const Scale& Size() const { return data_info_.size; }
+  const Scale& Offset() const { return data_info_.offset; }
+  const Scale& OffsetIndex() const { return data_info_.offset_index; }
  private:
   const PhysicalData& data_info_;
 };

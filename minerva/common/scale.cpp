@@ -12,15 +12,6 @@ namespace minerva {
 ////////////////////////////////////////////////////////
 const Scale Scale::kNullScale;
 
-int Scale::Prod() const {
-  if(vec_.empty())
-    return 0;
-  else {
-    int prod = 1;
-    for(int i : vec_) prod *= i;
-    return prod;
-  }
-}
 string Scale::ToString() const {
   stringstream ss;
   ss << "[";
@@ -208,14 +199,12 @@ size_t ScaleRange::Area() const {
 }
 
 size_t ScaleRange::Flatten(const Scale& sc) const {
-  assert(IsInRange(sc));
-  Scale off = sc - start_;
-  Scale interval = end_ - start_;
+  CHECK(IsInRange(sc));
   size_t stride = 1;
   size_t ret = 0;
-  for(size_t i = 0; i < off.NumDims(); ++i) {
-    ret += off[i] * stride;
-    stride *= interval[i];
+  for(size_t i = 0; i < sc.NumDims(); ++i) {
+    ret += (sc[i] - start_[i]) * stride;
+    stride *= end_[i] - start_[i];
   }
   return ret;
 }

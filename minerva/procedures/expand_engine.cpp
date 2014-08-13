@@ -109,10 +109,10 @@ void ExpandEngine::MakeMapping(LogicalDag::DNode* ldnode, NVector<Chunk>& chunks
   // check size & set offset, offset_index
   // TODO how to make this faster ?
   Scale merged_size = Chunk::ComputeOffset(chunks);
-  //CHECK_EQ(ldnode->data_.size, merged_size)
-    //<< "Expand function error: partition size unmatched!\n"
-    //<< "Expected: " << ldnode->data_.size << "\n"
-    //<< "Got: " << merged_size;
+  CHECK_EQ(ldnode->data_.size, merged_size)
+    << "Expand function error: partition size unmatched!\n"
+    << "Expected: " << ldnode->data_.size << "\n"
+    << "Got: " << merged_size;
   // set external rc
   for(auto ch : chunks) {
     ch.data_node()->data_.extern_rc = ldnode->data_.extern_rc;
