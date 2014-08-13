@@ -45,6 +45,7 @@ class PhysicalEngine: public PhysicalDagProcedure, public PhysicalDagMonitor {
   struct RuntimeState {
     int dependency_counter;
     std::condition_variable* on_complete;
+    std::mutex* state_mutex;
   };
 
  private:
@@ -55,7 +56,7 @@ class PhysicalEngine: public PhysicalDagProcedure, public PhysicalDagMonitor {
   void NodeRunner(DagNode*, NodeStateMap<PhysicalDag>& );
   void AppendTask(DagNode*, NodeStateMap<PhysicalDag>& );
 
-  std::mutex node_states_mutex_;
+  //std::mutex node_states_mutex_;
   std::unordered_map<uint64_t, RuntimeState> rt_states_;
 
   ThreadPool thread_pool_;

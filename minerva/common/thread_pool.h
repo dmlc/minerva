@@ -25,7 +25,13 @@ class ThreadPool {
   template<class T>
   void Push(const T& task) {
     std::function<void()> fnptr = task;
+    ++num_tasks_unfinished_;
     task_queue_.Push(task);
+  }
+  void WaitForAllFinished() {
+    while(num_tasks_unfinished_ != 0) {
+      std::this_thread::yield();
+    }
   }
 
  private:
@@ -33,6 +39,7 @@ class ThreadPool {
   ThreadPool();
   std::vector<std::thread> workers_;
   ConcurrentBlockingQueue<Task> task_queue_;
+  std::atomic<int> num_tasks_unfinished_;
 
   void SimpleWorker(int thrid) {
     while (true) {
@@ -42,6 +49,7 @@ class ThreadPool {
         return;
       }
       task();
+      --num_tasks_unfinished_;
     }
   }
 };
