@@ -91,7 +91,6 @@ class NArray {
   NArray Max(int dim);
   NArray Max(const Scale& dims);
   NArray MaxIndex(int dim);
-  NArray MaxIndex(const Scale& dims);
   // Replicate matrix
   NArray NormArithmetic(NArray, ArithmeticType);
   // Non-lazy reductions

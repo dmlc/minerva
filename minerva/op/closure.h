@@ -62,7 +62,7 @@ struct ReductionClosure {
 };
 
 struct MaxIndexClosure {
-  Scale dims;
+  int dim;
 };
 
 struct NormArithmeticClosure {

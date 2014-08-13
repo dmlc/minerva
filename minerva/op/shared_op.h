@@ -131,15 +131,15 @@ class MaxIndexOp : public SharedComputeFnWithClosure<MaxIndexClosure> {
       // Merge first
       merged = Chunk::Merge(inputs[0]);
     } else {
-      merged = inputs[0][0];
+      merged = inputs[0].ToVector()[0];
     }
     MaxIndexOp* op = new MaxIndexOp;
     op->closure = closure;
     auto size = merged.Size();
-    for (auto i: dims) {
-      size[i] = 1;
-    }
-
+    size[closure.dim] = 1;
+    NVector<Chunk> ret(Scale::Constant(merged.Size().NumDims(), 1));
+    ret[Scale::Origin(merged.Size().NumDims())] = Chunk::Compute({merged}, {size}, op)[0];
+    return {ret};
   }
   std::string Name() const {
     return "max index";
