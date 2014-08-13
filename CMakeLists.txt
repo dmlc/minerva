@@ -9,7 +9,7 @@ message(STATUS "cmake build type: ${CMAKE_BUILD_TYPE}")
 
 set(COMPILER_FLAGS "-std=c++11 -Wall -g -pthread -m64 -fPIC")
 set(CMAKE_CXX_FLAGS_DEBUG "${COMPILER_FLAGS} -O0 -march=native")
-set(CMAKE_CXX_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -march=native -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0")
+set(CMAKE_CXX_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -march=native -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0 -DNDEBUG")
 
 string(REPLACE "," ";" external_lib_list "${EXTERNAL_LIBS}")
 string(REPLACE "," ";" external_lib_path_list "${EXTERNAL_LIB_PATH}")

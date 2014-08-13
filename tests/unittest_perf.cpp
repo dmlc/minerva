@@ -8,7 +8,7 @@
 using namespace std;
 using namespace minerva;
 
-TEST(PerfTest, DISABLED_LotsOfUnusedNArray) {
+TEST(PerfTest, LotsOfUnusedNArray) {
   vector<NArray> narrs;
   for(int i = 0; i < 1000; ++i) {
     narrs.push_back(NArray::Constant({10, 10}, i, {2, 2}));
@@ -57,7 +57,7 @@ class AddOneManyTimesOp: public LogicalComputeFn, PhysicalComputeFn {
   std::string Name() const { return "+1:5000times"; }
 };
 
-TEST(PerfTest, DISABLED_LongChainInOne) {
+TEST(PerfTest, LongChainInOne) {
   NArray a = NArray::Constant({10, 10}, 0.0, {2, 2});
   NArray b = NArray::Compute({a}, {a.Size()}, new AddOneManyTimesOp)[0];
   b.Eval();
