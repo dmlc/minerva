@@ -42,6 +42,10 @@ template <typename T> class ConcurrentBlockingQueue {
     exit_now_.Write(true);
     cv_.notify_all();
   }
+  size_t QueueSize() {
+    std::unique_lock<std::mutex> lock(mutex_);
+    return queue_.size();
+  }
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ConcurrentBlockingQueue);

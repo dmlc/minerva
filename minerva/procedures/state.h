@@ -4,6 +4,7 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
+#include <mutex>
 #include <iostream>
 #include "dag/dag.h"
 
@@ -54,6 +55,7 @@ class NodeStateMap : public DagMonitor<DagType> {
     NodeState old = states_[id];
     if(old != to) {
       states_[id] = to;
+      std::lock_guard<std::mutex> lck(mutex_);
       state_sets_[(int)old].erase(id);
       state_sets_[(int)to].insert(id);
     }
@@ -72,6 +74,7 @@ class NodeStateMap : public DagMonitor<DagType> {
     state_sets_[(int)s].erase(id);
   }
  private:
+  mutable std::mutex mutex_;
   std::unordered_map<uint64_t, NodeState> states_;
   std::unordered_set<uint64_t> state_sets_[kNumNodeStates];
 };
