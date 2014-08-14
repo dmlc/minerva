@@ -1,4 +1,5 @@
 #include <minerva.h>
+#include <fstream>
 #include <gflags/gflags.h>
 
 DEFINE_bool(init, false, "Only generate init weights");
@@ -9,7 +10,7 @@ using namespace minerva;
 const float epsW = 0.001, epsB = 0.001;
 const int numepochs = 1;
 const int mb_size = 256;
-const int num_mb_per_epoch = 235;
+const int num_mb_per_epoch = 1;//235;
 
 const string weight_init_files[] = { "w12_init.dat", "w23_init.dat", };
 const string weight_out_files[] = { "w12_trained.dat", "w23_trained.dat", };
@@ -35,8 +36,8 @@ void InitWeight() {
   SimpleFileLoader* loader = new SimpleFileLoader;
   w12 = NArray::LoadFromFile({l2, l1}, weight_init_files[0], loader, {1, 1});
   w23 = NArray::LoadFromFile({l3, l2}, weight_init_files[1], loader, {1, 1});
-  b2 = NArray::Constant({l2, 1}, 0.0);
-  b3 = NArray::Constant({l3, 1}, 0.0);
+  b2 = NArray::Constant({l2, 1}, 0.0, {1, 1});
+  b3 = NArray::Constant({l3, 1}, 0.0, {1, 1});
 }
 
 NArray Softmax(NArray a) {
@@ -49,15 +50,20 @@ int main(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   if(FLAGS_init) {
+    cout << "Generate initial weights" << endl;
     GenerateInitWeight();
+    cout << "Finished!" << endl;
     return 0;
   } else {
+    cout << "Init weights and bias" << endl;
     InitWeight();
   }
 
+  cout << "Training procedure:" << endl;
   OneFileMBLoader train_data_loader(train_data_file, {l1});
   OneFileMBLoader train_label_loader(train_label_file, {l3});
   for(int epoch = 0; epoch < numepochs; ++epoch) {
+    cout << "  Epoch #" << epoch << endl;
     for(int mb = 0; mb < num_mb_per_epoch; ++mb) {
       NArray data = train_data_loader.LoadNext(mb_size);
       NArray label = train_label_loader.LoadNext(mb_size);
@@ -83,5 +89,17 @@ int main(int argc, char** argv) {
       b3 -= epsB * gb3;
     }
   }
+  // [optional] output logical dag file
+  ofstream ldagfout("mnist_ldag.txt");
+  ldagfout << MinervaSystem::Instance().logical_dag().PrintDag() << endl;
+  ldagfout.close();
+  // output weights
+  cout << "Write weight to files" << endl;
+  FileFormat format;
+  format.binary = true;
+  w12.ToFile(weight_out_files[0], format);
+  w23.ToFile(weight_out_files[1], format);
+
+  cout << "Training finished." << endl;
   return 0;
 }

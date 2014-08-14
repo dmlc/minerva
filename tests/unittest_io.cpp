@@ -107,3 +107,16 @@ TEST_F(MiniBatchIOTest, ReadWrapAroundMultipleAround) {
   }
   delete [] a1ptr;
 }
+
+TEST_F(MiniBatchIOTest, LoadAndMult) {
+  OneFileMBLoader loader(mb_file_name, {sample_length});
+  EXPECT_EQ(loader.num_samples(), num_samples);
+  NArray w = NArray::Constant({20, sample_length}, 0, {1, 1});
+  NArray x = loader.LoadNext(30);
+  NArray y = w * x;
+  //cout << MinervaSystem::Instance().logical_dag().PrintDag() << endl;
+  float* yptr = y.Get();
+  for(int i = 0; i < 20 * 30; ++i)
+    ASSERT_EQ(yptr[i], 0);
+  delete [] yptr;
+}

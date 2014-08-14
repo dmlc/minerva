@@ -121,6 +121,7 @@ void PhysicalEngine::GCNodes(PhysicalDag& dag, NodeStateMap<PhysicalDag>& node_s
   //cout << "#completed/#dead/: " << node_states.GetNodesOfState(NodeState::kCompleted).size() 
     //<< "/" << dead_nodes.size() << endl;
   for(uint64_t nid : dead_nodes) {
+    DLOG(INFO) << "Delete physical node#" << nid;
     dag.DeleteNode(nid);
   }
 }

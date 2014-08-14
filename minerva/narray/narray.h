@@ -44,9 +44,9 @@ class NArray {
   friend class MinervaSystem;
  public:
   static NArray Constant(const Scale& size, float val,
-      const NVector<Scale>& = NVector<Scale>());
+      const NVector<Scale>&);
   static NArray Randn(const Scale& size, float mu, float var,
-      const NVector<Scale>& = NVector<Scale>());
+      const NVector<Scale>&);
   static NArray Constant(const Scale& size, float val, const Scale& );
   static NArray Randn(const Scale& size, float mu, float var, const Scale& );
   static NArray LoadFromFile(const Scale& size, const std::string& fname, IFileLoader* loader,
