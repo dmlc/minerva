@@ -27,11 +27,20 @@ class OneFileMBLoadOp :
     int num_samples, sample_length;
     fin.read(reinterpret_cast<char*>(&num_samples), sizeof(int));
     fin.read(reinterpret_cast<char*>(&sample_length), sizeof(int));
-    int length = closure.load_shape.Prod();
-    float* buf = new float[length];
-    int startpos = closure.sample_start_index * sample_length * sizeof(float);
-    fin.seekg(startpos, ios::cur);
-    fin.read(reinterpret_cast<char*>(buf), length * sizeof(float));
+    int num_floats = closure.load_shape.Prod();
+    float* buf = new float[num_floats];
+    // read contents
+    int read_start = closure.sample_start_index * sample_length;
+    fin.seekg(read_start * sizeof(float), ios::cur);
+    int num_floats_read = 0;
+    const int num_floats_file = num_samples * sample_length;
+    while(num_floats_read < num_floats) {
+      int to_read = min(num_floats - num_floats_read, num_floats_file - read_start);
+      fin.read(reinterpret_cast<char*>(buf + num_floats_read), to_read * sizeof(float));
+      num_floats_read += to_read;
+      fin.seekg(2 * sizeof(int), ios::beg);
+      read_start = 0;
+    }
     // split
     size_t numdims = outputs[0].Size().NumDims();
     Scale dststart = Scale::Origin(numdims);
@@ -60,6 +69,7 @@ OneFileMBLoader::OneFileMBLoader(const string& name, const Scale& s):
   fin.read(reinterpret_cast<char*>(&num_samples_), 4);
   fin.read(reinterpret_cast<char*>(&sample_length_), 4);
   fin.close();
+  CHECK_EQ(sample_shape_.Prod(), sample_length_) << "size of each sample mismatch!";
 }
 OneFileMBLoader::~OneFileMBLoader() {
 }

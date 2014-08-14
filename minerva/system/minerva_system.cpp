@@ -39,6 +39,8 @@ void MinervaSystem::Finalize() {
 
 MinervaSystem::MinervaSystem(): impl_decider_(NULL) {
 }
+MinervaSystem::~MinervaSystem() {
+}
 
 void MinervaSystem::LoadBuiltinDagMonitors() {
   logical_dag_.RegisterMonitor(&lnode_states_);
@@ -85,6 +87,7 @@ float* MinervaSystem::GetValue(NArray& narr) {
 }
 
 void MinervaSystem::IncrExternRC(LogicalDag::DNode* dnode, int amount) {
+  CHECK_NOTNULL(dnode);
   int result_extern_rc = dnode->data_.extern_rc + amount;
   dnode->data_.extern_rc = result_extern_rc;
   uint64_t ldnode_id = dnode->node_id();

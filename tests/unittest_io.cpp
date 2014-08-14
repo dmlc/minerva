@@ -37,6 +37,10 @@ class MiniBatchIOTest : public testing::Test {
   }
   static void TearDownTestCase() {
   }
+  void SetUp() {
+  }
+  void TearDown() {
+  }
   static const string mb_file_name;
   static const int num_samples, sample_length;
 };
@@ -47,17 +51,59 @@ const int MiniBatchIOTest::sample_length = 10;
 TEST_F(MiniBatchIOTest, NormalRead) {
   OneFileMBLoader loader(mb_file_name, {sample_length});
   EXPECT_EQ(loader.num_samples(), num_samples);
-
   int sample_idx = 0;
   for(int k = 0; k < num_samples / 10; ++k) {
     NArray a1 = loader.LoadNext(10);
     float* a1ptr = a1.Get();
     for(int i = 0; i < 10; ++i,++sample_idx)
       for(int j = 0; j < sample_length; ++j)
-        EXPECT_EQ(a1ptr[j + i * sample_length], sample_idx);
+        ASSERT_EQ(a1ptr[j + i * sample_length], sample_idx);
     delete [] a1ptr;
   }
 }
 
 TEST_F(MiniBatchIOTest, ReadWrapAround) {
+  OneFileMBLoader loader(mb_file_name, {sample_length});
+  EXPECT_EQ(loader.num_samples(), num_samples);
+  int sample_idx = 0;
+  for(int k = 0; k < num_samples / 10 * 2; ++k) {
+    NArray a1 = loader.LoadNext(10);
+    float* a1ptr = a1.Get();
+    for(int i = 0; i < 10; ++i) {
+      for(int j = 0; j < sample_length; ++j)
+        ASSERT_EQ(a1ptr[j + i * sample_length], sample_idx);
+      sample_idx = (sample_idx + 1) % num_samples;
+    }
+    delete [] a1ptr;
+  }
+}
+
+TEST_F(MiniBatchIOTest, ReadWrapAroundCrossEdge) {
+  OneFileMBLoader loader(mb_file_name, {sample_length});
+  EXPECT_EQ(loader.num_samples(), num_samples);
+  int sample_idx = 0;
+  for(int k = 0; k < 10; ++k) {
+    NArray a1 = loader.LoadNext(30);
+    float* a1ptr = a1.Get();
+    for(int i = 0; i < 30; ++i) {
+      for(int j = 0; j < sample_length; ++j)
+        ASSERT_EQ(a1ptr[j + i * sample_length], sample_idx);
+      sample_idx = (sample_idx + 1) % num_samples;
+    }
+    delete [] a1ptr;
+  }
+}
+
+TEST_F(MiniBatchIOTest, ReadWrapAroundMultipleAround) {
+  OneFileMBLoader loader(mb_file_name, {sample_length});
+  EXPECT_EQ(loader.num_samples(), num_samples);
+  int sample_idx = 0;
+  NArray a1 = loader.LoadNext(450);
+  float* a1ptr = a1.Get();
+  for(int i = 0; i < 450; ++i) {
+    for(int j = 0; j < sample_length; ++j)
+      ASSERT_EQ(a1ptr[j + i * sample_length], sample_idx);
+    sample_idx = (sample_idx + 1) % num_samples;
+  }
+  delete [] a1ptr;
 }

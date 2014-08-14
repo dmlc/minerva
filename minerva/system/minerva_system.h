@@ -12,10 +12,11 @@
 namespace minerva {
 
 class MinervaSystem :
-  public Singleton<MinervaSystem> {
+  public EverlastingSingleton<MinervaSystem> {
   friend class NArray;
+  friend class EverlastingSingleton<MinervaSystem>;
  public:
-  MinervaSystem();
+  ~MinervaSystem();
   void Initialize(int* argc, char*** argv);
   void Finalize();
   LogicalDag& logical_dag() { return logical_dag_; }
@@ -28,6 +29,8 @@ class MinervaSystem :
   float* GetValue(NArray& narr);
 
  private:
+  DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
+  MinervaSystem();
   void LoadBuiltinDagMonitors();
   void IncrExternRC(LogicalDag::DNode* , int amount = 1);
 
