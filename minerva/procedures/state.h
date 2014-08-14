@@ -49,14 +49,13 @@ class NodeStateMap : public DagMonitor<DagType> {
     RemoveNode(n->node_id());
   }
   NodeState GetState(uint64_t id) const {
-    std::lock_guard<std::mutex> lck(mutex_);
     return states_.find(id)->second;
   }
   void ChangeState(uint64_t id, NodeState to) {
-    std::lock_guard<std::mutex> lck(mutex_);
     NodeState old = states_[id];
     if(old != to) {
       states_[id] = to;
+      std::lock_guard<std::mutex> lck(mutex_);
       state_sets_[(int)old].erase(id);
       state_sets_[(int)to].insert(id);
     }

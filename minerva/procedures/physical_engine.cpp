@@ -132,6 +132,7 @@ void PhysicalEngine::AppendTask(DagNode* node, NodeStateMap<PhysicalDag>& node_s
 void PhysicalEngine::NodeRunner(DagNode* node, NodeStateMap<PhysicalDag>& node_states) {
   MinervaSystem& ms = MinervaSystem::Instance();
   uint64_t nid = node->node_id();
+  CHECK_EQ(node_states.GetState(nid), NodeState::kReady);
   if (node->Type() == DagNode::OP_NODE) { // OpNode
     vector<DataShard> input;
     vector<DataShard> output;
@@ -162,7 +163,9 @@ void PhysicalEngine::NodeRunner(DagNode* node, NodeStateMap<PhysicalDag>& node_s
     }
   } 
   {
-    lock_guard<mutex> lock(*rt_states_[nid].state_mutex);
+    //lock_guard<mutex> lock(*rt_states_[nid].state_mutex);
+    //// ATTENTION: we don't need this lock if we could assure that for each required nid,
+    //              the NodeRunner() function would be called once and only once.
     // change states
     if(node->Type() == DagNode::OP_NODE) {
       node_states.ChangeState(nid, NodeState::kDead); // the op node is executed thus could be GCed
@@ -186,9 +189,9 @@ void PhysicalEngine::NodeRunner(DagNode* node, NodeStateMap<PhysicalDag>& node_s
   for (auto succ: node->successors_) {
     RuntimeState& rts = rt_states_[succ->node_id()];
     lock_guard<mutex> lock(*rts.state_mutex);
-    NodeState state = node_states.GetState(succ->node_id());
     CHECK_GE(--rts.dependency_counter, 0) << "wrong dependency_counter for node#" << succ->node_id();
     // Append node if all predecessors are finished
+    NodeState state = node_states.GetState(succ->node_id());
     if (state == NodeState::kReady && rts.dependency_counter == 0) {
       AppendTask(succ, node_states);
     }
