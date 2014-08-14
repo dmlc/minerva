@@ -1,6 +1,7 @@
 #include <minerva.h>
 #include <iostream>
 #include <op/impl/basic.h>
+#include <gtest/gtest.h>
 
 using namespace minerva;
 using namespace std;
@@ -25,8 +26,7 @@ void Fill(float* arr, size_t len) {
   }
 }
 
-void Test1() {
-  cout << "Test 2D norm arithmetic on first dimension" << endl;
+TEST(NormArithmeticKernel, AddFirstDimension) {
   DataStore& dstore = MinervaSystem::Instance().data_store();
   Scale s1 = {4, 6};
   Scale s2 = {1, 6};
@@ -45,33 +45,16 @@ void Test1() {
   NormArithmeticClosure closure{ADD, Scale{0}};
   Fill(dstore.GetData(id1, DataStore::CPU), s1.Prod());
   Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
-  cout << "Normalizer" << endl;
-  for (int i = 0; i < s1[1]; ++i) {
-    for (int j = 0; j < s1[0]; ++j) {
-      cout << dstore.GetData(id1, DataStore::CPU)[i * s1[0] + j] << " ";
-    }
-    cout << endl;
-  }
-  cout << "Normalizee" << endl;
-  for (int i = 0; i < s2[1]; ++i) {
-    for (int j = 0; j < s2[0]; ++j) {
-      cout << dstore.GetData(id2, DataStore::CPU)[i * s2[0] + j] << " ";
-    }
-    cout << endl;
-  }
   basic::NormArithmetic(in, out, closure);
-  cout << "Result" << endl;
   float* res = dstore.GetData(id3, DataStore::CPU);
-  for (int i = 0; i < s3[1]; ++i) {
-    for (int j = 0; j < s3[0]; ++j) {
-      cout << res[i * s3[0] + j] << " ";
+  for (int i = 0; i < s3[0]; ++i) {
+    for (int j = 0; j < s3[j]; ++j) {
+      EXPECT_FLOAT_EQ(res[i + s3[0] * j], i + s3[0] * j + 2);
     }
-    cout << endl;
   }
 }
 
-void Test2() {
-  cout << "Test 2D norm arithmetic on second dimension" << endl;
+TEST(NormArithmeticKernel, MultSecondDimension) {
   DataStore& dstore = MinervaSystem::Instance().data_store();
   Scale s1 = {4, 6};
   Scale s2 = {4, 1};
@@ -90,35 +73,12 @@ void Test2() {
   NormArithmeticClosure closure{MULT, Scale{1}};
   Fill(dstore.GetData(id1, DataStore::CPU), s1.Prod());
   Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
-  cout << "Normalizer" << endl;
-  for (int i = 0; i < s1[1]; ++i) {
-    for (int j = 0; j < s1[0]; ++j) {
-      cout << dstore.GetData(id1, DataStore::CPU)[i * s1[0] + j] << " ";
-    }
-    cout << endl;
-  }
-  cout << "Normalizee" << endl;
-  for (int i = 0; i < s2[1]; ++i) {
-    for (int j = 0; j < s2[0]; ++j) {
-      cout << dstore.GetData(id2, DataStore::CPU)[i * s2[0] + j] << " ";
-    }
-    cout << endl;
-  }
   basic::NormArithmetic(in, out, closure);
-  cout << "Result" << endl;
   float* res = dstore.GetData(id3, DataStore::CPU);
-  for (int i = 0; i < s3[1]; ++i) {
-    for (int j = 0; j < s3[0]; ++j) {
-      cout << res[i * s3[0] + j] << " ";
+  for (int i = 0; i < s3[0]; ++i) {
+    for (int j = 0; j < s3[1]; ++j) {
+      EXPECT_FLOAT_EQ(res[i + s3[0] * j], 2 * (i + s3[0] * j));
     }
-    cout << endl;
   }
-}
-
-int main(int argc, char** argv) {
-  MinervaSystem::Instance().Initialize(&argc, &argv);
-  Test1();
-  Test2();
-  return 0;
 }
 
