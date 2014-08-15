@@ -22,7 +22,7 @@ NVector<Chunk> FileLoaderOp::Expand(const NVector<Scale>& part_sizes) {
 
 string FileLoaderOp::Name() const {
   stringstream ss;
-  ss << "load(\"" << closure.fname << "\")";
+  ss << "load(" << closure.fname << ")";
   return ss.str();
 }
 

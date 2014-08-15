@@ -16,19 +16,21 @@ static MinervaSystem& ms = MinervaSystem::Instance();
 // constructors & destructors
 ////////////////////////////////////////////////////
 // public
-NArray::NArray(): data_node_(NULL) {}
+NArray::NArray(): data_node_(nullptr) {}
 NArray::NArray(const NArray& other): data_node_(other.data_node_) {
   ms.IncrExternRC(data_node_);
 }
 NArray::~NArray() {
-  if(data_node_ != NULL)
+  if(data_node_ != nullptr)
     ms.IncrExternRC(data_node_, -1);
 }
 NArray& NArray::operator = (const NArray& other) {
   auto old_dnode = data_node_;
   data_node_ = other.data_node_;
-  ms.IncrExternRC(data_node_, 1);
-  ms.IncrExternRC(old_dnode, -1);
+  if(data_node_ != nullptr)
+    ms.IncrExternRC(data_node_, 1);
+  if(old_dnode != nullptr)
+    ms.IncrExternRC(old_dnode, -1);
   return *this;
 }
 // private

@@ -80,7 +80,7 @@ class NVector {
     return data_[i];
   }
   void AugmentDim() {
-    range_ = ScaleRange::MakeRange(range_.start().Concat(1), range_.end().Concat(1));
+    range_ = ScaleRange::MakeRange(range_.start().Concat(0), range_.end().Concat(1));
   }
 
 private:
