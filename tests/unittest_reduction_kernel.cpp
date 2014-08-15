@@ -1,6 +1,7 @@
 #include <minerva.h>
 #include <iostream>
 #include <op/impl/basic.h>
+#include <gtest/gtest.h>
 
 using namespace minerva;
 using namespace std;
@@ -13,9 +14,9 @@ PhysicalData MakeData(Scale s, uint64_t data) {
   return ret;
 }
 
-void Fill(float* arr, float val, size_t len) {
+void Fill(float* arr, size_t len) {
   for (size_t i = 0; i < len; ++i) {
-    arr[i] = val;
+    arr[i] = i;
   }
 }
 
@@ -28,8 +29,7 @@ PhysicalData MakeData(Scale s, Scale o, Scale oi, uint64_t id) {
   return pdata;
 }
 
-void Test1() {
-  cout << "Test 2D reduction on first dimension" << endl;
+TEST(ReductionKernel, SumOnFirstDimension) {
   DataStore& dstore = MinervaSystem::Instance().data_store();
   Scale s1 = {20, 30};
   Scale s2 = {1, 30};
@@ -42,19 +42,15 @@ void Test1() {
   DataList in{DataShard(d1)};
   DataList out{DataShard(d2)};
   ReductionClosure closure{SUM, Scale{0}};
-  Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
+  Fill(dstore.GetData(id1, DataStore::CPU), s1.Prod());
   basic::Reduction(in, out, closure);
   float* res = dstore.GetData(id2, DataStore::CPU);
-  for (int i = 0; i < s2[0]; ++i) {
-    for (int j = 0; j < s2[1]; ++j) {
-      cout << res[i * s2[1] + j] << " ";
-    }
-    cout << endl;
+  for (int i = 0; i < s2[1]; ++i) {
+    EXPECT_FLOAT_EQ(res[i], 400 * i + 190);
   }
 }
 
-void Test2() {
-  cout << "Test 2D reduction on second dimension" << endl;
+TEST(ReductionKernel, MaxOnSecondDimension) {
   DataStore& dstore = MinervaSystem::Instance().data_store();
   Scale s1 = {20, 30};
   Scale s2 = {20, 1};
@@ -66,22 +62,12 @@ void Test2() {
   PhysicalData d2 = MakeData(s2, id2);
   DataList in{DataShard(d1)};
   DataList out{DataShard(d2)};
-  ReductionClosure closure{SUM, Scale{1}};
-  Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
+  ReductionClosure closure{MAX, Scale{1}};
+  Fill(dstore.GetData(id1, DataStore::CPU), s1.Prod());
   basic::Reduction(in, out, closure);
   float* res = dstore.GetData(id2, DataStore::CPU);
   for (int i = 0; i < s2[0]; ++i) {
-    for (int j = 0; j < s2[1]; ++j) {
-      cout << res[i * s2[1] + j] << " ";
-    }
-    cout << endl;
+    EXPECT_FLOAT_EQ(res[i], 580 + i);
   }
-}
-
-int main(int argc, char** argv) {
-  MinervaSystem::Instance().Initialize(&argc, &argv);
-  Test1();
-  Test2();
-  return 0;
 }
 
