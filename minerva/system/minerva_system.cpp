@@ -67,7 +67,7 @@ void MinervaSystem::SetImplDecider(ImplDecider* decider) {
 void MinervaSystem::Eval(NArray& narr) {
   LOG(INFO) << "Evaluation start...";
   // logical dag
-  //expand_engine_->GCNodes(logical_dag_);// GC useless logical nodes
+  expand_engine_->GCNodes(logical_dag_);// GC useless logical nodes
   std::vector<uint64_t> id_to_eval = {narr.data_node_->node_id()};
   expand_engine_->Process(logical_dag_, id_to_eval);
   //cout << physical_dag().PrintDag<OffsetPrinter>() << endl;

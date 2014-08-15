@@ -194,16 +194,18 @@ void DagEngine<DagType>::BottomUpScan(DagType& dag, const std::vector<uint64_t>&
     DagNode* node = dag.GetNode(nid);
     queue.pop();
     node_states_.ChangeState(nid, NodeState::kReady);
+    int pred_count = 0;
     for(DagNode* pred : node->predecessors_) {
       NodeState pred_state = node_states_.GetState(pred->node_id());
       switch(pred_state) {
         case NodeState::kBirth:
           queue.push(pred->node_id());
+          ++pred_count;
           break;
         case NodeState::kReady:
+          ++pred_count;
           break;
         case NodeState::kCompleted:
-          start_frontier_.insert(pred->node_id());
           break;
         case NodeState::kDead:
         default:
@@ -211,7 +213,7 @@ void DagEngine<DagType>::BottomUpScan(DagType& dag, const std::vector<uint64_t>&
           break;
       }
     }
-    if(node->predecessors_.empty()) {
+    if(pred_count == 0) {
       start_frontier_.insert(nid);
     }
   }
@@ -235,6 +237,7 @@ void DagEngine<DagType>::TopDownScan(DagType& dag, const std::vector<uint64_t>& 
     }
     LOG(INFO) << "Node (id=" << tgtid << ") complete.";
   }
+  DLOG(INFO) << "Wait for thread to be quiet";
   thread_pool_.WaitForAllFinished();
 }
 
@@ -278,12 +281,15 @@ void DagEngine<DagType>::NodeTask(DagNode* node) {
     // data node is changed to Complete state
     node_states_.ChangeState(nid, NodeState::kCompleted);
   }
+
+  TriggerSuccessors(node);
+
   RuntimeInfo& ri = rt_info_[node->node_id()];
   std::lock_guard<std::mutex> lck(*ri.mutex);
   if(ri.on_complete != nullptr) {
+    DLOG(INFO) << "Notify node#" << node->node_id() << " is finished";
     ri.on_complete->notify_all();
   }
-  TriggerSuccessors(node);
 }
   
 template<class DagType>
@@ -291,12 +297,13 @@ void DagEngine<DagType>::TriggerSuccessors(DagNode* node) {
   for(DagNode* succ : node->successors_) {
     RuntimeInfo& ri = rt_info_[succ->node_id()];
     std::lock_guard<std::mutex> lock(*ri.mutex);
-    CHECK_GE(--ri.num_triggers_needed, 0) << "wrong #triggers for node#" << succ->node_id();
     NodeState succ_state = node_states_.GetState(succ->node_id());
     CHECK_NE(succ_state, NodeState::kCompleted);
     CHECK_NE(succ_state, NodeState::kDead);
-    if(succ_state == NodeState::kReady && ri.num_triggers_needed == 0) {
-      AppendTask(succ);
+    if(succ_state == NodeState::kReady) {
+      CHECK_GE(--ri.num_triggers_needed, 0) << "wrong #triggers for node#" << succ->node_id();
+      if(ri.num_triggers_needed == 0)
+        AppendTask(succ);
     }
   }
 }

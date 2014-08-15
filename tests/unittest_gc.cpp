@@ -73,8 +73,11 @@ TEST(GCCorrectness, ChangeBothRCAfterEval) {
     b = c + 2;
   }
   a.Eval();
-  cout << ms.logical_dag().PrintDag() << endl;
-  EXPECT_EQ(ms.logical_dag().NumNodes(), 4);
+  //cout << ms.logical_dag().PrintDag() << endl;
+  EXPECT_EQ(ms.logical_dag().NumNodes(), 5);
   b.Eval();
-  EXPECT_EQ(ms.logical_dag().NumNodes(), 2);
+  EXPECT_EQ(ms.logical_dag().NumNodes(), 4);
+  NArray d = NArray::Constant({10, 8}, 0.0, {1, 1});
+  d.Eval();
+  EXPECT_EQ(ms.logical_dag().NumNodes(), 3);
 }
