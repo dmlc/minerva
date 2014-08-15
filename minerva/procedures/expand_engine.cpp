@@ -37,7 +37,6 @@ void ExpandEngine::GCNodes(LogicalDag& dag, NodeStateMap<LogicalDag>& node_state
   }
   // delete node of kDead state 
   for(uint64_t nid : dead_nodes) {
-    DLOG(INFO) << "Delete logical node#" << nid;
     dag.DeleteNode(nid);
   }
 }
@@ -56,7 +55,7 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, NodeStateMap<LogicalDag>& node_st
       // call expand function to generate data
       LogicalDataGenFn* fn = dnode->data_.data_gen_fn;
       if(fn != nullptr) {
-        DLOG(INFO) << "Expand logical datagen function: " << fn->Name() << " node#" << curnode->node_id();
+        DLOG(INFO) << "Expand logical datagen function: " << fn->Name();
         NVector<Chunk> chunks = fn->Expand(dnode->data_.partitions);
         MakeMapping(dnode, chunks);
       }
@@ -68,7 +67,6 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, NodeStateMap<LogicalDag>& node_st
       // make input chunks
       std::vector<NVector<Chunk>> in_chunks;
       for(LogicalDag::DNode* dn : onode->inputs_) {
-        CHECK(IsExpanded(dn->node_id())) << "input node#" << dn->node_id() << " is not expanded!";
         NVector<uint64_t> mapped_pnode_ids = lnode_to_pnode_[dn->node_id()];
         in_chunks.push_back(
           mapped_pnode_ids.Map<Chunk>(
@@ -80,7 +78,7 @@ void ExpandEngine::ExpandNode(LogicalDag& dag, NodeStateMap<LogicalDag>& node_st
         );
       }
       // call expand function
-      DLOG(INFO) << "Expand logical compute function: " << fn->Name() << " node#" << curnode->node_id();
+      DLOG(INFO) << "Expand logical compute function: " << fn->Name();
       std::vector<NVector<Chunk>> rst_chunks = fn->Expand(in_chunks);
       // check output validity
       CHECK_EQ(rst_chunks.size(), onode->outputs_.size()) 
