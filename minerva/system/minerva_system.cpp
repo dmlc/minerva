@@ -23,7 +23,7 @@ static const bool impl_valid = gflags::RegisterFlagValidator(&FLAGS_impl, &IsVal
 static bool IsValidNumThreads(const char* flag, int n) {
   return n > 0;
 }
-DEFINE_int32(numthreads, 2, "number of threads used in execution");
+DEFINE_int32(numthreads, 1, "number of threads used in execution");
 static const bool numthreads_valid = gflags::RegisterFlagValidator(&FLAGS_numthreads, &IsValidNumThreads);
 /////////////////////// member function definitions //////////////////////
 namespace minerva {
@@ -31,7 +31,6 @@ namespace minerva {
 void MinervaSystem::Initialize(int* argc, char*** argv) {
   google::InitGoogleLogging((*argv)[0]);
   gflags::ParseCommandLineFlags(argc, argv, true);
-  LoadBuiltinDagMonitors();
   thread_pool_ = new ThreadPool(FLAGS_numthreads);
   data_store_ = new DataStore();
   physical_engine_ = new PhysicalEngine(*thread_pool_, *data_store_);
@@ -46,6 +45,7 @@ void MinervaSystem::Initialize(int* argc, char*** argv) {
   } else {
     impl_decider_ = &all_basic_impl;
   }
+  LoadBuiltinDagMonitors();
 }
 void MinervaSystem::Finalize() {
 }

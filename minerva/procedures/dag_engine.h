@@ -117,7 +117,8 @@ void DagEngine<DagType>::Process(DagType& dag, const std::vector<uint64_t>& targ
     ri.num_triggers_needed = ready_node->predecessors_.size();
     if(ready_node->Type() == DagNode::OP_NODE) {
       for(DagNode* ready_op_succ : ready_node->successors_) {
-        if(CalcTotalReferenceCount(dag.GetDataNode(ready_nid)) == 0) {
+        typename DagType::DNode* succ_dnode = dynamic_cast<typename DagType::DNode*>(ready_op_succ);
+        if(CalcTotalReferenceCount(succ_dnode) == 0) {
           // very rare case: A data is generated completely useless.
           node_states_.ChangeState(ready_op_succ->node_id(), NodeState::kDead);
         } else {
@@ -257,6 +258,7 @@ int DagEngine<DagType>::CalcTotalReferenceCount(typename DagType::DNode* dnode) 
 template<class DagType>
 void DagEngine<DagType>::NodeTask(DagNode* node) {
   uint64_t nid = node->node_id();
+  DLOG(INFO) << "Process node#" << nid;
   CHECK_EQ(node_states_.GetState(nid), NodeState::kReady);
   ProcessNode(node); // ATTENTION: NO lock protected!
   // change state
@@ -281,6 +283,7 @@ void DagEngine<DagType>::NodeTask(DagNode* node) {
   if(ri.on_complete != nullptr) {
     ri.on_complete->notify_all();
   }
+  TriggerSuccessors(node);
 }
   
 template<class DagType>
@@ -293,7 +296,7 @@ void DagEngine<DagType>::TriggerSuccessors(DagNode* node) {
     CHECK_NE(succ_state, NodeState::kCompleted);
     CHECK_NE(succ_state, NodeState::kDead);
     if(succ_state == NodeState::kReady && ri.num_triggers_needed == 0) {
-      AppendTask(node);
+      AppendTask(succ);
     }
   }
 }
