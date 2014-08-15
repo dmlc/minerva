@@ -116,7 +116,11 @@ void DagEngine<DagType>::Process(DagType& dag, const std::vector<uint64_t>& targ
   for(uint64_t ready_nid : node_states_.GetNodesOfState(NodeState::kReady)) {
     DagNode* ready_node = dag.GetNode(ready_nid);
     RuntimeInfo& ri = rt_info_[ready_nid];
-    ri.num_triggers_needed = ready_node->predecessors_.size();
+    for(DagNode* pred : ready_node->predecessors_) {
+      if(node_states_.GetState(pred->node_id()) == NodeState::kReady) {
+        ++ri.num_triggers_needed;
+      }
+    }
     if(ready_node->Type() == DagNode::OP_NODE) {
       for(DagNode* ready_op_succ : ready_node->successors_) {
         typename DagType::DNode* succ_dnode = dynamic_cast<typename DagType::DNode*>(ready_op_succ);
@@ -259,8 +263,10 @@ void DagEngine<DagType>::TriggerSuccessors(DagNode* node) {
     CHECK_NE(succ_state, NodeState::kDead);
     if(succ_state == NodeState::kReady) {
       CHECK_GE(--ri.num_triggers_needed, 0) << "wrong #triggers for node#" << succ->node_id();
-      if(ri.num_triggers_needed == 0)
+      if(ri.num_triggers_needed == 0) {
+        DLOG(INFO) << "Trigger node#" << succ->node_id();
         AppendTask(succ);
+      }
     }
   }
 }

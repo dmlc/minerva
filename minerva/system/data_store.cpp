@@ -39,7 +39,6 @@ bool DataStore::CreateData(uint64_t id, MemTypes type, size_t length, int rc) {
 
 float* DataStore::GetData(uint64_t id, MemTypes type) {
   lock_guard<mutex> lck(access_mutex_);
-  DLOG(INFO) << "get data_id=" << id;
   DataState& ds = data_states_[id];
   CHECK_NE(ds.data_ptrs[type], static_cast<float*>(NULL)) << "id=" << id << " was not created!";
   return data_states_[id].data_ptrs[type];

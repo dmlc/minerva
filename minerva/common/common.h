@@ -27,7 +27,7 @@ std::ostream& operator << (std::ostream& os, const std::unordered_set<T>& s) {
 template<class T>
 std::ostream& operator << (std::ostream& os, const std::vector<T>& v) {
   os << "[";
-  for(const T& t : v) os << v << " ";
+  for(const T& t : v) os << t << " ";
   return os << "]";
 }
 
