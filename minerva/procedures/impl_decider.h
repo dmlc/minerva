@@ -1,14 +1,19 @@
 #pragma once
 #include "op/impl/impl.h"
 #include "dag_procedure.h"
+#include "dag_engine.h"
 
 namespace minerva {
 
-class SimpleImplDecider : public PhysicalDagProcedure {
+class ImplDecider {
+ public:
+  virtual void Process(PhysicalDag& dag, NodeStateMap& states) = 0;
+};
+
+class SimpleImplDecider : public ImplDecider {
  public:
   SimpleImplDecider(ImplType type): type(type) {}
-  virtual void Process(PhysicalDag& dag, NodeStateMap<PhysicalDag>& states,
-      const std::vector<uint64_t>&) {
+  virtual void Process(PhysicalDag& dag, NodeStateMap& states) {
     auto birth_node_set = states.GetNodesOfState(NodeState::kBirth);
     for(uint64_t nid : birth_node_set) {
       DagNode* node = dag.GetNode(nid);

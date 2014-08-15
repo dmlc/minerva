@@ -3,13 +3,16 @@
 #include "common/singleton.h"
 #include "dag/logical_dag.h"
 #include "dag/physical_dag.h"
-#include "system/data_store.h"
-#include "procedures/expand_engine.h"
-#include "procedures/physical_engine.h"
-#include "procedures/state.h"
+#include "procedures/dag_procedure.h"
 #include "narray/narray.h"
 
 namespace minerva {
+
+class ExpandEngine;
+class PhysicalEngine;
+class DataStore;
+class ThreadPool;
+class ImplDecider;
 
 class MinervaSystem :
   public Singleton<MinervaSystem> {
@@ -20,10 +23,10 @@ class MinervaSystem :
   void Finalize();
   LogicalDag& logical_dag() { return logical_dag_; }
   PhysicalDag& physical_dag() { return physical_dag_; }
-  DataStore& data_store() { return data_store_; }
-  PhysicalEngine& physical_engine() { return physical_engine_; }
+  DataStore& data_store() { return *data_store_; }
+  PhysicalEngine& physical_engine() { return *physical_engine_; }
 
-  void SetImplDecider(PhysicalDagProcedure* );
+  void SetImplDecider(ImplDecider* );
   void Eval(NArray& narr);
   float* GetValue(NArray& narr);
 
@@ -35,14 +38,13 @@ class MinervaSystem :
   LogicalDag logical_dag_;
   PhysicalDag physical_dag_;
 
-  NodeStateMap<LogicalDag> lnode_states_;
-  NodeStateMap<PhysicalDag> pnode_states_;
-  ExpandEngine expand_engine_;
-  PhysicalEngine physical_engine_;
+  ExpandEngine* expand_engine_;
+  PhysicalEngine* physical_engine_;
 
-  DataStore data_store_;
+  ThreadPool* thread_pool_;
+  DataStore* data_store_;
 
-  PhysicalDagProcedure* impl_decider_;
+  ImplDecider* impl_decider_;
 };
 
 } // end of namespace minerva

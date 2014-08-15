@@ -9,6 +9,7 @@
 #include "op/physical_op.h"
 #include "op/shared_op.h"
 #include "system/minerva_system.h"
+#include "system/data_store.h"
 
 using namespace std;
 
