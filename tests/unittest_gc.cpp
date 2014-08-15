@@ -4,7 +4,7 @@
 using namespace minerva;
 using namespace std;
 
-TEST(GCCorrectness, DISABLED_EvalInLoop) {
+TEST(GCCorrectness, EvalInLoop) {
   MinervaSystem& ms = MinervaSystem::Instance();
   NArray narr = NArray::Constant({10, 8}, 0.0, {2, 2});
   for(int i = 0; i < 10; ++i) {
@@ -12,12 +12,10 @@ TEST(GCCorrectness, DISABLED_EvalInLoop) {
     //cout << ms.logical_dag().PrintDag<ExternRCPrinter>() << endl;
     //cout << ms.physical_dag().PrintDag() << endl;
     narr.Eval();
-    EXPECT_EQ(ms.logical_dag().NumNodes(), 3) << "wrong #logical_nodes in iter#" << i;
-    if(i == 0)
-      EXPECT_EQ(ms.physical_dag().NumNodes(), 16) << "wrong #physical_nodes in iter#" << i;
-    else
-      EXPECT_EQ(ms.physical_dag().NumNodes(), 12) << "wrong #physical_nodes in iter#" << i;
+    EXPECT_EQ(ms.logical_dag().NumNodes(), 1) << "wrong #logical_nodes in iter#" << i;
+    EXPECT_EQ(ms.physical_dag().NumNodes(), 4) << "wrong #physical_nodes in iter#" << i;
     EXPECT_EQ(ms.data_store().GetTotalBytes(DataStore::CPU), 320) << "wrong memory usage in iter#" << i;
+    cout << "iter #" << i << " succeed!" << endl;
   }
   float* val = narr.Get();
   for(int i = 0; i < 80; ++i)
@@ -32,7 +30,8 @@ TEST(GCCorrectness, EvalPartial) {
     arr.push_back(a + 1);
   for(size_t i = 0; i < arr.size(); ++i) {
     arr[i].Eval();
-    ASSERT_EQ(ms.logical_dag().NumNodes(), 21 - i);
+    ASSERT_EQ(ms.logical_dag().NumNodes(), 11);
+    ASSERT_EQ(ms.physical_dag().NumNodes(), 20 - i);
     cout << "Eval #" << i << " succeed!" << endl;
   }
   //EXPECT_EQ(ms.data_store().GetTotalBytes(DataStore::CPU), 3520);
@@ -42,11 +41,16 @@ TEST(GCCorrectness, ChangeInternRCAfterEval) {
   MinervaSystem& ms = MinervaSystem::Instance();
   NArray a = NArray::Constant({10, 8}, 0.0, {1, 1});
   a.Eval();
+  EXPECT_EQ(ms.physical_dag().NumNodes(), 1);
   //EXPECT_EQ(ms.data_store().GetTotalBytes(DataStore::CPU), 320);
   NArray b = a + 1;
   NArray c = a + 1;
   b.Eval();
+  EXPECT_EQ(ms.logical_dag().NumNodes(), 3);
+  EXPECT_EQ(ms.physical_dag().NumNodes(), 4);
   c.Eval();
+  EXPECT_EQ(ms.logical_dag().NumNodes(), 3);
+  EXPECT_EQ(ms.physical_dag().NumNodes(), 3);
 }
 
 TEST(GCCorrectness, ChangeExternRCAfterEval) {
@@ -56,11 +60,11 @@ TEST(GCCorrectness, ChangeExternRCAfterEval) {
     NArray b = NArray::Constant({10, 8}, 0.0, {2, 2});
     b.Eval();
     EXPECT_EQ(ms.logical_dag().NumNodes(), 2);
-    //EXPECT_EQ(ms.physical_dag().NumNodes(), 8);
+    EXPECT_EQ(ms.physical_dag().NumNodes(), 12);
   }
   a.Eval();
   EXPECT_EQ(ms.logical_dag().NumNodes(), 1);
-  //EXPECT_EQ(ms.physical_dag().NumNodes(), 8);
+  EXPECT_EQ(ms.physical_dag().NumNodes(), 4);
 }
 
 TEST(GCCorrectness, ChangeBothRCAfterEval) {
@@ -73,8 +77,17 @@ TEST(GCCorrectness, ChangeBothRCAfterEval) {
     b = c + 2;
   }
   a.Eval();
-  cout << ms.logical_dag().PrintDag() << endl;
-  EXPECT_EQ(ms.logical_dag().NumNodes(), 4);
+  //cout << ms.logical_dag().PrintDag() << endl;
+  EXPECT_EQ(ms.logical_dag().NumNodes(), 2);
+  EXPECT_EQ(ms.physical_dag().NumNodes(), 4);
   b.Eval();
   EXPECT_EQ(ms.logical_dag().NumNodes(), 2);
+  EXPECT_EQ(ms.physical_dag().NumNodes(), 2);
+  // check correctness
+  float* aptr = a.Get();
+  for(int i = 0; i < 80; ++i)
+    ASSERT_EQ(aptr[i], 1);
+  float* bptr = b.Get();
+  for(int i = 0; i < 80; ++i)
+    ASSERT_EQ(bptr[i], 2);
 }

@@ -11,7 +11,9 @@ struct PhysicalData {
   Scale size, offset, offset_index;
   int extern_rc;
   uint64_t data_id;
-  PhysicalData(): extern_rc(0), data_id(0) {
+  bool mapped_to_lnode;
+  uint64_t mapped_lnid;
+  PhysicalData(): extern_rc(0), data_id(0), mapped_to_lnode(false), mapped_lnid(0) {
   }
 };
 

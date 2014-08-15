@@ -1,7 +1,6 @@
 #pragma once
 #include "dag_procedure.h"
 #include "common/thread_pool.h"
-//#include "state.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
@@ -73,10 +72,10 @@ class DagEngine : public DagProcedure<DagType>, public DagMonitor<DagType> {
   int CalcTotalReferenceCount(typename DagType::DNode* );
   NodeStateMap& node_states() { return node_states_; }
 
-  void OnCreateNode(DagNode* node);
-  void OnDeleteNode(DagNode* node);
-  void OnCreateEdge(DagNode* from, DagNode* to);
-  void OnIncrExternRC(typename DagType::DNode*, int amount);
+  virtual void OnCreateNode(DagNode* node);
+  virtual void OnDeleteNode(DagNode* node);
+  virtual void OnCreateEdge(DagNode* from, DagNode* to);
+  virtual void OnIncrExternRC(typename DagType::DNode*, int amount);
 
  protected:
   virtual void CreateNodeState(DagNode* ) {}
@@ -86,6 +85,9 @@ class DagEngine : public DagProcedure<DagType>, public DagMonitor<DagType> {
   virtual void OnIncrExternalDep(typename DagType::DNode*, int amount) {}
   virtual void FreeDataNodeRes(typename DagType::DNode* ) {}
   virtual void ProcessNode(DagNode* node) = 0;
+  virtual std::unordered_set<uint64_t> FindStartFrontier(DagType& dag, const std::vector<uint64_t>& targets) = 0;
+  virtual void PrepareProcess() {}
+  virtual void FinalizeProcess() {}
 
  protected:
   struct RuntimeInfo {
@@ -94,8 +96,8 @@ class DagEngine : public DagProcedure<DagType>, public DagMonitor<DagType> {
     std::mutex* mutex;
     std::condition_variable* on_complete;
   };
-  void BottomUpScan(DagType& dag, const std::vector<uint64_t>& targets);
-  void TopDownScan(DagType& dag, const std::vector<uint64_t>& targets);
+  void TopDownScan(DagType& dag, const std::unordered_set<uint64_t>& start_frontier,
+      const std::vector<uint64_t>& targets);
   void AppendTask(DagNode* );
   void NodeTask(DagNode* );
   void TriggerSuccessors(DagNode* );
@@ -105,12 +107,12 @@ class DagEngine : public DagProcedure<DagType>, public DagMonitor<DagType> {
 
   NodeStateMap node_states_;
   std::unordered_map<uint64_t, RuntimeInfo> rt_info_;
-  std::unordered_set<uint64_t> start_frontier_;
 };
 
 template<class DagType>
 void DagEngine<DagType>::Process(DagType& dag, const std::vector<uint64_t>& targets) {
-  BottomUpScan(dag, targets);
+  PrepareProcess();
+  std::unordered_set<uint64_t> start_frontier = FindStartFrontier(dag, targets);
   for(uint64_t ready_nid : node_states_.GetNodesOfState(NodeState::kReady)) {
     DagNode* ready_node = dag.GetNode(ready_nid);
     RuntimeInfo& ri = rt_info_[ready_nid];
@@ -133,13 +135,8 @@ void DagEngine<DagType>::Process(DagType& dag, const std::vector<uint64_t>& targ
     }
     SetUpReadyNodeState(ready_node);
   }
-  /*for(uint64_t start_nid : start_frontier_) {
-    DagNode* start_node = dag.GetNode(start_nid);
-    if(start_node->Type() == DagNode::DATA_NODE) {
-      ResetDataNodeState(dag.GetDataNode(start_nid));
-    }
-  }*/
-  TopDownScan(dag, targets);
+  TopDownScan(dag, start_frontier, targets);
+  FinalizeProcess();
 }
 
 template<class DagType>
@@ -179,47 +176,9 @@ void DagEngine<DagType>::OnIncrExternRC(typename DagType::DNode* dnode, int amou
 }
   
 template<class DagType>
-void DagEngine<DagType>::BottomUpScan(DagType& dag, const std::vector<uint64_t>& targets) {
-  start_frontier_.clear();
-  std::queue<uint64_t> queue;
-  for(uint64_t tgtid : targets) {
-    if(node_states_.GetState(tgtid) != NodeState::kCompleted) {
-      queue.push(tgtid);
-    } else {
-      start_frontier_.insert(tgtid);
-    }
-  }
-  while(!queue.empty()) {
-    uint64_t nid = queue.front();
-    DagNode* node = dag.GetNode(nid);
-    queue.pop();
-    node_states_.ChangeState(nid, NodeState::kReady);
-    for(DagNode* pred : node->predecessors_) {
-      NodeState pred_state = node_states_.GetState(pred->node_id());
-      switch(pred_state) {
-        case NodeState::kBirth:
-          queue.push(pred->node_id());
-          break;
-        case NodeState::kReady:
-          break;
-        case NodeState::kCompleted:
-          start_frontier_.insert(pred->node_id());
-          break;
-        case NodeState::kDead:
-        default:
-          CHECK(false) << "invalid node state (" << pred_state << ") on dependency path";
-          break;
-      }
-    }
-    if(node->predecessors_.empty()) {
-      start_frontier_.insert(nid);
-    }
-  }
-}
-  
-template<class DagType>
-void DagEngine<DagType>::TopDownScan(DagType& dag, const std::vector<uint64_t>& targets) {
-  for(uint64_t start_nid : start_frontier_) {
+void DagEngine<DagType>::TopDownScan(DagType& dag, const std::unordered_set<uint64_t>& start_frontier,
+    const std::vector<uint64_t>& targets) {
+  for(uint64_t start_nid : start_frontier) {
     AppendTask(dag.GetNode(start_nid));
   }
   // Waiting execution to complete
@@ -235,6 +194,7 @@ void DagEngine<DagType>::TopDownScan(DagType& dag, const std::vector<uint64_t>& 
     }
     LOG(INFO) << "Node (id=" << tgtid << ") complete.";
   }
+  DLOG(INFO) << "Wait for thread to be quiet";
   thread_pool_.WaitForAllFinished();
 }
 
@@ -278,12 +238,15 @@ void DagEngine<DagType>::NodeTask(DagNode* node) {
     // data node is changed to Complete state
     node_states_.ChangeState(nid, NodeState::kCompleted);
   }
+
+  TriggerSuccessors(node);
+
   RuntimeInfo& ri = rt_info_[node->node_id()];
   std::lock_guard<std::mutex> lck(*ri.mutex);
   if(ri.on_complete != nullptr) {
+    DLOG(INFO) << "Notify node#" << node->node_id() << " is finished";
     ri.on_complete->notify_all();
   }
-  TriggerSuccessors(node);
 }
   
 template<class DagType>
@@ -291,39 +254,28 @@ void DagEngine<DagType>::TriggerSuccessors(DagNode* node) {
   for(DagNode* succ : node->successors_) {
     RuntimeInfo& ri = rt_info_[succ->node_id()];
     std::lock_guard<std::mutex> lock(*ri.mutex);
-    CHECK_GE(--ri.num_triggers_needed, 0) << "wrong #triggers for node#" << succ->node_id();
     NodeState succ_state = node_states_.GetState(succ->node_id());
     CHECK_NE(succ_state, NodeState::kCompleted);
     CHECK_NE(succ_state, NodeState::kDead);
-    if(succ_state == NodeState::kReady && ri.num_triggers_needed == 0) {
-      AppendTask(succ);
+    if(succ_state == NodeState::kReady) {
+      CHECK_GE(--ri.num_triggers_needed, 0) << "wrong #triggers for node#" << succ->node_id();
+      if(ri.num_triggers_needed == 0)
+        AppendTask(succ);
     }
   }
 }
   
 template<class DagType>
 void DagEngine<DagType>::GCNodes(DagType& dag) {
-  std::vector<uint64_t> dead_nodes; //survived_nodes;
-  /*for(uint64_t pending_nid : node_states_.GetNodesOfState(NodeState::kPending)) {
-    DagNode* pending_node = dag.GetNode(pending_nid);
-    CHECK_EQ(pending_node->Type(), DagNode::DATA_NODE) << "only data node could be in Pending state";
-    typename DagType::DNode* pending_dnode = dynamic_cast<typename DagType::DNode*>(pending_node);
-    if(CalcTotalReferenceCount(pending_dnode) == 0) {
-      dead_nodes.push_back(pending_nid);
-    } else {
-      survived_nodes.push_back(pending_nid);
-    }
-    ResetDataNodeState(pending_dnode);
-  }*/
+  std::vector<uint64_t> dead_nodes;
   for(uint64_t dead_nid : node_states_.GetNodesOfState(NodeState::kDead)) {
     dead_nodes.push_back(dead_nid);
   }
+  DLOG(INFO) << dead_nodes.size() << " nodes to be GCed";
   for(uint64_t dead_nid : dead_nodes) {
+    //DLOG(INFO) << "GC dag node #" << dead_nid;
     dag.DeleteNode(dead_nid);
   }
-  /*for(uint64_t surv_nid : survived_nodes) {
-    node_states_.ChangeState(surv_nid, NodeState::kCompleted);
-  }*/
 }
 
 } // end of namespace minerva

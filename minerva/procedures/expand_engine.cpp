@@ -9,19 +9,45 @@ bool ExpandEngine::IsExpanded(uint64_t lnode_id) const {
   return lnode_to_pnode_.find(lnode_id) != lnode_to_pnode_.end();
 }
   
-void ExpandEngine::CommitExternRCChange() {
-}
-
-void ExpandEngine::OnIncrExternalDep(LogicalDataNode* ldnode, int amount) {
-}
-
 const NVector<uint64_t>& ExpandEngine::GetPhysicalNodes(uint64_t id) const {
   CHECK(IsExpanded(id)) << "invalid physical nid: " << id;
   return lnode_to_pnode_.find(id)->second;
 }
+  
+void ExpandEngine::CreateNodeState(DagNode* node) {
+  if(node->Type() == DagNode::DATA_NODE) {
+    // only data node could be candidate for trigger roots
+    start_frontier_.insert(node->node_id());
+  }
+  node_states_.ChangeState(node->node_id(), NodeState::kReady);
+}
 
-void ExpandEngine::OnDeleteDataNode(LogicalDataNode* ldnode) {
-  lnode_to_pnode_.erase(ldnode->node_id());
+void ExpandEngine::DeleteNodeState(DagNode* node) {
+  if(node->Type() == DagNode::DATA_NODE)
+    lnode_to_pnode_.erase(node->node_id());
+}
+  
+void ExpandEngine::OnCreateEdge(DagNode* from, DagNode* to) {
+  DagEngine<LogicalDag>::OnCreateEdge(from, to);
+  if(node_states_.GetState(from->node_id()) == NodeState::kCompleted) {
+    start_frontier_.insert(to->node_id());
+  }
+}
+
+std::unordered_set<uint64_t> ExpandEngine::FindStartFrontier(LogicalDag& dag, const std::vector<uint64_t>& targets) {
+  std::unordered_set<uint64_t> ret;
+  for(uint64_t nid : start_frontier_) {
+    DagNode* node = dag.GetNode(nid);
+    if(node->predecessors_.size() == 0 || node->Type() == DagNode::OP_NODE) {
+      ret.insert(nid);
+    }
+  }
+  //cout << ret << endl;
+  return ret;
+}
+  
+void ExpandEngine::FinalizeProcess() {
+  start_frontier_.clear();
 }
 
 void ExpandEngine::ProcessNode(DagNode* node) {
@@ -71,9 +97,12 @@ void ExpandEngine::MakeMapping(LogicalDag::DNode* ldnode, NVector<Chunk>& chunks
     << "Expand function error: partition size unmatched!\n"
     << "Expected: " << ldnode->data_.size << "\n"
     << "Got: " << merged_size;
-  // set external rc
   for(auto ch : chunks) {
+    // set external rc
     ch.data_node()->data_.extern_rc = ldnode->data_.extern_rc;
+    // set flag
+    ch.data_node()->data_.mapped_to_lnode = true;
+    ch.data_node()->data_.mapped_lnid = ldnode->node_id();
   }
   // insert mapping
   lnode_to_pnode_[ldnode->node_id()] = chunks.Map<uint64_t>(

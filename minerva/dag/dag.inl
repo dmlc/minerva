@@ -54,6 +54,11 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
   ret->op_ = op;
   ret->set_node_id(NewIndex());
   index_to_node_.insert(std::make_pair(ret->node_id(), ret));
+
+  // notify monitors
+  for(auto mon : monitors_) {
+    mon->OnCreateNode(ret);
+  }
   for(auto in : inputs) {
     ret->AddParent(in);
     // notify monitors
@@ -71,10 +76,6 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
   ret->inputs_ = inputs;
   ret->outputs_ = outputs;
 
-  // notify monitors
-  for(auto mon : monitors_) {
-    mon->OnCreateNode(ret);
-  }
   return ret;
 }
 

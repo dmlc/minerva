@@ -6,6 +6,7 @@
 #include "minerva_system.h"
 #include "common/thread_pool.h"
 #include "op/impl/basic.h"
+#include "dag/dag_printer.h"
 #include "procedures/impl_decider.h"
 #include "procedures/expand_engine.h"
 #include "procedures/physical_engine.h"
@@ -31,29 +32,26 @@ namespace minerva {
 void MinervaSystem::Initialize(int* argc, char*** argv) {
   google::InitGoogleLogging((*argv)[0]);
   gflags::ParseCommandLineFlags(argc, argv, true);
-  thread_pool_ = new ThreadPool(FLAGS_numthreads);
+  ThreadPool* execute_pool = new ThreadPool(FLAGS_numthreads);
+  ThreadPool* expand_pool = new ThreadPool(1);
   data_store_ = new DataStore();
-  physical_engine_ = new PhysicalEngine(*thread_pool_, *data_store_);
-  expand_engine_ = new ExpandEngine(*thread_pool_, *physical_engine_);
+  physical_engine_ = new PhysicalEngine(*execute_pool, *data_store_);
+  expand_engine_ = new ExpandEngine(*expand_pool);
   static SimpleImplDecider all_basic_impl(ImplType::kBasic);
   static SimpleImplDecider all_mkl_impl(ImplType::kMkl);
   static SimpleImplDecider all_cuda_impl(ImplType::kCuda);
   if (FLAGS_impl == "mkl") {
-    impl_decider_ = &all_mkl_impl;
+    physical_engine_->SetImplDecider(&all_mkl_impl);
   } else if (FLAGS_impl == "cuda") {
-    impl_decider_ = &all_cuda_impl;
+    physical_engine_->SetImplDecider(&all_cuda_impl);
   } else {
-    impl_decider_ = &all_basic_impl;
+    physical_engine_->SetImplDecider(&all_basic_impl);
   }
   LoadBuiltinDagMonitors();
 }
-void MinervaSystem::Finalize() {
-}
-
-MinervaSystem::MinervaSystem(): impl_decider_(NULL) {
-}
-MinervaSystem::~MinervaSystem() {
-}
+void MinervaSystem::Finalize() { }
+MinervaSystem::MinervaSystem() { }
+MinervaSystem::~MinervaSystem() { }
 
 void MinervaSystem::LoadBuiltinDagMonitors() {
   logical_dag_.RegisterMonitor(expand_engine_);
@@ -61,26 +59,39 @@ void MinervaSystem::LoadBuiltinDagMonitors() {
 }
   
 void MinervaSystem::SetImplDecider(ImplDecider* decider) {
-  impl_decider_ = decider;
+  physical_engine_->SetImplDecider(decider);
 }
 
 void MinervaSystem::Eval(NArray& narr) {
   LOG(INFO) << "Evaluation start...";
   // logical dag
-  //expand_engine_->GCNodes(logical_dag_);// GC useless logical nodes
   std::vector<uint64_t> id_to_eval = {narr.data_node_->node_id()};
   expand_engine_->Process(logical_dag_, id_to_eval);
-  //cout << physical_dag().PrintDag<OffsetPrinter>() << endl;
-/*
+  // commit extern rc change
+  for(auto changed_lnid : extern_rc_changed_ldnodes_) {
+    //cout << "changed_ldnode: " << changed_lnid << endl;
+    auto changed_ldnode = logical_dag_.GetDataNode(changed_lnid);
+    auto pnids = expand_engine_->GetPhysicalNodes(changed_ldnode->node_id());
+    for(uint64_t pnid : pnids) {
+      auto pnode = physical_dag_.GetDataNode(pnid);
+      int changed_amount = changed_ldnode->data_.extern_rc - pnode->data_.extern_rc;
+      pnode->data_.extern_rc += changed_amount;
+      physical_engine_->OnIncrExternRC(pnode, changed_amount);
+    }
+  }
+  extern_rc_changed_ldnodes_.clear();
+  LOG(INFO) << "Physical dag generated";
+  //cout << physical_dag().PrintDag<ExternRCPrinter>() << endl;
+
   // physical dag
   auto physical_nodes = expand_engine_->GetPhysicalNodes(narr.data_node_->node_id());
-  // 1. decide impl type
-  impl_decider_->Process(physical_dag_, physical_nodes.ToVector());
-  // 2. gc useless physical nodes
-  physical_engine_->GCNodes(physical_dag_);// GC useless physical nodes
-  // 3. do computation
+  // do computation
   physical_engine_->Process(physical_dag_, physical_nodes.ToVector());
-*/
+
+  // gc dags
+  expand_engine_->GCNodes(logical_dag_);// GC useless logical nodes
+  physical_engine_->GCNodes(physical_dag_);// GC useless physical nodes
+
   LOG(INFO) << "Evaluation completed!";
 }
 
@@ -100,6 +111,9 @@ float* MinervaSystem::GetValue(NArray& narr) {
 void MinervaSystem::IncrExternRC(LogicalDag::DNode* dnode, int amount) {
   CHECK_NOTNULL(dnode);
   dnode->data_.extern_rc += amount;
+  if(expand_engine_->node_states().GetState(dnode->node_id()) == NodeState::kCompleted) {
+    extern_rc_changed_ldnodes_.insert(dnode->node_id());
+  }
   expand_engine_->OnIncrExternRC(dnode, amount);
 }
   
