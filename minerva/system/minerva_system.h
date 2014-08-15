@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_set>
 #include "common/singleton.h"
 #include "dag/logical_dag.h"
 #include "dag/physical_dag.h"
@@ -43,11 +44,9 @@ class MinervaSystem :
 
   ExpandEngine* expand_engine_;
   PhysicalEngine* physical_engine_;
-
-  ThreadPool* thread_pool_;
   DataStore* data_store_;
 
-  ImplDecider* impl_decider_;
+  std::unordered_set<uint64_t> extern_rc_changed_ldnodes_;
 };
 
 } // end of namespace minerva

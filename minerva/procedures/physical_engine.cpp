@@ -10,8 +10,51 @@ namespace minerva {
 PhysicalEngine::PhysicalEngine(ThreadPool& tp, DataStore& ds): DagEngine<PhysicalDag>(tp), data_store_(ds) {
 }
   
-void PhysicalEngine::FreeNodeResources(PhysicalDataNode* dnode) {
+void PhysicalEngine::SetUpReadyNodeState(DagNode* node) {
+  impl_decider_->Decide(node, node_states_);
+}
+  
+void PhysicalEngine::FreeDataNodeRes(PhysicalDataNode* dnode) {
   data_store_.SetReferenceCount(dnode->data_.data_id, 0);
+}
+
+std::unordered_set<uint64_t> PhysicalEngine::FindStartFrontier(PhysicalDag& dag, const std::vector<uint64_t>& targets) {
+  std::unordered_set<uint64_t> start_frontier;
+  std::queue<uint64_t> queue;
+  for(uint64_t tgtid : targets) {
+    if(node_states_.GetState(tgtid) != NodeState::kCompleted) {
+      queue.push(tgtid);
+    }
+  }
+  while(!queue.empty()) {
+    uint64_t nid = queue.front();
+    DagNode* node = dag.GetNode(nid);
+    queue.pop();
+    node_states_.ChangeState(nid, NodeState::kReady);
+    int pred_count = 0;
+    for(DagNode* pred : node->predecessors_) {
+      NodeState pred_state = node_states_.GetState(pred->node_id());
+      switch(pred_state) {
+        case NodeState::kBirth:
+          queue.push(pred->node_id());
+          ++pred_count;
+          break;
+        case NodeState::kReady:
+          ++pred_count;
+          break;
+        case NodeState::kCompleted:
+          break;
+        case NodeState::kDead:
+        default:
+          CHECK(false) << "invalid node state (" << pred_state << ") on dependency path";
+          break;
+      }
+    }
+    if(pred_count == 0) {
+      start_frontier.insert(nid);
+    }
+  }
+  return start_frontier;
 }
 
 void PhysicalEngine::ProcessNode(DagNode* node) {
