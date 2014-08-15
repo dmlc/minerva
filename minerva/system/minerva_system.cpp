@@ -71,16 +71,16 @@ void MinervaSystem::Eval(NArray& narr) {
   std::vector<uint64_t> id_to_eval = {narr.data_node_->node_id()};
   expand_engine_->Process(logical_dag_, id_to_eval);
   //cout << physical_dag().PrintDag<OffsetPrinter>() << endl;
-/*
+
   // physical dag
   auto physical_nodes = expand_engine_->GetPhysicalNodes(narr.data_node_->node_id());
   // 1. decide impl type
-  impl_decider_->Process(physical_dag_, physical_nodes.ToVector());
+  impl_decider_->Process(physical_dag_, physical_engine_->node_states());
   // 2. gc useless physical nodes
-  physical_engine_->GCNodes(physical_dag_);// GC useless physical nodes
+  //physical_engine_->GCNodes(physical_dag_);// GC useless physical nodes
   // 3. do computation
   physical_engine_->Process(physical_dag_, physical_nodes.ToVector());
-*/
+
   LOG(INFO) << "Evaluation completed!";
 }
 

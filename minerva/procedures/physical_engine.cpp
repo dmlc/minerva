@@ -31,6 +31,7 @@ void PhysicalEngine::ProcessNode(DagNode* node) {
     }
     // call compute function
     PhysicalOp& op = phy_op_node->op_;
+    CHECK_NOTNULL(op.compute_fn);
     if(FLAGS_enable_execute) {
       DLOG(INFO) << "Execute node#" << nid << " compute fn: " << op.compute_fn->Name();
       op.compute_fn->Execute(input, output, op.impl_type);

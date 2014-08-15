@@ -46,7 +46,14 @@ TEST(GCCorrectness, ChangeInternRCAfterEval) {
   NArray b = a + 1;
   NArray c = a + 1;
   b.Eval();
+  EXPECT_EQ(ms.logical_dag().NumNodes(), 5);
+  EXPECT_EQ(ms.physical_dag().NumNodes(), 6);
   c.Eval();
+  EXPECT_EQ(ms.logical_dag().NumNodes(), 4);
+  EXPECT_EQ(ms.physical_dag().NumNodes(), 4);
+  c.Eval();
+  EXPECT_EQ(ms.logical_dag().NumNodes(), 3);
+  EXPECT_EQ(ms.physical_dag().NumNodes(), 3);
 }
 
 TEST(GCCorrectness, ChangeExternRCAfterEval) {

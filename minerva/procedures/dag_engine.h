@@ -185,8 +185,6 @@ void DagEngine<DagType>::BottomUpScan(DagType& dag, const std::vector<uint64_t>&
   for(uint64_t tgtid : targets) {
     if(node_states_.GetState(tgtid) != NodeState::kCompleted) {
       queue.push(tgtid);
-    } else {
-      start_frontier_.insert(tgtid);
     }
   }
   while(!queue.empty()) {
