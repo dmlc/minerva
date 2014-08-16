@@ -20,7 +20,7 @@ class ExpandEngine : public DagEngine<LogicalDag> {
   void MakeMapping(LogicalDag::DNode* ldnode, NVector<Chunk>& chunks);
  private:
   std::unordered_map<uint64_t, NVector<uint64_t>> lnode_to_pnode_;
-  std::unordered_set<uint64_t> start_frontier_;
+  std::unordered_set<uint64_t> start_frontier_, non_froniter_;
 };
 
 }

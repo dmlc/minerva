@@ -1,7 +1,8 @@
 #pragma once
 
-#include <functional>
 #include "scale.h"
+#include <functional>
+#include <glog/logging.h>
 
 namespace minerva {
 
@@ -67,7 +68,7 @@ class NVector {
   }
   template<class Fn>
   static NVector<T> ZipMap(const NVector<T>& nv1, const NVector<T>& nv2, Fn fn) {
-    assert(nv1.range_ == nv2.range_);
+    CHECK_EQ(nv1.range_, nv2.range_);
     std::vector<T> newdata;
     for (size_t i = 0; i < nv1.data_.size(); ++i) {
       newdata.push_back(fn(nv1.data_[i], nv2.data_[i]));

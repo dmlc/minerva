@@ -40,9 +40,31 @@ void InitWeight() {
   b3 = NArray::Constant({l3, 1}, 0.0, {1, 1});
 }
 
-NArray Softmax(NArray a) {
-  // TODO
-  return a;
+NArray Softmax(NArray m) {
+  NArray maxval = m.Max(0);
+  // NArray centered = m - maxval.Tile({m.Size(0), 1});
+  NArray centered = m.NormArithmetic(maxval, SUB);
+  NArray class_normalizer = Elewise::Ln(Elewise::Exp(centered).Sum(0)) + maxval;
+  // return Elewise::Exp(m - class_normalizer.Tile({m.Size(0), 1}));
+  return Elewise::Exp(m.NormArithmetic(class_normalizer, SUB));
+}
+
+void PrintTrainingAccuracy(NArray o, NArray t) {
+  //get predict
+  NArray predict = o.MaxIndex(0);
+  //get groundtruth
+  NArray groundtruth = t.MaxIndex(0);;
+  float correct = (predict - groundtruth).CountZero();
+  cout << "Training Error: " << (mb_size - correct) / mb_size << endl;
+}
+
+void Print(NArray m) {
+  //cout << MinervaSystem::Instance().logical_dag().PrintDag() << endl;
+  float* ptr = m.Get();
+  for(int i = 0; i < 10; ++i)
+    cout << ptr[i] << " ";
+  cout << endl;
+  delete [] ptr;
 }
 
 int main(int argc, char** argv) {
@@ -73,10 +95,14 @@ int main(int argc, char** argv) {
       NArray a3 = Elewise::Sigmoid((w23 * a2).NormArithmetic(b3, ADD));
       // softmax
       a3 = Softmax(a3);
+      //PrintTrainingAccuracy(a3, label);
       // bp
       NArray s3 = a3 - label;
       NArray s2 = w23.Trans() * s3;
       s2 = Elewise::Mult(s2, 1 - s2);
+      NArray tmp = s2 * a1.Trans();
+      Print(tmp);
+      Print(tmp / mb_size);
       // gradient
       NArray gw12 = s2 * a1.Trans() / mb_size;
       NArray gb2 = s2.Sum(1) / mb_size;
