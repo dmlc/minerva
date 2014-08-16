@@ -21,6 +21,10 @@ const string test_data_file = "data/mnist/testdata.dat";
 const string test_label_file = "data/mnist/testlabel.dat";
 
 const int l1 = 784, l2 = 256, l3 = 10;
+const int l1parts = 2, l2parts = 2, l3parts = 1;
+const NVector<Scale> l1_part_shape = Scale{l1}.EquallySplit({l1parts});
+const NVector<Scale> l2_part_shape = Scale{l2}.EquallySplit({l2parts});
+const NVector<Scale> l3_part_shape = Scale{l3}.EquallySplit({l3parts});
 NArray w12, w23, b2, b3;
 
 void GenerateInitWeight() {
@@ -34,10 +38,10 @@ void GenerateInitWeight() {
 
 void InitWeight() {
   SimpleFileLoader* loader = new SimpleFileLoader;
-  w12 = NArray::LoadFromFile({l2, l1}, weight_init_files[0], loader, {1, 1});
-  w23 = NArray::LoadFromFile({l3, l2}, weight_init_files[1], loader, {1, 1});
-  b2 = NArray::Constant({l2, 1}, 0.0, {1, 1});
-  b3 = NArray::Constant({l3, 1}, 0.0, {1, 1});
+  w12 = NArray::LoadFromFile({l2, l1}, weight_init_files[0], loader, {l2parts, l1parts});
+  w23 = NArray::LoadFromFile({l3, l2}, weight_init_files[1], loader, {l3parts, l2parts});
+  b2 = NArray::Constant({l2, 1}, 0.0, {l2parts, 1});
+  b3 = NArray::Constant({l3, 1}, 0.0, {l3parts, 1});
 }
 
 NArray Softmax(NArray m) {
@@ -84,6 +88,8 @@ int main(int argc, char** argv) {
   cout << "Training procedure:" << endl;
   OneFileMBLoader train_data_loader(train_data_file, {l1});
   OneFileMBLoader train_label_loader(train_label_file, {l3});
+  train_data_loader.set_partition_shapes_per_sample(l1_part_shape);
+  train_label_loader.set_partition_shapes_per_sample(l3_part_shape);
   for(int epoch = 0; epoch < numepochs; ++epoch) {
     cout << "  Epoch #" << epoch << endl;
     for(int mb = 0; mb < num_mb_per_epoch; ++mb) {
