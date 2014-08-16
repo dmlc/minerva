@@ -52,44 +52,44 @@ void ArithmeticConst(DataList& inputs, DataList& outputs, ArithmeticConstClosure
     case ADD:
       if(closure.side == 0) {// const on left
         for (int i = 0; i < length; ++i) {
-          res_data[i] = in_data[i] + val;
+          res_data[i] = val + in_data[i];
         }
       } else {// const on right
         for (int i = 0; i < length; ++i) {
-          res_data[i] = val + in_data[i];
+          res_data[i] = in_data[i] + val;
         }
       }
       break;
     case SUB:
       if(closure.side == 0) {// const on left
         for (int i = 0; i < length; ++i) {
-          res_data[i] = in_data[i] - val;
+          res_data[i] = val - in_data[i];
         }
       } else {// const on right
         for (int i = 0; i < length; ++i) {
-          res_data[i] = val - in_data[i];
+          res_data[i] = in_data[i] - val;
         }
       }
       break;
     case MULT:
       if(closure.side == 0) {// const on left
         for (int i = 0; i < length; ++i) {
-          res_data[i] = in_data[i] * val;
+          res_data[i] = val * in_data[i];
         }
       } else {// const on right
         for (int i = 0; i < length; ++i) {
-          res_data[i] = val * in_data[i];
+          res_data[i] = in_data[i] * val;
         }
       }
       break;
     case DIV:
       if(closure.side == 0) {// const on left
         for (int i = 0; i < length; ++i) {
-          res_data[i] = in_data[i] / val;
+          res_data[i] = val / in_data[i];
         }
       } else {// const on right
         for (int i = 0; i < length; ++i) {
-          res_data[i] = val / in_data[i];
+          res_data[i] = in_data[i] / val;
         }
       }
       break;

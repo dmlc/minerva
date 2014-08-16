@@ -10,7 +10,7 @@ using namespace minerva;
 const float epsW = 0.001, epsB = 0.001;
 const int numepochs = 10;
 const int mb_size = 256;
-const int num_mb_per_epoch = 1;//235;
+const int num_mb_per_epoch = 235;
 
 const string weight_init_files[] = { "w12_init.dat", "w23_init.dat", };
 const string weight_out_files[] = { "w12_trained.dat", "w23_trained.dat", };
@@ -40,9 +40,31 @@ void InitWeight() {
   b3 = NArray::Constant({l3, 1}, 0.0, {1, 1});
 }
 
-NArray Softmax(NArray a) {
-  // TODO
-  return a;
+NArray Softmax(NArray m) {
+  NArray maxval = m.Max(0);
+  // NArray centered = m - maxval.Tile({m.Size(0), 1});
+  NArray centered = m.NormArithmetic(maxval, SUB);
+  NArray class_normalizer = Elewise::Ln(Elewise::Exp(centered).Sum(0)) + maxval;
+  // return Elewise::Exp(m - class_normalizer.Tile({m.Size(0), 1}));
+  return Elewise::Exp(m.NormArithmetic(class_normalizer, SUB));
+}
+
+void PrintTrainingAccuracy(NArray o, NArray t) {
+  //get predict
+  NArray predict = o.MaxIndex(0);
+  //get groundtruth
+  NArray groundtruth = t.MaxIndex(0);;
+  float correct = (predict - groundtruth).CountZero();
+  cout << "Training Error: " << (mb_size - correct) / mb_size << endl;
+}
+
+void Print(NArray m) {
+  //cout << MinervaSystem::Instance().logical_dag().PrintDag() << endl;
+  float* ptr = m.Get();
+  for(int i = 0; i < 10; ++i)
+    cout << ptr[i] << " ";
+  cout << endl;
+  delete [] ptr;
 }
 
 int main(int argc, char** argv) {
@@ -87,6 +109,10 @@ int main(int argc, char** argv) {
       w23 -= epsW * gw23;
       b2 -= epsB * gb2;
       b3 -= epsB * gb3;
+      
+      if(mb % 20 == 0) {
+        PrintTrainingAccuracy(a3, label);
+      }
     }
   }
   // [optional] output logical dag file

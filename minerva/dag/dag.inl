@@ -140,11 +140,11 @@ std::string Dag<D, O>::PrintDag() const {
     if (i.second->Type() == DagNode::OP_NODE) {
       out << "ellipse";
       Dag<D, O>::ONode* onode = dynamic_cast<Dag<D, O>::ONode*>(i.second);
-      out << " label=\"" << NodePrinter::OpToString(onode->op_) << "\"";
+      out << " label=\"#" << i.first << "|" << NodePrinter::OpToString(onode->op_) << "\"";
     } else {
       out << "box";
       Dag<D, O>::DNode* dnode = dynamic_cast<Dag<D, O>::DNode*>(i.second);
-      out << " label=\"" << NodePrinter::DataToString(dnode->data_) << "\"";
+      out << " label=\"#" << i.first << "|" << NodePrinter::DataToString(dnode->data_) << "\"";
     }
     out << "];" << std::endl;
     for (auto j: i.second->successors_) {

@@ -30,7 +30,12 @@ void ExpandEngine::DeleteNodeState(DagNode* node) {
 void ExpandEngine::OnCreateEdge(DagNode* from, DagNode* to) {
   DagEngine<LogicalDag>::OnCreateEdge(from, to);
   if(node_states_.GetState(from->node_id()) == NodeState::kCompleted) {
-    start_frontier_.insert(to->node_id());
+    if(non_froniter_.find(to->node_id()) == non_froniter_.end()) {
+      start_frontier_.insert(to->node_id());
+    }
+  } else {
+    start_frontier_.erase(to->node_id());
+    non_froniter_.insert(to->node_id());
   }
 }
 
@@ -48,6 +53,7 @@ std::unordered_set<uint64_t> ExpandEngine::FindStartFrontier(LogicalDag& dag, co
   
 void ExpandEngine::FinalizeProcess() {
   start_frontier_.clear();
+  non_froniter_.clear();
 }
 
 void ExpandEngine::ProcessNode(DagNode* node) {
@@ -67,6 +73,7 @@ void ExpandEngine::ProcessNode(DagNode* node) {
     // make input chunks
     std::vector<NVector<Chunk>> in_chunks;
     for(LogicalDag::DNode* dn : onode->inputs_) {
+      CHECK(IsExpanded(dn->node_id())) << "input node#" << dn->node_id() << " is not expanded!";
       NVector<uint64_t> mapped_pnode_ids = lnode_to_pnode_[dn->node_id()];
       in_chunks.push_back(
         mapped_pnode_ids.Map<Chunk>(
