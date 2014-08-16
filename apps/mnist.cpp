@@ -10,7 +10,7 @@ using namespace minerva;
 const float epsW = 0.001, epsB = 0.001;
 const int numepochs = 10;
 const int mb_size = 256;
-const int num_mb_per_epoch = 1;//235;
+const int num_mb_per_epoch = 235;
 
 const string weight_init_files[] = { "w12_init.dat", "w23_init.dat", };
 const string weight_out_files[] = { "w12_trained.dat", "w23_trained.dat", };
@@ -95,14 +95,10 @@ int main(int argc, char** argv) {
       NArray a3 = Elewise::Sigmoid((w23 * a2).NormArithmetic(b3, ADD));
       // softmax
       a3 = Softmax(a3);
-      //PrintTrainingAccuracy(a3, label);
       // bp
       NArray s3 = a3 - label;
       NArray s2 = w23.Trans() * s3;
       s2 = Elewise::Mult(s2, 1 - s2);
-      NArray tmp = s2 * a1.Trans();
-      Print(tmp);
-      Print(tmp / mb_size);
       // gradient
       NArray gw12 = s2 * a1.Trans() / mb_size;
       NArray gb2 = s2.Sum(1) / mb_size;
@@ -113,6 +109,10 @@ int main(int argc, char** argv) {
       w23 -= epsW * gw23;
       b2 -= epsB * gb2;
       b3 -= epsB * gb3;
+      
+      if(mb % 20 == 0) {
+        PrintTrainingAccuracy(a3, label);
+      }
     }
   }
   // [optional] output logical dag file
