@@ -52,6 +52,10 @@ class NArray {
   static NArray LoadFromFile(const Scale& size, const std::string& fname, IFileLoader* loader,
       const Scale& numparts);
   static NArray LoadFromArray(const Scale&, float*, const Scale&);
+  static NArray Zeros(const Scale& size, const Scale& numparts) { return Constant(size, 0.0, numparts); }
+  static NArray Ones(const Scale& size, const Scale& numparts) { return Constant(size, 1.0, numparts); }
+
+
   NArray();
   NArray(const NArray& );
   NArray& operator = (const NArray& );
