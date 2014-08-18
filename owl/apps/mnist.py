@@ -2,6 +2,7 @@
 import sys,owl
 from owl import SimpleFileLoader
 from owl import FileFormat
+import owl.elewise as ele
 
 weight_init_files = ['w12_init.dat', 'w23_init.dat']
 weight_out_files = ['w12_trained.dat', 'w23_trained.dat']
@@ -30,14 +31,14 @@ def main(args=sys.argv[1:]):
         label = ...
         # ff
         a1 = data
-        a2 = owl.sigmoid((w12 * a1).normalize(b2, 0)) #TODO
-        a3 = owl.sigmoid((w23 * a2).normalize(b3, 0)) #TODO
+        a2 = ele.sigmoid((w12 * a1).normalize(b2, 0)) #TODO
+        a3 = ele.sigmoid((w23 * a2).normalize(b3, 0)) #TODO
         # softmax
         a3 = owl.softmax(a3)
         # bp
         s3 = a3 - label
         s2 = w23.trans() * s3
-        s2 = owl.mult(s2, 1 - s2)
+        s2 = ele.mult(s2, 1 - s2)
         # update
         w12 = w12 - epsW * s2 * a1.trans() / mbsize
         b2 = b2 - epsB * s2.sum(1) / mbsize

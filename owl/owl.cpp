@@ -34,24 +34,6 @@ m::NArray Softmax(m::NArray m) {
   return m::Elewise::Exp(m.NormArithmetic(class_normalizer, m::SUB));
 }
 
-class ScaleForPython : public m::Scale {
- public:
-  ScaleForPython(): Scale() {}
-  ScaleForPython(const bp::list& l) {
-    bp::stl_input_iterator<int> begin(l), end;
-    for(auto it = begin; it != end; ++it) {
-      vec_.push_back(*it);
-    }
-  }
-  operator bp::list() const {
-    bp::list l;
-    for(int i : vec_) {
-      l.append(i);
-    }
-    return l;
-  }
-};
-
 m::Scale ToScale(const bp::list& l) {
   bp::stl_input_iterator<int> begin(l), end;
   return m::Scale(begin, end);
@@ -73,6 +55,10 @@ m::NArray OnesWrapper(const bp::list& s, const bp::list& np) {
   return m::NArray::Ones(ToScale(s), ToScale(np));
 }
 
+m::NArray LoadFromFileWrapper(const bp::list& s, const std::string& fname, m::IFileLoader* loader, const bp::list& np) {
+  return m::NArray::LoadFromFile(ToScale(s), fname, loader, ToScale(np));
+}
+
 }
 
 // python module
@@ -83,10 +69,7 @@ BOOST_PYTHON_MODULE(libowl) {
   m::NArray (m::NArray::*fp_max1)(int ) = &m::NArray::Max;
   m::NArray (m::NArray::*fp_maxidx)(int ) = &m::NArray::MaxIndex;
 
-  class_<m::Scale>("Scale");
-  class_<owl::ScaleForPython, bases<m::Scale>>("ScaleForPython");
-  bp::implicitly_convertible<owl::ScaleForPython, bp::list>();
-  bp::implicitly_convertible<bp::list, owl::ScaleForPython>();
+  //class_<m::Scale>("Scale");
 
   class_<m::NArray>("NArray")
     // element-wise
@@ -120,13 +103,13 @@ BOOST_PYTHON_MODULE(libowl) {
     .def_readwrite("binary", &m::FileFormat::binary)
   ;
   //def("random_randn", &m::NArray::Randn); // TODO [by jermaine] Not compiling
-  //def("zeros", &owl::ZerosWrapper);
-  //def("ones", &owl::OnesWrapper);
-  def("zeros", &m::NArray::Zeros);
-  def("ones", &m::NArray::Ones);
+  def("load_from_file", &owl::LoadFromFileWrapper);
+  def("zeros", &owl::ZerosWrapper);
+  def("ones", &owl::OnesWrapper);
+  //def("zeros", &m::NArray::Zeros);
+  //def("ones", &m::NArray::Ones);
 
   def("initialize", &owl::Initialize);
-  //def("load_from_file", &owl::LoadFromFileWrapper);
   def("logical_dag", &owl::LogicalDag);
 
   // elewise
