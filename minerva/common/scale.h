@@ -98,7 +98,7 @@ class Scale {
   std::string ToString() const;
   NVector<Scale> ToNVector() const;
 
- private:
+ protected:
   std::vector<int> vec_;
 };
 

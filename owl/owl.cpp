@@ -2,6 +2,7 @@
 
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
+#include <boost/python/implicit.hpp>
 
 #include "minerva.h"
 
@@ -33,20 +34,43 @@ m::NArray Softmax(m::NArray m) {
   return m::Elewise::Exp(m.NormArithmetic(class_normalizer, m::SUB));
 }
 
+class ScaleForPython : public m::Scale {
+ public:
+  ScaleForPython(): Scale() {}
+  ScaleForPython(const bp::list& l) {
+    bp::stl_input_iterator<int> begin(l), end;
+    for(auto it = begin; it != end; ++it) {
+      vec_.push_back(*it);
+    }
+  }
+  operator bp::list() const {
+    bp::list l;
+    for(int i : vec_) {
+      l.append(i);
+    }
+    return l;
+  }
+};
+
+m::Scale ToScale(const bp::list& l) {
+  bp::stl_input_iterator<int> begin(l), end;
+  return m::Scale(begin, end);
+}
+
+bp::list ToPythonList(const m::Scale& s) {
+  bp::list l;
+  for(int i : s) {
+    l.append(i);
+  }
+  return l;
+}
+
 m::NArray ZerosWrapper(const bp::list& s, const bp::list& np) {
-  bp::stl_input_iterator<int> sbegin(s), send;
-  bp::stl_input_iterator<int> npbegin(np), npend;
-  m::Scale size(sbegin, send);
-  m::Scale numparts(npbegin, npend);
-  return m::NArray::Zeros(size, numparts);
+  return m::NArray::Zeros(ToScale(s), ToScale(np));
 }
 
 m::NArray OnesWrapper(const bp::list& s, const bp::list& np) {
-  bp::stl_input_iterator<int> sbegin(s), send;
-  bp::stl_input_iterator<int> npbegin(np), npend;
-  m::Scale size(sbegin, send);
-  m::Scale numparts(npbegin, npend);
-  return m::NArray::Ones(size, numparts);
+  return m::NArray::Ones(ToScale(s), ToScale(np));
 }
 
 }
@@ -59,9 +83,10 @@ BOOST_PYTHON_MODULE(libowl) {
   m::NArray (m::NArray::*fp_max1)(int ) = &m::NArray::Max;
   m::NArray (m::NArray::*fp_maxidx)(int ) = &m::NArray::MaxIndex;
 
-  class_<m::Scale>("Scale")
-    .def("numdims", &m::Scale::NumDims)
-    .def("prod", &m::Scale::Prod)
+  class_<m::Scale>("Scale");
+  class_<owl::ScaleForPython, bases<m::Scale>>("ScaleForPython");
+  bp::implicitly_convertible<owl::ScaleForPython, bp::list>();
+  bp::implicitly_convertible<bp::list, owl::ScaleForPython>();
 
   class_<m::NArray>("NArray")
     // element-wise
@@ -95,11 +120,13 @@ BOOST_PYTHON_MODULE(libowl) {
     .def_readwrite("binary", &m::FileFormat::binary)
   ;
   //def("random_randn", &m::NArray::Randn); // TODO [by jermaine] Not compiling
-  def("zeros", &owl::ZerosWrapper);
-  def("ones", &owl::OnesWrapper);
+  //def("zeros", &owl::ZerosWrapper);
+  //def("ones", &owl::OnesWrapper);
+  def("zeros", &m::NArray::Zeros);
+  def("ones", &m::NArray::Ones);
 
   def("initialize", &owl::Initialize);
-  def("load_from_file", &owl::LoadFromFileWrapper);
+  //def("load_from_file", &owl::LoadFromFileWrapper);
   def("logical_dag", &owl::LogicalDag);
 
   // elewise
