@@ -18,7 +18,6 @@ void Initialize(bp::list args) {
     argv[i] = bp::extract<char*>(args[i]);
   }
   m::MinervaSystem::Instance().Initialize(&argc, &argv);
-  delete[] argv;
 }
 
 std::string LogicalDag() {
@@ -59,6 +58,12 @@ m::NArray LoadFromFileWrapper(const bp::list& s, const std::string& fname, m::IF
   return m::NArray::LoadFromFile(ToScale(s), fname, loader, ToScale(np));
 }
 
+class OneFileMBLoaderWrapper : public m::OneFileMBLoader {
+ public:
+  OneFileMBLoaderWrapper(const std::string& fname, const bp::list& shape):
+    OneFileMBLoader(fname, ToScale(shape)) {}
+};
+
 }
 
 // python module
@@ -69,8 +74,14 @@ BOOST_PYTHON_MODULE(libowl) {
   m::NArray (m::NArray::*fp_max1)(int ) = &m::NArray::Max;
   m::NArray (m::NArray::*fp_maxidx)(int ) = &m::NArray::MaxIndex;
 
-  //class_<m::Scale>("Scale");
+  enum_<m::ArithmeticType>("arithmetic")
+    .value("add", m::ADD)
+    .value("sub", m::SUB)
+    .value("mul", m::MULT)
+    .value("div", m::DIV)
+  ;
 
+  //class_<m::Scale>("Scale");
   class_<m::NArray>("NArray")
     // element-wise
     .def(self + self)
@@ -97,18 +108,28 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("trans", &m::NArray::Trans)
     .def("to_file", &m::NArray::ToFile)
   ;
+
+  // file loader
   class_<m::IFileLoader>("IFileLoader");
   class_<m::SimpleFileLoader, bases<m::IFileLoader>>("SimpleFileLoader");
   class_<m::FileFormat>("FileFormat")
     .def_readwrite("binary", &m::FileFormat::binary)
   ;
-  //def("random_randn", &m::NArray::Randn); // TODO [by jermaine] Not compiling
   def("load_from_file", &owl::LoadFromFileWrapper);
+
+  // mb loader
+  class_<owl::OneFileMBLoaderWrapper>("MBLoader", init<std::string, bp::list>())
+    .def("load_next", &owl::OneFileMBLoaderWrapper::LoadNext)
+  ;
+
+  // creators
   def("zeros", &owl::ZerosWrapper);
   def("ones", &owl::OnesWrapper);
+  //def("random_randn", &m::NArray::Randn);
   //def("zeros", &m::NArray::Zeros);
   //def("ones", &m::NArray::Ones);
 
+  // system
   def("initialize", &owl::Initialize);
   def("logical_dag", &owl::LogicalDag);
 
