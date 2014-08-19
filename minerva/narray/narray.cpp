@@ -18,7 +18,8 @@ static MinervaSystem& ms = MinervaSystem::Instance();
 // public
 NArray::NArray(): data_node_(nullptr) {}
 NArray::NArray(const NArray& other): data_node_(other.data_node_) {
-  ms.IncrExternRC(data_node_);
+  if(data_node_ != nullptr)
+    ms.IncrExternRC(data_node_);
 }
 NArray::~NArray() {
   if(data_node_ != nullptr)

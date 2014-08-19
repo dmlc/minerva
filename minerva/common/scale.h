@@ -54,6 +54,10 @@ class Scale {
   Scale() { }
   Scale(const std::initializer_list<int>& lst): vec_(lst) { } // allow implicit conversion
   Scale(const std::vector<int>& sc): vec_(sc) { } // allow implicit conversion
+  template<class Iter> Scale(const Iter& begin, const Iter& end) {
+    for(Iter it = begin; it != end; ++it)
+      vec_.push_back(*it);
+  }
   Scale(const Scale& other): vec_(other.vec_) {}
   Scale(Scale&& other): vec_(other.vec_) {}
   Scale& operator = (const Scale& other) {
@@ -94,7 +98,7 @@ class Scale {
   std::string ToString() const;
   NVector<Scale> ToNVector() const;
 
- private:
+ protected:
   std::vector<int> vec_;
 };
 
