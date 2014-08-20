@@ -4,8 +4,9 @@ DEBUG_DIR=debug
 # release build directory
 RELEASE_DIR=release
 
-# cxx compiler
+# Compilers
 CXX_COMPILER=g++-4.8
+C_COMPILER=gcc-4.8
 
 # flags passed to cxx compiler
 CXXFLAGS=
@@ -16,21 +17,21 @@ MKL_INCLUDE_PATH=
 MKL_LIB_PATH=
 
 # path to search for google-logger headers
-GLOG_INCLUDE_PATH=/home/jermaine/Downloads/glog-0.3.3/build/include
+GLOG_INCLUDE_PATH=/home/yutian/cpp/glog-0.3.3/build/include
 # path to link to google-logger libraries 
-GLOG_LIB_PATH=/home/jermaine/Downloads/glog-0.3.3/build/lib
+GLOG_LIB_PATH=/home/yutian/cpp/glog-0.3.3/build/lib
 
 # path to search for google flags headers
-GFLAGS_INCLUDE_PATH=/home/jermaine/Downloads/gflags-2.1.1/build/include
+GFLAGS_INCLUDE_PATH=/home/yutian/cpp/gflags-2.1.1/build/include
 # path to link to google flags libraries 
-GFLAGS_LIB_PATH=/home/jermaine/Downloads/gflags-2.1.1/build/lib
+GFLAGS_LIB_PATH=/home/yutian/cpp/gflags-2.1.1/build/lib
 
 # path to search for gtest headers
-GTEST_INCLUDE_PATH=/home/jermaine/Downloads/gtest-1.7.0/include
+GTEST_INCLUDE_PATH=/home/yutian/cpp/gtest-1.7.0/include
 # path to link to gtest libraries 
-GTEST_LIB_PATH=/home/jermaine/Downloads/gtest-1.7.0/build/
+GTEST_LIB_PATH=/home/yutian/cpp/gtest-1.7.0/build
 
 # path to search for boost headers
-BOOST_INCLUDE_PATH=
+BOOST_INCLUDE_PATH=/home/yutian/cpp/boost_1_56_0/build/include
 # path to link to boost libraries
-BOOST_LIB_PATH=
+BOOST_LIB_PATH=/home/yutian/cpp/boost_1_56_0/build/lib

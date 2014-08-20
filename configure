@@ -66,7 +66,7 @@ Configurations:
 	-h, --help              Display this help and exit
 	--clean                 Clean up debug and release build
 	--cleanall              Clean all bulids including dependent libraries
-	--mkl=MKL_ROOT           Specify the root of MKL installation
+	--mkl=MKL_ROOT          Specify the root of MKL installation
 	--packages=DIR          Specify the location of dependent packages of Minerva
 	-Dvar=value             Specify definitions to be passed on to cmake
 EOF
@@ -112,7 +112,7 @@ if [ ! -d $RELEASE_DIR ]; then
 	mkdir $RELEASE_DIR
 fi
 cd $RELEASE_DIR
-CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Release $CXXFLAGS ..
+CC=$C_COMPILER CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Release $CXXFLAGS ..
 cd ..
 
 echo -e "\n\n\n========================== Debug =========================="
@@ -120,6 +120,6 @@ if [ ! -d $DEBUG_DIR ]; then
 	mkdir $DEBUG_DIR
 fi
 cd $DEBUG_DIR
-CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Debug $CXXFLAGS ..
+CC=$C_COMPILER CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Debug $CXXFLAGS ..
 cd ..
 
