@@ -48,7 +48,7 @@ TEST(NormArithmeticKernel, AddFirstDimension) {
   basic::NormArithmetic(in, out, closure);
   float* res = dstore.GetData(id3, DataStore::CPU);
   for (int i = 0; i < s3[0]; ++i) {
-    for (int j = 0; j < s3[j]; ++j) {
+    for (int j = 0; j < s3[1]; ++j) {
       EXPECT_FLOAT_EQ(res[i + s3[0] * j], i + s3[0] * j + 2);
     }
   }
