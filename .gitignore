@@ -44,3 +44,7 @@ Vagrantfile
 
 # configure file
 configure.in
+
+# Data files
+mnist
+mnist.zip
