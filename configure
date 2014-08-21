@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source configure.in
+
 function unknown_option {
 	echo "Unknown option: $1"
 	echo "Run ./configure --help to get help"
@@ -7,25 +9,24 @@ function unknown_option {
 }
 
 function run_clean {
-	echo "Are you sure to delete release/debug builds? (yes or no)"
+	echo "Are you sure to delete release/debug builds? [y/n]"
 	read yesorno;
-	if [ "$yesorno" == "yes" ]; then
+	if [ "$yesorno" == "y" ]; then
 		echo "Removing release and debug builds"
-		rm -rf release debug
+		rm -rf $RELEASE_DIR $DEBUG_DIR
 	fi
 	exit 0
 }
 function run_cleanall {
-echo "Are you sure to delete all builds (release, debug, deps)? (yes or no)"
+echo "Are you sure to delete all builds (release, debug, deps)? [y/n]"
 	read yesorno;
-	if [ "$yesorno" == "yes" ]; then
+	if [ "$yesorno" == "y" ]; then
 		echo "Removing all builds"
-		rm -rf release debug deps
+		rm -rf $RELEASE_DIR $DEBUG_DIR deps
 	fi
 	exit 0
 }
 
-source configure.in
 EXTERNAL_LIB_PATH="$MKL_LIB_PATH,$GLOG_LIB_PATH,$BOOST_LIB_PATH,$GFLAGS_LIB_PATH,$GTEST_LIB_PATH"
 EXTERNAL_INCLUDE_PATH="$MKL_INCLUDE_PATH,$GLOG_INCLUDE_PATH,$BOOST_INCLUDE_PATH,$GFLAGS_INCLUDE_PATH,$GTEST_INCLUDE_PATH"
 CXXFLAGS="$CXXFLAGS \
@@ -66,7 +67,7 @@ Configurations:
 	-h, --help              Display this help and exit
 	--clean                 Clean up debug and release build
 	--cleanall              Clean all bulids including dependent libraries
-	--mkl=MKL_ROOT           Specify the root of MKL installation
+	--mkl=MKL_ROOT          Specify the root of MKL installation
 	--packages=DIR          Specify the location of dependent packages of Minerva
 	-Dvar=value             Specify definitions to be passed on to cmake
 EOF
@@ -112,7 +113,7 @@ if [ ! -d $RELEASE_DIR ]; then
 	mkdir $RELEASE_DIR
 fi
 cd $RELEASE_DIR
-CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Release $CXXFLAGS ..
+CC=$C_COMPILER CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Release $CXXFLAGS ..
 cd ..
 
 echo -e "\n\n\n========================== Debug =========================="
@@ -120,6 +121,6 @@ if [ ! -d $DEBUG_DIR ]; then
 	mkdir $DEBUG_DIR
 fi
 cd $DEBUG_DIR
-CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Debug $CXXFLAGS ..
+CC=$C_COMPILER CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Debug $CXXFLAGS ..
 cd ..
 
