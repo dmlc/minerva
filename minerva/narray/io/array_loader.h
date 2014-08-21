@@ -8,8 +8,7 @@
 namespace minerva {
 
 struct ArrayLoaderClosure {
-  // TODO should be std::shared_ptr<float>
-  float* data;
+  std::shared_ptr<float> data;
   Scale size;
 };
 

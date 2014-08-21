@@ -62,11 +62,9 @@ void MinervaSystem::SetImplDecider(ImplDecider* decider) {
   physical_engine_->SetImplDecider(decider);
 }
 
-void MinervaSystem::Eval(NArray& narr) {
-  LOG(INFO) << "Evaluation start...";
-  // logical dag
-  std::vector<uint64_t> id_to_eval = {narr.data_node_->node_id()};
-  expand_engine_->Process(logical_dag_, id_to_eval);
+void MinervaSystem::GeneratePhysicalDag(const std::vector<uint64_t>& lids) {
+  expand_engine_->Process(logical_dag_, lids);
+  expand_engine_->WaitForFinish();
   // commit extern rc change
   for(auto changed_lnid : extern_rc_changed_ldnodes_) {
     //cout << "changed_ldnode: " << changed_lnid << endl;
@@ -80,19 +78,56 @@ void MinervaSystem::Eval(NArray& narr) {
     }
   }
   extern_rc_changed_ldnodes_.clear();
+  expand_engine_->GCNodes(logical_dag_);// GC useless logical nodes
   LOG(INFO) << "Physical dag generated";
   //cout << physical_dag().PrintDag<ExternRCPrinter>() << endl;
+}
 
-  // physical dag
-  auto physical_nodes = expand_engine_->GetPhysicalNodes(narr.data_node_->node_id());
-  // do computation
-  physical_engine_->Process(physical_dag_, physical_nodes.ToVector());
-
-  // gc dags
-  expand_engine_->GCNodes(logical_dag_);// GC useless logical nodes
+void MinervaSystem::WaitForEvalFinish() {
+  physical_engine_->WaitForFinish();
   physical_engine_->GCNodes(physical_dag_);// GC useless physical nodes
+}
+
+void MinervaSystem::ExecutePhysicalDag(const std::vector<uint64_t>& pids) {
+  physical_engine_->Process(physical_dag_, pids);
+}
+
+void MinervaSystem::Eval(const vector<NArray>& narrs) {
+  LOG(INFO) << "Evaluation(synchronous) start...";
+
+  std::vector<uint64_t> lid_to_eval;
+  for(auto na : narrs) {
+    lid_to_eval.push_back(na.data_node_->node_id());
+  }
+  // logical dag
+  GeneratePhysicalDag(lid_to_eval);
+  // physical dag
+  vector<uint64_t> pid_to_eval;
+  for(uint64_t id : lid_to_eval) {
+    const vector<uint64_t>& pnids = expand_engine_->GetPhysicalNodes(id).ToVector();
+    pid_to_eval.insert(pid_to_eval.end(), pnids.begin(), pnids.end());
+  }
+  ExecutePhysicalDag(pid_to_eval);
+  WaitForEvalFinish();
 
   LOG(INFO) << "Evaluation completed!";
+}
+
+void MinervaSystem::EvalAsync(const std::vector<NArray>& narrs) {
+  LOG(INFO) << "Evaluation(a-synchronous) start...";
+  std::vector<uint64_t> lid_to_eval;
+  for(auto na : narrs) {
+    lid_to_eval.push_back(na.data_node_->node_id());
+  }
+  // logical dag
+  GeneratePhysicalDag(lid_to_eval);
+  // physical dag
+  vector<uint64_t> pid_to_eval;
+  for(uint64_t id : lid_to_eval) {
+    const vector<uint64_t>& pnids = expand_engine_->GetPhysicalNodes(id).ToVector();
+    pid_to_eval.insert(pid_to_eval.end(), pnids.begin(), pnids.end());
+  }
+  ExecutePhysicalDag(pid_to_eval);
 }
 
 float* MinervaSystem::GetValue(NArray& narr) {

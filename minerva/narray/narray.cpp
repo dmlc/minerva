@@ -159,7 +159,11 @@ NArray NArray::RePartition(const NVector<Scale>& partitions) {
 }
 
 void NArray::Eval() {
-  MinervaSystem::Instance().Eval(*this);
+  MinervaSystem::Instance().Eval({*this});
+}
+  
+void NArray::EvalAsync() {
+  MinervaSystem::Instance().EvalAsync({*this});
 }
 
 float* NArray::Get() {
@@ -191,7 +195,7 @@ NArray NArray::LoadFromFile(const Scale& size, const std::string& fname,
   return NArray::Generate(size, loader_op, numparts);
 }
 
-NArray NArray::LoadFromArray(const Scale& size, float* array, const Scale& numparts) {
+NArray NArray::MakeNArray(const Scale& size, std::shared_ptr<float> array, const Scale& numparts) {
   ArrayLoaderOp* loader_op = new ArrayLoaderOp;
   loader_op->closure = {array, size};
   return NArray::Generate(size, loader_op, numparts);
