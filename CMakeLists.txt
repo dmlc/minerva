@@ -18,16 +18,15 @@ string(REPLACE "," ";" external_include_path_list "${EXTERNAL_INCLUDE_PATH}")
 
 find_package(CUDA)
 if (CUDA_FOUND)
-  include_directories(${CUDA_INCLUDE_DIRS})
+  include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
   add_definitions(-DHAS_CUDA)
+  string(REPLACE " " "\\\",\\\"" CUDA_CONCAT_DEBUG "${GENERAL_FLAGS_DEBUG}")
+  string(REPLACE " " "\\\",\\\"" CUDA_CONCAT_RELEASE "${GENERAL_FLAGS_RELEASE}")
+  set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+  set(CUDA_NVCC_FLAGS_DEBUG "-Xcompiler \\\"${CUDA_CONCAT_DEBUG}\\\"")
+  set(CUDA_NVCC_FLAGS_RELEASE "-Xcompiler \\\"${CUDA_CONCAT_RELEASE}\\\"")
+  set(CUDA_NVCC_FLAGS "-arch sm_35")
 endif (CUDA_FOUND)
-
-string(REPLACE " " "\\\",\\\"" CUDA_CONCAT_DEBUG "${GENERAL_FLAGS_DEBUG}")
-string(REPLACE " " "\\\",\\\"" CUDA_CONCAT_RELEASE "${GENERAL_FLAGS_RELEASE}")
-set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-set(CUDA_NVCC_FLAGS_DEBUG "-Xcompiler \\\"${CUDA_CONCAT_DEBUG}\\\"")
-set(CUDA_NVCC_FLAGS_RELEASE "-Xcompiler \\\"${CUDA_CONCAT_RELEASE}\\\"")
-set(CUDA_NVCC_FLAGS "-arch sm_35")
 
 include_directories(
   SYSTEM ${external_include_path_list}
