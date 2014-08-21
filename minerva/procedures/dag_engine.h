@@ -68,6 +68,7 @@ class DagEngine : public DagProcedure<DagType>, public DagMonitor<DagType> {
  public:
   DagEngine(ThreadPool& tp): thread_pool_(tp) {}
   void Process(DagType&, const std::vector<uint64_t>& nodes);
+  void WaitForFinish();
   void GCNodes(DagType& dag);
   int CalcTotalReferenceCount(typename DagType::DNode* );
   NodeStateMap& node_states() { return node_states_; }
@@ -94,7 +95,6 @@ class DagEngine : public DagProcedure<DagType>, public DagMonitor<DagType> {
     int num_triggers_needed;
     int reference_count;
     std::mutex* mutex;
-    std::condition_variable* on_complete;
   };
   void TopDownScan(DagType& dag, const std::unordered_set<uint64_t>& start_frontier,
       const std::vector<uint64_t>& targets);
@@ -107,6 +107,10 @@ class DagEngine : public DagProcedure<DagType>, public DagMonitor<DagType> {
 
   NodeStateMap node_states_;
   std::unordered_map<uint64_t, RuntimeInfo> rt_info_;
+
+  int num_nodes_yet_to_finish_;
+  std::mutex finish_mutex_;
+  std::condition_variable finish_cond_;
 };
 
 template<class DagType>
@@ -146,7 +150,7 @@ void DagEngine<DagType>::Process(DagType& dag, const std::vector<uint64_t>& targ
 template<class DagType>
 void DagEngine<DagType>::OnCreateNode(DagNode* node) {
   node_states_.AddNode(node->node_id(), NodeState::kBirth);
-  rt_info_[node->node_id()] = RuntimeInfo{0, 0, new std::mutex, nullptr};
+  rt_info_[node->node_id()] = RuntimeInfo{0, 0, new std::mutex};
   CreateNodeState(node);
 }
 
@@ -180,13 +184,22 @@ void DagEngine<DagType>::OnIncrExternRC(typename DagType::DNode* dnode, int amou
 }
   
 template<class DagType>
+void DagEngine<DagType>::WaitForFinish() {
+  std::unique_lock<std::mutex> lck(finish_mutex_);
+  while(num_nodes_yet_to_finish_ != 0)
+    finish_cond_.wait(lck);
+  thread_pool_.WaitForAllFinished();
+}
+
+template<class DagType>
 void DagEngine<DagType>::TopDownScan(DagType& dag, const std::unordered_set<uint64_t>& start_frontier,
     const std::vector<uint64_t>& targets) {
+  num_nodes_yet_to_finish_ = node_states_.GetNodesOfState(NodeState::kReady).size();
   for(uint64_t start_nid : start_frontier) {
     AppendTask(dag.GetNode(start_nid));
   }
   // Waiting execution to complete
-  for(uint64_t tgtid : targets) {
+  /*for(uint64_t tgtid : targets) {
     std::unique_lock<std::mutex> lock(*rt_info_[tgtid].mutex);
     LOG(INFO) << "Wait for node (id=" << tgtid << ") finish.";
     if (node_states_.GetState(tgtid) != NodeState::kCompleted) {
@@ -199,7 +212,7 @@ void DagEngine<DagType>::TopDownScan(DagType& dag, const std::unordered_set<uint
     LOG(INFO) << "Node (id=" << tgtid << ") complete.";
   }
   DLOG(INFO) << "Wait for thread to be quiet";
-  thread_pool_.WaitForAllFinished();
+  thread_pool_.WaitForAllFinished();*/
 }
 
 template<class DagType>
@@ -247,10 +260,10 @@ void DagEngine<DagType>::NodeTask(DagNode* node) {
 
   RuntimeInfo& ri = rt_info_[node->node_id()];
   std::lock_guard<std::mutex> lck(*ri.mutex);
-  if(ri.on_complete != nullptr) {
-    DLOG(INFO) << "Notify node#" << node->node_id() << " is finished";
-    ri.on_complete->notify_all();
-  }
+  std::lock_guard<std::mutex> flck(finish_mutex_);
+  if(--num_nodes_yet_to_finish_ == 0)
+    finish_cond_.notify_all();
+  //DLOG(INFO) << "Notify node#" << node->node_id() << " is finished";
 }
   
 template<class DagType>

@@ -214,8 +214,8 @@ class ArithmeticConstOp : public SharedComputeFnWithClosure<ArithmeticConstClosu
       ss << closure.val;
     }
     switch(closure.type) {
-      case ADD:   ss << "+"; break;
-      case SUB:   ss << "-"; break;
+      case ADD:   ss << "+."; break;
+      case SUB:   ss << "-."; break;
       case MULT:  ss << ".*"; break;
       case DIV:   ss << "./"; break;
     };

@@ -10,7 +10,7 @@ void ArrayLoaderOp::Execute(DataList& inputs, DataList& outputs, ImplType impl_t
   CHECK_EQ(impl_type, ImplType::kBasic) << "vector loader only has basic implementation";
   Scale dst_start = Scale::Origin(closure.size.NumDims());
   for (auto& ds: outputs) {
-    basic::NCopy(closure.data, closure.size, ds.Offset(), ds.GetCpuData(), ds.Size(), dst_start, ds.Size());
+    basic::NCopy(closure.data.get(), closure.size, ds.Offset(), ds.GetCpuData(), ds.Size(), dst_start, ds.Size());
   }
 }
 

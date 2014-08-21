@@ -64,6 +64,15 @@ class OneFileMBLoaderWrapper : public m::OneFileMBLoader {
     OneFileMBLoader(fname, ToScale(shape)) {}
 };
 
+bp::list NArrayToList(m::NArray narr) {
+  bp::list l;
+  float* v = narr.Get();
+  for(int i = 0; i < narr.Size().Prod(); ++i)
+    l.append(v[i]);
+  delete [] v;
+  return l;
+}
+
 }
 
 // python module
@@ -107,6 +116,8 @@ BOOST_PYTHON_MODULE(libowl) {
     // misc
     .def("trans", &m::NArray::Trans)
     .def("to_file", &m::NArray::ToFile)
+    .def("eval", &m::NArray::Eval)
+    .def("eval_async", &m::NArray::EvalAsync)
   ;
 
   // file loader
@@ -130,6 +141,7 @@ BOOST_PYTHON_MODULE(libowl) {
   //def("ones", &m::NArray::Ones);
 
   // system
+  def("to_list", &owl::NArrayToList);
   def("initialize", &owl::Initialize);
   def("logical_dag", &owl::LogicalDag);
 
