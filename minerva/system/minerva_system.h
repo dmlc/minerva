@@ -29,14 +29,18 @@ class MinervaSystem :
   PhysicalEngine& physical_engine() { return *physical_engine_; }
 
   void SetImplDecider(ImplDecider* );
-  void Eval(NArray& narr);
   float* GetValue(NArray& narr);
+  void Eval(const std::vector<NArray>& narrs);
+  void EvalAsync(const std::vector<NArray>& narrs);
+  void WaitForEvalFinish();
 
  private:
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
   MinervaSystem();
   void LoadBuiltinDagMonitors();
   void IncrExternRC(LogicalDag::DNode* , int amount = 1);
+  void GeneratePhysicalDag(const std::vector<uint64_t>& lids);
+  void ExecutePhysicalDag(const std::vector<uint64_t>& pids);
 
  private:
   LogicalDag logical_dag_;

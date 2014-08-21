@@ -4,6 +4,7 @@
 #include <vector>
 #include <initializer_list>
 #include <ostream>
+#include <memory>
 
 #include "common/scale.h"
 #include "op/closure.h"
@@ -43,17 +44,15 @@ class NArray {
   friend class Convolution;
   friend class MinervaSystem;
  public:
-  static NArray Constant(const Scale& size, float val,
-      const NVector<Scale>&);
-  static NArray Randn(const Scale& size, float mu, float var,
-      const NVector<Scale>&);
+  static NArray Constant(const Scale& size, float val, const NVector<Scale>&);
+  static NArray Randn(const Scale& size, float mu, float var, const NVector<Scale>&);
   static NArray Constant(const Scale& size, float val, const Scale& );
   static NArray Randn(const Scale& size, float mu, float var, const Scale& );
   static NArray LoadFromFile(const Scale& size, const std::string& fname, IFileLoader* loader,
       const Scale& numparts);
-  static NArray LoadFromArray(const Scale&, float*, const Scale&);
   static NArray Zeros(const Scale& size, const Scale& numparts) { return Constant(size, 0.0, numparts); }
   static NArray Ones(const Scale& size, const Scale& numparts) { return Constant(size, 1.0, numparts); }
+  static NArray MakeNArray(const Scale&, std::shared_ptr<float>, const Scale&);
 
 
   NArray();
@@ -110,6 +109,7 @@ class NArray {
 
   // system
   void Eval();
+  void EvalAsync();
   float* Get();
   void ToStream(std::ostream&, const FileFormat&);
   void ToFile(const std::string& filename, const FileFormat& );
