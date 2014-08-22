@@ -86,7 +86,7 @@ void WaitForEvalFinish() {
   m::MinervaSystem::Instance().WaitForEvalFinish();
 }
 
-}
+} // end of namespace owl
 
 // python module
 BOOST_PYTHON_MODULE(libowl) {
@@ -128,7 +128,8 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("normalize", &m::NArray::NormArithmetic)
     // misc
     .def("trans", &m::NArray::Trans)
-    .def("to_file", &m::NArray::ToFile)
+    .def("tofile", &m::NArray::ToFile)
+    .def("tolist", &owl::NArrayToList)
     .def("eval", &m::NArray::Eval)
     .def("eval_async", &m::NArray::EvalAsync)
   ;
@@ -155,7 +156,7 @@ BOOST_PYTHON_MODULE(libowl) {
   //def("ones", &m::NArray::Ones);
 
   // system
-  def("to_list", &owl::NArrayToList);
+  //def("to_list", &owl::NArrayToList);
   def("initialize", &owl::Initialize);
   def("logical_dag", &owl::LogicalDag);
   def("wait_eval", &owl::WaitForEvalFinish);

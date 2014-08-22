@@ -14,7 +14,6 @@ load_from_file = _owl.load_from_file
 zeros = _owl.zeros
 ones = _owl.ones
 make_narray = _owl.make_narray
-to_list = _owl.to_list
 
 op = _owl.arithmetic
 
