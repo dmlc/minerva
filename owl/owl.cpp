@@ -54,6 +54,15 @@ m::NArray OnesWrapper(const bp::list& s, const bp::list& np) {
   return m::NArray::Ones(ToScale(s), ToScale(np));
 }
 
+m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val, const bp::list& np) {
+  size_t length = bp::len(val);
+  std::shared_ptr<float> valptr(new float[length]);
+  for(size_t i = 0; i < length; ++i) {
+    valptr.get()[i] = bp::extract<float>(val[i]);
+  }
+  return m::NArray::MakeNArray(ToScale(s), valptr, ToScale(np));
+}
+
 m::NArray LoadFromFileWrapper(const bp::list& s, const std::string& fname, m::IFileLoader* loader, const bp::list& np) {
   return m::NArray::LoadFromFile(ToScale(s), fname, loader, ToScale(np));
 }
@@ -73,7 +82,11 @@ bp::list NArrayToList(m::NArray narr) {
   return l;
 }
 
+void WaitForEvalFinish() {
+  m::MinervaSystem::Instance().WaitForEvalFinish();
 }
+
+} // end of namespace owl
 
 // python module
 BOOST_PYTHON_MODULE(libowl) {
@@ -115,7 +128,8 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("normalize", &m::NArray::NormArithmetic)
     // misc
     .def("trans", &m::NArray::Trans)
-    .def("to_file", &m::NArray::ToFile)
+    .def("tofile", &m::NArray::ToFile)
+    .def("tolist", &owl::NArrayToList)
     .def("eval", &m::NArray::Eval)
     .def("eval_async", &m::NArray::EvalAsync)
   ;
@@ -136,14 +150,16 @@ BOOST_PYTHON_MODULE(libowl) {
   // creators
   def("zeros", &owl::ZerosWrapper);
   def("ones", &owl::OnesWrapper);
+  def("make_narray", &owl::MakeNArrayWrapper);
   //def("random_randn", &m::NArray::Randn);
   //def("zeros", &m::NArray::Zeros);
   //def("ones", &m::NArray::Ones);
 
   // system
-  def("to_list", &owl::NArrayToList);
+  //def("to_list", &owl::NArrayToList);
   def("initialize", &owl::Initialize);
   def("logical_dag", &owl::LogicalDag);
+  def("wait_eval", &owl::WaitForEvalFinish);
 
   // elewise
   def("mult", &m::Elewise::Mult);

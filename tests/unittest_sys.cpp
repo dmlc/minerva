@@ -69,3 +69,7 @@ TEST(EvalTest, AsyncEvalWithChangedLDag) {
   delete [] eptr;
   cout << "Call eval end" << endl;
 }
+
+TEST(WaitFinishTest, OnlyWait) {
+  MinervaSystem::Instance().WaitForEvalFinish();
+}
