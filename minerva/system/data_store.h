@@ -20,14 +20,13 @@ class DataStore {
   uint64_t GenerateDataID();
   bool CreateData(uint64_t, MemTypes, size_t len, int rc = 0);
   float* GetData(uint64_t, MemTypes);
-  bool ExistData(uint64_t ) const;
-  void FreeData(uint64_t );
+  bool ExistData(uint64_t) const;
+  void FreeData(uint64_t);
   // return true if the RC is zero afterwards
   bool IncrReferenceCount(uint64_t, int amount = 1);
   bool DecrReferenceCount(uint64_t, int amount = 1);
-  bool SetReferenceCount(uint64_t, int );
-  int GetReferenceCount(uint64_t ) const;
-  //void FreeData(uint64_t, MemTypes);
+  bool SetReferenceCount(uint64_t, int);
+  int GetReferenceCount(uint64_t) const;
   size_t GetTotalBytes(MemTypes memtype) const;
 
  private:
@@ -38,8 +37,8 @@ class DataStore {
     size_t length;
     int reference_count;
   };
-  bool CheckValidity(uint64_t ) const;
-  void GC(uint64_t );
+  bool CheckValidity(uint64_t) const;
+  void GC(uint64_t);
   mutable std::mutex access_mutex_;
   std::unordered_map<uint64_t, DataState> data_states_;
 };
