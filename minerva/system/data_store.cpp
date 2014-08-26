@@ -28,7 +28,7 @@ uint64_t DataStore::GenerateDataID() {
   return ++data_id_gen;
 }
 
-bool DataStore::CreateData(uint64_t id, MemTypes type, size_t length, int rc) {
+void DataStore::CreateData(uint64_t id, MemTypes type, size_t length, int rc) {
   lock_guard<mutex> lck(access_mutex_);
   DLOG(INFO) << "create data_id=" << id << " length=" << length << " type=" << type;
   DataState& ds = data_states_[id];
@@ -46,8 +46,6 @@ bool DataStore::CreateData(uint64_t id, MemTypes type, size_t length, int rc) {
     default:
       CHECK(false) << "invalid storage type";
   }
-  // TODO What's the point of return value?
-  return true;
 }
 
 float* DataStore::GetData(uint64_t id, MemTypes type) {

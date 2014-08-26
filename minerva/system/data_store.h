@@ -18,7 +18,7 @@ class DataStore {
   DataStore();
   ~DataStore();
   uint64_t GenerateDataID();
-  bool CreateData(uint64_t, MemTypes, size_t len, int rc = 0);
+  void CreateData(uint64_t, MemTypes, size_t len, int rc = 0);
   float* GetData(uint64_t, MemTypes);
   bool ExistData(uint64_t) const;
   void FreeData(uint64_t);
