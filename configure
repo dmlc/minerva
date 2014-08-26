@@ -9,17 +9,18 @@ function unknown_option {
 }
 
 function run_clean {
-	echo "Are you sure to delete release/debug builds? [y/n]"
-	read yesorno;
+	read -n 1 -s -p "Are you sure to delete release/debug builds? [y/n]
+" yesorno;
 	if [ "$yesorno" == "y" ]; then
 		echo "Removing release and debug builds"
 		rm -rf $RELEASE_DIR $DEBUG_DIR
 	fi
 	exit 0
 }
+
 function run_cleanall {
-echo "Are you sure to delete all builds (release, debug, deps)? [y/n]"
-	read yesorno;
+	read -n 1 -s -p "Are you sure to delete all builds (release, debug, deps)? [y/n]
+" yesorno;
 	if [ "$yesorno" == "y" ]; then
 		echo "Removing all builds"
 		rm -rf $RELEASE_DIR $DEBUG_DIR deps
@@ -38,9 +39,9 @@ do
 	case $1 in
 		-help | --help | -h | --h)
 			want_help=yes ;;
-		--clean)
+		-c | --clean)
 			run_clean=yes ;;
-		--cleanall)
+		-a | --cleanall)
 			run_cleanall=yes ;;
 		--mkl=*)
 			MKL_ROOT=`expr "x$1" : "x--mkl=\(.*\)"` ;;
@@ -65,8 +66,8 @@ if test "x$want_help" = xyes; then
 Usage: ./configure [OPTION]...
 Configurations:
 	-h, --help              Display this help and exit
-	--clean                 Clean up debug and release build
-	--cleanall              Clean all bulids including dependent libraries
+	-c, --clean                 Clean up debug and release build
+	-a, --cleanall              Clean all bulids including dependent libraries
 	--mkl=MKL_ROOT          Specify the root of MKL installation
 	--packages=DIR          Specify the location of dependent packages of Minerva
 	-Dvar=value             Specify definitions to be passed on to cmake
