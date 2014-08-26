@@ -31,17 +31,15 @@ class DataStore {
   size_t GetTotalBytes(MemTypes memtype) const;
 
  private:
+  DISALLOW_COPY_AND_ASSIGN(DataStore);
   struct DataState {
-    float* data_ptrs[NUM_MEM_TYPES];
+    DataState();
+    void* data_ptrs[NUM_MEM_TYPES];
     size_t length;
     int reference_count;
-    DataState();
   };
-  DISALLOW_COPY_AND_ASSIGN(DataStore);
   bool CheckValidity(uint64_t ) const;
   void GC(uint64_t );
-
- private:
   mutable std::mutex access_mutex_;
   std::unordered_map<uint64_t, DataState> data_states_;
 };
@@ -49,11 +47,6 @@ class DataStore {
 inline bool DataStore::ExistData(uint64_t id) const {
   std::lock_guard<std::mutex> lck(access_mutex_);
   return data_states_.find(id) != data_states_.end();
-}
-
-inline DataStore::DataState::DataState(): length(0), reference_count(0) {
-  // TODO use memset instead ?
-  for(int i = 0; i < NUM_MEM_TYPES; ++i) data_ptrs[i] = NULL;
 }
 
 } // end of namespace minerva
