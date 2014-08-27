@@ -2,7 +2,10 @@
 #include <cstdlib>
 #include <cstddef>
 #include <glog/logging.h>
+
+#ifdef HAS_CUDA
 #include <cuda_runtime.h>
+#endif
 
 using namespace std;
 
@@ -17,9 +20,11 @@ DataStore::~DataStore() {
     if ((ptr = i.second.data_ptrs[CPU])) {
       free(ptr);
     }
+#ifdef HAS_CUDA
     if ((ptr = i.second.data_ptrs[GPU])) {
       CHECK_EQ(cudaFree(ptr), cudaSuccess);
     }
+#endif
   }
 }
 
@@ -41,7 +46,11 @@ void DataStore::CreateData(uint64_t id, MemTypes type, size_t length, int rc) {
       ds.data_ptrs[type] = calloc(length, sizeof(float));
       break;
     case GPU:
+#ifdef HAS_CUDA
       CHECK_EQ(cudaMalloc(&ds.data_ptrs[type], length * sizeof(float)), cudaSuccess);
+#else
+      CHECK(false);
+#endif
       break;
     default:
       CHECK(false) << "invalid storage type";
@@ -50,6 +59,7 @@ void DataStore::CreateData(uint64_t id, MemTypes type, size_t length, int rc) {
 
 float* DataStore::GetData(uint64_t id, MemTypes type) {
   lock_guard<mutex> lck(access_mutex_);
+  CHECK(CheckValidity(id)) << "id=" << id << " was not created!";
   DataState& ds = data_states_[id];
   CHECK_NE(ds.data_ptrs[type], static_cast<void*>(0)) << "id=" << id << " was not created!";
   return (float*) data_states_[id].data_ptrs[type];
@@ -128,9 +138,11 @@ void DataStore::GC(uint64_t id) {
   if ((ptr = ds.data_ptrs[CPU])) {
     free(ptr);
   }
+#ifdef HAS_CUDA
   if ((ptr = ds.data_ptrs[GPU])) {
     CHECK_EQ(cudaFree(ptr), cudaSuccess);
   }
+#endif
   data_states_.erase(id);
 }
 
