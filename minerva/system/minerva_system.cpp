@@ -53,6 +53,14 @@ void MinervaSystem::Finalize() { }
 MinervaSystem::MinervaSystem() { }
 MinervaSystem::~MinervaSystem() { }
 
+void MinervaSystem::SetDevice(DeviceInfo info) {
+  device_info_ = info;
+}
+
+DeviceInfo MinervaSystem::GetDeviceInfo() {
+  return device_info_;
+}
+
 void MinervaSystem::LoadBuiltinDagMonitors() {
   logical_dag_.RegisterMonitor(expand_engine_);
   physical_dag_.RegisterMonitor(physical_engine_);

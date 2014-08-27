@@ -6,6 +6,7 @@
 #include "dag/physical_dag.h"
 #include "procedures/dag_procedure.h"
 #include "narray/narray.h"
+#include "device/device_info.h"
 
 namespace minerva {
 
@@ -33,6 +34,8 @@ class MinervaSystem :
   void Eval(const std::vector<NArray>& narrs);
   void EvalAsync(const std::vector<NArray>& narrs);
   void WaitForEvalFinish();
+  void SetDevice(DeviceInfo info);
+  DeviceInfo GetDeviceInfo();
 
  private:
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
@@ -49,6 +52,7 @@ class MinervaSystem :
   ExpandEngine* expand_engine_;
   PhysicalEngine* physical_engine_;
   DataStore* data_store_;
+  DeviceInfo device_info_;
 
   std::unordered_set<uint64_t> extern_rc_changed_ldnodes_;
 };

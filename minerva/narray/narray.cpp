@@ -6,6 +6,8 @@
 #include <fstream>
 #include <iomanip>
 
+#include "device/device_info.h"
+
 using namespace std;
 
 namespace minerva {
