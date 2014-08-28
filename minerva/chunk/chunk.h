@@ -3,6 +3,7 @@
 #include "common/nvector.h"
 #include "dag/physical_dag.h"
 #include "op/closure.h"
+#include "device/device_info.h"
 
 namespace minerva {
 

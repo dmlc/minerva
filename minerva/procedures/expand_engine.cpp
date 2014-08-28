@@ -1,5 +1,6 @@
 #include "expand_engine.h"
 #include "system/minerva_system.h"
+#include "device/device_info.h"
 
 using namespace std;
 
@@ -67,6 +68,7 @@ void ExpandEngine::ProcessNode(DagNode* node) {
       MakeMapping(dnode, chunks);
     }
   } else { // op node
+    MinervaSystem::Instance().SetDevice(node -> device_info());
     LogicalDag::ONode* onode = dynamic_cast<LogicalDag::ONode*>(node);
     LogicalComputeFn* fn = onode->op_.compute_fn;
     CHECK_NOTNULL(fn);
@@ -85,7 +87,7 @@ void ExpandEngine::ProcessNode(DagNode* node) {
       );
     }
     // call expand function
-    DLOG(INFO) << "Expand logical compute function: " << fn->Name();
+    DLOG(INFO) << "Expand logical compute function: " << fn->Name() << " on device " << MinervaSystem::Instance().GetDeviceInfo().id;
     std::vector<NVector<Chunk>> rst_chunks = fn->Expand(in_chunks);
     // check output validity
     CHECK_EQ(rst_chunks.size(), onode->outputs_.size()) 

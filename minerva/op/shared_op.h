@@ -7,6 +7,7 @@
 #include "physical.h"
 #include "closure.h"
 #include "impl/bundle.h"
+#include "device/device_info.h"
 
 namespace minerva {
 

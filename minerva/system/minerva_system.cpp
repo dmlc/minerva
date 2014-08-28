@@ -48,10 +48,29 @@ void MinervaSystem::Initialize(int* argc, char*** argv) {
     physical_engine_->SetImplDecider(&all_basic_impl);
   }
   LoadBuiltinDagMonitors();
+  df = DeviceFactory::Instance();
+  df.Initialize();
+  device_info_ = df.default_info();
 }
 void MinervaSystem::Finalize() { }
 MinervaSystem::MinervaSystem() { }
 MinervaSystem::~MinervaSystem() { }
+
+void MinervaSystem::SetDevice(DeviceInfo info) {
+  device_info_ = info;
+}
+
+DeviceInfo MinervaSystem::GetDeviceInfo() {
+  return device_info_;
+}
+
+DeviceInfo MinervaSystem::CreateGPUDevice(int gid) {
+  return df.gpu_device_info(gid);
+}
+
+DeviceInfo MinervaSystem::CreateGPUDevice(int gid, int numStream) {
+  return df.gpu_device_info(gid, numStream);
+}
 
 void MinervaSystem::LoadBuiltinDagMonitors() {
   logical_dag_.RegisterMonitor(expand_engine_);

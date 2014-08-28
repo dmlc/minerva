@@ -3,6 +3,7 @@
 #include <queue>
 #include <sstream>
 #include <glog/logging.h>
+#include "device/device_info.h"
 
 namespace minerva {
 
@@ -48,11 +49,14 @@ typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
 template<class D, class O>
 typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
     const std::vector<DataNode<D, O>*>& inputs,
-    const std::vector<DataNode<D, O>*>& outputs, const O& op) {
+    const std::vector<DataNode<D, O>*>& outputs,
+    const O& op,
+    const DeviceInfo device_info) {
   typedef OpNode<D, O> ONode;
   ONode* ret = new ONode;
   ret->op_ = op;
   ret->set_node_id(NewIndex());
+  ret->set_device_info(device_info);
   index_to_node_.insert(std::make_pair(ret->node_id(), ret));
 
   // notify monitors

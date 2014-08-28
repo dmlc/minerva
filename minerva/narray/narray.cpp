@@ -6,6 +6,8 @@
 #include <fstream>
 #include <iomanip>
 
+#include "device/device_info.h"
+
 using namespace std;
 
 namespace minerva {
@@ -57,7 +59,7 @@ std::vector<NArray> NArray::Compute(std::vector<NArray> params,
   for(NArray p : params) {
     param_data_nodes.push_back(p.data_node_);
   }
-  ldag.NewOpNode(param_data_nodes, rst_data_nodes, {fn});
+  ldag.NewOpNode(param_data_nodes, rst_data_nodes, {fn}, MinervaSystem::Instance().GetDeviceInfo());
   return rst;
 }
 
