@@ -4,8 +4,19 @@
 #include <gtest/gtest.h>
 #include <dag/dag.h>
 
-using namespace minerva;
 using namespace std;
+
+namespace minerva {
+
+template<> class Inspector<MinervaSystem> {
+  void GeneratePhysicalDag(const vector<uint64_t>& lids) {
+    MinervaSystem::Instance().GeneratePhysicalDag(lids);
+  }
+};
+
+}
+
+using namespace minerva;
 
 TEST(DevicePassingTest, Basic) {
   MinervaSystem& ms = MinervaSystem::Instance();
@@ -38,9 +49,5 @@ TEST(DevicePassingTest, PassingThroughDag) {
 
   PhysicalDag& pdag = ms.physical_dag();
   cout << pdag.NumNodes() << endl;
-  for (int i = 0; i < pdag.NumNodes(); ++ i) {
-    DagNode* node = pdag.GetNode(i);
-    cout << node->Type() << endl;
-  }
 }
 

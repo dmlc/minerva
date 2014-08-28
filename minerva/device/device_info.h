@@ -7,7 +7,7 @@ namespace minerva {
 
 struct DeviceInfo {
   int id;
-  std::vector<char*> CPUList; // for now # of CPU should be 1, which is local
+  std::vector<const char*> CPUList; // for now # of CPU should be 1, which is local
   std::vector<int> GPUList; // GPUs assigned to this "device", suitable for CUDA call cudaSetDevice
   std::vector<int> numStreams; // # of streams available on each GPU
 };

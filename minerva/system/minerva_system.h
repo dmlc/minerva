@@ -1,12 +1,12 @@
 #pragma once
-
-#include <unordered_set>
 #include "common/singleton.h"
 #include "dag/logical_dag.h"
 #include "dag/physical_dag.h"
 #include "procedures/dag_procedure.h"
 #include "narray/narray.h"
 #include "device/device_info.h"
+#include "common/inspector.h"
+#include <unordered_set>
 
 namespace minerva {
 
@@ -20,6 +20,7 @@ class MinervaSystem :
   public EverlastingSingleton<MinervaSystem> {
   friend class NArray;
   friend class EverlastingSingleton<MinervaSystem>;
+  friend class Inspector<MinervaSystem>;
  public:
   ~MinervaSystem();
   void Initialize(int* argc, char*** argv);
