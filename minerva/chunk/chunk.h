@@ -50,10 +50,12 @@ class Chunk {
   static Scale ComputeOffset(NVector<Chunk> ); // return merged size
   static Chunk Merge(NVector<Chunk> );
   NVector<Chunk> Split(const NVector<Scale>& partsizes);
-
-  // customized operations
+  // DAG building operations
+  // TODO deprecated version
   static std::vector<Chunk> Compute(const std::vector<Chunk>& params,
       const std::vector<Scale>& result_sizes, PhysicalComputeFn* fn);
+  static std::vector<Chunk> Compute(const std::vector<Chunk>& params,
+      const std::vector<Scale>& result_sizes, PhysicalComputeFn* fn, DeviceInfo info);
 
  private:
   PhysicalDataNode* data_node_; // Set up in constructor

@@ -5,6 +5,7 @@
 
 namespace minerva {
 
+// TODO No need in having those since we are not dealing with partitioning any more
 class AssembleOp: public PhyComputeFnWithClosure<AssembleClosure> {
   std::string Name() const {
     return "assemble";

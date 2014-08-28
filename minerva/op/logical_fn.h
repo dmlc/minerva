@@ -1,8 +1,8 @@
 #pragma once
-#include <vector>
 #include "common/nvector.h"
 #include "chunk/chunk.h"
 #include "op/basic_fn.h"
+#include <vector>
 
 namespace minerva {
 

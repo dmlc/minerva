@@ -15,7 +15,6 @@ struct LogicalData {
   LogicalData(): data_gen_fn(NULL), extern_rc(0) {}
   LogicalData(const Scale& s, LogicalDataGenFn* fn = NULL):
     size(s), data_gen_fn(fn), extern_rc(0) {}
-  //DataNodeContext context; // TODO how to set context ?
 };
 
 struct LogicalOp {
