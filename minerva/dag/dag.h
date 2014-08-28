@@ -12,6 +12,7 @@
 
 #include "common/common.h"
 #include "common/concurrent_blocking_queue.h"
+#include "device/device_info.h"
 
 namespace minerva {
 
@@ -30,11 +31,14 @@ class DagNode {
 
   uint64_t node_id() const { return node_id_; }
   void set_node_id(uint64_t id) { node_id_ = id; }
+  DeviceInfo device_info() const { return device_info_; }
+  void set_device_info(DeviceInfo info) { device_info_ = info; }
 
   std::vector<DagNode*> successors_;
   std::vector<DagNode*> predecessors_;
  private:
   uint64_t node_id_;
+  DeviceInfo device_info_;
 };
 
 template<typename Data, typename Op>
@@ -97,7 +101,7 @@ class Dag {
   ~Dag();
   DNode* NewDataNode(const Data& data);
   ONode* NewOpNode(const std::vector<DNode*>& inputs,
-      const std::vector<DNode*>& outputs, const Op& op);
+      const std::vector<DNode*>& outputs, const Op& op, DeviceInfo info);
   void DeleteNode(uint64_t );
   bool ExistNode(uint64_t ) const;
   DagNode* GetNode(uint64_t ) const;
