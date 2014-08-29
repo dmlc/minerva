@@ -28,17 +28,13 @@ class DagNode {
   bool DeleteSucc(DagNode*);
   bool DeletePred(DagNode*);
   virtual NodeTypes Type() const = 0;
-
   uint64_t node_id() const { return node_id_; }
   void set_node_id(uint64_t id) { node_id_ = id; }
-  DeviceInfo device_info() const { return device_info_; }
-  void set_device_info(DeviceInfo info) { device_info_ = info; }
 
   std::vector<DagNode*> successors_;
   std::vector<DagNode*> predecessors_;
  private:
   uint64_t node_id_;
-  DeviceInfo device_info_;
 };
 
 template<typename Data, typename Op>
@@ -62,6 +58,7 @@ class OpNode : public DagNode {
   NodeTypes Type() const { return DagNode::OP_NODE; }
   Op op_;
   std::vector<DNode*> inputs_, outputs_;
+  DeviceInfo device_info_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(OpNode);

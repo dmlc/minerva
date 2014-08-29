@@ -68,8 +68,8 @@ void ExpandEngine::ProcessNode(DagNode* node) {
       MakeMapping(dnode, chunks);
     }
   } else { // op node
-    MinervaSystem::Instance().SetDevice(node -> device_info());
     LogicalDag::ONode* onode = dynamic_cast<LogicalDag::ONode*>(node);
+    MinervaSystem::Instance().SetDevice(onode->device_info_);
     LogicalComputeFn* fn = onode->op_.compute_fn;
     CHECK_NOTNULL(fn);
     // make input chunks
