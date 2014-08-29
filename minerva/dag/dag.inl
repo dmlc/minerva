@@ -30,7 +30,6 @@ uint64_t Dag<D, O>::NewIndex() {
   return index_counter++;
 }
 
-
 template<class D, class O>
 typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
   DNode* ret = new DNode(NewIndex());

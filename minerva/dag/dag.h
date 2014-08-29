@@ -36,7 +36,7 @@ class DagNode {
  protected:
   DagNode(uint64_t id): node_id_(id) {
   }
- 
+
  private:
   DISALLOW_COPY_AND_ASSIGN(DagNode);
   uint64_t node_id_;

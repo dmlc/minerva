@@ -1,9 +1,8 @@
 #include <functional>
 #include <cstdio>
 #include <cstdlib>
-
+#include <algorithm>
 #include <glog/logging.h>
-
 #include "chunk.h"
 #include "dag/physical_dag.h"
 #include "op/physical_op.h"
@@ -26,6 +25,7 @@ Chunk& Chunk::operator = (const Chunk& other) {
 /////////////////////////////////////////////////////////
 // General interface for customized operations
 /////////////////////////////////////////////////////////
+// TODO deprecated
 std::vector<Chunk> Chunk::Compute(const std::vector<Chunk>& params,
       const std::vector<Scale>& result_sizes, PhysicalComputeFn* fn) {
   auto& ms = MinervaSystem::Instance();
@@ -50,6 +50,36 @@ std::vector<Chunk> Chunk::Compute(const std::vector<Chunk>& params,
   phy_op.impl_type = ImplType::kNA;
   phy_op.compute_fn = fn;
   pdag.NewOpNode(param_data_nodes, rst_data_nodes, phy_op, ms.GetDeviceInfo());
+  return rst;
+}
+
+vector<Chunk> Chunk::Compute(
+      const std::vector<Chunk>& params,
+      const std::vector<Scale>& result_sizes,
+      PhysicalComputeFn* fn,
+      DeviceInfo info) {
+  auto& ms = MinervaSystem::Instance();
+  auto& pdag = ms.physical_dag();
+  vector<Chunk> rst;
+  for (auto& size: result_sizes) {
+    PhysicalData phy_data;
+    phy_data.size = size;
+    phy_data.data_id = ms.data_store().GenerateDataID();
+    auto rst_node = pdag.NewDataNode(phy_data);
+    rst.push_back(Chunk(rst_node));
+  }
+  vector<PhysicalDataNode*> rst_data_nodes(rst.size());
+  transform(rst.begin(), rst.end(), rst_data_nodes.begin(), [](const Chunk& i) {
+    return i.data_node();
+  });
+  vector<PhysicalDataNode*> param_data_nodes(params.size());
+  transform(params.begin(), params.end(), param_data_nodes.begin(), [](const Chunk& i) {
+    return i.data_node();
+  });
+  PhysicalOp phy_op;
+  phy_op.impl_type = ImplType::kNA;
+  phy_op.compute_fn = fn;
+  pdag.NewOpNode(param_data_nodes, rst_data_nodes, phy_op, info);
   return rst;
 }
 
@@ -101,7 +131,7 @@ Chunk Chunk::Trans() {
   TransOp* trans_op = new TransOp;
   return Chunk::Compute({*this}, {new_size}, trans_op)[0];
 }
-  
+
 Scale Chunk::ComputeOffset(NVector<Chunk> chunks) {
   const Scale& numparts = chunks.Size();
   size_t numdims = numparts.NumDims();
@@ -122,7 +152,7 @@ Scale Chunk::ComputeOffset(NVector<Chunk> chunks) {
     }
   }
 }
-  
+
 Chunk Chunk::Merge(NVector<Chunk> parts) {
   Scale rstsize = ComputeOffset(parts);
   AssembleOp* assemble_op = new AssembleOp;
