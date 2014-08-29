@@ -60,14 +60,14 @@ vector<Chunk> Chunk::Compute(
       DeviceInfo info) {
   auto& ms = MinervaSystem::Instance();
   auto& pdag = ms.physical_dag();
-  vector<Chunk> rst;
-  for (auto& size: result_sizes) {
+  vector<Chunk> rst(result_sizes.size());
+  transform(result_sizes.begin(), result_sizes.end(), rst.begin(), [&](const Scale& size) {
     PhysicalData phy_data;
     phy_data.size = size;
     phy_data.data_id = ms.data_store().GenerateDataID();
     auto rst_node = pdag.NewDataNode(phy_data);
-    rst.push_back(Chunk(rst_node));
-  }
+    return Chunk(rst_node);
+  });
   vector<PhysicalDataNode*> rst_data_nodes(rst.size());
   transform(rst.begin(), rst.end(), rst_data_nodes.begin(), [](const Chunk& i) {
     return i.data_node();
