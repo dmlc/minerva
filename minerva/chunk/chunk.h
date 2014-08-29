@@ -38,12 +38,9 @@ class Chunk {
   void operator *= (float );
   void operator /= (float );
   Chunk operator - ();
-  // reduction
-  Chunk Reduce(const Scale& dims_to_reduce, ReductionType );
   // shape
   const Scale& Size() const { return data_node_->data_.size; }
   int Size(int dim) const { return data_node_->data_.size[dim]; }
-  Chunk Trans();
 
   static Scale ComputeOffset(NVector<Chunk> ); // return merged size
   static Chunk Merge(NVector<Chunk> );

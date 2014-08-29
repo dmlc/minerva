@@ -98,29 +98,6 @@ Chunk Chunk::Randn(const Scale& size, float mu, float var) {
   return Chunk::Compute({}, {size}, randn_op)[0];
 }
 
-/////////////////////////////////////////////////////////
-// reduction
-/////////////////////////////////////////////////////////
-Chunk Chunk::Reduce(const Scale& dims_to_reduce, ReductionType type) {
-  ReductionOp* op = new ReductionOp;
-  op->closure = {type, dims_to_reduce};
-  Scale rstsize = Size();
-  for (auto i: dims_to_reduce) {
-    rstsize[i] = 1;
-  }
-  return Compute({*this}, {rstsize}, op)[0];
-}
-
-/////////////////////////////////////////////////////////
-// shape
-/////////////////////////////////////////////////////////
-Chunk Chunk::Trans() {
-  CHECK_EQ(Size().NumDims(), 2) << "transpose only performs on 2d data";
-  Scale new_size = {Size(1), Size(0)};
-  TransOp* trans_op = new TransOp;
-  return Chunk::Compute({*this}, {new_size}, trans_op)[0];
-}
-
 Scale Chunk::ComputeOffset(NVector<Chunk> chunks) {
   const Scale& numparts = chunks.Size();
   size_t numdims = numparts.NumDims();
