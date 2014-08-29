@@ -38,8 +38,6 @@ class Chunk {
   void operator *= (float );
   void operator /= (float );
   Chunk operator - ();
-  // Matrix multiplication
-  friend Chunk operator * (Chunk, Chunk); // Matrix multiplication
   // reduction
   Chunk Reduce(const Scale& dims_to_reduce, ReductionType );
   // shape

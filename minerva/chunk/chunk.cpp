@@ -99,17 +99,6 @@ Chunk Chunk::Randn(const Scale& size, float mu, float var) {
 }
 
 /////////////////////////////////////////////////////////
-// matrix multiply
-/////////////////////////////////////////////////////////
-Chunk operator * (Chunk a, Chunk b) {
-  CHECK_EQ(a.Size().NumDims(), 2) << "matmult only performs on 2d data";
-  CHECK_EQ(b.Size().NumDims(), 2) << "matmult only performs on 2d data";
-  CHECK_EQ(a.Size(1), b.Size(0)) << "matmult dimension unmatch";
-  Scale new_size{a.Size(0), b.Size(1)};
-  MatMultOp* matmult_op = new MatMultOp;
-  return Chunk::Compute({a, b}, {new_size}, matmult_op)[0];
-}
-/////////////////////////////////////////////////////////
 // reduction
 /////////////////////////////////////////////////////////
 Chunk Chunk::Reduce(const Scale& dims_to_reduce, ReductionType type) {

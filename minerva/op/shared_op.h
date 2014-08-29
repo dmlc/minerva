@@ -49,27 +49,15 @@ class FillOp : public SharedDataGenFnWithClosure<FillClosure> {
 class MatMultOp : public SharedComputeFnWithClosure<MatMultClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
-    NVector<Chunk> a = inputs[0];
-    NVector<Chunk> b = inputs[1];
-    // validity
-    assert(a.Size(1) == b.Size(0));
-    int m = a.Size(0);
-    int n = b.Size(1);
-    int k = a.Size(1);
-    // matmult
-    NVector<Chunk> c({m, n});
-    for(int i = 0 ; i < m; ++i) {
-      for(int j = 0; j < n; ++j) {
-        for(int l = 0; l < k; ++l) {
-          if(l == 0) {
-            c[{i, j}] = a[{i, l}] * b[{l, j}];
-          }
-          else {
-            c[{i, j}] += a[{i, l}] * b[{l, j}];
-          }
-        }
-      }
-    }
+    CHECK_EQ(inputs.size(), 2) << "matmult takes 2 inputs";
+    CHECK_EQ(inputs[0].Size().Prod(), 1) << "no partition allowed";
+    CHECK_EQ(inputs[1].Size().Prod(), 1) << "no partition allowed";
+    auto& a = inputs[0].ToVector()[0];
+    auto& b = inputs[1].ToVector()[0];
+    CHECK_EQ(a.Size().NumDims(), 2) << "matmult only performs on 2D data";
+    CHECK_EQ(b.Size().NumDims(), 2) << "matmult only performs on 2D data";
+    NVector<Chunk> c({1, 1});
+    c[{0, 0}] = Chunk::Compute({a, b}, {Scale{a.Size(0), b.Size(1)}}, new MatMultOp)[0];
     return {c};
   }
   std::string Name() const {
