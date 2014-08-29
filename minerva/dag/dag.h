@@ -99,7 +99,7 @@ class Dag {
   typedef OpNode<Data, Op> ONode;
   Dag() {}
   ~Dag();
-  DNode* NewDataNode(const Data& data);
+  DNode* NewDataNode(const Data& data, DeviceInfo info);
   ONode* NewOpNode(const std::vector<DNode*>& inputs,
       const std::vector<DNode*>& outputs, const Op& op, DeviceInfo info);
   void DeleteNode(uint64_t );

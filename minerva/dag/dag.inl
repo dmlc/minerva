@@ -33,11 +33,14 @@ uint64_t Dag<D, O>::NewIndex() {
 
 
 template<class D, class O>
-typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
+typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(
+    const D& data,
+    const DeviceInfo device_info) {
   typedef Dag<D, O>::DNode DNode;
   DNode* ret = new DNode;
   ret->data_ = data;
   ret->set_node_id(NewIndex());
+  ret->set_device_info(device_info);
   index_to_node_.insert(std::make_pair(ret->node_id(), ret));
   // notify monitors
   for(auto mon : monitors_) {

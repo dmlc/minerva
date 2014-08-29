@@ -49,7 +49,7 @@ void MinervaSystem::Initialize(int* argc, char*** argv) {
   }
   LoadBuiltinDagMonitors();
   df = DeviceFactory::Instance();
-  df.Initialize();
+  df.Reset();
   device_info_ = df.default_info();
 }
 void MinervaSystem::Finalize() { }

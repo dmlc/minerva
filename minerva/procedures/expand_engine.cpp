@@ -58,6 +58,7 @@ void ExpandEngine::FinalizeProcess() {
 }
 
 void ExpandEngine::ProcessNode(DagNode* node) {
+  MinervaSystem::Instance().SetDevice(node -> device_info());
   if(node->Type() == DagNode::DATA_NODE) { // data node
     LogicalDag::DNode* dnode = dynamic_cast<LogicalDag::DNode*>(node);
     // call expand function to generate data
@@ -68,7 +69,6 @@ void ExpandEngine::ProcessNode(DagNode* node) {
       MakeMapping(dnode, chunks);
     }
   } else { // op node
-    MinervaSystem::Instance().SetDevice(node -> device_info());
     LogicalDag::ONode* onode = dynamic_cast<LogicalDag::ONode*>(node);
     LogicalComputeFn* fn = onode->op_.compute_fn;
     CHECK_NOTNULL(fn);

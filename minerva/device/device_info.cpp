@@ -5,7 +5,7 @@ using namespace std;
 
 namespace minerva {
 
-void DeviceFactory::Initialize() {
+void DeviceFactory::Reset() {
   allocated = 0;
 }
 
@@ -15,7 +15,8 @@ void DeviceFactory::print_device(DeviceInfo device_info) {
 
 DeviceInfo DeviceFactory::default_info() {
   DeviceInfo result;
-  result.id = allocated ++;
+  result.id = 0;
+  if (allocated == 0) ++ allocated;
   result.CPUList.push_back("localhost");
   result.GPUList.push_back(0);
   result.numStreams.push_back(1);

@@ -9,6 +9,7 @@
 #include "common/scale.h"
 #include "op/closure.h"
 #include "dag/logical_dag.h"
+#include "common/inspector.h"
 
 namespace minerva {
 
@@ -43,6 +44,7 @@ class NArray {
   friend class Elewise;
   friend class Convolution;
   friend class MinervaSystem;
+  friend class Inspector<MinervaSystem>;
  public:
   static NArray Constant(const Scale& size, float val, const NVector<Scale>&);
   static NArray Randn(const Scale& size, float mu, float var, const NVector<Scale>&);
