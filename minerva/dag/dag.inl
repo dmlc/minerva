@@ -33,9 +33,8 @@ uint64_t Dag<D, O>::NewIndex() {
 
 template<class D, class O>
 typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
-  DNode* ret = new DNode;
+  DNode* ret = new DNode(NewIndex());
   ret->data_ = data;
-  ret->set_node_id(NewIndex());
   index_to_node_.insert(std::make_pair(ret->node_id(), ret));
   // notify monitors
   for(auto mon : monitors_) {
@@ -50,9 +49,8 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
     const std::vector<DataNode<D, O>*>& outputs,
     const O& op,
     const DeviceInfo device_info) {
-  ONode* ret = new ONode;
+  ONode* ret = new ONode(NewIndex());
   ret->op_ = op;
-  ret->set_node_id(NewIndex());
   ret->device_info_ = device_info;
   index_to_node_.insert(std::make_pair(ret->node_id(), ret));
 

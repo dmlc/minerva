@@ -29,18 +29,23 @@ class DagNode {
   bool DeletePred(DagNode*);
   virtual NodeTypes Type() const = 0;
   uint64_t node_id() const { return node_id_; }
-  void set_node_id(uint64_t id) { node_id_ = id; }
 
   std::vector<DagNode*> successors_;
   std::vector<DagNode*> predecessors_;
+
+ protected:
+  DagNode(uint64_t id): node_id_(id) {
+  }
+ 
  private:
+  DISALLOW_COPY_AND_ASSIGN(DagNode);
   uint64_t node_id_;
 };
 
 template<typename Data, typename Op>
 class DataNode : public DagNode {
  public:
-  DataNode() {}
+  DataNode(uint64_t id): DagNode(id) {}
   ~DataNode();
   NodeTypes Type() const { return DagNode::DATA_NODE; }
   Data data_;
@@ -51,13 +56,12 @@ class DataNode : public DagNode {
 
 template<typename Data, typename Op>
 class OpNode : public DagNode {
-  typedef DataNode<Data, Op> DNode;
  public:
-  OpNode() {}
+  OpNode(uint64_t id): DagNode(id) {}
   ~OpNode();
   NodeTypes Type() const { return DagNode::OP_NODE; }
   Op op_;
-  std::vector<DNode*> inputs_, outputs_;
+  std::vector<DataNode<Data, Op>*> inputs_, outputs_;
   DeviceInfo device_info_;
 
  private:
