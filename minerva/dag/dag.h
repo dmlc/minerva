@@ -1,5 +1,6 @@
 #pragma once
-
+#include "common/common.h"
+#include "common/concurrent_blocking_queue.h"
 #include <cstdint>
 #include <vector>
 #include <map>
@@ -9,10 +10,6 @@
 #include <atomic>
 #include <string>
 #include <unordered_map>
-
-#include "common/common.h"
-#include "common/concurrent_blocking_queue.h"
-#include "device/device_info.h"
 
 namespace minerva {
 
@@ -62,7 +59,6 @@ class OpNode : public DagNode {
   NodeTypes Type() const { return DagNode::OP_NODE; }
   Op op_;
   std::vector<DataNode<Data, Op>*> inputs_, outputs_;
-  DeviceInfo device_info_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(OpNode);
@@ -102,7 +98,7 @@ class Dag {
   ~Dag();
   DNode* NewDataNode(const Data& data);
   ONode* NewOpNode(const std::vector<DNode*>& inputs,
-      const std::vector<DNode*>& outputs, const Op& op, DeviceInfo info);
+      const std::vector<DNode*>& outputs, const Op& op);
   void DeleteNode(uint64_t );
   bool ExistNode(uint64_t ) const;
   DagNode* GetNode(uint64_t ) const;

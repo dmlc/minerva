@@ -46,11 +46,9 @@ template<class D, class O>
 typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
     const std::vector<DataNode<D, O>*>& inputs,
     const std::vector<DataNode<D, O>*>& outputs,
-    const O& op,
-    const DeviceInfo device_info) {
+    const O& op) {
   ONode* ret = new ONode(NewIndex());
   ret->op_ = op;
-  ret->device_info_ = device_info;
   index_to_node_.insert(std::make_pair(ret->node_id(), ret));
 
   // notify monitors

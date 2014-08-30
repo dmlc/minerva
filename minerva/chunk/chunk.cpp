@@ -49,7 +49,8 @@ std::vector<Chunk> Chunk::Compute(const std::vector<Chunk>& params,
   // TODO how to set place ?
   phy_op.impl_type = ImplType::kNA;
   phy_op.compute_fn = fn;
-  pdag.NewOpNode(param_data_nodes, rst_data_nodes, phy_op, ms.GetDeviceInfo());
+  phy_op.device_info = ms.GetDeviceInfo();
+  pdag.NewOpNode(param_data_nodes, rst_data_nodes, phy_op);
   return rst;
 }
 
@@ -79,7 +80,8 @@ vector<Chunk> Chunk::Compute(
   PhysicalOp phy_op;
   phy_op.impl_type = ImplType::kNA;
   phy_op.compute_fn = fn;
-  pdag.NewOpNode(param_data_nodes, rst_data_nodes, phy_op, info);
+  phy_op.device_info = info;
+  pdag.NewOpNode(param_data_nodes, rst_data_nodes, phy_op);
   return rst;
 }
 

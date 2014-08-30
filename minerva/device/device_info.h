@@ -14,7 +14,8 @@ struct DeviceInfo {
 
 class DeviceFactory : public EverlastingSingleton<DeviceFactory> {
   public:
-    void Initialize();
+    void Reset();
+    int Allocated() { return allocated; }
     void print_device(DeviceInfo device_info);
     DeviceInfo default_info();
     DeviceInfo gpu_device_info(int gid);
