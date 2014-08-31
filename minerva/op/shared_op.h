@@ -18,9 +18,7 @@ class RandnOp : public SharedDataGenFnWithClosure<RandnClosure> {
  public:
   NVector<Chunk> Expand(const NVector<Scale>& part_sizes) {
     CHECK_EQ(part_sizes.Size().Prod(), 1) << "no partition allowed";
-    RandnOp* op = new RandnOp();
-    op->closure = closure;
-    op->device_info = device_info;
+    RandnOp* op = new RandnOp(*this);
     auto size = part_sizes.ToVector()[0];
     NVector<Chunk> res(Scale::Constant(size.NumDims(), 1));
     res[Scale::Origin(size.NumDims())] = Chunk::Compute({}, {size}, op)[0];
@@ -35,10 +33,11 @@ class FillOp : public SharedDataGenFnWithClosure<FillClosure> {
  public:
   NVector<Chunk> Expand(const NVector<Scale>& part_sizes) {
     CHECK_EQ(part_sizes.Size().Prod(), 1) << "no partition allowed";
-    return part_sizes.Map<Chunk>(
-        [&] (const Scale& psize) {
-          return Chunk::Constant(psize, closure.val);
-        });
+    FillOp* op = new FillOp(*this);
+    auto size = part_sizes.ToVector()[0];
+    NVector<Chunk> res(Scale::Constant(size.NumDims(), 1));
+    res[Scale::Origin(size.NumDims())] = Chunk::Compute({}, {size}, op)[0];
+    return {res};
   }
   std::string Name() const {
     std::stringstream ss;

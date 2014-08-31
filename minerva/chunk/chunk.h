@@ -11,8 +11,6 @@ class Chunk {
   friend class ChunkElewise;
 
  public:
-  static Chunk Constant(const Scale&, float);
-  static Chunk Randn(const Scale&, float, float);
   Chunk();
   Chunk(PhysicalDataNode* node);
   Chunk(const Chunk& other);
@@ -46,11 +44,8 @@ class Chunk {
   static Chunk Merge(NVector<Chunk> );
   NVector<Chunk> Split(const NVector<Scale>& partsizes);
   // DAG building operations
-  // TODO deprecated version
   static std::vector<Chunk> Compute(const std::vector<Chunk>& params,
       const std::vector<Scale>& result_sizes, PhysicalComputeFn* fn);
-  static std::vector<Chunk> Compute(const std::vector<Chunk>& params,
-      const std::vector<Scale>& result_sizes, PhysicalComputeFn* fn, DeviceInfo info);
 
  private:
   PhysicalDataNode* data_node_; // Set up in constructor
