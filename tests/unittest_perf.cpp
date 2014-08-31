@@ -11,7 +11,7 @@ using namespace minerva;
 TEST(PerfTest, LotsOfUnusedNArray) {
   vector<NArray> narrs;
   for(int i = 0; i < 1000; ++i) {
-    narrs.push_back(NArray::Constant({10, 10}, i, {2, 2}));
+    narrs.push_back(NArray::Constant({10, 10}, i, {1, 1}));
   }
   for(int i = 0; i < 1000; ++i) {
     narrs[i] = narrs[i] * 100 + 1;
@@ -23,7 +23,7 @@ TEST(PerfTest, LotsOfUnusedNArray) {
 }
 
 TEST(PerfTest, LongChain) {
-  NArray a = NArray::Constant({10, 10}, 0.0, {2, 2});
+  NArray a = NArray::Constant({10, 10}, 0.0, {1, 1});
   for(int i = 0; i < 5000; ++i) {
     a += 1;
   }
@@ -58,7 +58,7 @@ class AddOneManyTimesOp: public LogicalComputeFn, PhysicalComputeFn {
 };
 
 TEST(PerfTest, LongChainInOne) {
-  NArray a = NArray::Constant({10, 10}, 0.0, {2, 2});
+  NArray a = NArray::Constant({10, 10}, 0.0, {1, 1});
   NArray b = NArray::Compute({a}, {a.Size()}, new AddOneManyTimesOp)[0];
   b.Eval();
   /*float* val = b.Get();

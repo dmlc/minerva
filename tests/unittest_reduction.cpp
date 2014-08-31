@@ -11,7 +11,7 @@ TEST(Reduction, MaxOnFirstDimension) {
   for (int i = 0; i < size.Prod(); ++i) {
     data.get()[i] = i;
   }
-  NArray na = NArray::MakeNArray(size, data, {2, 2});
+  NArray na = NArray::MakeNArray(size, data, {1, 1});
   NArray na2 = na.Max(0);
   float* res = na2.Get();
   for (int i = 0; i < na2.Size().Prod(); ++i) {
@@ -25,7 +25,7 @@ TEST(Reduction, MaxOnSecondDimension) {
   for (int i = 0; i < size.Prod(); ++i) {
     data.get()[i] = i;
   }
-  NArray na = NArray::MakeNArray(size, data, {2, 2});
+  NArray na = NArray::MakeNArray(size, data, {1, 1});
   NArray na2 = na.Max(1);
   float* res = na2.Get();
   for (int i = 0; i < na2.Size().Prod(); ++i) {
@@ -39,7 +39,7 @@ TEST(Reduction, SumOnFirstDimension) {
   for (int i = 0; i < size.Prod(); ++i) {
     data.get()[i] = i;
   }
-  NArray na = NArray::MakeNArray(size, data, {2, 2});
+  NArray na = NArray::MakeNArray(size, data, {1, 1});
   NArray na2 = na.Sum(0);
   float* res = na2.Get();
   for (int i = 0; i < na2.Size().Prod(); ++i) {
@@ -53,7 +53,7 @@ TEST(Reduction, SumOnSecondDimension) {
   for (int i = 0; i < size.Prod(); ++i) {
     data.get()[i] = i;
   }
-  NArray na = NArray::MakeNArray(size, data, {2, 2});
+  NArray na = NArray::MakeNArray(size, data, {1, 1});
   NArray na2 = na.Sum(1);
   float* res = na2.Get();
   for (int i = 0; i < na2.Size().Prod(); ++i) {

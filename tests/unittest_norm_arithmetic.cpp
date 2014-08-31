@@ -12,8 +12,8 @@ TEST(NormArithmetic, AddFirstDimension1) {
   for (int i = 0; i < s1.Prod(); ++i) {
     data.get()[i] = i;
   }
-  NArray n1 = NArray::MakeNArray(s1, data, {2, 2});
-  NArray n2 = NArray::Constant(s2, 2, {1, 2});
+  NArray n1 = NArray::MakeNArray(s1, data, {1, 1});
+  NArray n2 = NArray::Constant(s2, 2, {1, 1});
   NArray n3 = n1.NormArithmetic(n2, ADD);
   float* res = n3.Get();
   for (int i = 0; i < n1.Size().Prod(); ++i) {
@@ -28,12 +28,12 @@ TEST(NormArithmetic, AddFirstDimension2) {
   for (int i = 0; i < s1.Prod(); ++i) {
     data.get()[i] = i;
   }
-  NArray n1 = NArray::MakeNArray(s1, data, {2, 2});
+  NArray n1 = NArray::MakeNArray(s1, data, {1, 1});
   shared_ptr<float> data2( new float[s2.Prod()] );
   for (int i = 0; i < s2.Prod(); ++i) {
     data2.get()[i] = 9 - i;
   }
-  NArray n2 = NArray::MakeNArray(s2, data2, {1, 2});
+  NArray n2 = NArray::MakeNArray(s2, data2, {1, 1});
   NArray n3 = n1.NormArithmetic(n2, ADD);
   float* res = n3.Get();
   for (int i = 0; i < n1.Size().Prod(); ++i) {
@@ -48,12 +48,12 @@ TEST(NormArithmetic, MultSecondDimension) {
   for (int i = 0; i < s1.Prod(); ++i) {
     data.get()[i] = i;
   }
-  NArray n1 = NArray::MakeNArray(s1, data, {2, 2});
+  NArray n1 = NArray::MakeNArray(s1, data, {1, 1});
   shared_ptr<float> data2(new float[s2.Prod()]);
   for (int i = 0; i < s2.Prod(); ++i) {
     data2.get()[i] = 9 - i;
   }
-  NArray n2 = NArray::MakeNArray(s2, data2, {2, 1});
+  NArray n2 = NArray::MakeNArray(s2, data2, {1, 1});
   NArray n3 = n1.NormArithmetic(n2, MULT);
   float* res = n3.Get();
   for (int i = 0; i < 9; ++i) {

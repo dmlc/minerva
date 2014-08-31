@@ -52,8 +52,8 @@ TEST(EvalTest, AsyncEval) {
 }
 
 TEST(EvalTest, AsyncEvalWithChangedLDag) {
-  NArray a = NArray::Zeros({250, 500}, {2, 2});
-  NArray b = NArray::Zeros({500, 400}, {2, 2});
+  NArray a = NArray::Zeros({250, 500}, {1, 1});
+  NArray b = NArray::Zeros({500, 400}, {1, 1});
   NArray c = a * b; // 250x400
   cout << "Call async eval" << endl;
   c.EvalAsync();
