@@ -1,6 +1,5 @@
 #include "expand_engine.h"
 #include "system/minerva_system.h"
-#include "device/device_info.h"
 
 using namespace std;
 
@@ -9,12 +8,12 @@ namespace minerva {
 bool ExpandEngine::IsExpanded(uint64_t lnode_id) const {
   return lnode_to_pnode_.find(lnode_id) != lnode_to_pnode_.end();
 }
-  
+
 const NVector<uint64_t>& ExpandEngine::GetPhysicalNodes(uint64_t id) const {
   CHECK(IsExpanded(id)) << "invalid physical nid: " << id;
   return lnode_to_pnode_.find(id)->second;
 }
-  
+
 void ExpandEngine::CreateNodeState(DagNode* node) {
   if(node->Type() == DagNode::DATA_NODE) {
     // only data node could be candidate for trigger roots
@@ -27,7 +26,7 @@ void ExpandEngine::DeleteNodeState(DagNode* node) {
   if(node->Type() == DagNode::DATA_NODE)
     lnode_to_pnode_.erase(node->node_id());
 }
-  
+
 void ExpandEngine::OnCreateEdge(DagNode* from, DagNode* to) {
   DagEngine<LogicalDag>::OnCreateEdge(from, to);
   if(node_states_.GetState(from->node_id()) == NodeState::kCompleted) {
@@ -51,14 +50,13 @@ std::unordered_set<uint64_t> ExpandEngine::FindStartFrontier(LogicalDag& dag, co
   //cout << ret << endl;
   return ret;
 }
-  
+
 void ExpandEngine::FinalizeProcess() {
   start_frontier_.clear();
   non_froniter_.clear();
 }
 
 void ExpandEngine::ProcessNode(DagNode* node) {
-  MinervaSystem::Instance().SetDevice(node -> device_info());
   if(node->Type() == DagNode::DATA_NODE) { // data node
     LogicalDag::DNode* dnode = dynamic_cast<LogicalDag::DNode*>(node);
     // call expand function to generate data
@@ -87,10 +85,10 @@ void ExpandEngine::ProcessNode(DagNode* node) {
       );
     }
     // call expand function
-    DLOG(INFO) << "Expand logical compute function: " << fn->Name() << " on device " << MinervaSystem::Instance().GetDeviceInfo().id;
+    DLOG(INFO) << "Expand logical compute function: " << fn->Name();
     std::vector<NVector<Chunk>> rst_chunks = fn->Expand(in_chunks);
     // check output validity
-    CHECK_EQ(rst_chunks.size(), onode->outputs_.size()) 
+    CHECK_EQ(rst_chunks.size(), onode->outputs_.size())
       << "Expand function error: #output unmatched. Function name: " << fn->Name();
     for(size_t i = 0; i < rst_chunks.size(); ++i) {
       MakeMapping(onode->outputs_[i], rst_chunks[i]);

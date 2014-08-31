@@ -4,17 +4,19 @@
 #include "chunk/chunk.h"
 #include "op/logical_fn.h"
 #include "context.h"
+#include "device/device_info.h"
 
 namespace minerva {
 
 struct LogicalData {
+  LogicalData(): data_gen_fn(NULL), extern_rc(0) {}
+  LogicalData(const Scale& s, LogicalDataGenFn* fn = 0):
+    size(s), data_gen_fn(fn), extern_rc(0) {}
   Scale size;
   LogicalDataGenFn* data_gen_fn;
   NVector<Scale> partitions;
   int extern_rc;
-  LogicalData(): data_gen_fn(NULL), extern_rc(0) {}
-  LogicalData(const Scale& s, LogicalDataGenFn* fn = NULL):
-    size(s), data_gen_fn(fn), extern_rc(0) {}
+  DeviceInfo device_info;
 };
 
 struct LogicalOp {

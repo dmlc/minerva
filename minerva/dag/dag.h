@@ -1,5 +1,6 @@
 #pragma once
-
+#include "common/common.h"
+#include "common/concurrent_blocking_queue.h"
 #include <cstdint>
 #include <vector>
 #include <map>
@@ -9,10 +10,6 @@
 #include <atomic>
 #include <string>
 #include <unordered_map>
-
-#include "common/common.h"
-#include "common/concurrent_blocking_queue.h"
-#include "device/device_info.h"
 
 namespace minerva {
 
@@ -28,23 +25,24 @@ class DagNode {
   bool DeleteSucc(DagNode*);
   bool DeletePred(DagNode*);
   virtual NodeTypes Type() const = 0;
-
   uint64_t node_id() const { return node_id_; }
-  void set_node_id(uint64_t id) { node_id_ = id; }
-  DeviceInfo device_info() const { return device_info_; }
-  void set_device_info(DeviceInfo info) { device_info_ = info; }
 
   std::vector<DagNode*> successors_;
   std::vector<DagNode*> predecessors_;
+
+ protected:
+  DagNode(uint64_t id): node_id_(id) {
+  }
+
  private:
+  DISALLOW_COPY_AND_ASSIGN(DagNode);
   uint64_t node_id_;
-  DeviceInfo device_info_;
 };
 
 template<typename Data, typename Op>
 class DataNode : public DagNode {
  public:
-  DataNode() {}
+  DataNode(uint64_t id): DagNode(id) {}
   ~DataNode();
   NodeTypes Type() const { return DagNode::DATA_NODE; }
   Data data_;
@@ -55,13 +53,12 @@ class DataNode : public DagNode {
 
 template<typename Data, typename Op>
 class OpNode : public DagNode {
-  typedef DataNode<Data, Op> DNode;
  public:
-  OpNode() {}
+  OpNode(uint64_t id): DagNode(id) {}
   ~OpNode();
   NodeTypes Type() const { return DagNode::OP_NODE; }
   Op op_;
-  std::vector<DNode*> inputs_, outputs_;
+  std::vector<DataNode<Data, Op>*> inputs_, outputs_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(OpNode);
@@ -99,9 +96,9 @@ class Dag {
   typedef OpNode<Data, Op> ONode;
   Dag() {}
   ~Dag();
-  DNode* NewDataNode(const Data& data, DeviceInfo info);
+  DNode* NewDataNode(const Data& data);
   ONode* NewOpNode(const std::vector<DNode*>& inputs,
-      const std::vector<DNode*>& outputs, const Op& op, DeviceInfo info);
+      const std::vector<DNode*>& outputs, const Op& op);
   void DeleteNode(uint64_t );
   bool ExistNode(uint64_t ) const;
   DagNode* GetNode(uint64_t ) const;

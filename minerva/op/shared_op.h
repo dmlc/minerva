@@ -17,10 +17,12 @@ namespace minerva {
 class RandnOp : public SharedDataGenFnWithClosure<RandnClosure> {
  public:
   NVector<Chunk> Expand(const NVector<Scale>& part_sizes) {
-    return part_sizes.Map<Chunk>(
-        [&] (const Scale& psize) {
-          return Chunk::Randn(psize, closure.mu, closure.var);
-        });
+    CHECK_EQ(part_sizes.Size().Prod(), 1) << "no partition allowed";
+    RandnOp* op = new RandnOp(*this);
+    auto size = part_sizes.ToVector()[0];
+    NVector<Chunk> res(Scale::Constant(size.NumDims(), 1));
+    res[Scale::Origin(size.NumDims())] = Chunk::Compute({}, {size}, op)[0];
+    return {res};
   }
   std::string Name() const {
     return ":randn";
@@ -30,10 +32,12 @@ class RandnOp : public SharedDataGenFnWithClosure<RandnClosure> {
 class FillOp : public SharedDataGenFnWithClosure<FillClosure> {
  public:
   NVector<Chunk> Expand(const NVector<Scale>& part_sizes) {
-    return part_sizes.Map<Chunk>(
-        [&] (const Scale& psize) {
-          return Chunk::Constant(psize, closure.val);
-        });
+    CHECK_EQ(part_sizes.Size().Prod(), 1) << "no partition allowed";
+    FillOp* op = new FillOp(*this);
+    auto size = part_sizes.ToVector()[0];
+    NVector<Chunk> res(Scale::Constant(size.NumDims(), 1));
+    res[Scale::Origin(size.NumDims())] = Chunk::Compute({}, {size}, op)[0];
+    return {res};
   }
   std::string Name() const {
     std::stringstream ss;
@@ -49,27 +53,18 @@ class FillOp : public SharedDataGenFnWithClosure<FillClosure> {
 class MatMultOp : public SharedComputeFnWithClosure<MatMultClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
-    NVector<Chunk> a = inputs[0];
-    NVector<Chunk> b = inputs[1];
-    // validity
-    assert(a.Size(1) == b.Size(0));
-    int m = a.Size(0);
-    int n = b.Size(1);
-    int k = a.Size(1);
-    // matmult
-    NVector<Chunk> c({m, n});
-    for(int i = 0 ; i < m; ++i) {
-      for(int j = 0; j < n; ++j) {
-        for(int l = 0; l < k; ++l) {
-          if(l == 0) {
-            c[{i, j}] = a[{i, l}] * b[{l, j}];
-          }
-          else {
-            c[{i, j}] += a[{i, l}] * b[{l, j}];
-          }
-        }
-      }
-    }
+    CHECK_EQ(inputs.size(), 2) << "MatMultOp takes 2 inputs";
+    CHECK_EQ(inputs[0].Size().Prod(), 1) << "no partition allowed";
+    CHECK_EQ(inputs[1].Size().Prod(), 1) << "no partition allowed";
+    auto& a = inputs[0].ToVector()[0];
+    auto& b = inputs[1].ToVector()[0];
+    CHECK_EQ(a.Size().NumDims(), 2) << "MatMultOp only performs on 2D data";
+    CHECK_EQ(b.Size().NumDims(), 2) << "MatMultOp only performs on 2D data";
+    CHECK_EQ(a.Size(1), b.Size(0)) << "size mismatch";
+    NVector<Chunk> c({1, 1});
+    MatMultOp* op = new MatMultOp();
+    op->device_info = device_info;
+    c[{0, 0}] = Chunk::Compute({a, b}, {Scale{a.Size(0), b.Size(1)}}, op)[0];
     return {c};
   }
   std::string Name() const {
@@ -80,14 +75,15 @@ class MatMultOp : public SharedComputeFnWithClosure<MatMultClosure> {
 class TransOp : public SharedComputeFnWithClosure<TransposeClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
-    NVector<Chunk> in = inputs[0];
-    assert(in.Size().NumDims() == 2);
-    int row = in.Size(0), col = in.Size(1);
-    NVector<Chunk> rst({col, row});
-    for(int i = 0; i < row; ++i)
-      for(int j = 0; j < col; ++j)
-        rst[{j, i}] = in[{i, j}].Trans();
-    return {rst};
+    CHECK_EQ(inputs.size(), 1) << "TransOp takes 1 input";
+    CHECK_EQ(inputs[0].Size().Prod(), 1) << "no partition allowed";
+    auto& a = inputs[0].ToVector()[0];
+    CHECK_EQ(a.Size().NumDims(), 2) << "TransOp only performs on 2D data";
+    NVector<Chunk> res({1, 1});
+    TransOp* op = new TransOp();
+    op->device_info = device_info;
+    res[{0, 0}] = Chunk::Compute({a}, {Scale{a.Size(1), a.Size(0)}}, op)[0];
+    return {res};
   }
   std::string Name() const {
     return "trans";
@@ -97,19 +93,19 @@ class TransOp : public SharedComputeFnWithClosure<TransposeClosure> {
 class ReductionOp : public SharedComputeFnWithClosure<ReductionClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
-    DLOG(INFO) << "ReductionOp::Expand";
-    CHECK_EQ(inputs.size(), 1) << "Reduction #input wrong";
-    NVector<Chunk> individual_reduce = inputs[0].Map<Chunk>(
-      [&] (Chunk ch) {
-        return ch.Reduce(closure.dims_to_reduce, closure.type);
-      }
-    );
-    Chunk merged = Chunk::Merge(individual_reduce);
-    Scale merged_size = merged.Size();
-    Scale num_rst_parts = Scale::Constant(merged_size.NumDims(), 1);
-    NVector<Chunk> rst(num_rst_parts);
-    rst[num_rst_parts - 1] = merged.Reduce(closure.dims_to_reduce, closure.type);
-    return {rst};
+    CHECK_EQ(inputs.size(), 1) << "ReductionOp takes 1 input";
+    CHECK_EQ(inputs[0].Size().Prod(), 1) << "no partition allowed";
+    auto& a = inputs[0].ToVector()[0];
+    ReductionOp* op = new ReductionOp;
+    op->closure = closure;
+    op->device_info = device_info;
+    auto rstsize = a.Size();
+    for (auto i: closure.dims_to_reduce) {
+      rstsize[i] = 1;
+    }
+    NVector<Chunk> res(Scale::Constant(a.Size().NumDims(), 1));
+    res[Scale::Origin(a.Size().NumDims())] = Chunk::Compute({a}, {rstsize}, op)[0];
+    return {res};
   }
   std::string Name() const {
    switch (closure.type) {
@@ -125,22 +121,17 @@ class ReductionOp : public SharedComputeFnWithClosure<ReductionClosure> {
 class MaxIndexOp : public SharedComputeFnWithClosure<MaxIndexClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
-    LOG(INFO) << "MaxIndexOp::Expand";
-    CHECK_EQ(inputs.size(), 1) << "MaxIndex #input wrong";
-    Chunk merged;
-    if (inputs[0].Length() != 1) {
-      // Merge first
-      merged = Chunk::Merge(inputs[0]);
-    } else {
-      merged = inputs[0].ToVector()[0];
-    }
+    CHECK_EQ(inputs.size(), 1) << "MaxIndexOp takes 1 input";
+    CHECK_EQ(inputs[0].Size().Prod(), 1) << "no partition allowed";
+    auto& a = inputs[0].ToVector()[0];
     MaxIndexOp* op = new MaxIndexOp;
     op->closure = closure;
-    auto size = merged.Size();
+    op->device_info = device_info;
+    auto size = a.Size();
     size[closure.dim] = 1;
-    NVector<Chunk> ret(Scale::Constant(merged.Size().NumDims(), 1));
-    ret[Scale::Origin(merged.Size().NumDims())] = Chunk::Compute({merged}, {size}, op)[0];
-    return {ret};
+    NVector<Chunk> res(Scale::Constant(a.Size().NumDims(), 1));
+    res[Scale::Origin(a.Size().NumDims())] = Chunk::Compute({a}, {size}, op)[0];
+    return {res};
   }
   std::string Name() const {
     return "max index";
@@ -150,14 +141,15 @@ class MaxIndexOp : public SharedComputeFnWithClosure<MaxIndexClosure> {
 class ElewiseOp : public SharedComputeFnWithClosure<ElewiseClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
-    NVector<Chunk> ret = inputs[0].Map<Chunk>(
-        [&] (const Chunk& ch) {
-          ElewiseOp* elewise_op = new ElewiseOp;
-          elewise_op->closure = closure;
-          return Chunk::Compute({ch}, {ch.Size()}, elewise_op)[0];
-        }
-      );
-    return {ret};
+    CHECK_EQ(inputs.size(), 1) << "ElewiseOp takes 1 input";
+    CHECK_EQ(inputs[0].Size().Prod(), 1) << "no parition allowed";
+    auto& a = inputs[0].ToVector()[0];
+    ElewiseOp* elewise_op = new ElewiseOp;
+    elewise_op->closure = closure;
+    elewise_op->device_info = device_info;
+    NVector<Chunk> res(Scale::Constant(a.Size().NumDims(), 1));
+    res[Scale::Origin(a.Size().NumDims())] = Chunk::Compute({a}, {a.Size()}, elewise_op)[0];
+    return {res};
   }
   std::string Name() const {
     switch(closure.type) {
@@ -173,17 +165,18 @@ class ElewiseOp : public SharedComputeFnWithClosure<ElewiseClosure> {
 class ArithmeticOp : public SharedComputeFnWithClosure<ArithmeticClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
-    const NVector<Chunk>& a = inputs[0];
-    const NVector<Chunk>& b = inputs[1];
-    const NVector<Chunk>& ret = NVector<Chunk>::ZipMap(a, b,
-        [&] (const Chunk& c1, const Chunk& c2) {
-          assert(c1.Size() == c2.Size());
-          ArithmeticOp* arith_op = new ArithmeticOp;
-          arith_op->closure = closure;
-          return Chunk::Compute({c1, c2}, {c1.Size()}, arith_op)[0];
-        }
-      );
-    return {ret};
+    CHECK_EQ(inputs.size(), 2) << "ArithmeticOp takes 2 inputs";
+    CHECK_EQ(inputs[0].Size().Prod(), 1) << "no partition allowed";
+    CHECK_EQ(inputs[1].Size().Prod(), 1) << "no partition allowed";
+    auto& a = inputs[0].ToVector()[0];
+    auto& b = inputs[1].ToVector()[0];
+    CHECK_EQ(a.Size(), b.Size()) << "size mismatch";
+    ArithmeticOp* arith_op = new ArithmeticOp;
+    arith_op->closure = closure;
+    arith_op->device_info = device_info;
+    NVector<Chunk> res(Scale::Constant(a.Size().NumDims(), 1));
+    res[Scale::Origin(a.Size().NumDims())] = Chunk::Compute({a, b}, {a.Size()}, arith_op)[0];
+    return {res};
   }
   std::string Name() const {
     switch(closure.type) {
@@ -199,15 +192,15 @@ class ArithmeticOp : public SharedComputeFnWithClosure<ArithmeticClosure> {
 class ArithmeticConstOp : public SharedComputeFnWithClosure<ArithmeticConstClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
-    const NVector<Chunk>& a = inputs[0];
-    const NVector<Chunk>& ret = a.Map<Chunk>(
-        [&] (const Chunk& c) {
-          ArithmeticConstOp* aconst_op = new ArithmeticConstOp;
-          aconst_op->closure = closure;
-          return Chunk::Compute({c}, {c.Size()}, aconst_op)[0];
-        }
-      );
-    return {ret};
+    CHECK_EQ(inputs.size(), 1) << "ArithmeticConstOp takes 1 input";
+    CHECK_EQ(inputs[0].Size().Prod(), 1) << "no parition allowed";
+    auto& a = inputs[0].ToVector()[0];
+    ArithmeticConstOp* aconst_op = new ArithmeticConstOp;
+    aconst_op->closure = closure;
+    aconst_op->device_info = device_info;
+    NVector<Chunk> res(Scale::Constant(a.Size().NumDims(), 1));
+    res[Scale::Origin(a.Size().NumDims())] = Chunk::Compute({a}, {a.Size()}, aconst_op)[0];
+    return {res};
   }
   std::string Name() const {
     std::stringstream ss;
@@ -230,22 +223,23 @@ class ArithmeticConstOp : public SharedComputeFnWithClosure<ArithmeticConstClosu
 class NormArithmeticOp: public SharedComputeFnWithClosure<NormArithmeticClosure> {
  public:
   std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>& inputs) {
-    const NVector<Chunk>& lhs = inputs[0];
-    const NVector<Chunk>& rhs = inputs[1];
-    NVector<Chunk> res(lhs.Size());
-    // TODO How to verify that the parition is the same on dimensions that don't need to be replicated?
-    // Let's put this work into kernel for now
-    auto iterator_max = lhs.Size();
-    auto iterator = Scale::Origin(iterator_max.NumDims());
-    do {
-      auto iterator_rhs = iterator;
-      for (auto i: closure.dims_to_replicate) {
-        iterator_rhs[i] = 0;
+    CHECK_EQ(inputs.size(), 2) << "NormArithmeticOp takes 2 inputs";
+    CHECK_EQ(inputs[0].Size().Prod(), 1) << "no parition allowed";
+    CHECK_EQ(inputs[1].Size().Prod(), 1) << "no parition allowed";
+    auto& a = inputs[0].ToVector()[0]; // Normalizee
+    auto& b = inputs[1].ToVector()[0]; // Normalizer
+    for (size_t i = 0; i < a.Size().NumDims(); ++i) {
+      if (closure.dims_to_replicate.Contains(i)) {
+        CHECK_EQ(b.Size(i), 1) << "size mismatch";
+      } else {
+        CHECK_EQ(a.Size(i), b.Size(i)) << "size mismatch";
       }
-      NormArithmeticOp* op = new NormArithmeticOp;
-      op->closure = closure;
-      res[iterator] = Chunk::Compute({lhs[iterator], rhs[iterator_rhs]}, {lhs[iterator].Size()}, op)[0];
-    } while (iterator.IncrOne(iterator_max));
+    }
+    NormArithmeticOp* op = new NormArithmeticOp;
+    op->closure = closure;
+    op->device_info = device_info;
+    NVector<Chunk> res(Scale::Constant(a.Size().NumDims(), 1));
+    res[Scale::Origin(a.Size().NumDims())] = Chunk::Compute({a, b}, {a.Size()}, op)[0];
     return {res};
   }
   std::string Name() const {

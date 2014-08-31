@@ -2,6 +2,7 @@
 #include "op/basic_fn.h"
 #include "op/closure_trait.h"
 #include "op/physical.h"
+#include "op/device_info_trait.h"
 
 namespace minerva {
 
@@ -25,7 +26,7 @@ class DataShard {
 
 typedef std::vector<DataShard> DataList;
 
-class PhysicalComputeFn: public BasicFn {
+class PhysicalComputeFn: public BasicFn, public virtual DeviceInfoTrait {
  public:
   virtual void Execute(DataList&, DataList&, ImplType) = 0;
 };
