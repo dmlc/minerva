@@ -63,15 +63,15 @@ TEST(DevicePassingTest, PassingThroughDag1) {
 
   PhysicalDag& pdag = ms.physical_dag();
   EXPECT_EQ(dynamic_cast<PhysicalDataNode*>(pdag.GetNode(0))->data_.device_info.id, 0);
-  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(1))->op_.device_info.id, 0);
+  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(1))->op_.compute_fn->device_info.id, 0);
   EXPECT_EQ(dynamic_cast<PhysicalDataNode*>(pdag.GetNode(2))->data_.device_info.id, 0);
-  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(3))->op_.device_info.id, 0);
+  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(3))->op_.compute_fn->device_info.id, 0);
   EXPECT_EQ(dynamic_cast<PhysicalDataNode*>(pdag.GetNode(4))->data_.device_info.id, di.id);
-  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(5))->op_.device_info.id, di.id);
+  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(5))->op_.compute_fn->device_info.id, di.id);
   EXPECT_EQ(dynamic_cast<PhysicalDataNode*>(pdag.GetNode(6))->data_.device_info.id, 0);
-  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(7))->op_.device_info.id, 0);
+  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(7))->op_.compute_fn->device_info.id, 0);
   EXPECT_EQ(dynamic_cast<PhysicalDataNode*>(pdag.GetNode(8))->data_.device_info.id, di.id);
-  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(9))->op_.device_info.id, di.id);
+  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(9))->op_.compute_fn->device_info.id, di.id);
 }
 
 TEST(DevicePassingTest, PassingThroughDag2) {
@@ -100,18 +100,18 @@ TEST(DevicePassingTest, PassingThroughDag2) {
 
   PhysicalDag& pdag = ms.physical_dag();
   EXPECT_EQ(dynamic_cast<PhysicalDataNode*>(pdag.GetNode(10))->data_.device_info.id, 0);
-  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(11))->op_.device_info.id, 0);
+  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(11))->op_.compute_fn->device_info.id, 0);
   EXPECT_EQ(dynamic_cast<PhysicalDataNode*>(pdag.GetNode(12))->data_.device_info.id, 0);
-  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(13))->op_.device_info.id, 0);
+  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(13))->op_.compute_fn->device_info.id, 0);
   EXPECT_EQ(dynamic_cast<PhysicalDataNode*>(pdag.GetNode(14))->data_.device_info.id, di1.id);
-  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(15))->op_.device_info.id, di1.id);
+  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(15))->op_.compute_fn->device_info.id, di1.id);
   EXPECT_EQ(dynamic_cast<PhysicalDataNode*>(pdag.GetNode(16))->data_.device_info.id, di1.id);
-  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(17))->op_.device_info.id, di1.id);
+  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(17))->op_.compute_fn->device_info.id, di1.id);
   EXPECT_EQ(dynamic_cast<PhysicalDataNode*>(pdag.GetNode(18))->data_.device_info.id, 0);
-  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(19))->op_.device_info.id, 0);
+  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(19))->op_.compute_fn->device_info.id, 0);
   EXPECT_EQ(dynamic_cast<PhysicalDataNode*>(pdag.GetNode(20))->data_.device_info.id, di1.id);
-  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(21))->op_.device_info.id, di1.id);
+  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(21))->op_.compute_fn->device_info.id, di1.id);
   EXPECT_EQ(dynamic_cast<PhysicalDataNode*>(pdag.GetNode(22))->data_.device_info.id, di2.id);
-  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(23))->op_.device_info.id, di2.id);
+  EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(23))->op_.compute_fn->device_info.id, di2.id);
 }
 

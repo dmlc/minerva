@@ -17,10 +17,14 @@ namespace minerva {
 class RandnOp : public SharedDataGenFnWithClosure<RandnClosure> {
  public:
   NVector<Chunk> Expand(const NVector<Scale>& part_sizes) {
-    return part_sizes.Map<Chunk>(
-        [&] (const Scale& psize) {
-          return Chunk::Randn(psize, closure.mu, closure.var);
-        });
+    CHECK_EQ(part_sizes.Size().Prod(), 1) << "no partition allowed";
+    RandnOp* op = new RandnOp();
+    op->closure = closure;
+    op->device_info = device_info;
+    auto size = part_sizes.ToVector()[0];
+    NVector<Chunk> res(Scale::Constant(size.NumDims(), 1));
+    res[Scale::Origin(size.NumDims())] = Chunk::Compute({}, {size}, op)[0];
+    return {res};
   }
   std::string Name() const {
     return ":randn";
@@ -30,6 +34,7 @@ class RandnOp : public SharedDataGenFnWithClosure<RandnClosure> {
 class FillOp : public SharedDataGenFnWithClosure<FillClosure> {
  public:
   NVector<Chunk> Expand(const NVector<Scale>& part_sizes) {
+    CHECK_EQ(part_sizes.Size().Prod(), 1) << "no partition allowed";
     return part_sizes.Map<Chunk>(
         [&] (const Scale& psize) {
           return Chunk::Constant(psize, closure.val);
@@ -58,7 +63,9 @@ class MatMultOp : public SharedComputeFnWithClosure<MatMultClosure> {
     CHECK_EQ(b.Size().NumDims(), 2) << "MatMultOp only performs on 2D data";
     CHECK_EQ(a.Size(1), b.Size(0)) << "size mismatch";
     NVector<Chunk> c({1, 1});
-    c[{0, 0}] = Chunk::Compute({a, b}, {Scale{a.Size(0), b.Size(1)}}, new MatMultOp)[0];
+    MatMultOp* op = new MatMultOp();
+    op->device_info = device_info;
+    c[{0, 0}] = Chunk::Compute({a, b}, {Scale{a.Size(0), b.Size(1)}}, op)[0];
     return {c};
   }
   std::string Name() const {
@@ -74,7 +81,9 @@ class TransOp : public SharedComputeFnWithClosure<TransposeClosure> {
     auto& a = inputs[0].ToVector()[0];
     CHECK_EQ(a.Size().NumDims(), 2) << "TransOp only performs on 2D data";
     NVector<Chunk> res({1, 1});
-    res[{0, 0}] = Chunk::Compute({a}, {Scale{a.Size(1), a.Size(0)}}, new TransOp)[0];
+    TransOp* op = new TransOp();
+    op->device_info = device_info;
+    res[{0, 0}] = Chunk::Compute({a}, {Scale{a.Size(1), a.Size(0)}}, op)[0];
     return {res};
   }
   std::string Name() const {
@@ -90,6 +99,7 @@ class ReductionOp : public SharedComputeFnWithClosure<ReductionClosure> {
     auto& a = inputs[0].ToVector()[0];
     ReductionOp* op = new ReductionOp;
     op->closure = closure;
+    op->device_info = device_info;
     auto rstsize = a.Size();
     for (auto i: closure.dims_to_reduce) {
       rstsize[i] = 1;
@@ -117,6 +127,7 @@ class MaxIndexOp : public SharedComputeFnWithClosure<MaxIndexClosure> {
     auto& a = inputs[0].ToVector()[0];
     MaxIndexOp* op = new MaxIndexOp;
     op->closure = closure;
+    op->device_info = device_info;
     auto size = a.Size();
     size[closure.dim] = 1;
     NVector<Chunk> res(Scale::Constant(a.Size().NumDims(), 1));
@@ -136,6 +147,7 @@ class ElewiseOp : public SharedComputeFnWithClosure<ElewiseClosure> {
     auto& a = inputs[0].ToVector()[0];
     ElewiseOp* elewise_op = new ElewiseOp;
     elewise_op->closure = closure;
+    elewise_op->device_info = device_info;
     NVector<Chunk> res(Scale::Constant(a.Size().NumDims(), 1));
     res[Scale::Origin(a.Size().NumDims())] = Chunk::Compute({a}, {a.Size()}, elewise_op)[0];
     return {res};
@@ -162,6 +174,7 @@ class ArithmeticOp : public SharedComputeFnWithClosure<ArithmeticClosure> {
     CHECK_EQ(a.Size(), b.Size()) << "size mismatch";
     ArithmeticOp* arith_op = new ArithmeticOp;
     arith_op->closure = closure;
+    arith_op->device_info = device_info;
     NVector<Chunk> res(Scale::Constant(a.Size().NumDims(), 1));
     res[Scale::Origin(a.Size().NumDims())] = Chunk::Compute({a, b}, {a.Size()}, arith_op)[0];
     return {res};
@@ -185,6 +198,7 @@ class ArithmeticConstOp : public SharedComputeFnWithClosure<ArithmeticConstClosu
     auto& a = inputs[0].ToVector()[0];
     ArithmeticConstOp* aconst_op = new ArithmeticConstOp;
     aconst_op->closure = closure;
+    aconst_op->device_info = device_info;
     NVector<Chunk> res(Scale::Constant(a.Size().NumDims(), 1));
     res[Scale::Origin(a.Size().NumDims())] = Chunk::Compute({a}, {a.Size()}, aconst_op)[0];
     return {res};
@@ -224,6 +238,7 @@ class NormArithmeticOp: public SharedComputeFnWithClosure<NormArithmeticClosure>
     }
     NormArithmeticOp* op = new NormArithmeticOp;
     op->closure = closure;
+    op->device_info = device_info;
     NVector<Chunk> res(Scale::Constant(a.Size().NumDims(), 1));
     res[Scale::Origin(a.Size().NumDims())] = Chunk::Compute({a, b}, {a.Size()}, op)[0];
     return {res};

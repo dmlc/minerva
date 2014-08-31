@@ -60,15 +60,18 @@ std::vector<NArray> NArray::Compute(std::vector<NArray> params,
   for(NArray p : params) {
     param_data_nodes.push_back(p.data_node_);
   }
-  ldag.NewOpNode(param_data_nodes, rst_data_nodes, {fn, device_info});
+  fn->device_info = device_info;
+  ldag.NewOpNode(param_data_nodes, rst_data_nodes, {fn});
   return rst;
 }
 
 NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<Scale>& parts) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
+  DeviceInfo device_info = MinervaSystem::Instance().GetDeviceInfo();
+  fn->device_info = device_info;
   LogicalData ldata(size, fn);
   ldata.partitions = parts;
-  ldata.device_info = MinervaSystem::Instance().GetDeviceInfo();
+  ldata.device_info = device_info;
   LogicalDataNode* rst_node = ldag.NewDataNode(ldata);
   return NArray(rst_node);
 }

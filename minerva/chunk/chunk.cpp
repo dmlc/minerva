@@ -37,7 +37,7 @@ std::vector<Chunk> Chunk::Compute(const std::vector<Chunk>& params,
     // TODO how to set place ?
     phy_data.size = size;
     phy_data.data_id = ms.data_store().GenerateDataID(); // generate data id
-    phy_data.device_info = ms.GetDeviceInfo();
+    phy_data.device_info = fn->device_info;
     auto rst_node = pdag.NewDataNode(phy_data);
     rst.push_back(Chunk(rst_node));
     rst_data_nodes.push_back(rst_node);
@@ -50,11 +50,11 @@ std::vector<Chunk> Chunk::Compute(const std::vector<Chunk>& params,
   // TODO how to set place ?
   phy_op.impl_type = ImplType::kNA;
   phy_op.compute_fn = fn;
-  phy_op.device_info = ms.GetDeviceInfo();
   pdag.NewOpNode(param_data_nodes, rst_data_nodes, phy_op);
   return rst;
 }
 
+/* TODO
 vector<Chunk> Chunk::Compute(
       const std::vector<Chunk>& params,
       const std::vector<Scale>& result_sizes,
@@ -86,16 +86,19 @@ vector<Chunk> Chunk::Compute(
   pdag.NewOpNode(param_data_nodes, rst_data_nodes, phy_op);
   return rst;
 }
+*/
 
 /////////////////////////////////////////////////////////
 // Data generator
 /////////////////////////////////////////////////////////
+// TODO deprecated
 Chunk Chunk::Constant(const Scale& size, float val) {
   FillOp* fill_op = new FillOp;
   fill_op->closure = {val};
   return Chunk::Compute({}, {size}, fill_op)[0];
 }
 
+// TODO deprecated
 Chunk Chunk::Randn(const Scale& size, float mu, float var) {
   RandnOp* randn_op = new RandnOp;
   randn_op->closure = {mu, var};

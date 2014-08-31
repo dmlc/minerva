@@ -21,7 +21,6 @@ struct LogicalData {
 
 struct LogicalOp {
   LogicalComputeFn* compute_fn;
-  DeviceInfo device_info;
 };
 
 }// end of namespace minerva

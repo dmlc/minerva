@@ -2,16 +2,17 @@
 #include "common/nvector.h"
 #include "chunk/chunk.h"
 #include "op/basic_fn.h"
+#include "op/device_info_trait.h"
 #include <vector>
 
 namespace minerva {
 
-class LogicalDataGenFn: public BasicFn {
+class LogicalDataGenFn: public BasicFn, public virtual DeviceInfoTrait {
  public:
   virtual NVector<Chunk> Expand(const NVector<Scale>& partition_shapes) = 0;
 };
 
-class LogicalComputeFn: public BasicFn {
+class LogicalComputeFn: public BasicFn, public virtual DeviceInfoTrait {
  public:
   virtual std::vector<NVector<Chunk>> Expand(const std::vector<NVector<Chunk>>&) = 0;
 };

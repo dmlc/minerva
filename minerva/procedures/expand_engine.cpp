@@ -1,6 +1,5 @@
 #include "expand_engine.h"
 #include "system/minerva_system.h"
-#include "device/device_info.h"
 
 using namespace std;
 
@@ -60,7 +59,6 @@ void ExpandEngine::FinalizeProcess() {
 void ExpandEngine::ProcessNode(DagNode* node) {
   if(node->Type() == DagNode::DATA_NODE) { // data node
     LogicalDag::DNode* dnode = dynamic_cast<LogicalDag::DNode*>(node);
-    MinervaSystem::Instance().SetDevice(dnode->data_.device_info);
     // call expand function to generate data
     LogicalDataGenFn* fn = dnode->data_.data_gen_fn;
     if(fn != nullptr) {
@@ -70,7 +68,6 @@ void ExpandEngine::ProcessNode(DagNode* node) {
     }
   } else { // op node
     LogicalDag::ONode* onode = dynamic_cast<LogicalDag::ONode*>(node);
-    MinervaSystem::Instance().SetDevice(onode->op_.device_info);
     LogicalComputeFn* fn = onode->op_.compute_fn;
     CHECK_NOTNULL(fn);
     // make input chunks
@@ -88,7 +85,7 @@ void ExpandEngine::ProcessNode(DagNode* node) {
       );
     }
     // call expand function
-    DLOG(INFO) << "Expand logical compute function: " << fn->Name() << " on device " << MinervaSystem::Instance().GetDeviceInfo().id;
+    DLOG(INFO) << "Expand logical compute function: " << fn->Name();
     std::vector<NVector<Chunk>> rst_chunks = fn->Expand(in_chunks);
     // check output validity
     CHECK_EQ(rst_chunks.size(), onode->outputs_.size())

@@ -23,7 +23,6 @@ struct PhysicalOp {
   Place place;
   ImplType impl_type;
   PhysicalComputeFn* compute_fn;
-  DeviceInfo device_info;
 };
 
 } // end of namespace minerva

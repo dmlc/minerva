@@ -3,7 +3,7 @@
 namespace minerva {
 
 template<class T>
-class ClosureTrait {
+struct ClosureTrait {
  public:
   T closure;
 };
