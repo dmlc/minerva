@@ -16,6 +16,7 @@ struct PhysicalData {
   uint64_t data_id;
   bool mapped_to_lnode;
   uint64_t mapped_lnid;
+  DeviceInfo device_info;
 };
 
 struct PhysicalOp {

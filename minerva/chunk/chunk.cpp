@@ -37,6 +37,7 @@ std::vector<Chunk> Chunk::Compute(const std::vector<Chunk>& params,
     // TODO how to set place ?
     phy_data.size = size;
     phy_data.data_id = ms.data_store().GenerateDataID(); // generate data id
+    phy_data.device_info = ms.GetDeviceInfo();
     auto rst_node = pdag.NewDataNode(phy_data);
     rst.push_back(Chunk(rst_node));
     rst_data_nodes.push_back(rst_node);
@@ -66,6 +67,7 @@ vector<Chunk> Chunk::Compute(
     PhysicalData phy_data;
     phy_data.size = size;
     phy_data.data_id = ms.data_store().GenerateDataID();
+    phy_data.device_info = info;
     auto rst_node = pdag.NewDataNode(phy_data);
     return Chunk(rst_node);
   });
