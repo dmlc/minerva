@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include "device_info.h"
+#include "device_factory.h"
 
 using namespace std;
 
@@ -39,6 +38,10 @@ DeviceInfo DeviceFactory::GpuDeviceInfo(int gid, int num_stream) {
   result.gpu_list.push_back(gid);
   result.num_streams.push_back(num_stream);
   return result;
+}
+
+Device DeviceFactory::GetDevice(int id) {
+  return device_storage_.get(id);
 }
 
 }

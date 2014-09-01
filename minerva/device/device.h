@@ -2,14 +2,19 @@
 #include <vector>
 #include "device_info.h"
 
+using namespace std;
+
 namespace minerva {
 
 class cudaStream;
 
-class device {
+class Device {
  public:
-  virtual void Execute(vector<DataShard> inputs, vector<DataShard> outputs, PhysicalOp Op); // called by Physical_Engine::ProcessNode()
+  virtual void Execute(vector<DataShard> inputs, PhysicalOp Op); // called by Physical_Engine::ProcessNode()
   cudaStream GetStream();
+
+ private:
+  vector<uint64_t> local_data;
 };
 
 }

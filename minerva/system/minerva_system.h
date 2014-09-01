@@ -4,7 +4,7 @@
 #include "dag/physical_dag.h"
 #include "procedures/dag_procedure.h"
 #include "narray/narray.h"
-#include "device/device_info.h"
+#include "device/device_factory.h"
 #include "common/inspector.h"
 #include <unordered_set>
 
@@ -57,7 +57,6 @@ class MinervaSystem :
   PhysicalEngine* physical_engine_;
   DataStore* data_store_;
 
-  DeviceFactory df_;
   DeviceInfo device_info_;
 
   std::unordered_set<uint64_t> extern_rc_changed_ldnodes_;

@@ -48,7 +48,7 @@ void MinervaSystem::Initialize(int* argc, char*** argv) {
     physical_engine_->SetImplDecider(&all_basic_impl);
   }
   LoadBuiltinDagMonitors();
-  df_ = DeviceFactory::Instance();
+  DeviceFactory df_ = DeviceFactory::Instance();
   df_.Reset();
   device_info_ = df_.DefaultInfo();
 }
