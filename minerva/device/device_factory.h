@@ -3,7 +3,7 @@
 #include "device_info.h"
 #include "device.h"
 
-namespace Minerva {
+namespace minerva {
 
 class DeviceFactory : public EverlastingSingleton<DeviceFactory> {
  public:
