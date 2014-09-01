@@ -48,35 +48,35 @@ void MinervaSystem::Initialize(int* argc, char*** argv) {
     physical_engine_->SetImplDecider(&all_basic_impl);
   }
   LoadBuiltinDagMonitors();
-  df = DeviceFactory::Instance();
-  df.Reset();
-  device_info_ = df.default_info();
+  df_ = DeviceFactory::Instance();
+  df_.Reset();
+  device_info_ = df_.DefaultInfo();
 }
 void MinervaSystem::Finalize() { }
 MinervaSystem::MinervaSystem() { }
 MinervaSystem::~MinervaSystem() { }
 
-void MinervaSystem::SetDevice(DeviceInfo info) {
+void MinervaSystem::set_device_info(DeviceInfo info) {
   device_info_ = info;
 }
 
-DeviceInfo MinervaSystem::GetDeviceInfo() {
+DeviceInfo MinervaSystem::device_info() const {
   return device_info_;
 }
 
-DeviceInfo MinervaSystem::CreateGPUDevice(int gid) {
-  return df.gpu_device_info(gid);
+DeviceInfo MinervaSystem::CreateGpuDevice(int gid) {
+  return df_.GpuDeviceInfo(gid);
 }
 
-DeviceInfo MinervaSystem::CreateGPUDevice(int gid, int numStream) {
-  return df.gpu_device_info(gid, numStream);
+DeviceInfo MinervaSystem::CreateGpuDevice(int gid, int num_stream) {
+  return df_.GpuDeviceInfo(gid, num_stream);
 }
 
 void MinervaSystem::LoadBuiltinDagMonitors() {
   logical_dag_.RegisterMonitor(expand_engine_);
   physical_dag_.RegisterMonitor(physical_engine_);
 }
-  
+
 void MinervaSystem::SetImplDecider(ImplDecider* decider) {
   physical_engine_->SetImplDecider(decider);
 }
@@ -170,5 +170,5 @@ void MinervaSystem::IncrExternRC(LogicalDag::DNode* dnode, int amount) {
   }
   expand_engine_->OnIncrExternRC(dnode, amount);
 }
-  
+
 } // end of namespace minerva

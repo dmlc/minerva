@@ -26,34 +26,34 @@ TEST(DevicePassingTest, Basic) {
   MinervaSystem& ms = MinervaSystem::Instance();
   DeviceFactory df = DeviceFactory::Instance();
   df.Reset();
-  ms.SetDevice(df.default_info());
-  EXPECT_EQ(ms.GetDeviceInfo().id, 0);
+  ms.set_device_info(df.DefaultInfo());
+  EXPECT_EQ(ms.device_info().id, 0);
 
-  DeviceInfo di1 = ms.CreateGPUDevice(0);
-  ms.SetDevice(di1);
-  EXPECT_EQ(ms.GetDeviceInfo().id, 1);
-  EXPECT_EQ(ms.GetDeviceInfo().GPUList.size(), 1);
-  EXPECT_EQ(ms.GetDeviceInfo().numStreams[0], 1);
+  DeviceInfo di1 = ms.CreateGpuDevice(0);
+  ms.set_device_info(di1);
+  EXPECT_EQ(ms.device_info().id, 1);
+  EXPECT_EQ(ms.device_info().gpu_list.size(), 1);
+  EXPECT_EQ(ms.device_info().num_streams[0], 1);
 
-  DeviceInfo di2 = ms.CreateGPUDevice(1, 2);
-  ms.SetDevice(di2);
-  EXPECT_EQ(ms.GetDeviceInfo().id, 2);
-  EXPECT_EQ(ms.GetDeviceInfo().GPUList.size(), 1);
-  EXPECT_EQ(ms.GetDeviceInfo().numStreams[0], 2);
+  DeviceInfo di2 = ms.CreateGpuDevice(1, 2);
+  ms.set_device_info(di2);
+  EXPECT_EQ(ms.device_info().id, 2);
+  EXPECT_EQ(ms.device_info().gpu_list.size(), 1);
+  EXPECT_EQ(ms.device_info().num_streams[0], 2);
 }
 
 TEST(DevicePassingTest, PassingThroughDag1) {
   MinervaSystem& ms = MinervaSystem::Instance();
   DeviceFactory df = DeviceFactory::Instance();
   df.Reset();
-  ms.SetDevice(df.default_info());
+  ms.set_device_info(df.DefaultInfo());
 
   NArray x = NArray::Randn({2, 4}, 0.0, 1.0, {1, 1});
   NArray y = NArray::Randn({4, 6}, 0.0, 1.0, {1, 1});
   NArray t = x * y;
 
-  DeviceInfo di = ms.CreateGPUDevice(0);
-  ms.SetDevice(di);
+  DeviceInfo di = ms.CreateGpuDevice(0);
+  ms.set_device_info(di);
   NArray z = NArray::Randn({2, 6}, 0.0, 1.0, {1, 1});
   NArray s = t + z;
 
@@ -78,20 +78,20 @@ TEST(DevicePassingTest, PassingThroughDag2) {
   MinervaSystem& ms = MinervaSystem::Instance();
   DeviceFactory df = DeviceFactory::Instance();
   df.Reset();
-  ms.SetDevice(df.default_info());
+  ms.set_device_info(df.DefaultInfo());
 
   NArray x = NArray::Randn({2, 4}, 0.0, 1.0, {1, 1});
   NArray y = NArray::Randn({2, 4}, 0.0, 1.0, {1, 1});
   NArray s = x - y;
 
-  DeviceInfo di1 = ms.CreateGPUDevice(0);
-  ms.SetDevice(di1);
+  DeviceInfo di1 = ms.CreateGpuDevice(0);
+  ms.set_device_info(di1);
   NArray z = NArray::Randn({4, 8}, 0.0, 1.0, {1, 1});
   NArray w = NArray::Randn({4, 8}, 0.0, 1.0, {1, 1});
   NArray t = z + w;
 
-  DeviceInfo di2 = ms.CreateGPUDevice(1, 2);
-  ms.SetDevice(di2);
+  DeviceInfo di2 = ms.CreateGpuDevice(1, 2);
+  ms.set_device_info(di2);
   NArray r = s * t;
 
   std::vector<uint64_t> lid_to_eval;

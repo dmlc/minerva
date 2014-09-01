@@ -36,16 +36,16 @@ class MinervaSystem :
   void EvalAsync(const std::vector<NArray>& narrs);
   void WaitForEvalFinish();
 
-  void SetDevice(DeviceInfo info);
-  DeviceInfo GetDeviceInfo();
-  DeviceInfo CreateGPUDevice(int gid);
-  DeviceInfo CreateGPUDevice(int gid, int numStream);
+  void set_device_info(DeviceInfo info);
+  DeviceInfo device_info() const;
+  DeviceInfo CreateGpuDevice(int gid);
+  DeviceInfo CreateGpuDevice(int gid, int num_stream);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
   MinervaSystem();
   void LoadBuiltinDagMonitors();
-  void IncrExternRC(LogicalDag::DNode* , int amount = 1);
+  void IncrExternRC(LogicalDag::DNode*, int amount = 1);
   void GeneratePhysicalDag(const std::vector<uint64_t>& lids);
   void ExecutePhysicalDag(const std::vector<uint64_t>& pids);
 
@@ -57,7 +57,7 @@ class MinervaSystem :
   PhysicalEngine* physical_engine_;
   DataStore* data_store_;
 
-  DeviceFactory df;
+  DeviceFactory df_;
   DeviceInfo device_info_;
 
   std::unordered_set<uint64_t> extern_rc_changed_ldnodes_;

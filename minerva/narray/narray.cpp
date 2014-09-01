@@ -46,7 +46,7 @@ NArray::NArray(LogicalDataNode* node): data_node_(node) {
 std::vector<NArray> NArray::Compute(std::vector<NArray> params,
     std::vector<Scale> result_sizes, LogicalComputeFn* fn) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
-  DeviceInfo device_info = MinervaSystem::Instance().GetDeviceInfo();
+  DeviceInfo device_info = MinervaSystem::Instance().device_info();
   std::vector<NArray> rst;
   std::vector<LogicalDataNode*> rst_data_nodes;
   for(Scale size : result_sizes) {
@@ -67,7 +67,7 @@ std::vector<NArray> NArray::Compute(std::vector<NArray> params,
 
 NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<Scale>& parts) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
-  DeviceInfo device_info = MinervaSystem::Instance().GetDeviceInfo();
+  DeviceInfo device_info = MinervaSystem::Instance().device_info();
   fn->device_info = device_info;
   LogicalData ldata(size, fn);
   ldata.partitions = parts;

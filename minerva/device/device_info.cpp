@@ -6,37 +6,40 @@ using namespace std;
 namespace minerva {
 
 void DeviceFactory::Reset() {
-  allocated = 0;
+  allocated_ = 0;
 }
 
-void DeviceFactory::print_device(DeviceInfo device_info) {
+void DeviceFactory::PrintDevice(DeviceInfo device_info) {
   printf("device id: %d", device_info.id);
 }
 
-DeviceInfo DeviceFactory::default_info() {
+DeviceInfo DeviceFactory::DefaultInfo() {
   DeviceInfo result;
   result.id = 0;
-  if (allocated == 0) ++ allocated;
-  result.CPUList.push_back("localhost");
-  result.GPUList.push_back(0);
-  result.numStreams.push_back(1);
+  if (allocated_ == 0) {
+    ++allocated_;
+  }
+  result.cpu_list.push_back("localhost");
+  result.gpu_list.push_back(0);
+  result.num_streams.push_back(1);
   return result;
 }
 
-DeviceInfo DeviceFactory::gpu_device_info(int gid) {
+DeviceInfo DeviceFactory::GpuDeviceInfo(int gid) {
   DeviceInfo result;
-  result.id = allocated ++;
-  result.GPUList.push_back(gid);
-  result.numStreams.push_back(1);
+  result.id = allocated_++;
+  result.gpu_list.push_back(gid);
+  result.num_streams.push_back(1);
   return result;
 }
 
-DeviceInfo DeviceFactory::gpu_device_info(int gid, int numStream) {
+DeviceInfo DeviceFactory::GpuDeviceInfo(int gid, int num_stream) {
   DeviceInfo result;
-  result.id = allocated ++;
-  result.GPUList.push_back(gid);
-  result.numStreams.push_back(numStream);
+  result.id = allocated_++;
+  result.gpu_list.push_back(gid);
+  result.num_streams.push_back(num_stream);
   return result;
 }
 
 }
+

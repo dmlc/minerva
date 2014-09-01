@@ -1,27 +1,27 @@
 #pragma once
+#include "common/singleton.h"
 #include <vector>
 #include <cstring>
-#include "common/singleton.h"
 
 namespace minerva {
 
 struct DeviceInfo {
   int id;
-  std::vector<const char*> CPUList; // for now # of CPU should be 1, which is local
-  std::vector<int> GPUList; // GPUs assigned to this "device", suitable for CUDA call cudaSetDevice
-  std::vector<int> numStreams; // # of streams available on each GPU
+  std::vector<const char*> cpu_list; // for now # of CPU should be 1, which is local
+  std::vector<int> gpu_list; // GPUs assigned to this "device", suitable for CUDA call cudaSetDevice
+  std::vector<int> num_streams; // # of streams available on each GPU
 };
 
 class DeviceFactory : public EverlastingSingleton<DeviceFactory> {
-  public:
-    void Reset();
-    int Allocated() { return allocated; }
-    void print_device(DeviceInfo device_info);
-    DeviceInfo default_info();
-    DeviceInfo gpu_device_info(int gid);
-    DeviceInfo gpu_device_info(int gid, int numStream);
-  private:
-    int allocated;
+ public:
+  void Reset();
+  int allocated() { return allocated_; }
+  void PrintDevice(DeviceInfo device_info);
+  DeviceInfo DefaultInfo();
+  DeviceInfo GpuDeviceInfo(int gid);
+  DeviceInfo GpuDeviceInfo(int gid, int num_stream);
+ private:
+  int allocated_;
 };
 
 }
