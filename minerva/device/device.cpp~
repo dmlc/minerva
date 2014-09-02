@@ -2,8 +2,14 @@
 
 namespace minerva {
 
+Device::Device() {}
+
 Device::Device(DeviceInfo info) {
-  
+  device_info_ = info;
+}
+
+uint64_t Device::GetInfo() {
+  return device_info_;
 }
 
 }

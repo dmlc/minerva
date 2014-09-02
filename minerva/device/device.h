@@ -7,7 +7,9 @@ namespace minerva {
 
 class Device {
  public:
+  Device();
   Device(DeviceInfo info);
+  DeviceInfo GetInfo();
   void Execute(std::vector<int> inputs); // called by Physical_Engine::ProcessNode()
 
  protected:

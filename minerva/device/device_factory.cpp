@@ -22,8 +22,7 @@ DeviceInfo DeviceFactory::DefaultInfo() {
     ++allocated_;
   }
   result.cpu_list.push_back("localhost");
-  result.gpu_list.push_back(0);
-  result.num_streams.push_back(1);
+  InsertGPUDevice(result);
   return result;
 }
 
@@ -32,6 +31,7 @@ DeviceInfo DeviceFactory::GPUDeviceInfo(int gid) {
   result.id = allocated_++;
   result.gpu_list.push_back(gid);
   result.num_streams.push_back(1);
+  InsertGPUDevice(result);
   return result;
 }
 
@@ -40,6 +40,7 @@ DeviceInfo DeviceFactory::GPUDeviceInfo(int gid, int num_stream) {
   result.id = allocated_++;
   result.gpu_list.push_back(gid);
   result.num_streams.push_back(num_stream);
+  InsertGPUDevice(result);
   return result;
 }
 
@@ -52,8 +53,8 @@ Device DeviceFactory::GetDevice(DeviceInfo info) {
 }
 
 void DeviceFactory::InsertGPUDevice(DeviceInfo info) {
-  //Device device(info);
-  //device_storage_[info.id] = device;
+  Device device(info);
+  device_storage_[info.id] = device;
 }
 
 }
