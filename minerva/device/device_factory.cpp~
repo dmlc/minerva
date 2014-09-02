@@ -52,8 +52,8 @@ Device DeviceFactory::GetDevice(DeviceInfo info) {
 }
 
 void DeviceFactory::InsertGPUDevice(DeviceInfo info) {
-  //Device device(info);
-  //device_storage_[info.id] = device;
+  Device device(info);
+  device_storage_[info.id] = device;
 }
 
 }

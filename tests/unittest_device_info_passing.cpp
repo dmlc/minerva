@@ -29,13 +29,13 @@ TEST(DevicePassingTest, Basic) {
   ms.set_device_info(df.DefaultInfo());
   EXPECT_EQ(ms.device_info().id, 0);
 
-  DeviceInfo di1 = ms.CreateGpuDevice(0);
+  DeviceInfo di1 = ms.CreateGPUDevice(0);
   ms.set_device_info(di1);
   EXPECT_EQ(ms.device_info().id, 1);
   EXPECT_EQ(ms.device_info().gpu_list.size(), 1);
   EXPECT_EQ(ms.device_info().num_streams[0], 1);
 
-  DeviceInfo di2 = ms.CreateGpuDevice(1, 2);
+  DeviceInfo di2 = ms.CreateGPUDevice(1, 2);
   ms.set_device_info(di2);
   EXPECT_EQ(ms.device_info().id, 2);
   EXPECT_EQ(ms.device_info().gpu_list.size(), 1);
@@ -52,7 +52,7 @@ TEST(DevicePassingTest, PassingThroughDag1) {
   NArray y = NArray::Randn({4, 6}, 0.0, 1.0, {1, 1});
   NArray t = x * y;
 
-  DeviceInfo di = ms.CreateGpuDevice(0);
+  DeviceInfo di = ms.CreateGPUDevice(0);
   ms.set_device_info(di);
   NArray z = NArray::Randn({2, 6}, 0.0, 1.0, {1, 1});
   NArray s = t + z;
@@ -84,13 +84,13 @@ TEST(DevicePassingTest, PassingThroughDag2) {
   NArray y = NArray::Randn({2, 4}, 0.0, 1.0, {1, 1});
   NArray s = x - y;
 
-  DeviceInfo di1 = ms.CreateGpuDevice(0);
+  DeviceInfo di1 = ms.CreateGPUDevice(0);
   ms.set_device_info(di1);
   NArray z = NArray::Randn({4, 8}, 0.0, 1.0, {1, 1});
   NArray w = NArray::Randn({4, 8}, 0.0, 1.0, {1, 1});
   NArray t = z + w;
 
-  DeviceInfo di2 = ms.CreateGpuDevice(1, 2);
+  DeviceInfo di2 = ms.CreateGPUDevice(1, 2);
   ms.set_device_info(di2);
   NArray r = s * t;
 

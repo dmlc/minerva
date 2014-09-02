@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #include "common/singleton.h"
 #include "device_info.h"
 #include "device.h"
@@ -11,12 +12,16 @@ class DeviceFactory : public EverlastingSingleton<DeviceFactory> {
   int allocated() { return allocated_; }
   void PrintDevice(DeviceInfo device_info);
   DeviceInfo DefaultInfo();
-  DeviceInfo GpuDeviceInfo(int gid);
-  DeviceInfo GpuDeviceInfo(int gid, int num_stream);
+  DeviceInfo GPUDeviceInfo(int gid);
+  DeviceInfo GPUDeviceInfo(int gid, int num_stream);
+  Device GetDevice(uint64_t id);
+  Device GetDevice(DeviceInfo info);
   
  private:
-  int allocated_;
-  //map<uint64_t, Device> device_storage_;
+  void InsertGPUDevice(DeviceInfo info);
+
+  uint64_t allocated_;
+  std::map<uint64_t, Device> device_storage_;
 };
 
 }

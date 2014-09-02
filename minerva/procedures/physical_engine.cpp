@@ -1,4 +1,5 @@
 #include "physical_engine.h"
+#include "device/device_factory.h"
 #include <gflags/gflags.h>
 
 DEFINE_bool(enable_execute, true, "enable concrete computation");
@@ -74,6 +75,9 @@ void PhysicalEngine::ProcessNode(DagNode* node) {
     }
     // call compute function
     PhysicalOp& op = phy_op_node->op_;
+    uint64_t device_id = op.compute_fn->device_info.id;
+    Device device = DeviceFactory::Instance().GetDevice(device_id);
+
     CHECK_NOTNULL(op.compute_fn);
     if(FLAGS_enable_execute) {
       DLOG(INFO) << "Execute node#" << nid << " compute fn: " << op.compute_fn->Name();

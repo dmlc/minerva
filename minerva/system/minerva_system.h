@@ -38,8 +38,8 @@ class MinervaSystem :
 
   void set_device_info(DeviceInfo info);
   DeviceInfo device_info() const;
-  DeviceInfo CreateGpuDevice(int gid);
-  DeviceInfo CreateGpuDevice(int gid, int num_stream);
+  DeviceInfo CreateGPUDevice(int gid);
+  DeviceInfo CreateGPUDevice(int gid, int num_stream);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
@@ -57,6 +57,7 @@ class MinervaSystem :
   PhysicalEngine* physical_engine_;
   DataStore* data_store_;
 
+  DeviceFactory df_;
   DeviceInfo device_info_;
 
   std::unordered_set<uint64_t> extern_rc_changed_ldnodes_;
