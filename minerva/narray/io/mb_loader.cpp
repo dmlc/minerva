@@ -1,11 +1,11 @@
-#include <fstream>
-#include <memory>
-
 #include "mb_loader.h"
 #include "narray/narray.h"
 #include "op/physical.h"
 #include "op/logical.h"
 #include "op/impl/basic.h"
+#include "op/context.h"
+#include <fstream>
+#include <memory>
 
 using namespace std;
 
@@ -21,8 +21,8 @@ class OneFileMBLoadOp :
   public PhysicalComputeFn,
   public ClosureTrait<OneFileMBLoadClosure> {
  public:
-  void Execute(DataList& inputs, DataList& outputs, ImplType impl_type) {
-    CHECK_EQ(impl_type, ImplType::kBasic) << "mb loader operator only has basic implementation";
+  void Execute(DataList& inputs, DataList& outputs, const Context& context) {
+    CHECK_EQ(context.impl_type, ImplType::kBasic) << "mb loader operator only has basic implementation";
     ifstream fin(closure.data_file_name.c_str(), ios::binary);
     int num_samples, sample_length;
     fin.read(reinterpret_cast<char*>(&num_samples), sizeof(int));

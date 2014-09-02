@@ -3,6 +3,7 @@
 #include "op/closure_trait.h"
 #include "op/physical.h"
 #include "op/device_info_trait.h"
+#include "op/context.h"
 
 namespace minerva {
 
@@ -28,14 +29,14 @@ typedef std::vector<DataShard> DataList;
 
 class PhysicalComputeFn: public BasicFn, public virtual DeviceInfoTrait {
  public:
-  virtual void Execute(DataList&, DataList&, ImplType) = 0;
+  virtual void Execute(DataList&, DataList&, const Context&) = 0;
 };
 
 template<class Closure>
 class PhyComputeFnWithClosure: public PhysicalComputeFn, public ClosureTrait<Closure> {
  public:
-  void Execute(DataList& inputs, DataList& outputs, ImplType impl_type) {
-    FnBundle<Closure>::Call(inputs, outputs, ClosureTrait<Closure>::closure, impl_type);
+  void Execute(DataList& inputs, DataList& outputs, const Context& context) {
+    FnBundle<Closure>::Call(inputs, outputs, ClosureTrait<Closure>::closure, context);
   }
 };
 

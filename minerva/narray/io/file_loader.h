@@ -1,7 +1,7 @@
 #pragma once
-
 #include "op/physical.h"
 #include "op/logical.h"
+#include "op/context.h"
 
 namespace minerva {
 
@@ -24,7 +24,7 @@ class FileLoaderOp :
   public PhysicalComputeFn,
   public ClosureTrait<FileLoaderClosure> {
  public:
-  void Execute(DataList& inputs, DataList& outputs, ImplType impl_type);
+  void Execute(DataList& inputs, DataList& outputs, const Context&);
   NVector<Chunk> Expand(const NVector<Scale>& part_sizes);
   std::string Name() const;
 };
