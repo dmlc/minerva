@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include <dag/dag.h>
 #include <common/inspector.h>
+#include <device/device.h>
 
 using namespace std;
 
@@ -15,6 +16,9 @@ template<> class Inspector<MinervaSystem> {
   }
   public: uint64_t GetNodeID(const NArray na) {
     return na.data_node_->node_id();
+  }
+  public: Device GetDevice(const uint64_t id) {
+    return MinervaSystem::Instance().df_.GetDevice(id);
   }
 };
 
@@ -117,19 +121,14 @@ TEST(DevicePassingTest, PassingThroughDag2) {
 
 TEST(DevicePassingTest, DeviceFactory) {
   MinervaSystem& ms = MinervaSystem::Instance();
-  DeviceFactory df = DeviceFactory::Instance();
-  df.Reset();
-  ms.set_device_info(df.DefaultInfo());
-  EXPECT_EQ(df.GetDevice(0).GetInfo().id, 0);
 
   DeviceInfo di1 = ms.CreateGPUDevice(0);
   ms.set_device_info(di1);
-  EXPECT_EQ(df.GetDevice(di1.id).GetInfo().gpu_list.size(), 1);
-  EXPECT_EQ(df.GetDevice(di1.id).GetInfo().num_streams[0], 1);
+  EXPECT_EQ(ms.GetDevice(di1.id).GetInfo().gpu_list.size(), 1);
 
   DeviceInfo di2 = ms.CreateGPUDevice(1, 2);
   ms.set_device_info(di2);
-  EXPECT_EQ(df.GetDevice(di2.id).GetInfo().gpu_list.size(), 1);
-  EXPECT_EQ(df.GetDevice(di2.id).GetInfo().num_streams[0], 2);
+  EXPECT_EQ(ms.GetDevice(di2.id).GetInfo().gpu_list.size(), 1);
+  EXPECT_EQ(ms.GetDevice(di2.id).GetInfo().num_streams[0], 2);
 }
 

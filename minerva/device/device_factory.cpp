@@ -26,7 +26,7 @@ DeviceInfo DeviceFactory::DefaultInfo() {
   return result;
 }
 
-DeviceInfo DeviceFactory::GPUDeviceInfo(int gid) {
+DeviceInfo DeviceFactory::CreateGPUDevice(int gid) {
   DeviceInfo result;
   result.id = allocated_++;
   result.gpu_list.push_back(gid);
@@ -35,7 +35,7 @@ DeviceInfo DeviceFactory::GPUDeviceInfo(int gid) {
   return result;
 }
 
-DeviceInfo DeviceFactory::GPUDeviceInfo(int gid, int num_stream) {
+DeviceInfo DeviceFactory::CreateGPUDevice(int gid, int num_stream) {
   DeviceInfo result;
   result.id = allocated_++;
   result.gpu_list.push_back(gid);

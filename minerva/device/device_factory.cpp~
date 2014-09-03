@@ -40,7 +40,7 @@ DeviceInfo DeviceFactory::GPUDeviceInfo(int gid, int num_stream) {
   result.id = allocated_++;
   result.gpu_list.push_back(gid);
   result.num_streams.push_back(num_stream);
-  InsertDevice(result);
+  InsertGPUDevice(result);
   return result;
 }
 

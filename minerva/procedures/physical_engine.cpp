@@ -75,8 +75,13 @@ void PhysicalEngine::ProcessNode(DagNode* node) {
     }
     // call compute function
     PhysicalOp& op = phy_op_node->op_;
+
     uint64_t device_id = op.compute_fn->device_info.id;
     Device device = DeviceFactory::Instance().GetDevice(device_id);
+    vector<PhysicalData> inputs;
+    for (auto n: phy_op_node->inputs_)
+      inputs.push_back(dynamic_cast<PhysicalDataNode*>(n)->data_);
+    device.Execute(inputs, op);
 
     CHECK_NOTNULL(op.compute_fn);
     if(FLAGS_enable_execute) {

@@ -40,6 +40,8 @@ class MinervaSystem :
   DeviceInfo device_info() const;
   DeviceInfo CreateGPUDevice(int gid);
   DeviceInfo CreateGPUDevice(int gid, int num_stream);
+  Device GetDevice(uint64_t id);
+  Device GetDevice(DeviceInfo info);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);

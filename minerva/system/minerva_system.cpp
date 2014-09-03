@@ -65,11 +65,19 @@ DeviceInfo MinervaSystem::device_info() const {
 }
 
 DeviceInfo MinervaSystem::CreateGPUDevice(int gid) {
-  return df_.GPUDeviceInfo(gid);
+  return df_.CreateGPUDevice(gid);
 }
 
 DeviceInfo MinervaSystem::CreateGPUDevice(int gid, int num_stream) {
-  return df_.GPUDeviceInfo(gid, num_stream);
+  return df_.CreateGPUDevice(gid, num_stream);
+}
+
+Device MinervaSystem::GetDevice(uint64_t id) {
+  return df_.GetDevice(id);
+}
+
+Device MinervaSystem::GetDevice(DeviceInfo info) {
+  return df_.GetDevice(info);
 }
 
 void MinervaSystem::LoadBuiltinDagMonitors() {
