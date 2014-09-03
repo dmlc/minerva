@@ -1,4 +1,5 @@
 #include "physical_engine.h"
+#include "op/context.h"
 #include <gflags/gflags.h>
 
 DEFINE_bool(enable_execute, true, "enable concrete computation");
@@ -77,7 +78,9 @@ void PhysicalEngine::ProcessNode(DagNode* node) {
     CHECK_NOTNULL(op.compute_fn);
     if(FLAGS_enable_execute) {
       DLOG(INFO) << "Execute node#" << nid << " compute fn: " << op.compute_fn->Name();
-      op.compute_fn->Execute(input, output, op.impl_type);
+      Context context;
+      context.impl_type = op.impl_type;
+      op.compute_fn->Execute(input, output, context);
     }
   }
 }
