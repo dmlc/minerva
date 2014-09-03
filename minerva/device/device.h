@@ -17,9 +17,10 @@ class Device {
   DeviceInfo GetInfo();
   void Execute(std::vector<PhysicalData> inputs, const PhysicalOp Op); // called by Physical_Engine::ProcessNode()
 
- protected:
-  std::vector<uint64_t> local_data_;
+ private:
+  std::set<uint64_t> local_data_;
   DeviceInfo device_info_;
+  //DataStore data_store_;
 };
 
 }
