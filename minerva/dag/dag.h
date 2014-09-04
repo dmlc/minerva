@@ -1,38 +1,30 @@
 #pragma once
 #include "common/common.h"
-#include "common/concurrent_blocking_queue.h"
 #include <cstdint>
-#include <vector>
-#include <map>
-#include <set>
-#include <functional>
 #include <initializer_list>
-#include <atomic>
-#include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace minerva {
 
 class DagNode {
  public:
-  enum NodeTypes {
-    OP_NODE = 0,
-    DATA_NODE
+  enum class NodeType {
+    kOpNode = 0,
+    kDataNode
   };
   virtual ~DagNode() {}
   void AddParent(DagNode*);
   void AddParents(std::initializer_list<DagNode*>);
   bool DeleteSucc(DagNode*);
   bool DeletePred(DagNode*);
-  virtual NodeTypes Type() const = 0;
+  virtual NodeType Type() const = 0;
   uint64_t node_id() const { return node_id_; }
-
-  std::vector<DagNode*> successors_;
-  std::vector<DagNode*> predecessors_;
+  std::unordered_set<DagNode*> successors_;
+  std::unordered_set<DagNode*> predecessors_;
 
  protected:
-  DagNode(uint64_t id): node_id_(id) {
-  }
+  DagNode(uint64_t id): node_id_(id) {}
 
  private:
   DISALLOW_COPY_AND_ASSIGN(DagNode);
@@ -44,7 +36,7 @@ class DataNode : public DagNode {
  public:
   DataNode(uint64_t id): DagNode(id) {}
   ~DataNode();
-  NodeTypes Type() const { return DagNode::DATA_NODE; }
+  NodeType Type() const { return DagNode::NodeType::kDataNode; }
   Data data_;
 
  private:

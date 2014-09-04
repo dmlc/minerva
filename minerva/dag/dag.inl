@@ -1,5 +1,3 @@
-#include <cstdint>
-#include <functional>
 #include <queue>
 #include <sstream>
 #include <glog/logging.h>
