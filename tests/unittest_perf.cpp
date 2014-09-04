@@ -48,8 +48,8 @@ class AddOneManyTimesOp: public LogicalComputeFn, PhysicalComputeFn {
   }
   vector<NVector<Chunk>> Expand(const vector<NVector<Chunk>>& inputs) {
     NVector<Chunk> rst = inputs[0].Map<Chunk>(
-        [] (const Chunk& ch) {
-          return Chunk::Compute({ch}, {ch.Size()}, new AddOneManyTimesOp)[0];
+        [this] (const Chunk& ch) {
+          return Chunk::Compute({ch}, {ch.Size()}, new AddOneManyTimesOp(*this))[0];
         }
       );
     return {rst};

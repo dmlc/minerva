@@ -41,10 +41,7 @@ void Device::Execute(uint64_t nid, std::vector<PhysicalData> inputs, std::vector
 
   std::vector<DataShard> outputShards;
   for (std::vector<PhysicalData>::iterator output = outputs.begin(); output != outputs.end(); ++ output) {
-    std::cout << Type() << std::endl;
-    std::cout << output->size.Prod() << " hhh" << std::endl;
     CreateData(output->data_id, output->size.Prod());
-    std::cout << output->size.Prod() << " created" << std::endl;
     local_data_.insert(output->data_id);
     outputShards.push_back(DataShard(*output));
   }

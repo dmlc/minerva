@@ -77,8 +77,6 @@ void PhysicalEngine::ProcessNode(DagNode* node) {
     PhysicalOpNode* phy_op_node = dynamic_cast<PhysicalOpNode*>(node);
     PhysicalOp& op = phy_op_node->op_;
     uint64_t device_id = op.compute_fn->device_info.id;
-    cout << "node id: " << node-> node_id() << "; device id: " << device_id << endl;
-
     Device* device = MinervaSystem::Instance().GetDevice(device_id);
     CHECK_NOTNULL(device);
     vector<PhysicalData> inputs;
