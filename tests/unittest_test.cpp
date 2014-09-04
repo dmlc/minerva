@@ -20,8 +20,6 @@ TEST(Test, DeviceDebug) {
   NArray y = NArray::Randn({4, 6}, 0.0, 1.0, {1, 1});
   NArray t = x * y;
 
-  DeviceInfo di = ms.CreateGPUDevice(0);
-  ms.set_device_info(di);
   NArray z = NArray::Randn({2, 6}, 0.0, 1.0, {1, 1});
   NArray s = t + z;
 

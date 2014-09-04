@@ -17,7 +17,7 @@ template<> class Inspector<MinervaSystem> {
   public: uint64_t GetNodeID(const NArray na) {
     return na.data_node_->node_id();
   }
-  public: Device GetDevice(const uint64_t id) {
+  public: Device* GetDevice(const uint64_t id) {
     return MinervaSystem::Instance().df_.GetDevice(id);
   }
 };
@@ -124,11 +124,11 @@ TEST(DevicePassingTest, DeviceFactory) {
 
   DeviceInfo di1 = ms.CreateGPUDevice(0);
   ms.set_device_info(di1);
-  EXPECT_EQ(ms.GetDevice(di1.id).GetInfo().gpu_list.size(), 1);
+  EXPECT_EQ(ms.GetDevice(di1.id)->GetInfo().gpu_list.size(), 1);
 
   DeviceInfo di2 = ms.CreateGPUDevice(1, 2);
   ms.set_device_info(di2);
-  EXPECT_EQ(ms.GetDevice(di2.id).GetInfo().gpu_list.size(), 1);
-  EXPECT_EQ(ms.GetDevice(di2.id).GetInfo().num_streams[0], 2);
+  EXPECT_EQ(ms.GetDevice(di2.id)->GetInfo().gpu_list.size(), 1);
+  EXPECT_EQ(ms.GetDevice(di2.id)->GetInfo().num_streams[0], 2);
 }
 

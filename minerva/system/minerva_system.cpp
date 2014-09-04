@@ -12,6 +12,7 @@
 #include "procedures/physical_engine.h"
 #include "procedures/impl_decider.h"
 #include "system/data_store.h"
+#include <iostream>
 
 using namespace std;
 
@@ -49,7 +50,6 @@ void MinervaSystem::Initialize(int* argc, char*** argv) {
   }
   LoadBuiltinDagMonitors();
   df_ = DeviceFactory::Instance();
-  df_.Reset();
   device_info_ = df_.DefaultInfo();
 }
 void MinervaSystem::Finalize() { }
@@ -72,11 +72,11 @@ DeviceInfo MinervaSystem::CreateGPUDevice(int gid, int num_stream) {
   return df_.CreateGPUDevice(gid, num_stream);
 }
 
-Device MinervaSystem::GetDevice(uint64_t id) {
+Device* MinervaSystem::GetDevice(uint64_t id) {
   return df_.GetDevice(id);
 }
 
-Device MinervaSystem::GetDevice(DeviceInfo info) {
+Device* MinervaSystem::GetDevice(DeviceInfo info) {
   return df_.GetDevice(info);
 }
 
