@@ -1,4 +1,5 @@
 #pragma once
+#ifdef HAS_CUDA
 #include <cuda_runtime.h>
 
 namespace minerva {
@@ -11,4 +12,4 @@ void CudaPerformArithmeticDiv(float*, float*, float*, size_t, cudaStream_t);
 
 }
 }
-
+#endif

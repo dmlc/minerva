@@ -13,6 +13,7 @@ void Arithmetic(DataList& inputs, DataList& outputs, ArithmeticClosure& closure,
   float* right = inputs[1].GetGpuData();
   float* res = outputs[0].GetGpuData();
   size_t size = outputs[0].Size().Prod();
+#ifdef HAS_CUDA
   switch (closure.type) {
     case ADD:
       CudaPerformArithmeticAdd(res, left, right, size, context.stream);
@@ -27,6 +28,7 @@ void Arithmetic(DataList& inputs, DataList& outputs, ArithmeticClosure& closure,
       CudaPerformArithmeticDiv(res, left, right, size, context.stream);
       break;
   }
+#endif
 }
 
 }
