@@ -61,14 +61,14 @@ class OpNode : public DagNode {
 template<typename Data, typename Op>
 class DagHelper {
  public:
-  static std::string DataToString(const Data& d) {
+  static std::string DataToString(const Data&) {
     return "N/A";
   }
-  static std::string OpToString(const Op& o) {
+  static std::string OpToString(const Op&) {
     return "N/A";
   }
-  static void FreeData(Data& d) {}
-  static void FreeOp(Op& o) {}
+  static void FreeData(Data&) {}
+  static void FreeOp(Op&) {}
 };
 
 template<typename DagType>
@@ -90,7 +90,9 @@ class Dag {
   typedef OpNode<Data, Op> ONode;
   typedef std::unordered_map<uint64_t, DagNode*> ContainerType;
   Dag() {}
-  ~Dag() {}
+  ~Dag() {
+    // TODO Not deleting nodes for now
+  }
   DNode* NewDataNode(const Data& data);
   ONode* NewOpNode(const std::vector<DNode*>& inputs,
       const std::vector<DNode*>& outputs, const Op& op);
@@ -111,8 +113,6 @@ class Dag {
  private:
   DISALLOW_COPY_AND_ASSIGN(Dag);
   uint64_t NewIndex();
-
- private:
   std::vector<DagMonitor<Dag<Data, Op>>*> monitors_;
   ContainerType index_to_node_;
 };
@@ -120,3 +120,4 @@ class Dag {
 } // end of namespace minerva
 
 #include "dag.inl"
+

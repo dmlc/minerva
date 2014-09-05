@@ -1,17 +1,16 @@
 #include "narray.h"
-#include "op/logical_op.h"
-#include "system/minerva_system.h"
-#include "io/file_loader.h"
-#include "io/array_loader.h"
-#include "device/device_info.h"
-#include <fstream>
-#include <iomanip>
 
 using namespace std;
 
 namespace minerva {
 
 static MinervaSystem& ms = MinervaSystem::Instance();
+
+NArray NArray::Constant(const Scale& size, float val) {
+  FillOp* fill_op = new FillOp;
+  fill_op->closure = {val};
+  return NArray::Generate(size, fill_op, parts);
+}
 
 ////////////////////////////////////////////////////
 // constructors & destructors
@@ -65,7 +64,7 @@ std::vector<NArray> NArray::Compute(std::vector<NArray> params,
   return rst;
 }
 
-NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<Scale>& parts) {
+NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
   DeviceInfo device_info = MinervaSystem::Instance().device_info();
   fn->device_info = device_info;
@@ -74,34 +73,6 @@ NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<S
   ldata.device_info = device_info;
   LogicalDataNode* rst_node = ldag.NewDataNode(ldata);
   return NArray(rst_node);
-}
-
-NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const Scale& numparts) {
-  return Generate(size, fn, size.EquallySplit(numparts));
-}
-
-NArray NArray::Constant(const Scale& size, float val, const NVector<Scale>& parts) {
-  FillOp* fill_op = new FillOp;
-  fill_op->closure = {val};
-  return NArray::Generate(size, fill_op, parts);
-}
-
-NArray NArray::Randn(const Scale& size, float mu, float var, const NVector<Scale>& parts) {
-  RandnOp* randn_op = new RandnOp;
-  randn_op->closure = {mu, var};
-  return NArray::Generate(size, randn_op, parts);
-}
-
-NArray NArray::Constant(const Scale& size, float val, const Scale& numparts) {
-  FillOp* fill_op = new FillOp;
-  fill_op->closure = {val};
-  return NArray::Generate(size, fill_op, numparts);
-}
-
-NArray NArray::Randn(const Scale& size, float mu, float var, const Scale& numparts) {
-  RandnOp* randn_op = new RandnOp;
-  randn_op->closure = {mu, var};
-  return NArray::Generate(size, randn_op, numparts);
 }
 
 // matmult
