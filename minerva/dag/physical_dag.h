@@ -1,8 +1,9 @@
 #pragma once
-#include <string>
 #include "dag.h"
 #include "op/physical.h"
 #include "op/physical_fn.h"
+#include <string>
+#include <sstream>
 
 namespace minerva {
 
@@ -28,7 +29,7 @@ class DataIdPrinter {
  public:
   static std::string DataToString(const PhysicalData& d) {
     std::stringstream ss;
-    ss << d.data_id;
+    ss << d.data_id << "!" << d.size;
     return ss.str();
   }
   static std::string OpToString(const PhysicalOp& o) {
@@ -54,3 +55,4 @@ typedef PhysicalDag::ONode PhysicalOpNode;
 class PhysicalDagMonitor : public DagMonitor<PhysicalDag> {};
 
 }
+

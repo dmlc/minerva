@@ -2,6 +2,7 @@
 #include "common/common.h"
 #include <cstdint>
 #include <initializer_list>
+#include <vector>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -13,7 +14,7 @@ class DagNode {
     kOpNode = 0,
     kDataNode
   };
-  virtual ~DagNode() {}
+  virtual ~DagNode();
   void AddParent(DagNode*);
   void AddParents(std::initializer_list<DagNode*>);
   bool DeleteSucc(DagNode*);
@@ -48,9 +49,10 @@ class OpNode : public DagNode {
  public:
   OpNode(uint64_t id): DagNode(id) {}
   ~OpNode();
-  NodeTypes Type() const { return DagNode::OP_NODE; }
+  NodeType Type() const { return DagNode::NodeType::kOpNode; }
   Op op_;
-  std::vector<DataNode<Data, Op>*> inputs_, outputs_;
+  std::vector<DataNode<Data, Op>*> inputs_;
+  std::vector<DataNode<Data, Op>*> outputs_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(OpNode);
@@ -69,42 +71,42 @@ class DagHelper {
   static void FreeOp(Op& o) {}
 };
 
-template<class DagType>
+template<typename DagType>
 class DagMonitor {
  public:
-  virtual void OnCreateNode(DagNode* );
-  virtual void OnDeleteNode(DagNode* );
-  virtual void OnCreateDataNode(typename DagType::DNode* ) {}
-  virtual void OnCreateOpNode(typename DagType::ONode* ) {}
-  virtual void OnDeleteDataNode(typename DagType::DNode* ) {}
-  virtual void OnDeleteOpNode(typename DagType::ONode* ) {}
-  virtual void OnCreateEdge(DagNode* from, DagNode* to) {}
+  virtual void OnCreateNode(DagNode*);
+  virtual void OnDeleteNode(DagNode*);
+  virtual void OnCreateDataNode(typename DagType::DNode*) {}
+  virtual void OnCreateOpNode(typename DagType::ONode*) {}
+  virtual void OnDeleteDataNode(typename DagType::DNode*) {}
+  virtual void OnDeleteOpNode(typename DagType::ONode*) {}
+  virtual void OnCreateEdge(DagNode*, DagNode*) {}
 };
 
-template<class Data, class Op>
+template<typename Data, typename Op>
 class Dag {
  public:
   typedef DataNode<Data, Op> DNode;
   typedef OpNode<Data, Op> ONode;
+  typedef std::unordered_map<uint64_t, DagNode*> ContainerType;
   Dag() {}
-  ~Dag();
+  ~Dag() {}
   DNode* NewDataNode(const Data& data);
   ONode* NewOpNode(const std::vector<DNode*>& inputs,
       const std::vector<DNode*>& outputs, const Op& op);
-  void DeleteNode(uint64_t );
-  bool ExistNode(uint64_t ) const;
-  DagNode* GetNode(uint64_t ) const;
-  ONode* GetOpNode(uint64_t ) const;
-  DNode* GetDataNode(uint64_t ) const;
+  void DeleteNode(uint64_t);
+  DagNode* GetNode(uint64_t) const;
+  ONode* GetOpNode(uint64_t) const;
+  DNode* GetDataNode(uint64_t) const;
   size_t NumNodes() const;
-
-  typedef std::unordered_map<uint64_t, DagNode*> ContainerType;
-  ContainerType::iterator begin() { return index_to_node_.begin(); }
-  ContainerType::iterator end() { return index_to_node_.end(); }
-
-  void RegisterMonitor(DagMonitor<Dag<Data, Op>>* );
-  template<class NodePrinter=DagHelper<Data, Op> >
-  std::string PrintDag() const;
+  ContainerType::iterator begin() {
+    return index_to_node_.begin();
+  }
+  ContainerType::iterator end() {
+    return index_to_node_.end();
+  }
+  void RegisterMonitor(DagMonitor<Dag<Data, Op>>*);
+  template<typename NodePrinter=DagHelper<Data, Op>> std::string PrintDag() const;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(Dag);
