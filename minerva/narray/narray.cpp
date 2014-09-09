@@ -1,4 +1,5 @@
 #include "narray.h"
+#include "common/common.h"
 
 using namespace std;
 
@@ -39,13 +40,16 @@ NArray::NArray(LogicalDataNode* node): data_node_(node) {
   ms.IncrExternRC(data_node_);
 }
 
-////////////////////////////////////////////////////
-// computation methods
-////////////////////////////////////////////////////
-std::vector<NArray> NArray::Compute(std::vector<NArray> params,
-    std::vector<Scale> result_sizes, LogicalComputeFn* fn) {
-  LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
-  DeviceInfo device_info = MinervaSystem::Instance().device_info();
+// DAG building operations
+vector<NArray> NArray::Compute(
+    const vector<NArray>& params,
+    const vector<Scale>& result_sizes,
+    PhysicalComputeFn* fn) {
+  auto& physical_dag = MinervaSystem::Instance().physical_dag();
+  auto& data_store = MinervaSystem::Instance().data_store();
+  auto device_info = MinervaSystem::Instance().device_info();
+  auto rst = Map<NArray>(result_sizes, [&](const Scale& scale) {
+    auto rst_node = physical_dag.NewDataNode(PhysicalData(size, device_info, data_store.GenerateDataID()));
   std::vector<NArray> rst;
   std::vector<LogicalDataNode*> rst_data_nodes;
   for(Scale size : result_sizes) {

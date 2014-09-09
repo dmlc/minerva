@@ -97,7 +97,7 @@ class NArray {
   NArray RePartition(const NVector<Scale>& partitions);
 
  private:
-  NArray(PhysicalDataNode* node);
+  NArray(PhysicalDataNode*);
   PhysicalDataNode* data_node_;
 };
 

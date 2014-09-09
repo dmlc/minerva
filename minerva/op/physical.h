@@ -9,14 +9,14 @@ namespace minerva {
 class PhysicalComputeFn;
 
 struct PhysicalData {
-  PhysicalData(): extern_rc(0), data_id(0), mapped_to_lnode(false), mapped_lnid(0) {
+  PhysicalData() {
   }
-  Scale size, offset, offset_index;
-  int extern_rc;
-  uint64_t data_id;
-  bool mapped_to_lnode;
-  uint64_t mapped_lnid;
+  PhysicalData(const Scale& s, DeviceInfo info, uint64_t id): PhysicalData(s), device_info(info), data_id(id) {
+  }
+  Scale size;
+  int extern_rc = 0;
   DeviceInfo device_info;
+  uint64_t data_id = 0;
 };
 
 struct PhysicalOp {
