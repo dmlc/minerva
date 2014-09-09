@@ -49,34 +49,23 @@ vector<NArray> NArray::Compute(
   auto& data_store = MinervaSystem::Instance().data_store();
   auto device_info = MinervaSystem::Instance().device_info();
   auto rst = Map<NArray>(result_sizes, [&](const Scale& scale) {
-    auto rst_node = physical_dag.NewDataNode(PhysicalData(size, device_info, data_store.GenerateDataId()));
-  std::vector<NArray> rst;
-  std::vector<LogicalDataNode*> rst_data_nodes;
-  for(Scale size : result_sizes) {
-    LogicalData ldata(size);
-    ldata.device_info = device_info;
-    LogicalDataNode* rst_node = ldag.NewDataNode(ldata);
-    rst.push_back(NArray(rst_node));
-    rst_data_nodes.push_back(rst_node);
-  }
-  std::vector<LogicalDataNode*> param_data_nodes;
-  for(NArray p : params) {
-    param_data_nodes.push_back(p.data_node_);
-  }
+    return NArray(physical_dag.NewDataNode(PhysicalData(size, device_info, data_store.GenerateDataId())));
+  });
+  auto rst_data_nodes = Map<PhysicalDataNode*>(rst, [](const NArray& i) {
+    return i.data_node();
+  });
+  auto param_data_nodes = Map<PhysicalDataNode*>(params, [](const NArray& i) {
+    return i.data_node();
+  });
   fn->device_info = device_info;
   ldag.NewOpNode(param_data_nodes, rst_data_nodes, {fn});
   return rst;
 }
 
-NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn) {
-  LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
-  DeviceInfo device_info = MinervaSystem::Instance().device_info();
-  fn->device_info = device_info;
-  LogicalData ldata(size, fn);
-  ldata.partitions = parts;
-  ldata.device_info = device_info;
-  LogicalDataNode* rst_node = ldag.NewDataNode(ldata);
-  return NArray(rst_node);
+NArray NArray::Generate(
+    const Scale& size,
+    PhysicalComputeFn* fn) {
+  return NArray::Compute({}, {size}, fn)[0];
 }
 
 // matmult

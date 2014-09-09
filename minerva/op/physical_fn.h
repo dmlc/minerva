@@ -29,15 +29,24 @@ typedef std::vector<DataShard> DataList;
 
 class PhysicalComputeFn: public BasicFn, public virtual DeviceInfoTrait {
  public:
-  virtual void Execute(DataList&, DataList&, const Context&) = 0;
+  virtual void Execute(const DataList&, const DataList&, const Context&) = 0;
 };
 
-template<class Closure>
+template<typename Closure>
 class PhyComputeFnWithClosure: public PhysicalComputeFn, public ClosureTrait<Closure> {
  public:
-  void Execute(DataList& inputs, DataList& outputs, const Context& context) {
+  void Execute(const DataList& inputs, const DataList& outputs, const Context& context) {
     FnBundle<Closure>::Call(inputs, outputs, ClosureTrait<Closure>::closure, context);
   }
 };
 
+template<typename Closure>
+class PhyDataGenFnWithClosure : public PhysicalComputeFn, public ClosureTrait<Closure> {
+ public:
+  void Execute(const DataList& outputs, const Context& context) {
+    FnBundle<Closure>::Call(outputs, ClosureTrait<Closure>::closure, context);
+  }
+};
+
 }
+
