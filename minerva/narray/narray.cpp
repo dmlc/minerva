@@ -49,7 +49,7 @@ vector<NArray> NArray::Compute(
   auto& data_store = MinervaSystem::Instance().data_store();
   auto device_info = MinervaSystem::Instance().device_info();
   auto rst = Map<NArray>(result_sizes, [&](const Scale& scale) {
-    auto rst_node = physical_dag.NewDataNode(PhysicalData(size, device_info, data_store.GenerateDataID()));
+    auto rst_node = physical_dag.NewDataNode(PhysicalData(size, device_info, data_store.GenerateDataId()));
   std::vector<NArray> rst;
   std::vector<LogicalDataNode*> rst_data_nodes;
   for(Scale size : result_sizes) {

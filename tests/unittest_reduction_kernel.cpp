@@ -33,8 +33,8 @@ TEST(ReductionKernel, SumOnFirstDimension) {
   DataStore& dstore = MinervaSystem::Instance().data_store();
   Scale s1 = {20, 30};
   Scale s2 = {1, 30};
-  uint64_t id1 = dstore.GenerateDataID();
-  uint64_t id2 = dstore.GenerateDataID();
+  uint64_t id1 = dstore.GenerateDataId();
+  uint64_t id2 = dstore.GenerateDataId();
   dstore.CreateData(id1, DataStore::CPU, s1.Prod());
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
   PhysicalData d1 = MakeData(s1, id1);
@@ -54,8 +54,8 @@ TEST(ReductionKernel, MaxOnSecondDimension) {
   DataStore& dstore = MinervaSystem::Instance().data_store();
   Scale s1 = {20, 30};
   Scale s2 = {20, 1};
-  uint64_t id1 = dstore.GenerateDataID();
-  uint64_t id2 = dstore.GenerateDataID();
+  uint64_t id1 = dstore.GenerateDataId();
+  uint64_t id2 = dstore.GenerateDataId();
   dstore.CreateData(id1, DataStore::CPU, s1.Prod());
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
   PhysicalData d1 = MakeData(s1, id1);

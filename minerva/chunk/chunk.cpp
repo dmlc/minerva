@@ -69,7 +69,7 @@ vector<Chunk> Chunk::Compute(
   auto rst = Map<Chunk>(result_sizes, [&](const Scale& size) {
     PhysicalData phy_data;
     phy_data.size = size;
-    phy_data.data_id = ms.data_store().GenerateDataID();
+    phy_data.data_id = ms.data_store().GenerateDataId();
     phy_data.device_info = device_info;
     auto rst_node = pdag.NewDataNode(phy_data);
     return Chunk(rst_node);

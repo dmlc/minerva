@@ -28,7 +28,7 @@ DataStore::~DataStore() {
   }
 }
 
-uint64_t DataStore::GenerateDataID() {
+uint64_t DataStore::GenerateDataId() {
   static uint64_t data_id_gen = 0;
   return ++data_id_gen;
 }

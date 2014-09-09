@@ -25,10 +25,10 @@ TEST(Assemble, Assemble2D) {
   Scale o1 = {0, 0}, o2 = {0, 3}, o3 = {2, 0}, o4 = {2, 3};
   Scale oi1 = {0, 0}, oi2 = {0, 1}, oi3 = {1, 0}, oi4 = {1, 1};
   Scale srst = {4, 6};
-  uint64_t id1 = dstore.GenerateDataID();
-  uint64_t id2 = dstore.GenerateDataID();
-  uint64_t id3 = dstore.GenerateDataID();
-  uint64_t id4 = dstore.GenerateDataID();
+  uint64_t id1 = dstore.GenerateDataId();
+  uint64_t id2 = dstore.GenerateDataId();
+  uint64_t id3 = dstore.GenerateDataId();
+  uint64_t id4 = dstore.GenerateDataId();
   dstore.CreateData(id1, DataStore::CPU, s1.Prod());
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
   dstore.CreateData(id3, DataStore::CPU, s3.Prod());
@@ -45,7 +45,7 @@ TEST(Assemble, Assemble2D) {
   vector<DataShard> inds;
   for_each(dvec.begin(), dvec.end(), [&] (PhysicalData& pd) { inds.push_back(DataShard(pd)); });
   // make output
-  uint64_t rstid = dstore.GenerateDataID();
+  uint64_t rstid = dstore.GenerateDataId();
   dstore.CreateData(rstid, DataStore::CPU, srst.Prod());
   PhysicalData rstpd; rstpd.size = srst; rstpd.data_id = rstid;
   vector<DataShard> outds{DataShard(rstpd)};
@@ -66,8 +66,8 @@ TEST(Assemble, Assemble3DSplitIn1stDimension) {
   Scale o1 = {0, 0, 0}, o2 = {2, 0, 0};
   Scale oi1 = {0, 0, 0}, oi2 = {1, 0, 0};
   Scale srst = {4, 6, 8};
-  uint64_t id1 = dstore.GenerateDataID();
-  uint64_t id2 = dstore.GenerateDataID();
+  uint64_t id1 = dstore.GenerateDataId();
+  uint64_t id2 = dstore.GenerateDataId();
   dstore.CreateData(id1, DataStore::CPU, s1.Prod());
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
   Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
@@ -78,7 +78,7 @@ TEST(Assemble, Assemble3DSplitIn1stDimension) {
   vector<DataShard> inds;
   for_each(dvec.begin(), dvec.end(), [&] (PhysicalData& pd) { inds.push_back(DataShard(pd)); });
   // make output
-  uint64_t rstid = dstore.GenerateDataID();
+  uint64_t rstid = dstore.GenerateDataId();
   dstore.CreateData(rstid, DataStore::CPU, srst.Prod());
   PhysicalData rstpd; rstpd.size = srst; rstpd.data_id = rstid;
   vector<DataShard> outds{DataShard(rstpd)};
@@ -100,8 +100,8 @@ TEST(Assemble, Assemble3DSplitIn2ndDimension) {
   Scale oi1 = {0, 0, 0}, oi2 = {0, 1, 0};
   Scale srst = {4, 6, 8};
   Scale numparts = {1, 2 ,1};
-  uint64_t id1 = dstore.GenerateDataID();
-  uint64_t id2 = dstore.GenerateDataID();
+  uint64_t id1 = dstore.GenerateDataId();
+  uint64_t id2 = dstore.GenerateDataId();
   dstore.CreateData(id1, DataStore::CPU, s1.Prod());
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
   Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
@@ -112,7 +112,7 @@ TEST(Assemble, Assemble3DSplitIn2ndDimension) {
   vector<DataShard> inds;
   for_each(dvec.begin(), dvec.end(), [&] (PhysicalData& pd) { inds.push_back(DataShard(pd)); });
   // make output
-  uint64_t rstid = dstore.GenerateDataID();
+  uint64_t rstid = dstore.GenerateDataId();
   dstore.CreateData(rstid, DataStore::CPU, srst.Prod());
   PhysicalData rstpd; rstpd.size = srst; rstpd.data_id = rstid;
   vector<DataShard> outds{DataShard(rstpd)};
@@ -134,8 +134,8 @@ TEST(Assemble, Assemble3DSplitIn3rdDimension) {
   Scale oi1 = {0, 0, 0}, oi2 = {0, 0, 1};
   Scale srst = {4, 6, 8};
   Scale numparts = {1, 1 ,2};
-  uint64_t id1 = dstore.GenerateDataID();
-  uint64_t id2 = dstore.GenerateDataID();
+  uint64_t id1 = dstore.GenerateDataId();
+  uint64_t id2 = dstore.GenerateDataId();
   dstore.CreateData(id1, DataStore::CPU, s1.Prod());
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
   Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
@@ -146,7 +146,7 @@ TEST(Assemble, Assemble3DSplitIn3rdDimension) {
   vector<DataShard> inds;
   for_each(dvec.begin(), dvec.end(), [&] (PhysicalData& pd) { inds.push_back(DataShard(pd)); });
   // make output
-  uint64_t rstid = dstore.GenerateDataID();
+  uint64_t rstid = dstore.GenerateDataId();
   dstore.CreateData(rstid, DataStore::CPU, srst.Prod());
   PhysicalData rstpd; rstpd.size = srst; rstpd.data_id = rstid;
   vector<DataShard> outds{DataShard(rstpd)};

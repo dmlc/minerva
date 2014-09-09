@@ -31,9 +31,9 @@ TEST(NormArithmeticKernel, AddFirstDimension) {
   Scale s1 = {4, 6};
   Scale s2 = {1, 6};
   Scale s3 = s1;
-  uint64_t id1 = dstore.GenerateDataID();
-  uint64_t id2 = dstore.GenerateDataID();
-  uint64_t id3 = dstore.GenerateDataID();
+  uint64_t id1 = dstore.GenerateDataId();
+  uint64_t id2 = dstore.GenerateDataId();
+  uint64_t id3 = dstore.GenerateDataId();
   dstore.CreateData(id1, DataStore::CPU, s1.Prod());
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
   dstore.CreateData(id3, DataStore::CPU, s3.Prod());
@@ -59,9 +59,9 @@ TEST(NormArithmeticKernel, MultSecondDimension) {
   Scale s1 = {4, 6};
   Scale s2 = {4, 1};
   Scale s3 = s1;
-  uint64_t id1 = dstore.GenerateDataID();
-  uint64_t id2 = dstore.GenerateDataID();
-  uint64_t id3 = dstore.GenerateDataID();
+  uint64_t id1 = dstore.GenerateDataId();
+  uint64_t id2 = dstore.GenerateDataId();
+  uint64_t id3 = dstore.GenerateDataId();
   dstore.CreateData(id1, DataStore::CPU, s1.Prod());
   dstore.CreateData(id2, DataStore::CPU, s2.Prod());
   dstore.CreateData(id3, DataStore::CPU, s3.Prod());
