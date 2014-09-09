@@ -34,9 +34,9 @@ void Device::Execute(uint64_t nid, std::vector<PhysicalData> inputs, std::vector
        memcpy(local_pointer, remote_pointer, size);
        local_data_.insert(data_id);
     }
-    inputShards.push_back(DataShard(local_pointer, input->size));
+    inputShards.push_back(DataShard(local_pointer, input->size, input->offset));
 #else
-    inputShards.push_back(DataShard(this->GetData(data_id), input->size));
+    inputShards.push_back(DataShard(this->GetData(data_id), input->size, input->offset));
 #endif
   }
 
@@ -45,7 +45,7 @@ void Device::Execute(uint64_t nid, std::vector<PhysicalData> inputs, std::vector
     CreateData(output->data_id, output->size.Prod());
     float* data = this->GetData(output->data_id);
     local_data_.insert(output->data_id);
-    outputShards.push_back(DataShard(data, output->size));
+    outputShards.push_back(DataShard(data, output->size, output->offset));
   }
 
   CHECK_NOTNULL(Op.compute_fn);

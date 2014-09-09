@@ -9,7 +9,7 @@ namespace minerva {
 class DataShard {
  public:
   DataShard(const PhysicalData&);
-  DataShard(float* data, Scale size);
+  DataShard(float* data, Scale size, Scale offset);
   // return data untransformed (NO memory copy)
   float* GetCpuData();
   float* GetGpuData();
@@ -21,7 +21,7 @@ class DataShard {
   Scale Offset();
  private:
   float* data_;
-  Scale size_;
+  Scale size_, offset_;
 };
 
 typedef std::vector<DataShard> DataList;
