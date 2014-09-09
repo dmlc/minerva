@@ -7,8 +7,7 @@ using namespace std;
 namespace minerva {
 
 DataShard::DataShard(const PhysicalData& d) {
-  int device_id = d.device_info.id;
-  data_ = MinervaSystem::Instance().GetDevice(device_id)->GetData(d.data_id);
+  data_ = MinervaSystem::Instance().data_store().GetData(d.data_id, DataStore::CPU);
   size_ = d.size;
   offset_ = d.offset;
 }
