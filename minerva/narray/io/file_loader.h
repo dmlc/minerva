@@ -5,8 +5,6 @@
 
 namespace minerva {
 
-class NArray;
-
 class IFileLoader {
  public:
   virtual void Load(const std::string& fname, const Scale& size, DataList& out_shards) {}  // Not pure virtual for Python

@@ -7,37 +7,37 @@ namespace minerva {
 
 static MinervaSystem& ms = MinervaSystem::Instance();
 
+// Static constructors
 NArray NArray::Constant(const Scale& size, float val) {
   FillOp* fill_op = new FillOp;
   fill_op->closure = {val};
-  return NArray::Generate(size, fill_op, parts);
+  return NArray::GenerateOne(size, fill_op);
 }
 
-////////////////////////////////////////////////////
-// constructors & destructors
-////////////////////////////////////////////////////
-// public
-NArray::NArray(): data_node_(nullptr) {}
-NArray::NArray(const NArray& other): data_node_(other.data_node_) {
-  if(data_node_ != nullptr)
-    ms.IncrExternRC(data_node_);
+NArray NArray::Randn(const Scale& size, float mu, float var) {
+  RandnOp* randn_op = new RandnOp();
+  randn_op->closure = {mu, var};
+  return NArray::GenerateOne(size, randn_op);
 }
-NArray::~NArray() {
-  if(data_node_ != nullptr)
-    ms.IncrExternRC(data_node_, -1);
+
+NArray NArray::LoadFromFile(const Scale& size, const std::string& fname, IFileLoader* loader) {
+  FileLoaderOp* loader_op = new FileLoaderOp;
+  loader_op->closure = {fname, size, loader};
+  return NArray::GenerateOne(size, loader_op);
 }
-NArray& NArray::operator = (const NArray& other) {
-  auto old_dnode = data_node_;
-  data_node_ = other.data_node_;
-  if(data_node_ != nullptr)
-    ms.IncrExternRC(data_node_, 1);
-  if(old_dnode != nullptr)
-    ms.IncrExternRC(old_dnode, -1);
-  return *this;
+
+NArray NArray::Zeros(const Scale& size) {
+  return NArray::Constant(size, 0.0);
 }
-// private
-NArray::NArray(LogicalDataNode* node): data_node_(node) {
-  ms.IncrExternRC(data_node_);
+
+NArray NArray::Ones(const Scale& size) {
+  return NArray::Constant(size, 1.0);
+}
+
+NArray NArray::MakeNArray(const Scale& size, shared_ptr<float> array) {
+  ArrayLoaderOp* loader_op = new ArrayLoaderOp;
+  loader_op->closure = {array, size};
+  return NArray::GenerateOne(size, loader_op);
 }
 
 // DAG building operations
@@ -62,14 +62,46 @@ vector<NArray> NArray::Compute(
   return rst;
 }
 
-NArray NArray::Generate(
-    const Scale& size,
-    PhysicalComputeFn* fn) {
-  return NArray::Compute({}, {size}, fn)[0];
+NArray NArray::ComputeOne(const vector<NArray>& params, const Scale& size, PhysicalComputeFn* fn) {
+  return NArray::Compute(params, {size}, fn)[0];
 }
 
-// matmult
-NArray operator * (NArray lhs, NArray rhs) {
+NArray NArray::GenerateOne(const Scale& size, PhysicalComputeFn* fn) {
+  return NArray::ComputeOne({}, size, fn);
+}
+
+// Constructors and destructors
+NArray::NArray() : data_node_(nullptr) {}
+
+NArray::NArray(const NArray& other) : data_node_(other.data_node_) {
+  if (data_node_ != nullptr) {
+    ms.IncrExternRC(data_node_);
+  }
+}
+
+NArray& NArray::operator=(const NArray& other) {
+  if (this == &other) {
+    return *this;
+  }
+  auto old_dnode = data_node_;
+  data_node_ = other.data_node_;
+  if (data_node_ != nullptr) {
+    ms.IncrExternRC(data_node_);
+  }
+  if (old_dnode != nullptr) {
+    ms.IncrExternRC(old_dnode, -1);
+  }
+  return *this;
+}
+
+NArray::~NArray() {
+  if (data_node_ != nullptr) {
+    ms.IncrExternRC(data_node_, -1);
+  }
+}
+
+// Operations
+NArray operator*(NArray lhs, NArray rhs) {
   // validity
   assert(lhs.Size().NumDims() == 2 && rhs.Size().NumDims() == 2);
   assert(lhs.Size(1) == rhs.Size(0));
@@ -159,18 +191,11 @@ void NArray::ToFile(const std::string& filename, const FileFormat& format) {
   fout.close();
 }
 
-NArray NArray::LoadFromFile(const Scale& size, const std::string& fname,
-    IFileLoader* loader, const Scale& numparts) {
-  FileLoaderOp* loader_op = new FileLoaderOp;
-  loader_op->closure = {fname, size, loader};
-  return NArray::Generate(size, loader_op, numparts);
 }
 
-NArray NArray::MakeNArray(const Scale& size, std::shared_ptr<float> array, const Scale& numparts) {
-  ArrayLoaderOp* loader_op = new ArrayLoaderOp;
-  loader_op->closure = {array, size};
-  return NArray::Generate(size, loader_op, numparts);
-}
-
+NArray::NArray(PhysicalDataNode* node): data_node_(node) {
+  if (data_node != nullptr) {
+    ms.IncrExternRC(data_node_);
+  }
 }
 
