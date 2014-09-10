@@ -31,6 +31,13 @@ DeviceInfo DeviceFactory::DefaultInfo() {
   return result;
 }
 
+DeviceInfo DeviceFactory::CreateCPUDevice() {
+  DeviceInfo result;
+  result.id = allocated_++;
+  InsertCPUDevice(result);
+  return result;
+}
+
 DeviceInfo DeviceFactory::CreateGPUDevice(int gid) {
   DeviceInfo result;
   result.id = allocated_++;

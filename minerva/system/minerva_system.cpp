@@ -49,8 +49,8 @@ void MinervaSystem::Initialize(int* argc, char*** argv) {
     physical_engine_->SetImplDecider(&all_basic_impl);
   }
   LoadBuiltinDagMonitors();
-  df_ = DeviceFactory::Instance();
-  device_info_ = df_.DefaultInfo();
+  device_factory_ = new DeviceFactory();
+  device_info_ = device_factory_->DefaultInfo();
 }
 void MinervaSystem::Finalize() { }
 MinervaSystem::MinervaSystem() { }
@@ -64,20 +64,24 @@ DeviceInfo MinervaSystem::device_info() const {
   return device_info_;
 }
 
+DeviceInfo MinervaSystem::CreateCPUDevice() {
+  return device_factory_->CreateCPUDevice();
+}
+
 DeviceInfo MinervaSystem::CreateGPUDevice(int gid) {
-  return df_.CreateGPUDevice(gid);
+  return device_factory_->CreateGPUDevice(gid);
 }
 
 DeviceInfo MinervaSystem::CreateGPUDevice(int gid, int num_stream) {
-  return df_.CreateGPUDevice(gid, num_stream);
+  return device_factory_->CreateGPUDevice(gid, num_stream);
 }
 
 Device* MinervaSystem::GetDevice(uint64_t id) {
-  return df_.GetDevice(id);
+  return device_factory_->GetDevice(id);
 }
 
 Device* MinervaSystem::GetDevice(DeviceInfo info) {
-  return df_.GetDevice(info);
+  return device_factory_->GetDevice(info);
 }
 
 void MinervaSystem::LoadBuiltinDagMonitors() {

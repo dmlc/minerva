@@ -12,17 +12,25 @@ using namespace minerva;
 
 TEST(Test, DeviceDebug) {
   MinervaSystem& ms = MinervaSystem::Instance();
-  DeviceFactory df = DeviceFactory::Instance();
-  df.Reset();
-  ms.set_device_info(df.DefaultInfo());
+  NArray a = NArray::Zeros({250, 500}, {1, 1});
+  NArray b = NArray::Zeros({500, 400}, {1, 1});
+  NArray c = a * b; // 250x400
+  cout << "Call async eval" << endl;
+  c.EvalAsync();
+  cout << "Call eval end" << endl;
+  NArray d = c + 1; // 250x400
 
-  NArray x = NArray::Randn({2, 4}, 0.0, 1.0, {1, 1});
-  NArray y = NArray::Randn({4, 6}, 0.0, 1.0, {1, 1});
-  NArray t = x * y;
+  DeviceInfo di = ms.CreateCPUDevice();
+  ms.set_device_info(di);
 
-  NArray z = NArray::Randn({2, 6}, 0.0, 1.0, {1, 1});
-  NArray s = t + z;
-
-  s.Eval();
+  NArray e = b * d.Trans(); // 500x250
+  MinervaSystem::Instance().WaitForEvalFinish();
+  cout << "Call sync eval" << endl;
+  float* eptr = e.Get();
+  for (int i = 0; i < 500 * 250; ++i) {
+    ASSERT_EQ(eptr[i], 0.0);
+  }
+  delete [] eptr;
+  cout << "Call eval end" << endl;
 }
 

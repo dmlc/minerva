@@ -13,6 +13,7 @@ class DeviceFactory : public EverlastingSingleton<DeviceFactory> {
   int allocated() { return allocated_; }
   void PrintDevice(DeviceInfo device_info);
   DeviceInfo DefaultInfo();
+  DeviceInfo CreateCPUDevice();
   DeviceInfo CreateGPUDevice(int gid);
   DeviceInfo CreateGPUDevice(int gid, int num_stream);
   Device* GetDevice(uint64_t id);

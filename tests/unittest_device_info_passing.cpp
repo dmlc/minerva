@@ -18,7 +18,7 @@ template<> class Inspector<MinervaSystem> {
     return na.data_node_->node_id();
   }
   public: Device* GetDevice(const uint64_t id) {
-    return MinervaSystem::Instance().df_.GetDevice(id);
+    return MinervaSystem::Instance().device_factory().GetDevice(id);
   }
 };
 
