@@ -11,5 +11,17 @@ class Elewise {
   static NArray Sigmoid(NArray);
 };
 
+NArray operator+(NArray, NArray);
+NArray operator-(NArray, NArray);
+NArray operator/(NArray, NArray);
+NArray operator+(float, NArray);
+NArray operator-(float, NArray);
+NArray operator*(float, NArray);
+NArray operator/(float, NArray);
+NArray operator+(NArray, float);
+NArray operator-(NArray, float);
+NArray operator*(NArray, float);
+NArray operator/(NArray, float);
+
 }
 

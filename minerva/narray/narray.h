@@ -50,43 +50,40 @@ class NArray {
   friend NArray operator-(NArray, float);
   friend NArray operator*(NArray, float);
   friend NArray operator/(NArray, float);
-  void operator += (NArray );
-  void operator -= (NArray );
-  void operator *= (NArray );
-  void operator /= (NArray );
-  void operator += (float );
-  void operator -= (float );
-  void operator *= (float );
-  void operator /= (float );
-  NArray operator - ();
-  // matmult
-  friend NArray operator * (NArray, NArray);
-  // shape
-  const Scale& Size() { return data_node_->data_.size; }
-  int Size(int dim) { return data_node_->data_.size[dim]; }
-  NArray Reshape(const Scale& dims);
-  NArray Trans();
+  void operator+=(NArray);
+  void operator-=(NArray);
+  void operator*=(NArray);
+  void operator/=(NArray);
+  void operator+=(float);
+  void operator-=(float);
+  void operator*=(float);
+  void operator/=(float);
+  NArray operator-();
+  // Matmult
+  friend NArray operator*(NArray, NArray);
+  // Shape
+  const Scale& Size() const { return data_node_->data_.size; }
+  int Size(int dim) const { return data_node_->data_.size[dim]; }
+  NArray Reshape(const Scale& dims) const;
+  NArray Trans() const;
   // Lazy reductions
-  NArray Sum(int dim);
-  NArray Sum(const Scale& dims);
-  NArray Max(int dim);
-  NArray Max(const Scale& dims);
-  NArray MaxIndex(int dim);
+  NArray Sum(int dim) const;
+  NArray Sum(const Scale& dims) const;
+  NArray Max(int dim) const;
+  NArray Max(const Scale& dims) const;
+  NArray MaxIndex(int dim) const;
   // Replicate matrix
-  NArray NormArithmetic(NArray, ArithmeticType);
+  NArray NormArithmetic(NArray, ArithmeticType) const;
   // Non-lazy reductions
-  float Sum(); // TODO
-  float Max(); // TODO
-  int CountZero();
-
-
-  // system
-  void Eval();
-  void EvalAsync();
-  float* Get();
-  void ToStream(std::ostream&, const FileFormat&);
-  void ToFile(const std::string& filename, const FileFormat& );
-  NArray RePartition(const NVector<Scale>& partitions);
+  float Sum() const; // TODO
+  float Max() const; // TODO
+  int CountZero() const;
+  // System
+  void Eval() const;
+  void EvalAsync() const;
+  float* Get() const;
+  void ToStream(std::ostream& out, const FileFormat& format) const;
+  void ToFile(const std::string& filename, const FileFormat& format) const;
 
  private:
   NArray(PhysicalDataNode*);

@@ -1,5 +1,6 @@
 #include "narray.h"
 #include "common/common.h"
+#include <glog/logging.h>
 
 using namespace std;
 
@@ -100,24 +101,32 @@ NArray::~NArray() {
   }
 }
 
-// Operations
+// Matmult
 NArray operator*(NArray lhs, NArray rhs) {
-  // validity
-  assert(lhs.Size().NumDims() == 2 && rhs.Size().NumDims() == 2);
-  assert(lhs.Size(1) == rhs.Size(0));
+  CHECK_EQ(lhs.Size().NumDims(), 2) << "eligible only for 2D";
+  CHECK_EQ(rhs.Size().NumDims(), 2) << "eligible only for 2D";
+  CHECK_EQ(lhs.Size(1), rhs.Size(0)) << "size must match";
   Scale newsize = {lhs.Size(0), rhs.Size(1)};
   MatMultOp* matmult_op = new MatMultOp;
-  return NArray::Compute({lhs, rhs}, {newsize}, matmult_op)[0];
+  return NArray::ComputeOne({lhs, rhs}, newsize, matmult_op);
 }
 
-// shape
-NArray NArray::Reshape(const Scale& dims) {
+// Shape
+NArray NArray::Reshape(const Scale& dims) const {
   // TODO
+  CHECK(false) << "not implemented";
   return NArray();
 }
 
+NArray NArray::Trans() const {
+  CHECK_EQ(Size().NumDims(), 2) << "eligible only for 2D";
+  Scale newsize = {Size(1), Size(0)};
+  TransOp* trans_op = new TransOp;
+  return NArray::ComputeOne({*this}, newsize, trans_op);
+}
+
 // Replicate matrix
-NArray NArray::NormArithmetic(NArray rhs, ArithmeticType type) {
+NArray NArray::NormArithmetic(NArray rhs, ArithmeticType type) const {
   auto& lhs = *this;
   CHECK_EQ(lhs.Size().NumDims(), rhs.Size().NumDims()) << "NormArithmetic #dimension mismatch";
   vector<int> dims_to_replicate;
@@ -134,49 +143,26 @@ NArray NArray::NormArithmetic(NArray rhs, ArithmeticType type) {
   NormArithmeticOp* op = new NormArithmeticOp;
   op->closure.type = type;
   op->closure.dims_to_replicate = dims_to_replicate;
-  return NArray::Compute({lhs, rhs}, {lhs.Size()}, op)[0];
+  return NArray::ComputeOne({lhs, rhs}, lhs.Size(), op);
 }
 
-NArray NArray::Trans() {
-  // validity
-  assert(Size().NumDims() == 2);
-  Scale newsize = {Size(1), Size(0)};
-  TransOp* trans_op = new TransOp;
-  return NArray::Compute({*this}, {newsize}, trans_op)[0];
-}
-
-
-NArray NArray::RePartition(const NVector<Scale>& partitions) {
-  /*if(partitions == data_node_->data_.partitions) {
-    // partition is the same
-    return *this;
-  }
-  // new partition plan
-  Scale total_size = Scale::Merge(partitions);
-  assert(total_size == data_node_->data_.size); // validity
-  PartitionOp* part_op = new PartitionOp;
-  part_op->closure = {partitions};
-  return Compute({*this}, {this->Size()}, part_op)[0];*/
-  //TODO
-  return NArray();
-}
-
-void NArray::Eval() {
+// System
+void NArray::Eval() const {
   MinervaSystem::Instance().Eval({*this});
 }
 
-void NArray::EvalAsync() {
+void NArray::EvalAsync() const {
   MinervaSystem::Instance().EvalAsync({*this});
 }
 
-float* NArray::Get() {
+float* NArray::Get() const {
   Eval();
   return MinervaSystem::Instance().GetValue(*this);
 }
 
-void NArray::ToStream(ostream& out, const FileFormat& format) {
+void NArray::ToStream(ostream& out, const FileFormat& format) const {
   float* value = Get();
-  if(format.binary) {
+  if (format.binary) {
     out.write(reinterpret_cast<char*>(value), Size().Prod() * sizeof(float));
   } else {
     for (int i = 0; i < Size().Prod(); ++i) {
@@ -185,17 +171,17 @@ void NArray::ToStream(ostream& out, const FileFormat& format) {
   }
 }
 
-void NArray::ToFile(const std::string& filename, const FileFormat& format) {
+void NArray::ToFile(const std::string& filename, const FileFormat& format) const {
   ofstream fout(filename.c_str());
   ToStream(fout, format);
   fout.close();
 }
 
-}
-
-NArray::NArray(PhysicalDataNode* node): data_node_(node) {
+NArray::NArray(PhysicalDataNode* node) : data_node_(node) {
   if (data_node != nullptr) {
     ms.IncrExternRC(data_node_);
   }
+}
+
 }
 

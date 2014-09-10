@@ -1,6 +1,6 @@
-#include "narray.h"
+#include "narray/narray.h"
 #include "op/shared_op.h"
-#include <iostream>
+#include <glog/logging.h>
 
 using namespace std;
 
@@ -13,13 +13,13 @@ NArray NArray::Sum(int dim) {
 
 NArray NArray::Sum(const Scale& dims) {
   auto size = Size();
-  for (auto i: dims) {
+  for (auto i : dims) {
     size[i] = 1;
   }
-  ReductionOp* reduction_op = new ReductionOp;
-  reduction_op->closure.type = SUM;
+  ReductionOp* reduction_op = new ReductionOp();
+  reduction_op->closure.type = ReductionType::kSum;
   reduction_op->closure.dims_to_reduce = dims;
-  return NArray::Compute({*this}, {size}, reduction_op)[0];
+  return NArray::ComputeOne({*this}, size, reduction_op);
 }
 
 NArray NArray::Max(int dim) {
@@ -28,30 +28,33 @@ NArray NArray::Max(int dim) {
 
 NArray NArray::Max(const Scale& dims) {
   auto size = Size();
-  for (auto i: dims) {
+  for (auto i : dims) {
     size[i] = 1;
   }
-  ReductionOp* reduction_op = new ReductionOp;
-  reduction_op->closure.type = MAX;
+  ReductionOp* reduction_op = new ReductionOp();
+  reduction_op->closure.type = ReductionType::kMax;
   reduction_op->closure.dims_to_reduce = dims;
-  return NArray::Compute({*this}, {size}, reduction_op)[0];
+  return NArray::ComputeOne({*this}, size, reduction_op);
 }
 
 NArray NArray::MaxIndex(int dim) {
   auto size = Size();
   size[dim] = 1;
-  MaxIndexOp* op = new MaxIndexOp;
+  MaxIndexOp* op = new MaxIndexOp();
   op->closure.dim = dim;
-  return NArray::Compute({*this}, {size}, op)[0];
+  return NArray::ComputeOne({*this}, size, op);
 }
 
-// Non-lazy reduction
+// Non-lazy reductions
 float NArray::Sum() {
   // TODO
+  CHECK(false) << "not implemented";
   return 0;
 }
+
 float NArray::Max() {
   // TODO
+  CHECK(false) << "not implemented";
   return 0;
 }
 
