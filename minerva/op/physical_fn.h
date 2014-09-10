@@ -10,19 +10,19 @@ namespace minerva {
 class DataShard {
  public:
   DataShard(const PhysicalData&);
-  DataShard(const DataShard&);
+  DataShard(float* data, Scale size, Scale offset);
   // return data untransformed (NO memory copy)
   float* GetCpuData();
   float* GetGpuData();
   // return data transformed (may incur memory copy !!!)
-  float* GetTransformedCpuData();
-  float* GetTransformedGpuData();
+  //float* GetTransformedCpuData();
+  //float* GetTransformedGpuData();
   // Getters
-  const Scale& Size() const { return data_info_.size; }
-  const Scale& Offset() const { return data_info_.offset; }
-  const Scale& OffsetIndex() const { return data_info_.offset_index; }
+  Scale Size();
+  Scale Offset();
  private:
-  const PhysicalData& data_info_;
+  float* data_;
+  Scale size_, offset_;
 };
 
 typedef std::vector<DataShard> DataList;

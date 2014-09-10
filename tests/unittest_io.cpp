@@ -1,6 +1,7 @@
 #include <minerva.h>
 #include <gtest/gtest.h>
 #include <fstream>
+#include <iostream>
 
 using namespace minerva;
 using namespace std;

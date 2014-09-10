@@ -12,6 +12,7 @@
 #include "procedures/physical_engine.h"
 #include "procedures/impl_decider.h"
 #include "system/data_store.h"
+#include <iostream>
 
 using namespace std;
 
@@ -48,9 +49,8 @@ void MinervaSystem::Initialize(int* argc, char*** argv) {
     physical_engine_->SetImplDecider(&all_basic_impl);
   }
   LoadBuiltinDagMonitors();
-  df_ = DeviceFactory::Instance();
-  df_.Reset();
-  device_info_ = df_.DefaultInfo();
+  device_factory_ = new DeviceFactory();
+  device_info_ = device_factory_->DefaultInfo();
 }
 void MinervaSystem::Finalize() { }
 MinervaSystem::MinervaSystem() { }
@@ -64,12 +64,24 @@ DeviceInfo MinervaSystem::device_info() const {
   return device_info_;
 }
 
-DeviceInfo MinervaSystem::CreateGpuDevice(int gid) {
-  return df_.GpuDeviceInfo(gid);
+DeviceInfo MinervaSystem::CreateCPUDevice() {
+  return device_factory_->CreateCPUDevice();
 }
 
-DeviceInfo MinervaSystem::CreateGpuDevice(int gid, int num_stream) {
-  return df_.GpuDeviceInfo(gid, num_stream);
+DeviceInfo MinervaSystem::CreateGPUDevice(int gid) {
+  return device_factory_->CreateGPUDevice(gid);
+}
+
+DeviceInfo MinervaSystem::CreateGPUDevice(int gid, int num_stream) {
+  return device_factory_->CreateGPUDevice(gid, num_stream);
+}
+
+Device* MinervaSystem::GetDevice(uint64_t id) {
+  return device_factory_->GetDevice(id);
+}
+
+Device* MinervaSystem::GetDevice(DeviceInfo info) {
+  return device_factory_->GetDevice(info);
 }
 
 void MinervaSystem::LoadBuiltinDagMonitors() {

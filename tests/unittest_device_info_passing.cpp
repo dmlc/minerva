@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include <dag/dag.h>
 #include <common/inspector.h>
+#include <device/device.h>
 
 using namespace std;
 
@@ -15,6 +16,9 @@ template<> class Inspector<MinervaSystem> {
   }
   public: uint64_t GetNodeID(const NArray na) {
     return na.data_node_->node_id();
+  }
+  public: Device* GetDevice(const uint64_t id) {
+    return MinervaSystem::Instance().device_factory().GetDevice(id);
   }
 };
 
@@ -29,13 +33,13 @@ TEST(DevicePassingTest, Basic) {
   ms.set_device_info(df.DefaultInfo());
   EXPECT_EQ(ms.device_info().id, 0);
 
-  DeviceInfo di1 = ms.CreateGpuDevice(0);
+  DeviceInfo di1 = ms.CreateGPUDevice(0);
   ms.set_device_info(di1);
   EXPECT_EQ(ms.device_info().id, 1);
   EXPECT_EQ(ms.device_info().gpu_list.size(), 1);
   EXPECT_EQ(ms.device_info().num_streams[0], 1);
 
-  DeviceInfo di2 = ms.CreateGpuDevice(1, 2);
+  DeviceInfo di2 = ms.CreateGPUDevice(1, 2);
   ms.set_device_info(di2);
   EXPECT_EQ(ms.device_info().id, 2);
   EXPECT_EQ(ms.device_info().gpu_list.size(), 1);
@@ -52,7 +56,7 @@ TEST(DevicePassingTest, PassingThroughDag1) {
   NArray y = NArray::Randn({4, 6}, 0.0, 1.0, {1, 1});
   NArray t = x * y;
 
-  DeviceInfo di = ms.CreateGpuDevice(0);
+  DeviceInfo di = ms.CreateGPUDevice(0);
   ms.set_device_info(di);
   NArray z = NArray::Randn({2, 6}, 0.0, 1.0, {1, 1});
   NArray s = t + z;
@@ -84,13 +88,13 @@ TEST(DevicePassingTest, PassingThroughDag2) {
   NArray y = NArray::Randn({2, 4}, 0.0, 1.0, {1, 1});
   NArray s = x - y;
 
-  DeviceInfo di1 = ms.CreateGpuDevice(0);
+  DeviceInfo di1 = ms.CreateGPUDevice(0);
   ms.set_device_info(di1);
   NArray z = NArray::Randn({4, 8}, 0.0, 1.0, {1, 1});
   NArray w = NArray::Randn({4, 8}, 0.0, 1.0, {1, 1});
   NArray t = z + w;
 
-  DeviceInfo di2 = ms.CreateGpuDevice(1, 2);
+  DeviceInfo di2 = ms.CreateGPUDevice(1, 2);
   ms.set_device_info(di2);
   NArray r = s * t;
 
@@ -113,5 +117,18 @@ TEST(DevicePassingTest, PassingThroughDag2) {
   EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(21))->op_.compute_fn->device_info.id, di1.id);
   EXPECT_EQ(dynamic_cast<PhysicalDataNode*>(pdag.GetNode(22))->data_.device_info.id, di2.id);
   EXPECT_EQ(dynamic_cast<PhysicalOpNode*>(pdag.GetNode(23))->op_.compute_fn->device_info.id, di2.id);
+}
+
+TEST(DevicePassingTest, DeviceFactory) {
+  MinervaSystem& ms = MinervaSystem::Instance();
+
+  DeviceInfo di1 = ms.CreateGPUDevice(0);
+  ms.set_device_info(di1);
+  EXPECT_EQ(ms.GetDevice(di1.id)->GetInfo().gpu_list.size(), 1);
+
+  DeviceInfo di2 = ms.CreateGPUDevice(1, 2);
+  ms.set_device_info(di2);
+  EXPECT_EQ(ms.GetDevice(di2.id)->GetInfo().gpu_list.size(), 1);
+  EXPECT_EQ(ms.GetDevice(di2.id)->GetInfo().num_streams[0], 2);
 }
 

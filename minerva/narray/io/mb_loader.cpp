@@ -51,8 +51,7 @@ class OneFileMBLoadOp :
     fin.close();
   }
   NVector<Chunk> Expand(const NVector<Scale>& partsizes) {
-    OneFileMBLoadOp* mbload_op = new OneFileMBLoadOp;
-    mbload_op->closure = closure;
+    OneFileMBLoadOp* mbload_op = new OneFileMBLoadOp(*this);
     const vector<Chunk>& retchs = Chunk::Compute({}, partsizes.ToVector(), mbload_op);
     return NVector<Chunk>(retchs, partsizes.Size());
   }

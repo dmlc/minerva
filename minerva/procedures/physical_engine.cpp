@@ -1,8 +1,8 @@
 #include "physical_engine.h"
 #include "op/context.h"
+#include "system/minerva_system.h"
 #include <gflags/gflags.h>
-
-DEFINE_bool(enable_execute, true, "enable concrete computation");
+#include <iostream>
 
 using namespace std;
 
@@ -61,9 +61,9 @@ std::unordered_set<uint64_t> PhysicalEngine::FindStartFrontier(PhysicalDag& dag,
 void PhysicalEngine::ProcessNode(DagNode* node) {
   uint64_t nid = node->node_id();
   if (node->Type() == DagNode::OP_NODE) { // OpNode
+/*
     vector<DataShard> input;
     vector<DataShard> output;
-    PhysicalOpNode* phy_op_node = dynamic_cast<PhysicalOpNode*>(node);
     for (auto n: phy_op_node->inputs_) {
       PhysicalData& in_data = dynamic_cast<PhysicalDataNode*>(n)->data_;
       input.push_back(DataShard(in_data));
@@ -73,15 +73,20 @@ void PhysicalEngine::ProcessNode(DagNode* node) {
       data_store_.CreateData(out_data.data_id, DataStore::CPU, out_data.size.Prod(), 1);
       output.push_back(DataShard(out_data));
     }
+*/
     // call compute function
+    PhysicalOpNode* phy_op_node = dynamic_cast<PhysicalOpNode*>(node);
     PhysicalOp& op = phy_op_node->op_;
-    CHECK_NOTNULL(op.compute_fn);
-    if(FLAGS_enable_execute) {
-      DLOG(INFO) << "Execute node#" << nid << " compute fn: " << op.compute_fn->Name();
-      Context context;
-      context.impl_type = op.impl_type;
-      op.compute_fn->Execute(input, output, context);
-    }
+    uint64_t device_id = op.compute_fn->device_info.id;
+    Device* device = MinervaSystem::Instance().GetDevice(device_id);
+    CHECK_NOTNULL(device);
+    vector<PhysicalData> inputs;
+    for (auto n: phy_op_node->inputs_)
+      inputs.push_back(dynamic_cast<PhysicalDataNode*>(n)->data_);
+    vector<PhysicalData> outputs;
+    for (auto n: phy_op_node->outputs_)
+      outputs.push_back(dynamic_cast<PhysicalDataNode*>(n)->data_);
+    device->Execute(nid, inputs, outputs, op);
   }
 }
 
