@@ -30,7 +30,7 @@ struct Context {
   };
 };
 
-struct CudaRuntimeContext: public Context {
+struct CudaRuntimeContext : public Context {
 #ifdef HAS_CUDA
   cudaStream_t stream;
 #endif
