@@ -47,7 +47,6 @@ std::unordered_set<uint64_t> ExpandEngine::FindStartFrontier(LogicalDag& dag, co
       ret.insert(nid);
     }
   }
-  //cout << ret << endl;
   return ret;
 }
 

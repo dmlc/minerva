@@ -12,7 +12,5 @@ class DagProcedure {
   virtual void Process(DagType&, const std::vector<uint64_t>&) = 0;
 };
 
-class LogicalDagProcedure : public DagProcedure<LogicalDag> { };
-class PhysicalDagProcedure : public DagProcedure<PhysicalDag> { };
-
 }
+

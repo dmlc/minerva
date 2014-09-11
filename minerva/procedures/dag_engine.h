@@ -15,9 +15,11 @@ enum class NodeState {
   kCompleted,
   kDead,
 };
+
 const int kNumNodeStates = (int)NodeState::kDead + 1;
+
 inline std::ostream& operator << (std::ostream& os, NodeState s) {
-  switch(s) {
+  switch (s) {
     case NodeState::kBirth:
       return os << "Birth";
     case NodeState::kReady:
@@ -30,6 +32,7 @@ inline std::ostream& operator << (std::ostream& os, NodeState s) {
       return os << "Unknown state";
   }
 }
+
 class NodeStateMap {
  public:
   NodeStateMap() { }
@@ -198,21 +201,6 @@ void DagEngine<DagType>::TopDownScan(DagType& dag, const std::unordered_set<uint
   for(uint64_t start_nid : start_frontier) {
     AppendTask(dag.GetNode(start_nid));
   }
-  // Waiting execution to complete
-  /*for(uint64_t tgtid : targets) {
-    std::unique_lock<std::mutex> lock(*rt_info_[tgtid].mutex);
-    LOG(INFO) << "Wait for node (id=" << tgtid << ") finish.";
-    if (node_states_.GetState(tgtid) != NodeState::kCompleted) {
-      RuntimeInfo& ri = rt_info_[tgtid];
-      ri.on_complete = new std::condition_variable;
-      ri.on_complete->wait(lock);
-      delete ri.on_complete;
-      ri.on_complete = nullptr;
-    }
-    LOG(INFO) << "Node (id=" << tgtid << ") complete.";
-  }
-  DLOG(INFO) << "Wait for thread to be quiet";
-  thread_pool_.WaitForAllFinished();*/
 }
 
 template<class DagType>

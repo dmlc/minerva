@@ -1,9 +1,9 @@
 #pragma once
-#include "dag.h"
-#include "op/physical.h"
-#include "op/physical_fn.h"
 #include <string>
 #include <sstream>
+#include "dag/dag.h"
+#include "op/physical.h"
+#include "op/physical_fn.h"
 
 namespace minerva {
 
@@ -18,7 +18,7 @@ class DagHelper<PhysicalData, PhysicalOp> {
   static std::string OpToString(const PhysicalOp& o) {
     return o.compute_fn->Name();
   }
-  static void FreeData(PhysicalData& d) {
+  static void FreeData(PhysicalData&) {
   }
   static void FreeOp(PhysicalOp& o) {
     delete o.compute_fn;
@@ -54,5 +54,5 @@ typedef PhysicalDag::DNode PhysicalDataNode;
 typedef PhysicalDag::ONode PhysicalOpNode;
 class PhysicalDagMonitor : public DagMonitor<PhysicalDag> {};
 
-}
+}  // namespace minerva
 

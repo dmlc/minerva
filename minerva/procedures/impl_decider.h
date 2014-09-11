@@ -1,20 +1,20 @@
 #pragma once
 #include "op/impl/impl.h"
-#include "dag_procedure.h"
-#include "dag_engine.h"
+#include "procedures/dag_procedure.h"
+#include "procedures/dag_engine.h"
 
 namespace minerva {
 
 class ImplDecider {
  public:
-  virtual void Decide(DagNode*, NodeStateMap& ) = 0;
+  virtual void Decide(DagNode*, NodeStateMap&) = 0;
 };
 
 class SimpleImplDecider : public ImplDecider {
  public:
-  SimpleImplDecider(ImplType type): type(type) {}
+  explicit SimpleImplDecider(ImplType type) : type(type) {}
   virtual void Decide(DagNode* node, NodeStateMap& states) {
-    if(node->Type() == DagNode::OP_NODE) {
+    if (node->Type() == DagNode::OP_NODE) {
       PhysicalOpNode* onode = dynamic_cast<PhysicalOpNode*>(node);
       onode->op_.impl_type = type;
     }
@@ -23,4 +23,4 @@ class SimpleImplDecider : public ImplDecider {
   ImplType type;
 };
 
-}
+}  // namespace minerva
