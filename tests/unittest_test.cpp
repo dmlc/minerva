@@ -20,8 +20,8 @@ TEST(Test, DeviceDebug) {
   cout << "Call eval end" << endl;
   NArray d = c + 1; // 250x400
 
-  DeviceInfo di = ms.CreateCPUDevice();
-  ms.set_device_info(di);
+  uint64_t id = ms.CreateCPUDevice();
+  ms.set_device_id(id);
 
   NArray e = b * d.Trans(); // 500x250
   MinervaSystem::Instance().WaitForEvalFinish();

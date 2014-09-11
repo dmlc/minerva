@@ -1,10 +1,9 @@
 #pragma once
-#include "device/device_info.h"
 
 namespace minerva {
 
 struct DeviceInfoTrait {
-  DeviceInfo device_info;
+  uint64_t device_id;
 };
 
 }

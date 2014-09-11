@@ -3,7 +3,6 @@
 #include "system/minerva_system.h"
 #include "io/file_loader.h"
 #include "io/array_loader.h"
-#include "device/device_info.h"
 #include <fstream>
 #include <iomanip>
 
@@ -46,12 +45,12 @@ NArray::NArray(LogicalDataNode* node): data_node_(node) {
 std::vector<NArray> NArray::Compute(std::vector<NArray> params,
     std::vector<Scale> result_sizes, LogicalComputeFn* fn) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
-  DeviceInfo device_info = MinervaSystem::Instance().device_info();
+  uint64_t device_id = MinervaSystem::Instance().device_id();
   std::vector<NArray> rst;
   std::vector<LogicalDataNode*> rst_data_nodes;
   for(Scale size : result_sizes) {
     LogicalData ldata(size);
-    ldata.device_info = device_info;
+    ldata.device_id = device_id;
     LogicalDataNode* rst_node = ldag.NewDataNode(ldata);
     rst.push_back(NArray(rst_node));
     rst_data_nodes.push_back(rst_node);
@@ -60,18 +59,18 @@ std::vector<NArray> NArray::Compute(std::vector<NArray> params,
   for(NArray p : params) {
     param_data_nodes.push_back(p.data_node_);
   }
-  fn->device_info = device_info;
+  fn->device_id = device_id;
   ldag.NewOpNode(param_data_nodes, rst_data_nodes, {fn});
   return rst;
 }
 
 NArray NArray::Generate(const Scale& size, LogicalDataGenFn* fn, const NVector<Scale>& parts) {
   LogicalDag& ldag = MinervaSystem::Instance().logical_dag();
-  DeviceInfo device_info = MinervaSystem::Instance().device_info();
-  fn->device_info = device_info;
+  int64_t device_id = MinervaSystem::Instance().device_id();
+  fn->device_id = device_id;
   LogicalData ldata(size, fn);
   ldata.partitions = parts;
-  ldata.device_info = device_info;
+  ldata.device_id = device_id;
   LogicalDataNode* rst_node = ldag.NewDataNode(ldata);
   return NArray(rst_node);
 }

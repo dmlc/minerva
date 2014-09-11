@@ -65,12 +65,12 @@ vector<Chunk> Chunk::Compute(
       PhysicalComputeFn* fn) {
   auto& ms = MinervaSystem::Instance();
   auto& pdag = ms.physical_dag();
-  auto& device_info = fn->device_info;
+  auto& device_id = fn->device_id;
   auto rst = Map<Chunk>(result_sizes, [&](const Scale& size) {
     PhysicalData phy_data;
     phy_data.size = size;
     phy_data.data_id = ms.data_store().GenerateDataID();
-    phy_data.device_info = device_info;
+    phy_data.device_id = device_id;
     auto rst_node = pdag.NewDataNode(phy_data);
     return Chunk(rst_node);
   });

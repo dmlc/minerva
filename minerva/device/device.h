@@ -4,17 +4,21 @@
 #include "system/data_store.h"
 #include "op/physical.h"
 #include "op/physical_fn.h"
+#include "common/inspector.h"
 
 namespace minerva {
 
+class MinervaSystem;
+
 class Device {
+  friend class Inspector<MinervaSystem>;
  public:
   enum DeviceTypes {
    CPU_DEVICE = 0,
    GPU_DEVICE
   };
   Device();
-  Device(DeviceInfo info);
+  Device(uint64_t id, DeviceInfo info);
   DeviceInfo GetInfo();
   void Execute(uint64_t nid, std::vector<PhysicalData> inputs, std::vector<PhysicalData> outputs, const PhysicalOp Op); // called by Physical_Engine::ProcessNode()
   virtual DeviceTypes Type() const = 0;
@@ -23,13 +27,14 @@ class Device {
  protected:
   std::set<uint64_t> local_data_;
   DeviceInfo device_info_;
+  uint64_t device_id_;
   virtual void CreateData(uint64_t data_id, int size) = 0;
   virtual void Execute_Op(std::vector<DataShard> inputShards, std::vector<DataShard> outputShards, PhysicalOp Op) = 0;
 };
 
 class GpuDevice : public Device {
  public:
-  GpuDevice(DeviceInfo info) : Device(info) {}
+  GpuDevice(uint64_t id, DeviceInfo info) : Device(id, info) {}
   DeviceTypes Type() const { return GPU_DEVICE; }
   void CreateData(uint64_t data_id, int size);
   float* GetData(uint64_t data_id);
@@ -38,7 +43,7 @@ class GpuDevice : public Device {
 
 class CpuDevice : public Device {
  public:
-  CpuDevice(DeviceInfo info) : Device(info) {}
+  CpuDevice(uint64_t id, DeviceInfo info) : Device(id, info) {}
   DeviceTypes Type() const { return CPU_DEVICE; }
   void CreateData(uint64_t data_id, int size);
   float* GetData(uint64_t data_id);

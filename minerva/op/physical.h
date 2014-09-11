@@ -2,7 +2,6 @@
 #include "common/scale.h"
 #include "impl/impl.h"
 #include "context.h"
-#include "device/device_info.h"
 
 namespace minerva {
 
@@ -14,9 +13,9 @@ struct PhysicalData {
   Scale size, offset, offset_index;
   int extern_rc;
   uint64_t data_id;
+  uint64_t device_id;
   bool mapped_to_lnode;
   uint64_t mapped_lnid;
-  DeviceInfo device_info;
 };
 
 struct PhysicalOp {

@@ -37,13 +37,12 @@ class MinervaSystem :
   void EvalAsync(const std::vector<NArray>& narrs);
   void WaitForEvalFinish();
 
-  void set_device_info(DeviceInfo info);
-  DeviceInfo device_info() const;
-  DeviceInfo CreateCPUDevice();
-  DeviceInfo CreateGPUDevice(int gid);
-  DeviceInfo CreateGPUDevice(int gid, int num_stream);
+  void set_device_id(uint64_t id);
+  uint64_t device_id() const;
+  uint64_t CreateCPUDevice();
+  uint64_t CreateGPUDevice(int gid);
+  uint64_t CreateGPUDevice(int gid, int num_stream);
   Device* GetDevice(uint64_t id);
-  Device* GetDevice(DeviceInfo info);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
@@ -62,7 +61,7 @@ class MinervaSystem :
   DataStore* data_store_;
 
   DeviceFactory* device_factory_;
-  DeviceInfo device_info_;
+  uint64_t device_id_;
 
   std::unordered_set<uint64_t> extern_rc_changed_ldnodes_;
 };
