@@ -12,7 +12,8 @@ namespace minerva {
 
 Device::Device() {}
 
-Device::Device(DeviceInfo info) {
+Device::Device(uint64_t device_id, DeviceInfo info) {
+  device_id_ = device_id;
   device_info_ = info;
 }
 
@@ -25,14 +26,14 @@ void Device::Execute(uint64_t nid, std::vector<PhysicalData> inputs, std::vector
   for (std::vector<PhysicalData>::iterator input = inputs.begin(); input != inputs.end(); ++ input) {
     uint64_t data_id = input->data_id;
     if (local_data_.find(data_id) == local_data_.end()) { // data not found in this device
-      uint64_t input_device_id = input->device_info.id;
+      uint64_t input_device_id = input->device_id;
       int size = input->size.Prod();
       CreateData(data_id + 10000, size);
       float* local_pointer = this->GetData(data_id + 10000);
       float* remote_pointer = MinervaSystem::Instance().GetDevice(input_device_id)->GetData(data_id);
       // TODO data copy
       memcpy(local_pointer, remote_pointer, size);
-      DLOG(INFO) << "Data copy from device " << input_device_id << " to device " << device_info_.id;
+      DLOG(INFO) << "Data copy from device " << input_device_id << " to device " << device_id_;
       local_data_.insert(data_id);
       inputShards.push_back(DataShard(local_pointer, input->size, input->offset));
     }

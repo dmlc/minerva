@@ -50,38 +50,34 @@ void MinervaSystem::Initialize(int* argc, char*** argv) {
   }
   LoadBuiltinDagMonitors();
   device_factory_ = new DeviceFactory();
-  device_info_ = device_factory_->DefaultInfo();
+  device_id_ = 0;
 }
 void MinervaSystem::Finalize() { }
 MinervaSystem::MinervaSystem() { }
 MinervaSystem::~MinervaSystem() { }
 
-void MinervaSystem::set_device_info(DeviceInfo info) {
-  device_info_ = info;
+void MinervaSystem::set_device_id(uint64_t id) {
+  device_id_ = id;
 }
 
-DeviceInfo MinervaSystem::device_info() const {
-  return device_info_;
+uint64_t MinervaSystem::device_id() const {
+  return device_id_;
 }
 
-DeviceInfo MinervaSystem::CreateCPUDevice() {
+uint64_t MinervaSystem::CreateCPUDevice() {
   return device_factory_->CreateCPUDevice();
 }
 
-DeviceInfo MinervaSystem::CreateGPUDevice(int gid) {
+uint64_t MinervaSystem::CreateGPUDevice(int gid) {
   return device_factory_->CreateGPUDevice(gid);
 }
 
-DeviceInfo MinervaSystem::CreateGPUDevice(int gid, int num_stream) {
+uint64_t MinervaSystem::CreateGPUDevice(int gid, int num_stream) {
   return device_factory_->CreateGPUDevice(gid, num_stream);
 }
 
 Device* MinervaSystem::GetDevice(uint64_t id) {
   return device_factory_->GetDevice(id);
-}
-
-Device* MinervaSystem::GetDevice(DeviceInfo info) {
-  return device_factory_->GetDevice(info);
 }
 
 void MinervaSystem::LoadBuiltinDagMonitors() {

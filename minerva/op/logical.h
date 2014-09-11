@@ -4,7 +4,6 @@
 #include "chunk/chunk.h"
 #include "op/logical_fn.h"
 #include "context.h"
-#include "device/device_info.h"
 
 namespace minerva {
 
@@ -16,7 +15,7 @@ struct LogicalData {
   LogicalDataGenFn* data_gen_fn;
   NVector<Scale> partitions;
   int extern_rc;
-  DeviceInfo device_info;
+  uint64_t device_id;
 };
 
 struct LogicalOp {

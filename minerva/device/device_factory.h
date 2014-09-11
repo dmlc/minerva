@@ -11,17 +11,14 @@ class DeviceFactory : public EverlastingSingleton<DeviceFactory> {
   DeviceFactory();
   void Reset();
   int allocated() { return allocated_; }
-  void PrintDevice(DeviceInfo device_info);
-  DeviceInfo DefaultInfo();
-  DeviceInfo CreateCPUDevice();
-  DeviceInfo CreateGPUDevice(int gid);
-  DeviceInfo CreateGPUDevice(int gid, int num_stream);
+  uint64_t CreateCPUDevice();
+  uint64_t CreateGPUDevice(int gid);
+  uint64_t CreateGPUDevice(int gid, int num_stream);
   Device* GetDevice(uint64_t id);
-  Device* GetDevice(DeviceInfo info);
   
  private:
-  void InsertCPUDevice(DeviceInfo info);
-  void InsertGPUDevice(DeviceInfo info);
+  void InsertCPUDevice(uint64_t id, DeviceInfo info);
+  void InsertGPUDevice(uint64_t id, DeviceInfo info);
 
   uint64_t allocated_;
   std::unordered_map<uint64_t, Device*> device_storage_;
