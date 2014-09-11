@@ -3,6 +3,7 @@
 #include <glog/logging.h>
 #include "device.h"
 #include "system/minerva_system.h"
+#include "op/context.h"
 #include <iostream>
 
 DEFINE_bool(enable_execute, true, "enable concrete computation");
@@ -75,12 +76,16 @@ float* CpuDevice::GetData(uint64_t data_id) {
 }
 
 void CpuDevice::Execute_Op(std::vector<DataShard> inputShards, std::vector<DataShard> outputShards, PhysicalOp Op) {
-  Op.compute_fn->Execute(inputShards, outputShards, Op.impl_type);
+  Context cxt;
+  cxt.impl_type = Op.impl_type;
+  Op.compute_fn->Execute(inputShards, outputShards, cxt);
 }
 
 void GpuDevice::Execute_Op(std::vector<DataShard> inputShards, std::vector<DataShard> outputShards, PhysicalOp Op) {
 #ifdef HAS_CUDA
-
+  Context cxt;
+  cxt.impl_type = Op.impl_type;
+  Op.compute_fn->Execute(inputShards, outputShards, cxt);
 #endif
 }
 

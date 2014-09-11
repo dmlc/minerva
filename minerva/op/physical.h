@@ -20,7 +20,7 @@ struct PhysicalData {
 };
 
 struct PhysicalOp {
-  Place place;
+  // TODO Use compute_fn->device_info to determine device
   ImplType impl_type;
   PhysicalComputeFn* compute_fn;
 };

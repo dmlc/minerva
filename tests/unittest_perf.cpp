@@ -1,3 +1,4 @@
+#include <op/context.h>
 #include <minerva.h>
 #include <iostream>
 #include <gtest/gtest.h>
@@ -36,7 +37,7 @@ TEST(PerfTest, LongChain) {
 
 class AddOneManyTimesOp: public LogicalComputeFn, PhysicalComputeFn {
  public:
-  void Execute(DataList& inputs, DataList& outputs, ImplType type) {
+  void Execute(DataList& inputs, DataList& outputs, const Context&) {
     float* src = inputs[0].GetCpuData();
     float* dst = outputs[0].GetCpuData();
     memcpy(dst, src, inputs[0].Size().Prod() * sizeof(float));

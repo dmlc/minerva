@@ -1,32 +1,40 @@
 #pragma once
+#include <iostream>
 
-#include "common/scale.h"
-#include "impl/impl.h"
+#ifdef HAS_CUDA
+#include <cuda_runtime.h>
+#endif
 
 namespace minerva {
 
-struct Place {
-  int procid;
-  int device_type; // 0 is CPU, 1 is GPU
-  int device_id; // which core or which GPU
+enum class ImplType {
+  kNA = 0,
+  kBasic,
+  kMkl,
+  kCuda
 };
 
-const Place kUnknownPlace = {-1, -1, -1};
-
-struct OpNodeContext {
-  Place place;
-  ImplType impl_type; // -1 is dynamic, 0 is basic, 1 is MKL, 2 is CUDA
-};
-
-struct DataNodeContext {
-  Place place;
-  //bool transpose;
-};
-
-inline bool operator == (const Place& p1, const Place& p2) {
-  return p1.procid == p2.procid 
-    && p1.device_id == p2.device_id
-    && p1.device_type == p2.device_type;
+inline std::ostream& operator<<(std::ostream& os, ImplType t) {
+  switch (t) {
+    case ImplType::kNA: return os << "N/A";
+    case ImplType::kBasic: return os << "Basic";
+    case ImplType::kMkl: return os << "Mkl";
+    case ImplType::kCuda: return os << "Cuda";
+    default: return os << "Unknown impl type";
+  }
 }
 
-} // end of namespace minerva
+struct Context {
+  ImplType impl_type;
+  virtual ~Context() {
+  };
+};
+
+struct CudaRuntimeContext: public Context {
+#ifdef HAS_CUDA
+  cudaStream_t stream;
+#endif
+};
+
+}
+

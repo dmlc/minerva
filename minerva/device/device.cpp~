@@ -3,6 +3,7 @@
 #include <glog/logging.h>
 #include "device.h"
 #include "system/minerva_system.h"
+#include "op/context.h"
 #include <iostream>
 
 DEFINE_bool(enable_execute, true, "enable concrete computation");
@@ -31,7 +32,8 @@ void Device::Execute(uint64_t nid, std::vector<PhysicalData> inputs, std::vector
       float* remote_pointer = MinervaSystem::Instance().GetDevice(input_device_id)->GetData(data_id);
       // TODO data copy
       memcpy(local_pointer, remote_pointer, size);
-      std::cout << "data copy from device " << input_device_id << " to device " << device_info_.id << std::endl;
+      DLOG(INFO) << "Data copy from device " << input_device_id << " to device " << device_info_.id;
+      std::cout << "Data copy from device " << input_device_id << " to device " << device_info_.id;
       local_data_.insert(data_id);
       inputShards.push_back(DataShard(local_pointer, input->size, input->offset));
     }
@@ -75,12 +77,16 @@ float* CpuDevice::GetData(uint64_t data_id) {
 }
 
 void CpuDevice::Execute_Op(std::vector<DataShard> inputShards, std::vector<DataShard> outputShards, PhysicalOp Op) {
-  Op.compute_fn->Execute(inputShards, outputShards, Op.impl_type);
+  Context cxt;
+  cxt.impl_type = Op.impl_type;
+  Op.compute_fn->Execute(inputShards, outputShards, cxt);
 }
 
 void GpuDevice::Execute_Op(std::vector<DataShard> inputShards, std::vector<DataShard> outputShards, PhysicalOp Op) {
 #ifdef HAS_CUDA
-
+  Context cxt;
+  cxt.impl_type = Op.impl_type;
+  Op.compute_fn->Execute(inputShards, outputShards, cxt);
 #endif
 }
 
