@@ -36,7 +36,9 @@ class NArray {
   // Constructors and destructors
   NArray();
   NArray(const NArray&);
+  NArray(NArray&&);
   NArray& operator=(const NArray&);
+  NArray& operator=(NArray&&);
   ~NArray();
   // Element-wise operations
   friend NArray operator+(NArray, NArray);

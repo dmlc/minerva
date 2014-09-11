@@ -80,18 +80,33 @@ NArray::NArray(const NArray& other) : data_node_(other.data_node_) {
   }
 }
 
+NArray::NArray(NArray&& other) : data_node_(other.data_node_) {
+  other.data_node_ = 0;
+}
+
 NArray& NArray::operator=(const NArray& other) {
   if (this == &other) {
     return *this;
   }
-  auto old_dnode = data_node_;
+  if (data_node_ != nullptr) {
+    ms.IncrExternRC(data_node_, -1);
+  }
   data_node_ = other.data_node_;
   if (data_node_ != nullptr) {
     ms.IncrExternRC(data_node_);
   }
-  if (old_dnode != nullptr) {
-    ms.IncrExternRC(old_dnode, -1);
+  return *this;
+}
+
+NArray& NArray::operator=(NArray&& other) {
+  if (this == &other) {
+    return *this;
   }
+  if (data_node_ != nullptr) {
+    ms.IncrExternRC(data_node_, -1);
+  }
+  data_node_ = other.data_node_;
+  other.data_node_ = nullptr;
   return *this;
 }
 
