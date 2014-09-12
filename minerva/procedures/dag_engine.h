@@ -9,91 +9,30 @@
 
 namespace minerva {
 
-enum class NodeState {
-  kBirth = 0,
-  kReady,
-  kCompleted,
-  kDead,
-};
-
-const int kNumNodeStates = (int)NodeState::kDead + 1;
-
-inline std::ostream& operator << (std::ostream& os, NodeState s) {
-  switch (s) {
-    case NodeState::kBirth:
-      return os << "Birth";
-    case NodeState::kReady:
-      return os << "Ready";
-    case NodeState::kCompleted:
-      return os << "Completed";
-    case NodeState::kDead:
-      return os << "Dead";
-    default:
-      return os << "Unknown state";
-  }
-}
-
-class NodeStateMap {
- public:
-  NodeStateMap() { }
-  void AddNode(uint64_t id, NodeState init_state) {
-    states_[id] = init_state;
-    state_sets_[(int)init_state].insert(id);
-  }
-  void RemoveNode(uint64_t id) {
-    NodeState s = states_[id];
-    states_.erase(id);
-    state_sets_[(int)s].erase(id);
-  }
-  NodeState GetState(uint64_t id) const {
-    return states_.find(id)->second;
-  }
-  void ChangeState(uint64_t id, NodeState to) {
-    NodeState old = states_[id];
-    if(old != to) {
-      states_[id] = to;
-      std::lock_guard<std::mutex> lck(mutex_);
-      state_sets_[(int)old].erase(id);
-      state_sets_[(int)to].insert(id);
-    }
-  }
-  const std::unordered_set<uint64_t>& GetNodesOfState(NodeState s) const {
-    return state_sets_[(int)s];
-  }
- private:
-  mutable std::mutex mutex_;
-  std::unordered_map<uint64_t, NodeState> states_;
-  std::unordered_set<uint64_t> state_sets_[kNumNodeStates];
-};
-
-template<class DagType>
+template<typename DagType>
 class DagEngine : public DagProcedure<DagType>, public DagMonitor<DagType> {
  public:
   DagEngine(ThreadPool& tp): thread_pool_(tp) {}
-  void Process(DagType&, const std::vector<uint64_t>& nodes);
+  void Process(DagType& dag, const std::vector<uint64_t>& nodes);
   void WaitForFinish();
   void GCNodes(DagType& dag);
-  int CalcTotalReferenceCount(typename DagType::DNode* );
+  int CalcTotalReferenceCount(typename DagType::DNode* node);
   NodeStateMap& node_states() { return node_states_; }
-
-  virtual void OnCreateNode(DagNode* node);
-  virtual void OnDeleteNode(DagNode* node);
-  virtual void OnCreateEdge(DagNode* from, DagNode* to);
   virtual void OnIncrExternRC(typename DagType::DNode*, int amount);
+  // DAG monitor
+  void OnCreateNode(DagNode* node);
+  void OnDeleteNode(DagNode* node);
+  void OnCreateEdge(DagNode* from, DagNode* to);
 
  protected:
-  virtual void CreateNodeState(DagNode* ) {}
-  virtual void DeleteNodeState(DagNode* ) {}
-  virtual void SetUpReadyNodeState(DagNode* ) {}
-  virtual void OnIncrInternalDep(typename DagType::DNode*, int amount) {}
-  virtual void OnIncrExternalDep(typename DagType::DNode*, int amount) {}
+  virtual void CreateNodeState(DagNode*) {}
+  virtual void DeleteNodeState(DagNode*) {}
+  virtual void SetUpReadyNodeState(DagNode*) {}
   virtual void FreeDataNodeRes(typename DagType::DNode* ) {}
   virtual void ProcessNode(DagNode* node) = 0;
   virtual std::unordered_set<uint64_t> FindStartFrontier(DagType& dag, const std::vector<uint64_t>& targets) = 0;
-  virtual void PrepareProcess() {}
-  virtual void FinalizeProcess() {}
-
- protected:
+  virtual void PrepareProcess() { }
+  virtual void FinalizeProcess() { }
   struct RuntimeInfo {
     int num_triggers_needed;
     int reference_count;
@@ -101,22 +40,18 @@ class DagEngine : public DagProcedure<DagType>, public DagMonitor<DagType> {
   };
   void TopDownScan(DagType& dag, const std::unordered_set<uint64_t>& start_frontier,
       const std::vector<uint64_t>& targets);
-  void AppendTask(DagNode* );
-  void NodeTask(DagNode* );
-  void TriggerSuccessors(DagNode* );
-
- protected:
+  void AppendTask(DagNode*);
+  void NodeTask(DagNode*);
+  void TriggerSuccessors(DagNode*);
   ThreadPool& thread_pool_;
-
   NodeStateMap node_states_;
   std::unordered_map<uint64_t, RuntimeInfo> rt_info_;
-
   int num_nodes_yet_to_finish_;
   std::mutex finish_mutex_;
   std::condition_variable finish_cond_;
 };
 
-template<class DagType>
+template<typename DagType>
 void DagEngine<DagType>::Process(DagType& dag, const std::vector<uint64_t>& targets) {
   PrepareProcess();
   std::unordered_set<uint64_t> start_frontier = FindStartFrontier(dag, targets);
@@ -150,43 +85,41 @@ void DagEngine<DagType>::Process(DagType& dag, const std::vector<uint64_t>& targ
   FinalizeProcess();
 }
 
-template<class DagType>
+template<typename DagType>
 void DagEngine<DagType>::OnCreateNode(DagNode* node) {
   node_states_.AddNode(node->node_id(), NodeState::kBirth);
   rt_info_[node->node_id()] = RuntimeInfo{0, 0, new std::mutex};
   CreateNodeState(node);
 }
 
-template<class DagType>
+template<typename DagType>
 void DagEngine<DagType>::OnDeleteNode(DagNode* node) {
   node_states_.RemoveNode(node->node_id());
   DeleteNodeState(node);
 }
-  
-template<class DagType>
+
+template<typename DagType>
 void DagEngine<DagType>::OnCreateEdge(DagNode* from, DagNode* to) {
   if(from->Type() == DagNode::DATA_NODE &&
       node_states_.GetState(from->node_id()) == NodeState::kCompleted) {
     typename DagType::DNode* dnode = dynamic_cast<typename DagType::DNode*>(from);
-    OnIncrInternalDep(dnode, 1);
     rt_info_[from->node_id()].reference_count += 1;
   }
 }
 
-template<class DagType>
+template<typename DagType>
 void DagEngine<DagType>::OnIncrExternRC(typename DagType::DNode* dnode, int amount) {
   if(node_states_.GetState(dnode->node_id()) == NodeState::kCompleted) {
     RuntimeInfo& ri = rt_info_[dnode->node_id()];
     ri.reference_count += amount;
-    OnIncrExternalDep(dnode, amount);
     if(ri.reference_count == 0) {
       FreeDataNodeRes(dnode);
       node_states_.ChangeState(dnode->node_id(), NodeState::kDead);
     }
   }
 }
-  
-template<class DagType>
+
+template<typename DagType>
 void DagEngine<DagType>::WaitForFinish() {
   std::unique_lock<std::mutex> lck(finish_mutex_);
   while(num_nodes_yet_to_finish_ != 0)
@@ -194,7 +127,7 @@ void DagEngine<DagType>::WaitForFinish() {
   thread_pool_.WaitForAllFinished();
 }
 
-template<class DagType>
+template<typename DagType>
 void DagEngine<DagType>::TopDownScan(DagType& dag, const std::unordered_set<uint64_t>& start_frontier,
     const std::vector<uint64_t>& targets) {
   num_nodes_yet_to_finish_ = node_states_.GetNodesOfState(NodeState::kReady).size();
@@ -203,12 +136,12 @@ void DagEngine<DagType>::TopDownScan(DagType& dag, const std::unordered_set<uint
   }
 }
 
-template<class DagType>
+template<typename DagType>
 void DagEngine<DagType>::AppendTask(DagNode* node) {
   thread_pool_.Push(std::bind(&DagEngine<DagType>::NodeTask, this, node));
 }
-  
-template<class DagType>
+
+template<typename DagType>
 int DagEngine<DagType>::CalcTotalReferenceCount(typename DagType::DNode* dnode) {
   int count = dnode->data_.extern_rc;
   for(DagNode* succ : dnode->successors_) {
@@ -220,7 +153,7 @@ int DagEngine<DagType>::CalcTotalReferenceCount(typename DagType::DNode* dnode) 
   return count;
 }
 
-template<class DagType>
+template<typename DagType>
 void DagEngine<DagType>::NodeTask(DagNode* node) {
   uint64_t nid = node->node_id();
   DLOG(INFO) << "Process node#" << nid;
@@ -253,8 +186,8 @@ void DagEngine<DagType>::NodeTask(DagNode* node) {
     finish_cond_.notify_all();
   //DLOG(INFO) << "Notify node#" << node->node_id() << " is finished";
 }
-  
-template<class DagType>
+
+template<typename DagType>
 void DagEngine<DagType>::TriggerSuccessors(DagNode* node) {
   for(DagNode* succ : node->successors_) {
     RuntimeInfo& ri = rt_info_[succ->node_id()];
@@ -271,18 +204,18 @@ void DagEngine<DagType>::TriggerSuccessors(DagNode* node) {
     }
   }
 }
-  
-template<class DagType>
+
+template<typename DagType>
 void DagEngine<DagType>::GCNodes(DagType& dag) {
   std::vector<uint64_t> dead_nodes;
   for(uint64_t dead_nid : node_states_.GetNodesOfState(NodeState::kDead)) {
     dead_nodes.push_back(dead_nid);
   }
   DLOG(INFO) << dead_nodes.size() << " nodes to be GCed";
-  for(uint64_t dead_nid : dead_nodes) {
-    //DLOG(INFO) << "GC dag node #" << dead_nid;
+  for (uint64_t dead_nid : dead_nodes) {
     dag.DeleteNode(dead_nid);
   }
 }
 
 } // end of namespace minerva
+
