@@ -25,9 +25,6 @@ class DagEngine : public DagProcedure<DagType>, public DagMonitor<DagType> {
   void OnCreateEdge(DagNode* from, DagNode* to);
 
  protected:
-  virtual void CreateNodeState(DagNode*) {}
-  virtual void DeleteNodeState(DagNode*) {}
-  virtual void SetUpReadyNodeState(DagNode*) {}
   virtual void FreeDataNodeRes(typename DagType::DNode* ) {}
   virtual void ProcessNode(DagNode* node) = 0;
   virtual std::unordered_set<uint64_t> FindStartFrontier(DagType& dag, const std::vector<uint64_t>& targets) = 0;
@@ -79,7 +76,6 @@ void DagEngine<DagType>::Process(DagType& dag, const std::vector<uint64_t>& targ
       typename DagType::DNode* ready_dnode = dynamic_cast<typename DagType::DNode*>(ready_node);
       ri.reference_count = CalcTotalReferenceCount(ready_dnode);
     }
-    SetUpReadyNodeState(ready_node);
   }
   TopDownScan(dag, start_frontier, targets);
   FinalizeProcess();
@@ -89,13 +85,11 @@ template<typename DagType>
 void DagEngine<DagType>::OnCreateNode(DagNode* node) {
   node_states_.AddNode(node->node_id(), NodeState::kBirth);
   rt_info_[node->node_id()] = RuntimeInfo{0, 0, new std::mutex};
-  CreateNodeState(node);
 }
 
 template<typename DagType>
 void DagEngine<DagType>::OnDeleteNode(DagNode* node) {
   node_states_.RemoveNode(node->node_id());
-  DeleteNodeState(node);
 }
 
 template<typename DagType>

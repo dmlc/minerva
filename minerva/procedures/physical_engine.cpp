@@ -11,10 +11,6 @@ namespace minerva {
 PhysicalEngine::PhysicalEngine(ThreadPool& tp, DataStore& ds): DagEngine<PhysicalDag>(tp), data_store_(ds) {
 }
   
-void PhysicalEngine::SetUpReadyNodeState(DagNode* node) {
-  impl_decider_->Decide(node, node_states_);
-}
-  
 void PhysicalEngine::FreeDataNodeRes(PhysicalDataNode* dnode) {
   data_store_.SetReferenceCount(dnode->data_.data_id, 0);
 }
