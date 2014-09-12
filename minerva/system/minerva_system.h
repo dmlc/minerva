@@ -27,7 +27,6 @@ class MinervaSystem :
   void Finalize();
   LogicalDag& logical_dag() { return logical_dag_; }
   PhysicalDag& physical_dag() { return physical_dag_; }
-  DataStore& data_store() { return *data_store_; }
   DeviceFactory& device_factory() { return *device_factory_; }
   PhysicalEngine& physical_engine() { return *physical_engine_; }
 
@@ -43,6 +42,7 @@ class MinervaSystem :
   uint64_t CreateGPUDevice(int gid);
   uint64_t CreateGPUDevice(int gid, int num_stream);
   Device* GetDevice(uint64_t id);
+  uint64_t GenerateDataID();
 
  private:
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
@@ -58,7 +58,6 @@ class MinervaSystem :
 
   ExpandEngine* expand_engine_;
   PhysicalEngine* physical_engine_;
-  DataStore* data_store_;
 
   DeviceFactory* device_factory_;
   uint64_t device_id_;

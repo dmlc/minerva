@@ -4,7 +4,6 @@
 #include "device.h"
 #include "system/minerva_system.h"
 #include "op/context.h"
-#include "common/inspector.h"
 #include <iostream>
 
 DEFINE_bool(enable_execute, true, "enable concrete computation");
@@ -16,10 +15,15 @@ Device::Device() {}
 Device::Device(uint64_t device_id, DeviceInfo info) {
   device_id_ = device_id;
   device_info_ = info;
+  data_store_ = new DataStore();
 }
 
 DeviceInfo Device::GetInfo() {
   return device_info_;
+}
+
+void Device::FreeData(uint64_t data_id) {
+  data_store_->SetReferenceCount(data_id, 0);
 }
 
 void Device::Execute(uint64_t nid, std::vector<PhysicalData> inputs, std::vector<PhysicalData> outputs, const PhysicalOp Op) {
@@ -58,22 +62,22 @@ void Device::Execute(uint64_t nid, std::vector<PhysicalData> inputs, std::vector
 }
 
 void GpuDevice::CreateData(uint64_t data_id, int size) {
-  DataStore& data_store_ = MinervaSystem::Instance().data_store();
+  //DataStore& data_store_ = MinervaSystem::Instance().data_store();
   data_store_.CreateData(data_id, DataStore::GPU, size, 1);
 }
 
 void CpuDevice::CreateData(uint64_t data_id, int size) {
-  DataStore& data_store_ = MinervaSystem::Instance().data_store();
+  //DataStore& data_store_ = MinervaSystem::Instance().data_store();
   data_store_.CreateData(data_id, DataStore::CPU, size, 1);
 }
 
 float* GpuDevice::GetData(uint64_t data_id) {
-  DataStore& data_store_ = MinervaSystem::Instance().data_store();
+  //DataStore& data_store_ = MinervaSystem::Instance().data_store();
   return data_store_.GetData(data_id, DataStore::GPU);
 }
 
 float* CpuDevice::GetData(uint64_t data_id) {
-  DataStore& data_store_ = MinervaSystem::Instance().data_store();
+  //DataStore& data_store_ = MinervaSystem::Instance().data_store();
   return data_store_.GetData(data_id, DataStore::CPU);
 }
 

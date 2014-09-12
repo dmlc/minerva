@@ -11,7 +11,6 @@
 #include "procedures/expand_engine.h"
 #include "procedures/physical_engine.h"
 #include "procedures/impl_decider.h"
-#include "system/data_store.h"
 #include <iostream>
 
 using namespace std;
@@ -35,8 +34,7 @@ void MinervaSystem::Initialize(int* argc, char*** argv) {
   gflags::ParseCommandLineFlags(argc, argv, true);
   ThreadPool* execute_pool = new ThreadPool(FLAGS_numthreads);
   ThreadPool* expand_pool = new ThreadPool(1);
-  data_store_ = new DataStore();
-  physical_engine_ = new PhysicalEngine(*execute_pool, *data_store_);
+  physical_engine_ = new PhysicalEngine(*execute_pool);
   expand_engine_ = new ExpandEngine(*expand_pool);
   static SimpleImplDecider all_basic_impl(ImplType::kBasic);
   static SimpleImplDecider all_mkl_impl(ImplType::kMkl);
@@ -78,6 +76,11 @@ uint64_t MinervaSystem::CreateGPUDevice(int gid, int num_stream) {
 
 Device* MinervaSystem::GetDevice(uint64_t id) {
   return device_factory_->GetDevice(id);
+}
+
+uint64_t MinervaSystem::GenerateDataID() {
+  static uint64_t data_id_gen = 0;
+  return ++data_id_gen;
 }
 
 void MinervaSystem::LoadBuiltinDagMonitors() {
@@ -163,7 +166,7 @@ float* MinervaSystem::GetValue(NArray& narr) {
   Scale srcstart = Scale::Origin(narr.Size().NumDims());
   for(uint64_t nid : phy_nid) {
     PhysicalData& pdata = physical_dag_.GetDataNode(nid)->data_;
-    float* srcptr = data_store_->GetData(pdata.data_id, DataStore::CPU);
+    float* srcptr = GetDevice(pdata.device_id)->GetData(pdata.data_id);
     basic::NCopy(srcptr, pdata.size, srcstart,
         rstptr, narr.Size(), pdata.offset, pdata.size);
   }

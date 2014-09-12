@@ -1,13 +1,10 @@
 #include "op/physical_fn.h"
 #include "system/minerva_system.h"
-#include "system/data_store.h"
-
-using namespace std;
 
 namespace minerva {
 
 DataShard::DataShard(const PhysicalData& d) {
-  data_ = MinervaSystem::Instance().data_store().GetData(d.data_id, DataStore::CPU);
+  data_ = MinervaSystem::Instance().GetDevice(d.device_id)->GetData(d.data_id);
   size_ = d.size;
   offset_ = d.offset;
 }

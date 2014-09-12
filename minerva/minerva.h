@@ -3,5 +3,4 @@
 #include "narray/io/mb_loader.h"
 #include "narray/io/file_loader.h"
 #include "system/minerva_system.h"
-#include "system/data_store.h"
 #include "device/device_info.h"

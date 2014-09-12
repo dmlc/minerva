@@ -28,11 +28,6 @@ DataStore::~DataStore() {
   }
 }
 
-uint64_t DataStore::GenerateDataID() {
-  static uint64_t data_id_gen = 0;
-  return ++data_id_gen;
-}
-
 void DataStore::CreateData(uint64_t id, MemTypes type, size_t length, int rc) {
   lock_guard<mutex> lck(access_mutex_);
   DLOG(INFO) << "create data_id=" << id << " length=" << length << " type=" << type;

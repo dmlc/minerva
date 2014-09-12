@@ -3,7 +3,6 @@
 #include "op/physical_op.h"
 #include "op/shared_op.h"
 #include "system/minerva_system.h"
-#include "system/data_store.h"
 #include "common/common.h"
 #include <functional>
 #include <cstdio>
@@ -69,7 +68,7 @@ vector<Chunk> Chunk::Compute(
   auto rst = Map<Chunk>(result_sizes, [&](const Scale& size) {
     PhysicalData phy_data;
     phy_data.size = size;
-    phy_data.data_id = ms.data_store().GenerateDataID();
+    phy_data.data_id = ms.GenerateDataID();
     phy_data.device_id = device_id;
     auto rst_node = pdag.NewDataNode(phy_data);
     return Chunk(rst_node);
