@@ -21,6 +21,9 @@ ostream& operator<<(ostream& os, NodeState s) {
   }
 }
 
+NodeStateMap::NodeStateMap() {
+}
+
 void NodeStateMap::AddNode(uint64_t id, NodeState init_state) {
   states_[id] = init_state;
   state_sets_[static_cast<int>(init_state)].insert(id);

@@ -1,6 +1,7 @@
 #pragma once
 #include "dag_procedure.h"
 #include "common/thread_pool.h"
+#include "procedures/node_state_map.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
@@ -28,8 +29,6 @@ class DagEngine : public DagProcedure<DagType>, public DagMonitor<DagType> {
   virtual void FreeDataNodeRes(typename DagType::DNode* ) {}
   virtual void ProcessNode(DagNode* node) = 0;
   virtual std::unordered_set<uint64_t> FindStartFrontier(DagType& dag, const std::vector<uint64_t>& targets) = 0;
-  virtual void PrepareProcess() { }
-  virtual void FinalizeProcess() { }
   struct RuntimeInfo {
     int num_triggers_needed;
     int reference_count;
@@ -50,7 +49,6 @@ class DagEngine : public DagProcedure<DagType>, public DagMonitor<DagType> {
 
 template<typename DagType>
 void DagEngine<DagType>::Process(DagType& dag, const std::vector<uint64_t>& targets) {
-  PrepareProcess();
   std::unordered_set<uint64_t> start_frontier = FindStartFrontier(dag, targets);
   for(uint64_t ready_nid : node_states_.GetNodesOfState(NodeState::kReady)) {
     DagNode* ready_node = dag.GetNode(ready_nid);
@@ -60,7 +58,7 @@ void DagEngine<DagType>::Process(DagType& dag, const std::vector<uint64_t>& targ
         ++ri.num_triggers_needed;
       }
     }
-    if(ready_node->Type() == DagNode::OP_NODE) {
+    if(ready_node->Type() == DagNode::NodeType::kOpNode) {
       for(DagNode* ready_op_succ : ready_node->successors_) {
         typename DagType::DNode* succ_dnode = dynamic_cast<typename DagType::DNode*>(ready_op_succ);
         if(CalcTotalReferenceCount(succ_dnode) == 0) {
@@ -78,7 +76,6 @@ void DagEngine<DagType>::Process(DagType& dag, const std::vector<uint64_t>& targ
     }
   }
   TopDownScan(dag, start_frontier, targets);
-  FinalizeProcess();
 }
 
 template<typename DagType>
@@ -94,7 +91,7 @@ void DagEngine<DagType>::OnDeleteNode(DagNode* node) {
 
 template<typename DagType>
 void DagEngine<DagType>::OnCreateEdge(DagNode* from, DagNode* to) {
-  if(from->Type() == DagNode::DATA_NODE &&
+  if(from->Type() == DagNode::NodeType::kDataNode &&
       node_states_.GetState(from->node_id()) == NodeState::kCompleted) {
     typename DagType::DNode* dnode = dynamic_cast<typename DagType::DNode*>(from);
     rt_info_[from->node_id()].reference_count += 1;
@@ -154,7 +151,7 @@ void DagEngine<DagType>::NodeTask(DagNode* node) {
   CHECK_EQ(node_states_.GetState(nid), NodeState::kReady);
   ProcessNode(node); // ATTENTION: NO lock protected!
   // change state
-  if(node->Type() == DagNode::OP_NODE) {
+  if(node->Type() == DagNode::NodeType::kOpNode) {
     node_states_.ChangeState(nid, NodeState::kDead); // the op node is executed thus could be GCed
     // check all its predecessors
     for(DagNode* pred : node->predecessors_) {

@@ -21,6 +21,7 @@ const int kNumNodeStates = static_cast<int>(NodeState::kDead) + 1;
 
 class NodeStateMap {
  public:
+  NodeStateMap();
   void AddNode(uint64_t, NodeState);
   void RemoveNode(uint64_t);
   NodeState GetState(uint64_t) const;

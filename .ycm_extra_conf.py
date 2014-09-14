@@ -29,6 +29,7 @@
 # For more information, please refer to <http://unlicense.org/>
 
 import os
+import inspect
 import ycm_core
 
 # These are the compilation flags that will be used in case there's no
@@ -135,13 +136,14 @@ def FlagsForFile( filename ):
     #except ValueError:
       #pass
   else:
-    config_file = open('configure.in')
-    for line in config_file.readlines():
-      if line.find('INCLUDE') >= 0:
-        ex_in_path = line.split('=')[-1]
-        if(len(ex_in_path) > 0):
-          flags.append('-I')
-          flags.append(ex_in_path.strip())
+    config_file_path = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'configure.in')
+    with open(config_file_path) as config_file:
+      for line in config_file.readlines():
+        if line.find('INCLUDE') >= 0:
+          ex_in_path = line.split('=')[-1]
+          if(len(ex_in_path) > 0):
+            flags.append('-I')
+            flags.append(ex_in_path.strip())
     relative_to = DirectoryOfThisScript()
     final_flags = MakeRelativePathsInFlagsAbsolute( flags, relative_to )
 
@@ -149,3 +151,4 @@ def FlagsForFile( filename ):
     'flags': final_flags,
     'do_cache': True
   }
+
