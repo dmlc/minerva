@@ -74,7 +74,7 @@ class DagHelper {
 template<typename DagType>
 class DagMonitor {
  public:
-  virtual void OnCreateNode(DagNode*);
+  virtual void OnCreateNode(DagNode*) = 0;
   virtual void OnDeleteNode(DagNode*);
   virtual void OnCreateDataNode(typename DagType::DNode*) {}
   virtual void OnCreateOpNode(typename DagType::ONode*) {}

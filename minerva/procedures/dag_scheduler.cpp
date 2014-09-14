@@ -6,7 +6,7 @@ using namespace std;
 
 namespace minerva {
 
-DagScheduler::DagScheduler(PhysicalDag* d) {
+DagScheduler::DagScheduler(PhysicalDag* d) : dispatcher_(&DagScheduler::DispatcherRoutine, this) {
   dag_ = d;
 }
 
@@ -17,18 +17,43 @@ void DagScheduler::WaitForFinish() {
   }
 }
 
-int DagScheduler::CalcTotalReferenceCount(PhysicalDataNode* node) {
-  int count = node->data_.extern_rc;
-  for (auto succ : node->successors_) {
-    auto succ_state = node_states_.GetState(succ->node_id());
-    if (succ_state == NodeState::kBirth || succ_state == NodeState::kReady) {
-     ++count;
+void DagScheduler::GCNodes() {
+  lock_guard<mutex> lck(scheduler_busy_);
+  auto& dead_set = node_states_.GetNodesOfState(NodeState::kDead);
+  vector<uint64_t> dead_nodes(dead_set.begin(), dead_set.end());
+  DLOG(INFO) << dead_nodes.size() << " nodes to be GCed";
+  for (auto id : dead_nodes) {
+    dag_->DeleteNode(id);
+  }
+}
+
+void DagScheduler::OnIncrExternRC(PhysicalDataNode* node, int amount) {
+  if (node_states_.GetState(node->node_id()) == NodeState::kCompleted) {
+    auto& ri = rt_info_[node->node_id()];
+    ri.reference_count += amount;
+    if (ri.reference_count == 0) {
+      FreeDataNodeRes(node);
+      node_states_.ChangeState(node->node_id(), NodeState::kDead);
     }
   }
-  return count;
+}
+
+void DagScheduler::OnCreateNode(DagNode* node) {
+  node_states_.AddNode(node->node_id(), NodeState::kBirth);
+}
+
+void DagScheduler::OnDeleteNode(DagNode* node) {
+  node_states_.RemoveNode(node->node_id());
+}
+
+void DagScheduler::OnCreateEdge(DagNode* from, DagNode* to) {
+  if (from->Type() == DagNode::NodeType::kDataNode && node_states_.GetState(from->node_id()) == NodeState::kCompleted) {
+    rt_info_[from->node_id()].reference_count += 1;
+  }
 }
 
 void DagScheduler::Process(const vector<uint64_t>& targets) {
+  lock_guard<mutex> lck(scheduler_busy_);
   auto start_frontier = FindStartFrontier(targets);
   for (auto ready_id : node_states_.GetNodesOfState(NodeState::kReady)) {
     auto ready_node = dag_->GetNode(ready_id);
@@ -53,7 +78,57 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
       ri.reference_count = CalcTotalReferenceCount(ready_dnode);
     }
   }
-  TopDownScan(start_frontier, targets);
+  num_nodes_yet_to_finish_ = node_states_.GetNodesOfState(NodeState::kReady).size();
+  for (auto id : start_frontier) {
+    dispatcher_queue_.Push(id);
+  }
+}
+
+void DagScheduler::OnOperationComplete(uint64_t id) {
+  lock_guard<mutex> lck(scheduler_busy_);
+  auto node = dag_->GetNode(id);
+  if (node->Type() == DagNode::NodeType::kOpNode) {
+    for (auto pred : node->predecessors_) {
+      auto& pred_ri = rt_info_[pred->node_id()];
+      if (--pred_ri.reference_count == 0) {
+        FreeDataNodeRes(dynamic_cast<PhysicalDataNode*>(pred));
+        node_states_.ChangeState(pred->node_id(), NodeState::kDead);
+      }
+    }
+  } else {
+    node_states_.ChangeState(id, NodeState::kCompleted);
+  }
+  for (auto succ : node->successors_) {
+    auto& ri = rt_info_[succ->node_id()];
+    auto succ_state = node_states_.GetState(succ->node_id());
+    if (succ_state == NodeState::kReady) {
+      if (--ri.num_triggers_needed == 0) {
+        DLOG(INFO) << "trigger node id " << succ->node_id();
+        dispatcher_queue_.Push(succ->node_id());
+      }
+    }
+  }
+  {
+    lock_guard<mutex> lck2(finish_mutex_);
+    if (--num_nodes_yet_to_finish_ == 0) {
+      finish_cond_.notify_all();
+    }
+  }
+}
+
+int DagScheduler::CalcTotalReferenceCount(PhysicalDataNode* node) const {
+  int count = node->data_.extern_rc;
+  for (auto succ : node->successors_) {
+    auto succ_state = node_states_.GetState(succ->node_id());
+    if (succ_state == NodeState::kBirth || succ_state == NodeState::kReady) {
+     ++count;
+    }
+  }
+  return count;
+}
+
+void FreeDataNodeRes(PhysicalDataNode* node) {
+  // TODO Notify device to free data storage
 }
 
 unordered_set<uint64_t> DagScheduler::FindStartFrontier(const std::vector<uint64_t>& targets) {
@@ -92,4 +167,14 @@ unordered_set<uint64_t> DagScheduler::FindStartFrontier(const std::vector<uint64
   return start_frontier;
 }
 
+void DagScheduler::DispatcherRoutine() {
+  uint64_t node_id;
+  // Pop queue while not exiting
+  while (!dispatcher_queue_.Pop(node_id)) {
+    DLOG(INFO) << "dispatching node id " << node_id;
+    // TODO dispatch to some device
+  }
+}
+
 }  // namespace minerva
+
