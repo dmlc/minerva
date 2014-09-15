@@ -15,24 +15,33 @@ enum class NodeState {
   kDead
 };
 
-std::ostream& operator<<(std::ostream&, NodeState);
-
 const int kNumNodeStates = static_cast<int>(NodeState::kDead) + 1;
 
-class NodeStateMap {
+std::ostream& operator<<(std::ostream&, NodeState);
+
+struct RuntimeInfo {
+  int num_triggers_needed;
+  int reference_count;
+  // `state` should only be modified through `RuntimeInfoMap::ChangeState`
+  NodeState state;
+};
+
+class RuntimeInfoMap {
  public:
-  NodeStateMap();
-  void AddNode(uint64_t, NodeState);
+  RuntimeInfoMap();
+  void AddNode(uint64_t);
   void RemoveNode(uint64_t);
-  NodeState GetState(uint64_t) const;
+  RuntimeInfo& At(uint64_t);
+  NodeState GetState(uint64_t);
   void ChangeState(uint64_t, NodeState);
   const std::unordered_set<uint64_t>& GetNodesOfState(NodeState) const;
+  // Require manual locking
+  std::recursive_mutex busy_mutex_;
 
  private:
-  mutable std::mutex mutex_;
-  std::unordered_map<uint64_t, NodeState> states_;
   std::unordered_set<uint64_t> state_sets_[kNumNodeStates];
-  DISALLOW_COPY_AND_ASSIGN(NodeStateMap);
+  std::unordered_map<uint64_t, RuntimeInfo> info_;
+  DISALLOW_COPY_AND_ASSIGN(RuntimeInfoMap);
 };
 
 }  // namespace minerva

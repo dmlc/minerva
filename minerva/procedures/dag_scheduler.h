@@ -1,6 +1,6 @@
 #pragma once
 #include "procedures/dag_procedure.h"
-#include "procedures/node_state_map.h"
+#include "procedures/runtime_info_map.h"
 #include "procedures/device_listener.h"
 #include "dag/dag.h"
 #include "dag/physical_dag.h"
@@ -29,25 +29,19 @@ class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<Physica
   void OnOperationComplete(uint64_t);  // Synchronized
   // DAG procedure
   void Process(const std::vector<uint64_t>&);  // Synchronized
-  NodeStateMap& node_states();
 
  private:
-  struct RuntimeInfo {
-    int num_triggers_needed;
-    int reference_count;
-    std::mutex* mutex;
-  };
-  int CalcTotalReferenceCount(PhysicalDataNode*) const;
+  int CalcTotalReferenceCount(PhysicalDataNode*);
   void FreeDataNodeRes(PhysicalDataNode*);
   std::unordered_set<uint64_t> FindStartFrontier(const std::vector<uint64_t>&);
-  // Node states and runtime information
-  NodeStateMap node_states_;
-  std::unordered_map<uint64_t, RuntimeInfo> rt_info_;
-  int num_nodes_yet_to_finish_;
-  std::mutex scheduler_busy_;  // Guard public methods
+  // Runtime information
+  RuntimeInfoMap rt_info_;
+  // Scheduler dispatcher
   ConcurrentBlockingQueue<uint64_t> dispatcher_queue_;
   void DispatcherRoutine();
   std::thread dispatcher_;
+  // Evaluation finishing signal
+  int num_nodes_yet_to_finish_;
   std::mutex finish_mutex_;
   std::condition_variable finish_cond_;
   DISALLOW_COPY_AND_ASSIGN(DagScheduler);
