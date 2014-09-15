@@ -8,7 +8,7 @@ using namespace std;
 
 namespace minerva {
   
-PhysicalEngine::PhysicalEngine(ThreadPool& tp, DataStore& ds): DagEngine<PhysicalDag>(tp), data_store_(ds) {
+PhysicalEngine::PhysicalEngine(ThreadPool& tp): DagEngine<PhysicalDag>(tp) {
 }
   
 void PhysicalEngine::SetUpReadyNodeState(DagNode* node) {
@@ -16,7 +16,9 @@ void PhysicalEngine::SetUpReadyNodeState(DagNode* node) {
 }
   
 void PhysicalEngine::FreeDataNodeRes(PhysicalDataNode* dnode) {
-  data_store_.SetReferenceCount(dnode->data_.data_id, 0);
+  Device* device = MinervaSystem::Instance().GetDevice(dnode->data_.device_id);
+  device->FreeData(dnode->data_.data_id);
+  
 }
 
 std::unordered_set<uint64_t> PhysicalEngine::FindStartFrontier(PhysicalDag& dag, const std::vector<uint64_t>& targets) {

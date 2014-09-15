@@ -15,16 +15,16 @@ const int num_mb_per_epoch = 235;
 const string weight_init_files[] = { "w12_init.dat", "w23_init.dat", };
 const string weight_out_files[] = { "w12_trained.dat", "w23_trained.dat", };
 const string bias_out_files[] = { "b2_trained.dat", "b3_trained.dat" };
-const string train_data_file = "data/mnist/traindata.dat";
-const string train_label_file = "data/mnist/trainlabel.dat";
-const string test_data_file = "data/mnist/testdata.dat";
-const string test_label_file = "data/mnist/testlabel.dat";
+const string train_data_file = "/home/serailhydra/data/mnist/traindata.dat";
+const string train_label_file = "/home/serailhydra/data/mnist/trainlabel.dat";
+const string test_data_file = "/home/serailhydra/data/mnist/testdata.dat";
+const string test_label_file = "/home/serailhydra/data/mnist/testlabel.dat";
 
 const int l1 = 784, l2 = 256, l3 = 10;
-const int l1parts = 2, l2parts = 2, l3parts = 1;
-const NVector<Scale> l1_part_shape = Scale{l1}.EquallySplit({l1parts});
-const NVector<Scale> l2_part_shape = Scale{l2}.EquallySplit({l2parts});
-const NVector<Scale> l3_part_shape = Scale{l3}.EquallySplit({l3parts});
+const int l1parts = 1, l2parts = 1, l3parts = 1;
+const NVector<Scale> l1_part_shape = Scale{1}.EquallySplit({l1parts});
+const NVector<Scale> l2_part_shape = Scale{1}.EquallySplit({l2parts});
+const NVector<Scale> l3_part_shape = Scale{1}.EquallySplit({l3parts});
 NArray w12, w23, b2, b3;
 
 void GenerateInitWeight() {
@@ -86,8 +86,8 @@ int main(int argc, char** argv) {
   }
 
   cout << "Training procedure:" << endl;
-  OneFileMBLoader train_data_loader(train_data_file, {l1});
-  OneFileMBLoader train_label_loader(train_label_file, {l3});
+  OneFileMBLoader train_data_loader(train_data_file, {1});
+  OneFileMBLoader train_label_loader(train_label_file, {1});
   train_data_loader.set_partition_shapes_per_sample(l1_part_shape);
   train_label_loader.set_partition_shapes_per_sample(l3_part_shape);
   for(int epoch = 0; epoch < numepochs; ++epoch) {

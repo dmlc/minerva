@@ -8,7 +8,7 @@ namespace minerva {
 class PhysicalComputeFn;
 
 struct PhysicalData {
-  PhysicalData(): extern_rc(0), data_id(0), mapped_to_lnode(false), mapped_lnid(0) {
+  PhysicalData(): extern_rc(0), data_id(0), device_id(0), mapped_to_lnode(false), mapped_lnid(0) {
   }
   Scale size, offset, offset_index;
   int extern_rc;
