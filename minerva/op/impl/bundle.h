@@ -2,6 +2,7 @@
 #include <iostream>
 #include <map>
 #include "basic.h"
+#include "op/impl/cuda.h"
 #include "impl.h"
 
 namespace minerva {
@@ -21,10 +22,10 @@ void NO_IMPL(A1&, A2&, A3&, const A4&) {
   std::cout << "No implementation" << std::endl;
 }
 
-INSTALL_COMPUTE_FN(ArithmeticClosure, basic::Arithmetic, NO_IMPL, NO_IMPL);
+INSTALL_COMPUTE_FN(ArithmeticClosure, basic::Arithmetic, NO_IMPL, cuda::Arithmetic);
 INSTALL_COMPUTE_FN(ArithmeticConstClosure, basic::ArithmeticConst, NO_IMPL, NO_IMPL);
 INSTALL_COMPUTE_FN(ElewiseClosure, basic::Elewise, NO_IMPL, NO_IMPL);
-INSTALL_COMPUTE_FN(MatMultClosure, basic::MatMult, NO_IMPL, NO_IMPL);
+INSTALL_COMPUTE_FN(MatMultClosure, basic::MatMult, NO_IMPL, cuda::MatMult);
 INSTALL_COMPUTE_FN(TransposeClosure, basic::Transpose, NO_IMPL, NO_IMPL);
 INSTALL_COMPUTE_FN(ReductionClosure, basic::Reduction, NO_IMPL, NO_IMPL);
 INSTALL_COMPUTE_FN(AssembleClosure, basic::Assemble, NO_IMPL, NO_IMPL);

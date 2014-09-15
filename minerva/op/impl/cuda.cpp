@@ -31,5 +31,18 @@ void Arithmetic(DataList& inputs, DataList& outputs, ArithmeticClosure& closure,
 #endif
 }
 
+void MatMult(DataList& inputs, DataList& outputs, MatMultClosure& closure, const CudaRuntimeContext & context) {
+  CHECK_EQ(inputs.size(), 2) << "(matmult) #inputs is wrong!";
+  CHECK_EQ(outputs.size(), 1) << "(matmult) #outputs is wrong!";
+  float* left_data = inputs[0].GetGpuData();
+  float* right_data = inputs[1].GetGpuData();
+  float* res_data = outputs[0].GetGpuData();
+  int m = outputs[0].Size()[0];
+  int n = outputs[0].Size()[1];
+  int o = inputs[0].Size()[1];
+  // ATTENTION: the data is column major !!
+  CudaPerformMatMult(left_data, right_data, res_data, m, n, o, context.handle, context.zero, context.one);
+}
+
 }
 }

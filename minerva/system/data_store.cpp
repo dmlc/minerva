@@ -65,6 +65,23 @@ float* DataStore::GetData(uint64_t id, MemTypes type) {
   return (float*) data_states_[id].data_ptrs[type];
 }
 
+// This function gets CPU data pointer to the chunk pointed by id
+// if it is not stored in CPU memory, we will copy from GPU memory
+float* DataStore::GetCPUData(uint64_t id) {
+	lock_guard<mutex> lck(access_mutex_);
+	CHECK(CheckValidity(id)) << "id=" << id << " was not created!";
+	DataState& ds = data_states_[id];
+	void *& data = ds.data_ptrs[DataStore::CPU];
+	if (data == nullptr)
+	{
+		CHECK_NE(ds.data_ptrs[DataStore::GPU], static_cast<void*>(0)) << "id=" << id << " was not created!";
+		data = malloc(sizeof(float)*ds.length);
+		cudaMemcpy(data, ds.data_ptrs[DataStore::GPU], sizeof(float)*ds.length, cudaMemcpyDeviceToHost);
+	}
+	
+	return (float*)data;
+}
+
 bool DataStore::IncrReferenceCount(uint64_t id, int amount) {
   return DecrReferenceCount(id, -amount);
 }

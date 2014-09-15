@@ -20,6 +20,7 @@ class DataStore {
   uint64_t GenerateDataID();
   void CreateData(uint64_t, MemTypes, size_t len, int rc = 0);
   float* GetData(uint64_t, MemTypes);
+  float* GetCPUData(uint64_t);
   bool ExistData(uint64_t) const;
   void FreeData(uint64_t);
   // return true if the RC is zero afterwards

@@ -195,7 +195,7 @@ void NArray::ToFile(const std::string& filename, const FileFormat& format) {
 }
 
 NArray NArray::LoadFromFile(const Scale& size, const std::string& fname,
-    IFileLoader* loader, const Scale& numparts) {
+  IFileLoader* loader, const Scale& numparts) {
   FileLoaderOp* loader_op = new FileLoaderOp;
   loader_op->closure = {fname, size, loader};
   return NArray::Generate(size, loader_op, numparts);

@@ -163,7 +163,7 @@ float* MinervaSystem::GetValue(NArray& narr) {
   Scale srcstart = Scale::Origin(narr.Size().NumDims());
   for(uint64_t nid : phy_nid) {
     PhysicalData& pdata = physical_dag_.GetDataNode(nid)->data_;
-    float* srcptr = data_store_->GetData(pdata.data_id, DataStore::CPU);
+    float* srcptr = data_store_->GetCPUData(pdata.data_id);
     basic::NCopy(srcptr, pdata.size, srcstart,
         rstptr, narr.Size(), pdata.offset, pdata.size);
   }

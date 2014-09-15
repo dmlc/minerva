@@ -7,6 +7,7 @@ namespace minerva {
 namespace cuda {
 
 void Arithmetic(DataList&, DataList&, ArithmeticClosure&, const CudaRuntimeContext&);
+void MatMult(DataList&, DataList&, MatMultClosure&, const CudaRuntimeContext&);
 
 }
 }
