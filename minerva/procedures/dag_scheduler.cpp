@@ -99,6 +99,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
           ++ri.num_triggers_needed;
           break;
         case NodeState::kCompleted:
+          // TODO Bug
           break;
         default:
           CHECK(false) << "invalid node state of id " << pred->node_id() << " on dependency path";
@@ -129,7 +130,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
 void DagScheduler::OnOperationComplete(uint64_t id) {
   auto node = dag_->GetNode(id);
   auto& ri = rt_info_.At(id);
-  // Change current state and predecessors' reference count
+  // Change current state and predecessors' reference counts
   if (node->Type() == DagNode::NodeType::kOpNode) {
     for (auto pred : node->predecessors_) {
       auto& pred_ri = rt_info_.At(pred->node_id());
