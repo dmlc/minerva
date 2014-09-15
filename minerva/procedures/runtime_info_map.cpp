@@ -11,6 +11,8 @@ ostream& operator<<(ostream& os, NodeState s) {
       return os << "Birth";
     case NodeState::kReady:
       return os << "Ready";
+    case NodeState::kRunning:
+      return os << "Running";
     case NodeState::kCompleted:
       return os << "Completed";
     case NodeState::kDead:
@@ -21,16 +23,21 @@ ostream& operator<<(ostream& os, NodeState s) {
   }
 }
 
+RuntimeInfo::RuntimeInfo() : num_triggers_needed(0), reference_count(0), state(NodeState::kBirth) {
+}
+
 RuntimeInfoMap::RuntimeInfoMap() {
 }
 
 void RuntimeInfoMap::AddNode(uint64_t id) {
-  CHECK(state_sets_[static_cast<int>(NodeState::kBirth)].insert(id).second);
-  CHECK(info_.emplace(id, RuntimeInfo{0, 0, NodeState::kBirth}).second);
+  CHECK_EQ(info_.find(id), info_.end());
+  info_[id];
 }
 
 void RuntimeInfoMap::RemoveNode(uint64_t id) {
-  CHECK_EQ(state_sets_[static_cast<int>(info_.at(id).state)].erase(id), 1);
+  if (info_.at(id).state == NodeState::kDead) {
+    CHECK_EQ(dead_nodes_.erase(id), 1);
+  }
   CHECK_EQ(info_.erase(id), 1);
 }
 
@@ -42,17 +49,13 @@ NodeState RuntimeInfoMap::GetState(uint64_t id) {
   return info_.at(id).state;
 }
 
-void RuntimeInfoMap::ChangeState(uint64_t id, NodeState to) {
-  NodeState old = info_.at(id).state;
-  if (old != to) {
-    info_.at(id).state = to;
-    CHECK_EQ(state_sets_[static_cast<int>(old)].erase(id), 1);
-    CHECK_EQ(state_sets_[static_cast<int>(to)].insert(id), 1);
-  }
+void RuntimeInfoMap::KillNode(uint64_t id) {
+  CHECK_EQ(info_.at(id).state, NodeState::kDead);
+  CHECK_EQ(dead_nodes_.insert(id), 1);
 }
 
-const unordered_set<uint64_t>& RuntimeInfoMap::GetNodesOfState(NodeState s) const {
-  return state_sets_[static_cast<int>(s)];
+unordered_set<uint64_t> RuntimeInfoMap::dead_nodes() {
+  return dead_nodes_;
 }
 
 }  // namespace minerva

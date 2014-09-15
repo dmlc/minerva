@@ -10,9 +10,14 @@
 #include <mutex>
 #include <condition_variable>
 #include <thread>
+#include <atomic>
 
 namespace minerva {
 
+/*
+ * Public methods of DAG scheduler are thread safe,
+ * in the sense of multiple devices and a single user thread.
+ */
 class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<PhysicalDag>, public DeviceListener {
  public:
   DagScheduler(PhysicalDag*);
@@ -26,14 +31,13 @@ class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<Physica
   void OnDeleteNode(DagNode*);
   void OnCreateEdge(DagNode*, DagNode*);
   // Device listener
-  void OnOperationComplete(uint64_t);  // Synchronized
+  void OnOperationComplete(uint64_t);
   // DAG procedure
-  void Process(const std::vector<uint64_t>&);  // Synchronized
+  void Process(const std::vector<uint64_t>&);
 
  private:
   int CalcTotalReferenceCount(PhysicalDataNode*);
   void FreeDataNodeRes(PhysicalDataNode*);
-  std::unordered_set<uint64_t> FindStartFrontier(const std::vector<uint64_t>&);
   // Runtime information
   RuntimeInfoMap rt_info_;
   // Scheduler dispatcher
@@ -41,7 +45,7 @@ class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<Physica
   void DispatcherRoutine();
   std::thread dispatcher_;
   // Evaluation finishing signal
-  int num_nodes_yet_to_finish_;
+  std::atomic<int> num_nodes_yet_to_finish_;
   std::mutex finish_mutex_;
   std::condition_variable finish_cond_;
   DISALLOW_COPY_AND_ASSIGN(DagScheduler);

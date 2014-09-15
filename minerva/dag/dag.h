@@ -20,7 +20,9 @@ class DagNode {
   bool DeleteSucc(DagNode*);
   bool DeletePred(DagNode*);
   virtual NodeType Type() const = 0;
-  uint64_t node_id() const { return node_id_; }
+  uint64_t node_id() const {
+    return node_id_;
+  }
   std::unordered_set<DagNode*> successors_;
   std::unordered_set<DagNode*> predecessors_;
 

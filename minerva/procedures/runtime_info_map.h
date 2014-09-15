@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <mutex>
+#include <atomic>
 #include <iostream>
 #include "common/common.h"
 
@@ -11,17 +12,18 @@ namespace minerva {
 enum class NodeState {
   kBirth = 0,
   kReady,
+  kRunning,
   kCompleted,
   kDead
 };
 
-const int kNumNodeStates = static_cast<int>(NodeState::kDead) + 1;
-
 std::ostream& operator<<(std::ostream&, NodeState);
 
 struct RuntimeInfo {
-  int num_triggers_needed;
-  int reference_count;
+  RuntimeInfo();
+  std::atomic<int> num_triggers_needed;
+  std::atomic<int> reference_count;
+  std::mutex m;
   // `state` should only be modified through `RuntimeInfoMap::ChangeState`
   NodeState state;
 };
@@ -33,13 +35,11 @@ class RuntimeInfoMap {
   void RemoveNode(uint64_t);
   RuntimeInfo& At(uint64_t);
   NodeState GetState(uint64_t);
-  void ChangeState(uint64_t, NodeState);
-  const std::unordered_set<uint64_t>& GetNodesOfState(NodeState) const;
-  // Require manual locking
-  std::recursive_mutex busy_mutex_;
+  void KillNode(uint64_t);
+  std::unordered_set<uint64_t> dead_nodes();
 
  private:
-  std::unordered_set<uint64_t> state_sets_[kNumNodeStates];
+  std::unordered_set<uint64_t> dead_nodes_;
   std::unordered_map<uint64_t, RuntimeInfo> info_;
   DISALLOW_COPY_AND_ASSIGN(RuntimeInfoMap);
 };
