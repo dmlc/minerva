@@ -24,30 +24,12 @@ class Device {
   void FreeData(uint64_t data_id);
 
  protected:
-  std::set<uint64_t> local_data_;
+  std::set<uint64_t>* local_data_;
   DeviceInfo device_info_;
   DataStore* data_store_;
   uint64_t device_id_;
   virtual void CreateData(uint64_t data_id, int size) = 0;
   virtual void Execute_Op(std::vector<DataShard> inputShards, std::vector<DataShard> outputShards, PhysicalOp Op) = 0;
-};
-
-class GpuDevice : public Device {
- public:
-  GpuDevice(uint64_t id, DeviceInfo info) : Device(id, info) {}
-  DeviceTypes Type() const { return GPU_DEVICE; }
-  void CreateData(uint64_t data_id, int size);
-  float* GetData(uint64_t data_id);
-  void Execute_Op(std::vector<DataShard> inputShards, std::vector<DataShard> outputShards, PhysicalOp Op);
-};
-
-class CpuDevice : public Device {
- public:
-  CpuDevice(uint64_t id, DeviceInfo info) : Device(id, info) {}
-  DeviceTypes Type() const { return CPU_DEVICE; }
-  void CreateData(uint64_t data_id, int size);
-  float* GetData(uint64_t data_id);
-  void Execute_Op(std::vector<DataShard> inputShards, std::vector<DataShard> outputShards, PhysicalOp Op);
 };
 
 }

@@ -1,4 +1,6 @@
 #include "device_factory.h"
+#include "cpu_device.h"
+#include "gpu_device.h"
 
 using namespace std;
 

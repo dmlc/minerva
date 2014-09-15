@@ -1,4 +1,5 @@
 #include "device_factory.h"
+#include "cpu_device.h"
 
 using namespace std;
 
@@ -16,13 +17,13 @@ void DeviceFactory::Reset() {
   allocated_ = 0;
 }
 
-DeviceInfo DeviceFactory::CreateCPUDevice() {
+uint64_t DeviceFactory::CreateCPUDevice() {
   DeviceInfo result;
-  InsertCPUDevice(allocated_++, result);
-  return result;
+  InsertCPUDevice(allocated_, result);
+  return allocated_++;
 }
 
-DeviceInfo DeviceFactory::CreateGPUDevice(int gid) {
+uint64_t DeviceFactory::CreateGPUDevice(int gid) {
   DeviceInfo result;
   result.gpu_list.push_back(gid);
   result.num_streams.push_back(1);
@@ -30,7 +31,7 @@ DeviceInfo DeviceFactory::CreateGPUDevice(int gid) {
   return allocated_++;
 }
 
-DeviceInfo DeviceFactory::CreateGPUDevice(int gid, int num_stream) {
+uint64_t DeviceFactory::CreateGPUDevice(int gid, int num_stream) {
   DeviceInfo result;
   result.gpu_list.push_back(gid);
   result.num_streams.push_back(num_stream);
