@@ -47,9 +47,7 @@ private:
   std::vector<cudaStream_t> streams_;
   std::vector<cublasHandle_t> cublas_handles_;
   int stream_ptr_;
-  const static int num_streams_ = 16;
-  float * gpu_buffer_one_;
-  float * gpu_buffer_zero_;
+  const static int num_streams_ = 1;
 };
 
 class CpuDevice : public Device {

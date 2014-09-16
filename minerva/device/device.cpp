@@ -45,8 +45,8 @@ void Device::Execute(uint64_t nid, std::vector<PhysicalData> inputs, std::vector
     if (local_data_.find(data_id) == local_data_.end()) { // data not found in this device
       uint64_t input_device_id = input->device_id;
       int size = input->size.Prod();
-      CreateData(data_id + 10000, size);
-      float* local_pointer = this->GetData(data_id + 10000);
+      CreateData(data_id, size);
+      float* local_pointer = this->GetData(data_id);
       float* remote_pointer = MinervaSystem::Instance().GetDevice(input_device_id)->GetData(data_id);
       CopyData(local_pointer, remote_pointer, size*sizeof(float));
       DLOG(INFO) << "Data copy from device " << input_device_id << " to device " << device_id_;
@@ -81,14 +81,7 @@ GpuDevice::GpuDevice(uint64_t id, DeviceInfo info)
     cudaStreamCreate(&streams_[i]);
     cublasCreate(&cublas_handles_[i]);
     cublasSetStream(cublas_handles_[i], streams_[i]);
-	cublasSetPointerMode(cublas_handles_[i], CUBLAS_POINTER_MODE_DEVICE);
   }
-  cudaMalloc((void**)&gpu_buffer_one_, sizeof(float));
-  float one = 1.0;
-  cudaMemcpy(gpu_buffer_one_, &one, sizeof(float), cudaMemcpyHostToDevice);
-  cudaMalloc((void**)&gpu_buffer_zero_, sizeof(float));
-  float zero = 1.0;
-  cudaMemcpy(gpu_buffer_zero_, &zero, sizeof(float), cudaMemcpyHostToDevice);  
 }
 
 GpuDevice::~GpuDevice() {
@@ -97,8 +90,6 @@ GpuDevice::~GpuDevice() {
     cublasDestroy(cublas_handles_[i]);
     cudaStreamDestroy(streams_[i]);
   }
-  cudaFree(gpu_buffer_one_);
-  cudaFree(gpu_buffer_zero_);
 }
 
 void GpuDevice::CreateData(uint64_t data_id, int size) {
@@ -133,9 +124,11 @@ void GpuDevice::Execute_Op(std::vector<DataShard> inputShards, std::vector<DataS
   cxt.impl_type = ImplType::kCuda;
   cxt.stream = streams_[stream_ptr_];
   cxt.handle = cublas_handles_[stream_ptr_];
-  cxt.one = gpu_buffer_one_;
-  cxt.zero = gpu_buffer_zero_;
   stream_ptr_++;
+  if (stream_ptr_ == num_streams_)
+  {
+    stream_ptr_ = 0; 
+  }
   Op.compute_fn->Execute(inputShards, outputShards, cxt);
 #endif
 }
