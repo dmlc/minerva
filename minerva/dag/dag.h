@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <initializer_list>
 #include <vector>
+#include <mutex>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -15,29 +16,27 @@ class DagNode {
     kDataNode
   };
   virtual ~DagNode();
-  void AddParent(DagNode*);
-  void AddParents(std::initializer_list<DagNode*>);
-  bool DeleteSucc(DagNode*);
-  bool DeletePred(DagNode*);
+  int AddParent(DagNode*);
   virtual NodeType Type() const = 0;
   uint64_t node_id() const {
     return node_id_;
   }
   std::unordered_set<DagNode*> successors_;
   std::unordered_set<DagNode*> predecessors_;
+  std::mutex iterator_busy_;
 
  protected:
-  DagNode(uint64_t id): node_id_(id) {}
+  DagNode(uint64_t id) : node_id_(id) {}
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(DagNode);
   uint64_t node_id_;
+  DISALLOW_COPY_AND_ASSIGN(DagNode);
 };
 
 template<typename Data, typename Op>
 class DataNode : public DagNode {
  public:
-  DataNode(uint64_t id): DagNode(id) {}
+  DataNode(uint64_t id) : DagNode(id) {}
   ~DataNode();
   NodeType Type() const { return DagNode::NodeType::kDataNode; }
   Data data_;
@@ -49,7 +48,7 @@ class DataNode : public DagNode {
 template<typename Data, typename Op>
 class OpNode : public DagNode {
  public:
-  OpNode(uint64_t id): DagNode(id) {}
+  OpNode(uint64_t id) : DagNode(id) {}
   ~OpNode();
   NodeType Type() const { return DagNode::NodeType::kOpNode; }
   Op op_;
@@ -78,11 +77,7 @@ class DagMonitor {
  public:
   virtual void OnCreateNode(DagNode*) = 0;
   virtual void OnDeleteNode(DagNode*);
-  virtual void OnCreateDataNode(typename DagType::DNode*) {}
-  virtual void OnCreateOpNode(typename DagType::ONode*) {}
-  virtual void OnDeleteDataNode(typename DagType::DNode*) {}
-  virtual void OnDeleteOpNode(typename DagType::ONode*) {}
-  virtual void OnCreateEdge(DagNode*, DagNode*) {}
+  virtual void OnCreateEdge(DagNode*, DagNode*);
 };
 
 template<typename Data, typename Op>

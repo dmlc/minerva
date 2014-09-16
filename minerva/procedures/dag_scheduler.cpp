@@ -19,6 +19,7 @@ void DagScheduler::WaitForFinish() {
 }
 
 void DagScheduler::GCNodes() {
+  WaitForFinish();
   auto dead_set = rt_info_.dead_nodes();
   DLOG(INFO) << dead_set.size() << " nodes to be GCed";
   for (auto id :dead_set) {
@@ -156,14 +157,17 @@ void DagScheduler::OnOperationComplete(uint64_t id) {
     ri.state = NodeState::kCompleted;
   }
   // Trigger successors
-  for (auto succ : node->successors_) {
-    auto& ri = rt_info_.At(succ->node_id());
-    if (ri.state == NodeState::kReady) {
-      if (--ri.num_triggers_needed == 0) {
-        DLOG(INFO) << "trigger node id " << succ->node_id();
-        ri.state = NodeState::kRunning;
-        ++num_nodes_yet_to_finish_;
-        dispatcher_queue_.Push(succ->node_id());
+  {
+    lock_guard<mutex> lck(node->iterator_busy_);
+    for (auto succ : node->successors_) {
+      auto& ri = rt_info_.At(succ->node_id());
+      if (ri.state == NodeState::kReady) {
+        if (--ri.num_triggers_needed == 0) {
+          DLOG(INFO) << "trigger node id " << succ->node_id();
+          ri.state = NodeState::kRunning;
+          ++num_nodes_yet_to_finish_;
+          dispatcher_queue_.Push(succ->node_id());
+        }
       }
     }
   }
@@ -176,6 +180,7 @@ void DagScheduler::OnOperationComplete(uint64_t id) {
 }
 
 int DagScheduler::CalcTotalReferenceCount(PhysicalDataNode* node) {
+  CHECK_NOTNULL(node);
   int count = node->data_.extern_rc;
   for (auto succ : node->successors_) {
     switch (rt_info_.GetState(succ->node_id())) {
@@ -192,6 +197,7 @@ int DagScheduler::CalcTotalReferenceCount(PhysicalDataNode* node) {
 }
 
 void FreeDataNodeRes(PhysicalDataNode* node) {
+  CHECK_NOTNULL(node);
   // TODO Notify device to free data storage
 }
 

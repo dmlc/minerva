@@ -1,5 +1,6 @@
 #include <sstream>
 #include <glog/logging.h>
+#include <mutex>
 
 namespace minerva {
 
@@ -13,35 +14,11 @@ OpNode<D, O>::~OpNode() {
   DagHelper<D, O>::FreeOp(op_);
 }
 
-template<typename DagType>
-void DagMonitor<DagType>::OnCreateNode(DagNode* node) {
-  switch (node->Type()) {
-    case DagNode::NodeType::kOpNode:
-      OnCreateOpNode(dynamic_cast<typename DagType::ONode*>(node));
-      break;
-    case DagNode::NodeType::kDataNode:
-      OnCreateDataNode(dynamic_cast<typename DagType::DNode*>(node));
-      break;
-  };
-}
-
-template<typename DagType>
-void DagMonitor<DagType>::OnDeleteNode(DagNode* node) {
-  switch (node->Type()) {
-    case DagNode::NodeType::kOpNode:
-      OnDeleteOpNode(dynamic_cast<typename DagType::ONode*>(node));
-      break;
-    case DagNode::NodeType::kDataNode:
-      OnDeleteDataNode(dynamic_cast<typename DagType::DNode*>(node));
-      break;
-  };
-}
-
 template<typename D, typename O>
 typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
   DNode* ret = new DNode(NewIndex());
   ret->data_ = data;
-  index_to_node_.insert(std::make_pair(ret->node_id(), ret));
+  CHECK_EQ(index_to_node_.insert(std::make_pair(ret->node_id(), ret)), 1);
   for (auto mon : monitors_) {
     mon->OnCreateNode(ret);
   }
@@ -55,18 +32,20 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
     const O& op) {
   ONode* ret = new ONode(NewIndex());
   ret->op_ = op;
-  index_to_node_.insert(std::make_pair(ret->node_id(), ret));
+  CHECK_EQ(index_to_node_.insert(std::make_pair(ret->node_id(), ret)), 1);
   for (auto mon : monitors_) {
     mon->OnCreateNode(ret);
   }
   for (auto in : inputs) {
-    ret->AddParent(in);
-    for (auto mon : monitors_) {
-      mon->OnCreateEdge(in, ret);
+    std::lock_guard<std::mutex>> lck(in->iterator_busy_);
+    if (ret->AddParent(in)) {
+      for (auto mon : monitors_) {
+        mon->OnCreateEdge(in, ret);
+      }
     }
   }
-  for(auto out : outputs) {
-    out->AddParent(ret);
+  for (auto out : outputs) {
+    CHECK(out->AddParent(ret));
     for (auto mon : monitors_) {
       mon->OnCreateEdge(ret, out);
     }
@@ -78,19 +57,17 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
 
 template<typename D, typename O>
 void Dag<D, O>::DeleteNode(uint64_t id) {
-  DagNode* node = GetNode(id);
+  auto node = GetNode(id);
   for (auto mon : monitors_) {
     mon->OnDeleteNode(node);
   }
-  index_to_node_.erase(id);
+  CHECK_EQ(index_to_node_.erase(id), 1);
   delete node;
 }
 
 template<typename D, typename O>
 DagNode* Dag<D, O>::GetNode(uint64_t nid) const {
-  auto node = index_to_node_.find(nid);
-  CHECK_NE(node, index_to_node_.end()) << "nid=" << nid << " not found in dag!";
-  return node->second;
+  return index_to_node_.at(nid)->second;
 }
 
 template<typename D, typename O>

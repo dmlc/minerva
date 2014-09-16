@@ -1,5 +1,6 @@
 #include "dag.h"
 #include <algorithm>
+#include <glog/logging.h>
 
 using namespace std;
 
@@ -7,32 +8,19 @@ namespace minerva {
 
 DagNode::~DagNode() {
   for (auto succ : successors_) {
-    succ->predecessors_.erase(this);
+    CHECK_EQ(succ->predecessors_.erase(this), 1);
   }
   for (auto pred : predecessors_) {
-    pred->successors_.erase(this);
+    CHECK_EQ(pred->successors_.erase(this), 1);
   }
 }
 
-void DagNode::AddParent(DagNode* p) {
-  p->successors_.insert(this);
-  predecessors_.insert(p);
+int DagNode::AddParent(DagNode* p) {
+  auto pred_insert_success = p->successors_.insert(this).second;
+  auto this_insert_success = predecessors_.insert(p).second;
+  CHECK_EQ(pred_insert_success, this_insert_success);
+  return pred_insert_success;
 }
 
-void DagNode::AddParents(initializer_list<DagNode*> list) {
-  for (auto i : list) {
-    AddParent(i);
-  }
-}
+}  // namespace minerva
 
-bool DagNode::DeleteSucc(DagNode* p) {
-  successors_.erase(p);
-  return successors_.empty();
-}
-
-bool DagNode::DeletePred(DagNode* p) {
-  predecessors_.erase(p);
-  return predecessors_.empty();
-}
-
-}
