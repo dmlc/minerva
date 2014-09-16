@@ -1,5 +1,6 @@
 #pragma once
 #include "op/physical.h"
+#include "op/physical_fn.h"
 #include "op/closure.h"
 #include "op/impl/bundle.h"
 #include "device/device_info.h"

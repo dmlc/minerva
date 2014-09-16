@@ -1,6 +1,6 @@
 #include "basic.h"
 #include "common/nvector.h"
-
+#include "op/closure.h"
 #include <cmath>
 #include <glog/logging.h>
 #include <algorithm>
@@ -18,22 +18,22 @@ void Arithmetic(DataList& inputs, DataList& outputs, ArithmeticClosure& closure)
   float* res_data = outputs[0].GetCpuData();
   int length = outputs[0].Size().Prod();
   switch(closure.type) {
-    case ADD:
+    case ArithmeticType::kAdd:
       for (int i = 0; i < length; ++i) {
         res_data[i] = left_data[i] + right_data[i];
       }
       break;
-    case SUB:
+    case ArithmeticType::kSub:
       for (int i = 0; i < length; ++i) {
         res_data[i] = left_data[i] - right_data[i];
       }
       break;
-    case MULT:
+    case ArithmeticType::kMult:
       for (int i = 0; i < length; ++i) {
         res_data[i] = left_data[i] * right_data[i];
       }
       break;
-    case DIV:
+    case ArithmeticType::kDiv:
       for (int i = 0; i < length; ++i) {
         res_data[i] = left_data[i] / right_data[i];
       }
@@ -49,45 +49,45 @@ void ArithmeticConst(DataList& inputs, DataList& outputs, ArithmeticConstClosure
   float* res_data = outputs[0].GetCpuData();
   int length = outputs[0].Size().Prod();
   switch(closure.type) {
-    case ADD:
-      if(closure.side == 0) {// const on left
+    case ArithmeticType::kAdd:
+      if(closure.side == 0) {  // const on left
         for (int i = 0; i < length; ++i) {
           res_data[i] = val + in_data[i];
         }
-      } else {// const on right
+      } else {  // const on right
         for (int i = 0; i < length; ++i) {
           res_data[i] = in_data[i] + val;
         }
       }
       break;
-    case SUB:
-      if(closure.side == 0) {// const on left
+    case ArithmeticType::kSub:
+      if(closure.side == 0) {  // const on left
         for (int i = 0; i < length; ++i) {
           res_data[i] = val - in_data[i];
         }
-      } else {// const on right
+      } else {  // const on right
         for (int i = 0; i < length; ++i) {
           res_data[i] = in_data[i] - val;
         }
       }
       break;
-    case MULT:
-      if(closure.side == 0) {// const on left
+    case ArithmeticType::kMult:
+      if(closure.side == 0) {  // const on left
         for (int i = 0; i < length; ++i) {
           res_data[i] = val * in_data[i];
         }
-      } else {// const on right
+      } else {  // const on right
         for (int i = 0; i < length; ++i) {
           res_data[i] = in_data[i] * val;
         }
       }
       break;
-    case DIV:
-      if(closure.side == 0) {// const on left
+    case ArithmeticType::kDiv:
+      if(closure.side == 0) {  // const on left
         for (int i = 0; i < length; ++i) {
           res_data[i] = val / in_data[i];
         }
-      } else {// const on right
+      } else {  // const on right
         for (int i = 0; i < length; ++i) {
           res_data[i] = in_data[i] / val;
         }
@@ -103,22 +103,22 @@ void Elewise(DataList& inputs, DataList& outputs, ElewiseClosure& closure) {
   float* res_data = outputs[0].GetCpuData();
   int length = outputs[0].Size().Prod();
   switch(closure.type) {
-    case EXP:
+    case ElewiseType::kExp:
       for (int i = 0; i < length; ++i) {
         res_data[i] = exp(in_data[i]);
       }
       break;
-    case LN:
+    case ElewiseType::kLn:
       for (int i = 0; i < length; ++i) {
         res_data[i] = log(in_data[i]);
       }
       break;
-    case SIGMOID:
+    case ElewiseType::kSigmoid:
       for (int i = 0; i < length; ++i) {
         res_data[i] = 1 / (1 + exp(-in_data[i]));
       }
       break;
-    case NEGATIVE:
+    case ElewiseType::kNegative:
       for (int i = 0; i < length; ++i) {
         res_data[i] = -in_data[i];
       }
@@ -177,10 +177,10 @@ void Reduction(DataList& inputs, DataList& outputs, ReductionClosure& closure) {
       float tmp2 = in_data[in_range.Flatten(cur)];
       // TODO Moving switch out of loop to optimize
       switch (closure.type) {
-        case SUM:
+        case ReductionType::kSum:
           tmp += tmp2;
           break;
-        case MAX:
+        case ReductionType::kMax:
           if (tmp < tmp2) {
             tmp = tmp2;
           }
@@ -274,16 +274,16 @@ void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& 
     size_t flatten = normalizee_range.Flatten(iterator);
     for (size_t i = 0; i < single_iteration_size; ++i) {
       switch (closure.type) {
-        case ADD:
+        case ArithmeticType::kAdd:
           res_data[flatten + i] += cur;
           break;
-        case SUB:
+        case ArithmeticType::kSub:
           res_data[flatten + i] -= cur;
           break;
-        case MULT:
+        case ArithmeticType::kMult:
           res_data[flatten + i] *= cur;
           break;
-        case DIV:
+        case ArithmeticType::kDiv:
           res_data[flatten + i] /= cur;
           break;
       }
