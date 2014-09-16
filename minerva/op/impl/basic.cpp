@@ -356,7 +356,7 @@ void NCopy(float* src, const Scale& srcsize, const Scale& srcstart,
     ++copytimes;
     // incr copy_start
     copystart = copystart + percopysize - 1; // similar to "end = start + len - 1"
-  } while(Scale::IncrOne(copystart, copysize));
+  } while(copystart.IncrOne(copysize));
   VLOG(1) << "Copy times in NCopy:" << copytimes;
 }
 

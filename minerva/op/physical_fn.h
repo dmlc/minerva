@@ -2,27 +2,26 @@
 #include "op/basic_fn.h"
 #include "op/closure_trait.h"
 #include "op/physical.h"
-#include "op/device_info_trait.h"
+#include "op/device_id_trait.h"
 #include "op/context.h"
 
 namespace minerva {
 
 class DataShard {
  public:
-  DataShard(const PhysicalData&);
-  DataShard(float* data, Scale size, Scale offset);
+  DataShard(float* data, const Scale& size);
   // Getters
-  Scale Size();
+  Scale size();
   float* data();
 
  private:
   float* data_;
-  Scale size_, offset_;
+  Scale size_;
 };
 
 typedef std::vector<DataShard> DataList;
 
-class PhysicalComputeFn : public BasicFn, public DeviceInfoTrait {
+class PhysicalComputeFn : public BasicFn, public DeviceIdTrait {
  public:
   virtual void Execute(const DataList&, const DataList&, const Context&) = 0;
 };

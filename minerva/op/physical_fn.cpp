@@ -6,14 +6,10 @@ using namespace std;
 
 namespace minerva {
 
-DataShard::DataShard(const PhysicalData& d) {
-  size_ = d.size;
+DataShard::DataShard(float* data, const Scale& size): data_(data), size_(size) {
 }
 
-DataShard::DataShard(float* data, Scale size, Scale offset): data_(data), size_(size), offset_(offset) {
-}
-
-Scale DataShard::Size() {
+Scale DataShard::size() {
   return size_;
 }
 
@@ -21,5 +17,5 @@ float* DataShard::data() {
   return data_;
 }
 
-}
+}  // namespace minerva
 

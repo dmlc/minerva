@@ -1,6 +1,5 @@
 #pragma once
 #include <iostream>
-
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #endif

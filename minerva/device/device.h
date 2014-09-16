@@ -8,10 +8,7 @@
 
 namespace minerva {
 
-class MinervaSystem;
-
 class Device {
-  friend class Inspector<MinervaSystem>;
  public:
   enum DeviceTypes {
    CPU_DEVICE = 0,
@@ -51,3 +48,4 @@ class CpuDevice : public Device {
 };
 
 }
+
