@@ -1,5 +1,6 @@
 #include "procedures/dag_scheduler.h"
 #include <queue>
+#include <list>
 #include <glog/logging.h>
 
 using namespace std;
@@ -70,6 +71,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
   // Nodes in `queue` should all have state `kBirth`
   queue<uint64_t> queue;
   for (auto id : targets) {
+    // `targets` should consist of only data nodes
     CHECK_EQ(dag_->GetNode(id)->Type(), DagNode::NodeType::kDataNode);
     switch (rt_info_.GetState(id)) {
       case NodeState::kBirth:
@@ -87,7 +89,13 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
     auto node = dag_->GetNode(node_id);
     auto& ri = rt_info_.At(node_id);
     queue.pop();
-    lock_guard<mutex> lck(ri.m);  // Avoid premature trigger by predecessor
+    list<lock_guard<mutex>> lcks;
+    if (node->Type() == DagNode::NodeType::kOpNode) {
+      for (auto pred : node->predecessors_) {
+        // Lock preceding data nodes to prevent premature trigger
+        lcks.emplace_back(rt_info_.At(pred->node_id()).m);
+      }
+    }
     ri.state = NodeState::kReady;
     for (auto pred : node->predecessors_) {
       switch (rt_info_.GetState(pred->node_id())) {
@@ -99,7 +107,6 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
           ++ri.num_triggers_needed;
           break;
         case NodeState::kCompleted:
-          // TODO Bug
           break;
         default:
           CHECK(false) << "invalid node state of id " << pred->node_id() << " on dependency path";
@@ -130,6 +137,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
 void DagScheduler::OnOperationComplete(uint64_t id) {
   auto node = dag_->GetNode(id);
   auto& ri = rt_info_.At(id);
+  lock_guard<mutex> lck(ri.m);
   // Change current state and predecessors' reference counts
   if (node->Type() == DagNode::NodeType::kOpNode) {
     for (auto pred : node->predecessors_) {
@@ -150,7 +158,6 @@ void DagScheduler::OnOperationComplete(uint64_t id) {
   // Trigger successors
   for (auto succ : node->successors_) {
     auto& ri = rt_info_.At(succ->node_id());
-    lock_guard<mutex> lck(ri.m);
     if (ri.state == NodeState::kReady) {
       if (--ri.num_triggers_needed == 0) {
         DLOG(INFO) << "trigger node id " << succ->node_id();
