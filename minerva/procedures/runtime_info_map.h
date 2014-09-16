@@ -23,7 +23,6 @@ struct RuntimeInfo {
   RuntimeInfo();
   std::atomic<int> num_triggers_needed;
   std::atomic<int> reference_count;
-  std::mutex m;
   // `state` should only be modified through `RuntimeInfoMap::ChangeState`
   NodeState state;
 };

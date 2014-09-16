@@ -11,6 +11,10 @@ DagScheduler::DagScheduler(PhysicalDag* d) : dispatcher_(&DagScheduler::Dispatch
   dag_ = d;
 }
 
+DagScheduler::~DagScheduler() {
+  dispatcher_queue_.SignalForKill();
+}
+
 void DagScheduler::WaitForFinish() {
   unique_lock<mutex> lck(finish_mutex_);
   while (num_nodes_yet_to_finish_) {
@@ -19,7 +23,7 @@ void DagScheduler::WaitForFinish() {
 }
 
 void DagScheduler::GCNodes() {
-  WaitForFinish();
+  lock_guard<recursive_mutex> lck(m_);
   auto dead_set = rt_info_.dead_nodes();
   DLOG(INFO) << dead_set.size() << " nodes to be GCed";
   for (auto id :dead_set) {
@@ -68,8 +72,17 @@ void DagScheduler::OnCreateEdge(DagNode* from, DagNode*) {
   }
 }
 
+void DagScheduler::OnBeginModify() {
+  m_.lock();
+}
+
+void DagScheduler::OnFinishModify() {
+  m_.unlock();
+}
+
 void DagScheduler::Process(const vector<uint64_t>& targets) {
   // Nodes in `queue` should all have state `kBirth`
+  lock_guard<recursive_mutex> lck(m_);
   queue<uint64_t> queue;
   for (auto id : targets) {
     // `targets` should consist of only data nodes
@@ -90,13 +103,6 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
     auto node = dag_->GetNode(node_id);
     auto& ri = rt_info_.At(node_id);
     queue.pop();
-    list<lock_guard<mutex>> lcks;
-    if (node->Type() == DagNode::NodeType::kOpNode) {
-      for (auto pred : node->predecessors_) {
-        // Lock preceding data nodes to prevent premature trigger
-        lcks.emplace_back(rt_info_.At(pred->node_id()).m);
-      }
-    }
     ri.state = NodeState::kReady;
     for (auto pred : node->predecessors_) {
       switch (rt_info_.GetState(pred->node_id())) {
@@ -130,53 +136,13 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
       DLOG(INFO) << "starting node id " << node_id;
       ri.state = NodeState::kRunning;
       ++num_nodes_yet_to_finish_;
-      dispatcher_queue_.Push(node_id);
+      dispatcher_queue_.Push({TaskType::kToRun, node_id});
     }
   }
 }
 
 void DagScheduler::OnOperationComplete(uint64_t id) {
-  auto node = dag_->GetNode(id);
-  auto& ri = rt_info_.At(id);
-  lock_guard<mutex> lck(ri.m);
-  // Change current state and predecessors' reference counts
-  if (node->Type() == DagNode::NodeType::kOpNode) {
-    for (auto pred : node->predecessors_) {
-      auto& pred_ri = rt_info_.At(pred->node_id());
-      // Reference count decreasing to zero, not able to recover access anymore
-      if (--pred_ri.reference_count == 0) {
-        FreeDataNodeRes(dynamic_cast<PhysicalDataNode*>(pred));
-        // No locks needed, since `reference_count` cannot be decreased to 0 multiple times
-        pred_ri.state = NodeState::kDead;
-        rt_info_.KillNode(pred->node_id());
-      }
-    }
-    ri.state = NodeState::kDead;
-    rt_info_.KillNode(id);
-  } else {
-    ri.state = NodeState::kCompleted;
-  }
-  // Trigger successors
-  {
-    lock_guard<mutex> lck(node->iterator_busy_);
-    for (auto succ : node->successors_) {
-      auto& ri = rt_info_.At(succ->node_id());
-      if (ri.state == NodeState::kReady) {
-        if (--ri.num_triggers_needed == 0) {
-          DLOG(INFO) << "trigger node id " << succ->node_id();
-          ri.state = NodeState::kRunning;
-          ++num_nodes_yet_to_finish_;
-          dispatcher_queue_.Push(succ->node_id());
-        }
-      }
-    }
-  }
-  {
-    lock_guard<mutex> lck(finish_mutex_);
-    if (--num_nodes_yet_to_finish_ == 0) {
-      finish_cond_.notify_all();
-    }
-  }
+  dispatcher_queue_.Push({TaskType::kToComplete, id});
 }
 
 int DagScheduler::CalcTotalReferenceCount(PhysicalDataNode* node) {
@@ -202,11 +168,56 @@ void FreeDataNodeRes(PhysicalDataNode* node) {
 }
 
 void DagScheduler::DispatcherRoutine() {
-  uint64_t node_id;
+  pair<TaskType, uint64_t> task;
   // Pop queue while not exiting
-  while (!dispatcher_queue_.Pop(node_id)) {
-    DLOG(INFO) << "dispatching node id " << node_id;
-    // TODO dispatch to some device
+  while (!dispatcher_queue_.Pop(task)) {
+    lock_guard<recursive_mutex> lck(m_);
+    auto node_id = task.second;
+    auto node = dag_->GetNode(node_id);
+    auto& ri = rt_info_.At(node_id);
+    if (task.first == TaskType::kToRun) {  // Now task to dispatch
+      DLOG(INFO) << "dispatching node id " << node_id;
+      // TODO dispatch to some device
+    } else {  // Task completed
+      DLOG(INFO) << "finishing node id " << node_id;
+      // Change current state and predecessors' reference counts
+      if (node->Type() == DagNode::NodeType::kOpNode) {
+        for (auto pred : node->predecessors_) {
+          auto& pred_ri = rt_info_.At(pred->node_id());
+          // Reference count decreasing to zero, not able to recover access anymore
+          if (--pred_ri.reference_count == 0) {
+            FreeDataNodeRes(dynamic_cast<PhysicalDataNode*>(pred));
+            // No locks needed, since `reference_count` cannot be decreased to 0 multiple times
+            pred_ri.state = NodeState::kDead;
+            rt_info_.KillNode(pred->node_id());
+          }
+        }
+        ri.state = NodeState::kDead;
+        rt_info_.KillNode(node_id);
+      } else {
+        ri.state = NodeState::kCompleted;
+      }
+      // Trigger successors
+      {
+        for (auto succ : node->successors_) {
+          auto& ri = rt_info_.At(succ->node_id());
+          if (ri.state == NodeState::kReady) {
+            if (--ri.num_triggers_needed == 0) {
+              DLOG(INFO) << "trigger node id " << succ->node_id();
+              ri.state = NodeState::kRunning;
+              ++num_nodes_yet_to_finish_;
+              dispatcher_queue_.Push({TaskType::kToRun, succ->node_id()});
+            }
+          }
+        }
+      }
+      {
+        lock_guard<mutex> lck(finish_mutex_);
+        if (--num_nodes_yet_to_finish_ == 0) {
+          finish_cond_.notify_all();
+        }
+      }
+    }
   }
 }
 

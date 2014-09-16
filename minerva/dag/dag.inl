@@ -5,22 +5,18 @@
 namespace minerva {
 
 template<typename D, typename O>
-DataNode<D, O>::~DataNode() {
-  DagHelper<D, O>::FreeData(data_);
-}
-
-template<typename D, typename O>
-OpNode<D, O>::~OpNode() {
-  DagHelper<D, O>::FreeOp(op_);
-}
-
-template<typename D, typename O>
 typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
+  for (auto mon : monitors_) {
+    mon->OnBeginModify();
+  }
   DNode* ret = new DNode(NewIndex());
   ret->data_ = data;
   CHECK_EQ(index_to_node_.insert(std::make_pair(ret->node_id(), ret)), 1);
   for (auto mon : monitors_) {
     mon->OnCreateNode(ret);
+  }
+  for (auto mon : monitors_) {
+    mon->OnFinishModify();
   }
   return ret;
 }
@@ -30,6 +26,9 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
     const std::vector<DataNode<D, O>*>& inputs,
     const std::vector<DataNode<D, O>*>& outputs,
     const O& op) {
+  for (auto mon : monitors_) {
+    mon->OnBeginModify();
+  }
   ONode* ret = new ONode(NewIndex());
   ret->op_ = op;
   CHECK_EQ(index_to_node_.insert(std::make_pair(ret->node_id(), ret)), 1);
@@ -37,7 +36,6 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
     mon->OnCreateNode(ret);
   }
   for (auto in : inputs) {
-    std::lock_guard<std::mutex>> lck(in->iterator_busy_);
     if (ret->AddParent(in)) {
       for (auto mon : monitors_) {
         mon->OnCreateEdge(in, ret);
@@ -52,17 +50,32 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
   }
   ret->inputs_ = inputs;
   ret->outputs_ = outputs;
+  for (auto mon : monitors_) {
+    mon->OnFinishModify();
+  }
   return ret;
 }
 
 template<typename D, typename O>
 void Dag<D, O>::DeleteNode(uint64_t id) {
+  for (auto mon : monitors_) {
+    mon->OnBeginModify();
+  }
   auto node = GetNode(id);
+  for (auto succ : node->successors_) {
+    CHECK_EQ(succ->predecessors_.erase(node), 1);
+  }
+  for (auto pred : node->predcessors_) {
+    CHECK_EQ(pred->successors_.erase(node), 1);
+  }
   for (auto mon : monitors_) {
     mon->OnDeleteNode(node);
   }
   CHECK_EQ(index_to_node_.erase(id), 1);
   delete node;
+  for (auto mon : monitors_) {
+    mon->OnFinishModify();
+  }
 }
 
 template<typename D, typename O>
@@ -121,5 +134,5 @@ uint64_t Dag<D, O>::NewIndex() {
   return index_counter++;
 }
 
-} // end of namespace minerva
+}  // end of namespace minerva
 
