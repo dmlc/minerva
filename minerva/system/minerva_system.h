@@ -3,7 +3,7 @@
 #include "dag/physical_dag.h"
 #include "procedures/dag_procedure.h"
 #include "narray/narray.h"
-#include "device/device_info.h"
+#include "device/device_factory.h"
 #include "common/inspector.h"
 #include <unordered_set>
 
@@ -19,6 +19,7 @@ class MinervaSystem :
   void Initialize(int* argc, char*** argv);
   void Finalize();
   PhysicalDag& physical_dag() { return physical_dag_; }
+  DeviceFactory& device_factory() { return *device_factory_; }
   PhysicalEngine& physical_engine() { return *physical_engine_; }
 
   float* GetValue(NArray& narr);
@@ -26,10 +27,12 @@ class MinervaSystem :
   void EvalAsync(const std::vector<NArray>& narrs);
   void WaitForEvalFinish();
 
-  void set_device_info(DeviceInfo info);
-  DeviceInfo device_info() const;
-  DeviceInfo CreateGpuDevice(int gid);
-  DeviceInfo CreateGpuDevice(int gid, int num_stream);
+  void set_device_id(uint64_t id);
+  uint64_t device_id() const;
+  uint64_t CreateCPUDevice();
+  uint64_t CreateGPUDevice(int gid);
+  uint64_t CreateGPUDevice(int gid, int num_stream);
+  Device* GetDevice(uint64_t id);
 
  private:
   MinervaSystem();
@@ -41,8 +44,8 @@ class MinervaSystem :
 
   PhysicalEngine* physical_engine_;
 
-  DeviceFactory df_;
-  DeviceInfo device_info_;
+  DeviceFactory* device_factory_;
+  uint64_t device_id_;
 
   std::unordered_set<uint64_t> extern_rc_changed_ldnodes_;
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);

@@ -14,8 +14,7 @@ void FileLoaderOp::Execute(DataList& inputs, DataList& outputs, const Context& c
 }
 
 NVector<Chunk> FileLoaderOp::Expand(const NVector<Scale>& part_sizes) {
-  FileLoaderOp* op = new FileLoaderOp;
-  op->closure = closure;
+  FileLoaderOp* op = new FileLoaderOp(*this);
   const vector<Chunk>& ret_chunks = Chunk::Compute({}, part_sizes.ToVector(), op);
   return NVector<Chunk>(ret_chunks, part_sizes.Size());
 }

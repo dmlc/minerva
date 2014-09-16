@@ -2,7 +2,6 @@
 #include "common/scale.h"
 #include "impl/impl.h"
 #include "context.h"
-#include "device/device_info.h"
 
 namespace minerva {
 
@@ -10,10 +9,10 @@ class PhysicalComputeFn;
 
 struct PhysicalData {
   PhysicalData() {}
-  PhysicalData(const Scale& s, DeviceInfo info, uint64_t id): PhysicalData(s), device_info(info), data_id(id) {}
+  PhysicalData(const Scale& s, uint64_t d, uint64_t id): size(s), device_id(d), data_id(id) {}
   Scale size;
   int extern_rc = 0;
-  DeviceInfo device_info;
+  uint64_t device_id = 0;
   uint64_t data_id = 0;
 };
 

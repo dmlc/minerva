@@ -16,8 +16,7 @@ void ArrayLoaderOp::Execute(DataList& inputs, DataList& outputs, const Context& 
 }
 
 NVector<Chunk> ArrayLoaderOp::Expand(const NVector<Scale>& part_sizes) {
-  ArrayLoaderOp* op = new ArrayLoaderOp;
-  op->closure = closure;
+  ArrayLoaderOp* op = new ArrayLoaderOp(*this);
   return {Chunk::Compute({}, part_sizes.ToVector(), op), part_sizes.Size()};
 }
 

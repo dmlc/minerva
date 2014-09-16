@@ -6,30 +6,30 @@ using namespace std;
 
 namespace minerva {
 
-DataShard::DataShard(const PhysicalData& d): data_info_(d) {
+DataShard::DataShard(const PhysicalData& d) {
+  data_ = MinervaSystem::Instance().data_store().GetData(d.data_id, DataStore::CPU);
+  size_ = d.size;
+  offset_ = d.offset;
 }
 
-DataShard::DataShard(const DataShard& other): data_info_(other.data_info_) {
+DataShard::DataShard(float* data, Scale size, Scale offset): data_(data), size_(size), offset_(offset) {
 }
 
 // return data untransformed (NO memory copy)
 float* DataShard::GetCpuData() {
-  return MinervaSystem::Instance().data_store().GetData(data_info_.data_id, DataStore::CPU);
+  return data_;
 }
 
 float* DataShard::GetGpuData() {
-  return MinervaSystem::Instance().data_store().GetData(data_info_.data_id, DataStore::GPU);
+  return data_;
 }
 
-// return data transformed (may incur memory copy !!!)
-float* DataShard::GetTransformedCpuData() {
-  // TODO
-  return GetCpuData();
+Scale DataShard::Offset() {
+  return offset_;
 }
 
-float* DataShard::GetTransformedGpuData() {
-  // TODO
-  return GetGpuData();
+Scale DataShard::Size() {
+  return size_;
 }
 
 }
