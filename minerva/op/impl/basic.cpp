@@ -193,9 +193,10 @@ void Reduction(DataList& inputs, DataList& outputs, ReductionClosure& closure) {
 
 void Randn(DataList& output, RandnClosure& closure) {
   CHECK_EQ(output.size(), 1) << "wrong number of randn output";
+  srand((unsigned)time(NULL));
   int length = output[0].Size().Prod();
   float* data = output[0].GetCpuData();
-  default_random_engine generator;
+  static default_random_engine generator;
   normal_distribution<float> distribution(closure.mu, closure.var); // TODO only float for now
   for (int i = 0; i < length; ++i) {
     data[i] = distribution(generator);
