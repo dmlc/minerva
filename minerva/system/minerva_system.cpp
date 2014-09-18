@@ -1,8 +1,7 @@
+#include "system/minerva_system.h"
 #include <glog/logging.h>
-#include <gflags/gflags.h>
 #include <cstdlib>
 #include <iostream>
-#include "minerva_system.h"
 #include "common/thread_pool.h"
 #include "op/impl/basic.h"
 #include "dag/dag_printer.h"
@@ -17,7 +16,6 @@ MinervaSystem::~MinervaSystem() {}
 
 void MinervaSystem::Initialize(int* argc, char*** argv) {
   google::InitGoogleLogging((*argv)[0]);
-  gflags::ParseCommandLineFlags(argc, argv, true);
   physical_dag_ = new PhysicalDag();
   dag_scheduler_ = new DagScheduler(physical_dag_);
   device_factory_ = new DeviceFactory();
@@ -28,6 +26,7 @@ void MinervaSystem::Initialize(int* argc, char*** argv) {
 void MinervaSystem::Finalize() {}
 
 float* MinervaSystem::GetValue(NArray& narr) {
+  narr.data_node_
   NVector<uint64_t> phy_nid = expand_engine_->GetPhysicalNodes(narr.data_node_->node_id());
   float* rstptr = new float[narr.Size().Prod()];
   Scale srcstart = Scale::Origin(narr.Size().NumDims());

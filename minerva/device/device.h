@@ -1,51 +1,74 @@
 #pragma once
 #include <vector>
+#include <string>
+#include <utility>
 #include "device_info.h"
-#include "system/data_store.h"
+#include "device/data_store.h"
 #include "op/physical.h"
 #include "op/physical_fn.h"
-#include "common/inspector.h"
+#include "procedures/device_listener.h"
+#include "common/common.h"
+#include "common/concurrent_blocking_queue.h"
 
 namespace minerva {
 
 class Device {
  public:
-  enum DeviceTypes {
-   CPU_DEVICE = 0,
-   GPU_DEVICE
+  enum class MemType {
+    kCpu,
+    kGpu
   };
-  Device();
-  Device(uint64_t id, DeviceInfo info);
-  DeviceInfo GetInfo();
-  void Execute(uint64_t nid, std::vector<PhysicalData> inputs, std::vector<PhysicalData> outputs, const PhysicalOp Op); // called by Physical_Engine::ProcessNode()
-  virtual DeviceTypes Type() const = 0;
-  virtual float* GetData(uint64_t data_id) = 0;
+  Device(uint64_t, DeviceListener*);
+  virtual ~Device();
+  virtual void PushTask(uint64_t) = 0;
+  virtual std::pair<MemType, float*> GetPtr(uint64_t);
+  virtual std::string Name() const;
 
  protected:
-  std::set<uint64_t> local_data_;
-  DeviceInfo device_info_;
+  std::unordered_set<uint64_t> local_data_;
+  std::unordered_set<uint64_t> remote_data_;
   uint64_t device_id_;
-  virtual void CreateData(uint64_t data_id, int size) = 0;
-  virtual void Execute_Op(std::vector<DataShard> inputShards, std::vector<DataShard> outputShards, PhysicalOp Op) = 0;
+  DataStore* data_store_;
+  DeviceListener* listener_;
+
+ private:
+  Device();
+  DISALLOW_COPY_AND_ASSIGN(Device);
 };
+
+#ifdef HAS_CUDA
 
 class GpuDevice : public Device {
  public:
-  GpuDevice(uint64_t id, DeviceInfo info) : Device(id, info) {}
-  DeviceTypes Type() const { return GPU_DEVICE; }
-  void CreateData(uint64_t data_id, int size);
-  float* GetData(uint64_t data_id);
-  void Execute_Op(std::vector<DataShard> inputShards, std::vector<DataShard> outputShards, PhysicalOp Op);
+  GpuDevice(uint64_t, DeviceListener*);
+  ~GpuDevice();
+  void PushTask(uint64_t);
+  std::pair<MemType, float*> GetPtr(uint64_t);
+  std::string Name() const;
+
+ private:
+  static const size_t kDefaultStreamNum = 16;
+  void Execute(uint64_t);
+  cudaStream_t GetSomeStream();
+  cudaStream_t stream_[kDefaultStreamNum];
+  ThreadPool pool_;
+  DISALLOW_COPY_AND_ASSIGN(GpuDevice);
 };
+
+#endif
 
 class CpuDevice : public Device {
  public:
-  CpuDevice(uint64_t id, DeviceInfo info) : Device(id, info) {}
-  DeviceTypes Type() const { return CPU_DEVICE; }
-  void CreateData(uint64_t data_id, int size);
-  float* GetData(uint64_t data_id);
-  void Execute_Op(std::vector<DataShard> inputShards, std::vector<DataShard> outputShards, PhysicalOp Op);
+  CpuDevice(uint64_t, DeviceListener*);
+  ~CpuDevice();
+  void PushTask(uint64_t);
+  std::pair<MemType, float*> GetPtr(uint64_t);
+  std::string Name() const;
+ 
+ private:
+  void Execute(uint64_t);
+  DISALLOW_COPY_AND_ASSIGN(CpuDevice);
 };
 
-}
+}  // namespace minerva
 

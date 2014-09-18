@@ -1,5 +1,6 @@
 #pragma once
 #include <unordered_set>
+#include <memory>
 #include "common/singleton.h"
 #include "dag/physical_dag.h"
 #include "procedures/dag_scheduler.h"
@@ -37,6 +38,7 @@ class MinervaSystem :
   uint64_t CreateCPUDevice();
   uint64_t CreateGPUDevice(int gid);
   uint64_t CreateGPUDevice(int gid, int num_stream);
+  float* GetPtr(uint64_t, uint64_t);
   Device* GetDevice(uint64_t id);
 
  private:
@@ -48,8 +50,7 @@ class MinervaSystem :
   PhysicalDag* physical_dag_;
   DagScheduler* dag_scheduler_;
   DeviceFactory* device_factory_;
-  uint64_t device_id_;
-
+  uint64_t current_device_id_;
   std::unordered_set<uint64_t> extern_rc_changed_ldnodes_;
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
 };

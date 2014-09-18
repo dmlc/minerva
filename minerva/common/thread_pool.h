@@ -11,14 +11,14 @@ namespace minerva {
 class ThreadPool {
  public:
   typedef std::function<void()> Task;
-  ThreadPool(size_t numthreads): num_tasks_unfinished_(0) {
+  ThreadPool(size_t numthreads) : num_tasks_unfinished_(0) {
     for(size_t thrid = 0; thrid < numthreads; ++thrid) {
-      workers_.push_back(std::thread(&ThreadPool::SimpleWorker, this, thrid));
+      workers_.emplace_back(&ThreadPool::SimpleWorker, this, thrid);
     }
   }
   ~ThreadPool() {
     task_queue_.SignalForKill();
-    for(auto & w : workers_) {
+    for (auto& w : workers_) {
       w.join();
     }
   }
@@ -29,25 +29,21 @@ class ThreadPool {
     task_queue_.Push(task);
   }
   void WaitForAllFinished() {
-    while(num_tasks_unfinished_ != 0) {
+    while (num_tasks_unfinished_ != 0) {
       std::this_thread::yield();
     }
   }
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(ThreadPool);
   ThreadPool();
   std::vector<std::thread> workers_;
   ConcurrentBlockingQueue<Task> task_queue_;
   std::atomic<int> num_tasks_unfinished_;
+  DISALLOW_COPY_AND_ASSIGN(ThreadPool);
 
   void SimpleWorker(int thrid) {
-    while (true) {
-      Task task;
-      bool exit_now = task_queue_.Pop(task);
-      if (exit_now) {
-        return;
-      }
+    Task task;
+    while (!task_queue_.Pop(task)) {
       task();
       --num_tasks_unfinished_;
     }
