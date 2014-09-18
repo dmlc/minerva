@@ -1,5 +1,4 @@
-#include "scale.h"
-#include "nvector.h"
+#include "common/scale.h"
 #include <glog/logging.h>
 #include <algorithm>
 

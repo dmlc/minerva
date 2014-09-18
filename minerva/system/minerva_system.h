@@ -1,11 +1,11 @@
 #pragma once
+#include <unordered_set>
 #include "common/singleton.h"
 #include "dag/physical_dag.h"
-#include "procedures/dag_procedure.h"
+#include "procedures/dag_scheduler.h"
 #include "narray/narray.h"
 #include "device/device_factory.h"
 #include "common/inspector.h"
-#include <unordered_set>
 
 namespace minerva {
 
@@ -14,19 +14,24 @@ class MinervaSystem :
   friend class NArray;
   friend class EverlastingSingleton<MinervaSystem>;
   friend class Inspector<MinervaSystem>;
+
  public:
   ~MinervaSystem();
   void Initialize(int* argc, char*** argv);
   void Finalize();
-  PhysicalDag& physical_dag() { return physical_dag_; }
-  DeviceFactory& device_factory() { return *device_factory_; }
-  PhysicalEngine& physical_engine() { return *physical_engine_; }
-
+  PhysicalDag& physical_dag() {
+    return *physical_dag_;
+  }
+  DeviceFactory& device_factory() {
+    return *device_factory_;
+  }
+  DagScheduler& dag_scheduler() {
+    return *dag_scheduler_;
+  }
   float* GetValue(NArray& narr);
   void Eval(const std::vector<NArray>& narrs);
   void EvalAsync(const std::vector<NArray>& narrs);
   void WaitForEvalFinish();
-
   void set_device_id(uint64_t id);
   uint64_t device_id() const;
   uint64_t CreateCPUDevice();
@@ -40,10 +45,8 @@ class MinervaSystem :
   void IncrExternRC(LogicalDag::DNode*, int amount = 1);
   void GeneratePhysicalDag(const std::vector<uint64_t>& lids);
   void ExecutePhysicalDag(const std::vector<uint64_t>& pids);
-  PhysicalDag physical_dag_;
-
-  PhysicalEngine* physical_engine_;
-
+  PhysicalDag* physical_dag_;
+  DagScheduler* dag_scheduler_;
   DeviceFactory* device_factory_;
   uint64_t device_id_;
 

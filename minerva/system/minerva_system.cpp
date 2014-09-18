@@ -1,60 +1,47 @@
 #include <glog/logging.h>
 #include <gflags/gflags.h>
 #include <cstdlib>
-//#include <fstream>
-
+#include <iostream>
 #include "minerva_system.h"
 #include "common/thread_pool.h"
 #include "op/impl/basic.h"
 #include "dag/dag_printer.h"
-#include "procedures/impl_decider.h"
-#include "procedures/expand_engine.h"
-#include "procedures/physical_engine.h"
-#include "procedures/impl_decider.h"
+#include "procedures/dag_scheduler.h"
 #include "system/data_store.h"
-#include <iostream>
 
 using namespace std;
 
-/////////////////////// flag definitions //////////////////////
-static bool IsValidImplType(const char* flag, const std::string& value) {
-  return strcmp(flag, "basic") || strcmp(flag, "mkl") || strcmp(flag, "cuda");
-}
-DEFINE_string(impl, "basic", "use basic|mkl|cuda kernels");
-static const bool impl_valid = gflags::RegisterFlagValidator(&FLAGS_impl, &IsValidImplType);
-static bool IsValidNumThreads(const char* flag, int n) {
-  return n > 0;
-}
-DEFINE_int32(numthreads, 1, "number of threads used in execution");
-static const bool numthreads_valid = gflags::RegisterFlagValidator(&FLAGS_numthreads, &IsValidNumThreads);
-/////////////////////// member function definitions //////////////////////
 namespace minerva {
+
+MinervaSystem::~MinervaSystem() {}
 
 void MinervaSystem::Initialize(int* argc, char*** argv) {
   google::InitGoogleLogging((*argv)[0]);
   gflags::ParseCommandLineFlags(argc, argv, true);
-  ThreadPool* execute_pool = new ThreadPool(FLAGS_numthreads);
-  ThreadPool* expand_pool = new ThreadPool(1);
-  data_store_ = new DataStore();
-  physical_engine_ = new PhysicalEngine(*execute_pool, *data_store_);
-  expand_engine_ = new ExpandEngine(*expand_pool);
-  static SimpleImplDecider all_basic_impl(ImplType::kBasic);
-  static SimpleImplDecider all_mkl_impl(ImplType::kMkl);
-  static SimpleImplDecider all_cuda_impl(ImplType::kCuda);
-  if (FLAGS_impl == "mkl") {
-    physical_engine_->SetImplDecider(&all_mkl_impl);
-  } else if (FLAGS_impl == "cuda") {
-    physical_engine_->SetImplDecider(&all_cuda_impl);
-  } else {
-    physical_engine_->SetImplDecider(&all_basic_impl);
-  }
-  LoadBuiltinDagMonitors();
+  physical_dag_ = new PhysicalDag();
+  dag_scheduler_ = new DagScheduler(physical_dag_);
   device_factory_ = new DeviceFactory();
   device_id_ = 0;
+  LoadBuiltinDagMonitors();
 }
-void MinervaSystem::Finalize() { }
-MinervaSystem::MinervaSystem() { }
-MinervaSystem::~MinervaSystem() { }
+
+void MinervaSystem::Finalize() {}
+
+float* MinervaSystem::GetValue(NArray& narr) {
+  NVector<uint64_t> phy_nid = expand_engine_->GetPhysicalNodes(narr.data_node_->node_id());
+  float* rstptr = new float[narr.Size().Prod()];
+  Scale srcstart = Scale::Origin(narr.Size().NumDims());
+  for(uint64_t nid : phy_nid) {
+    PhysicalData& pdata = physical_dag_.GetDataNode(nid)->data_;
+    float* srcptr = data_store_->GetData(pdata.data_id, DataStore::CPU);
+    basic::NCopy(srcptr, pdata.size, srcstart,
+        rstptr, narr.Size(), pdata.offset, pdata.size);
+  }
+  return rstptr;
+}
+
+MinervaSystem::MinervaSystem() {}
+
 
 void MinervaSystem::set_device_id(uint64_t id) {
   device_id_ = id;
@@ -81,12 +68,7 @@ Device* MinervaSystem::GetDevice(uint64_t id) {
 }
 
 void MinervaSystem::LoadBuiltinDagMonitors() {
-  logical_dag_.RegisterMonitor(expand_engine_);
-  physical_dag_.RegisterMonitor(physical_engine_);
-}
-
-void MinervaSystem::SetImplDecider(ImplDecider* decider) {
-  physical_engine_->SetImplDecider(decider);
+  physical_dag_->RegisterMonitor(dag_scheduler_);
 }
 
 void MinervaSystem::GeneratePhysicalDag(const std::vector<uint64_t>& lids) {
@@ -155,19 +137,6 @@ void MinervaSystem::EvalAsync(const std::vector<NArray>& narrs) {
     pid_to_eval.insert(pid_to_eval.end(), pnids.begin(), pnids.end());
   }
   ExecutePhysicalDag(pid_to_eval);
-}
-
-float* MinervaSystem::GetValue(NArray& narr) {
-  NVector<uint64_t> phy_nid = expand_engine_->GetPhysicalNodes(narr.data_node_->node_id());
-  float* rstptr = new float[narr.Size().Prod()];
-  Scale srcstart = Scale::Origin(narr.Size().NumDims());
-  for(uint64_t nid : phy_nid) {
-    PhysicalData& pdata = physical_dag_.GetDataNode(nid)->data_;
-    float* srcptr = data_store_->GetData(pdata.data_id, DataStore::CPU);
-    basic::NCopy(srcptr, pdata.size, srcstart,
-        rstptr, narr.Size(), pdata.offset, pdata.size);
-  }
-  return rstptr;
 }
 
 void MinervaSystem::IncrExternRC(LogicalDag::DNode* dnode, int amount) {
