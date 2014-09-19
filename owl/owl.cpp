@@ -3,11 +3,14 @@
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
 #include <boost/python/implicit.hpp>
+#include <iostream>
 
 #include "minerva.h"
 
 namespace bp = boost::python;
 namespace m = minerva;
+
+using namespace std;
 
 namespace owl {
 
@@ -46,6 +49,10 @@ bp::list ToPythonList(const m::Scale& s) {
   return l;
 }
 
+m::NArray RandnWrapper(const bp::list& s, const float mean, const float mu, const bp::list& np) {
+  return m::NArray::Randn(ToScale(s), mean, mu, ToScale(np));
+}
+
 m::NArray ZerosWrapper(const bp::list& s, const bp::list& np) {
   return m::NArray::Zeros(ToScale(s), ToScale(np));
 }
@@ -72,6 +79,11 @@ class OneFileMBLoaderWrapper : public m::OneFileMBLoader {
   OneFileMBLoaderWrapper(const std::string& fname, const bp::list& shape):
     OneFileMBLoader(fname, ToScale(shape)) {}
 };
+
+void NArrayToFile(m::NArray narr, const string filename) {
+  m::FileFormat format; format.binary = false;
+  narr.ToFile(filename, format);
+}
 
 bp::list NArrayToList(m::NArray narr) {
   bp::list l;
@@ -128,7 +140,7 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("normalize", &m::NArray::NormArithmetic)
     // misc
     .def("trans", &m::NArray::Trans)
-    .def("tofile", &m::NArray::ToFile)
+    .def("tofile", &owl::NArrayToFile)
     .def("tolist", &owl::NArrayToList)
     .def("eval", &m::NArray::Eval)
     .def("eval_async", &m::NArray::EvalAsync)
@@ -151,9 +163,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("zeros", &owl::ZerosWrapper);
   def("ones", &owl::OnesWrapper);
   def("make_narray", &owl::MakeNArrayWrapper);
-  //def("random_randn", &m::NArray::Randn);
-  //def("zeros", &m::NArray::Zeros);
-  //def("ones", &m::NArray::Ones);
+  def("randn", &owl::RandnWrapper);
 
   // system
   //def("to_list", &owl::NArrayToList);
