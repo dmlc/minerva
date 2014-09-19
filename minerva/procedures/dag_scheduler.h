@@ -26,7 +26,7 @@ class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<Physica
     kToComplete
   };
   DagScheduler(PhysicalDag*);
-  ~DagScheduler();
+  virtual ~DagScheduler();
   // Wait for evaluation to finish
   void WaitForFinish();
   void GCNodes();

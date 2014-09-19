@@ -7,6 +7,7 @@
 #include "narray/narray.h"
 #include "device/device_factory.h"
 #include "common/inspector.h"
+#include "device/device.h"
 
 namespace minerva {
 
@@ -17,6 +18,7 @@ class MinervaSystem :
   friend class Inspector<MinervaSystem>;
 
  public:
+  static void UniversalMemcpy(std::pair<Device::MemType, float*>, std::pair<Device::MemType, float*>, size_t);
   ~MinervaSystem();
   void Initialize(int* argc, char*** argv);
   void Finalize();
@@ -29,28 +31,25 @@ class MinervaSystem :
   DagScheduler& dag_scheduler() {
     return *dag_scheduler_;
   }
-  float* GetValue(NArray& narr);
+  uint64_t CreateCPUDevice();
+#ifdef HAS_CUDA
+  uint64_t CreateGPUDevice(int gid);
+#endif
+  std::shared_ptr<float> GetValue(NArray& narr);
+  std::pair<Device::MemType, float*> GetPtr(uint64_t, uint64_t);
   void Eval(const std::vector<NArray>& narrs);
   void EvalAsync(const std::vector<NArray>& narrs);
   void WaitForEvalFinish();
-  void set_device_id(uint64_t id);
-  uint64_t device_id() const;
-  uint64_t CreateCPUDevice();
-  uint64_t CreateGPUDevice(int gid);
-  uint64_t CreateGPUDevice(int gid, int num_stream);
-  float* GetPtr(uint64_t, uint64_t);
-  Device* GetDevice(uint64_t id);
+  uint64_t current_device_id_;
 
  private:
   MinervaSystem();
   void LoadBuiltinDagMonitors();
-  void IncrExternRC(LogicalDag::DNode*, int amount = 1);
-  void GeneratePhysicalDag(const std::vector<uint64_t>& lids);
+  void IncrExternRC(PhysicalDataNode*, int amount = 1);
   void ExecutePhysicalDag(const std::vector<uint64_t>& pids);
   PhysicalDag* physical_dag_;
   DagScheduler* dag_scheduler_;
   DeviceFactory* device_factory_;
-  uint64_t current_device_id_;
   std::unordered_set<uint64_t> extern_rc_changed_ldnodes_;
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
 };

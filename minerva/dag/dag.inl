@@ -5,6 +5,15 @@
 namespace minerva {
 
 template<typename D, typename O>
+typename Dag<D, O>::DNode* Dag<D, O>::~Dag() {
+  ClearMonitor();
+  auto index_to_node = index_to_node_;
+  for (auto i : index_to_node) {
+    DeleteNode(i.second);
+  }
+}
+
+template<typename D, typename O>
 typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
   for (auto mon : monitors_) {
     mon->OnBeginModify();
@@ -101,6 +110,11 @@ size_t Dag<D, O>::NumNodes() const {
 template<typename D, typename O>
 void Dag<D, O>::RegisterMonitor(DagMonitor<Dag<D, O>>* m) {
   monitors_.push_back(m);
+}
+
+template<typename D, typename O>
+void Dag<D, O>::ClearMonitor() {
+  monitors_.clear();
 }
 
 template<typename D, typename O>

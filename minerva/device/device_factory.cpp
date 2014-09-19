@@ -1,59 +1,46 @@
 #include "device_factory.h"
+#include "device/device.h"
+#include <glog/logging.h>
 
 using namespace std;
 
 namespace minerva {
 
-DeviceFactory::DeviceFactory() {
-  allocated_ = 1;
-  device_storage_.clear();
-  DeviceInfo dft;
-  dft.cpu_list.push_back("localhost");
-  InsertCPUDevice(0, dft);
+DeviceFactory::DeviceFactory(DeviceListener* l) : listener_(l) {
 }
 
-void DeviceFactory::Reset() {
-  allocated_ = 0;
+DeviceFactory::~DeviceFactory() {
+  for (auto i : device_storage_) {
+    delete i.second;
+  }
 }
 
-uint64_t DeviceFactory::CreateCPUDevice() {
-  DeviceInfo result;
-  InsertCPUDevice(allocated_, result);
-  return allocated_++;
+uint64_t DeviceFactory::CreateCpuDevice() {
+  auto id = GenerateDeviceId();
+  Device* d = new CpuDevice(id, listener_);
+  CHECK(device_storage_.emplace(id, d).second);
+  return id;
 }
 
-uint64_t DeviceFactory::CreateGPUDevice(int gid) {
-  DeviceInfo result;
-  result.gpu_list.push_back(gid);
-  result.num_streams.push_back(1);
-  InsertGPUDevice(allocated_, result);
-  return allocated_++;
+#ifdef HAS_CUDA
+
+uint64_t DeviceFactory::CreateGpuDevice(int gid) {
+  auto id = GenerateDeviceId();
+  Device* d = new GpuDevice(id, listener_, gid);
+  CHECK(device_storage_.emplace(id, id).second);
+  return id;
 }
 
-uint64_t DeviceFactory::CreateGPUDevice(int gid, int num_stream) {
-  DeviceInfo result;
-  result.gpu_list.push_back(gid);
-  result.num_streams.push_back(num_stream);
-  InsertGPUDevice(allocated_, result);
-  return allocated_++;
-}
+#endif
 
 Device* DeviceFactory::GetDevice(uint64_t id) {
-  if (device_storage_.find(id) != device_storage_.end())
-    return device_storage_[id];
-  else
-    return NULL;
+  return device_storage_.at(id);
 }
 
-void DeviceFactory::InsertCPUDevice(uint64_t id, DeviceInfo info) {
-  Device *device = new CpuDevice(id, info);
-  device_storage_[id] = device;
+uint64_t DeviceFactory::GenerateDeviceId() {
+  static uint64_t index_counter = 0;
+  return index_counter++;
 }
 
-void DeviceFactory::InsertGPUDevice(uint64_t id, DeviceInfo info) {
-  Device *device = new GpuDevice(id, info);
-  device_storage_[id] = device;
-}
-
-}
+}  // namespace minerva
 

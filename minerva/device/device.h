@@ -2,7 +2,6 @@
 #include <vector>
 #include <string>
 #include <utility>
-#include "device_info.h"
 #include "device/data_store.h"
 #include "op/physical.h"
 #include "op/physical_fn.h"
@@ -41,7 +40,7 @@ class Device {
 
 class GpuDevice : public Device {
  public:
-  GpuDevice(uint64_t, DeviceListener*);
+  GpuDevice(uint64_t, DeviceListener*, int);
   ~GpuDevice();
   void PushTask(uint64_t);
   std::pair<MemType, float*> GetPtr(uint64_t);
@@ -49,6 +48,7 @@ class GpuDevice : public Device {
 
  private:
   static const size_t kDefaultStreamNum = 16;
+  const int device_;
   void Execute(uint64_t);
   cudaStream_t GetSomeStream();
   cudaStream_t stream_[kDefaultStreamNum];

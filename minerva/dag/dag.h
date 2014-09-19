@@ -19,7 +19,7 @@ class Dag {
   typedef OpNode<Data, Op> ONode;
   typedef std::unordered_map<uint64_t, DagNode*> ContainerType;
   Dag() {}
-  ~Dag() {}
+  ~Dag();
   DNode* NewDataNode(const Data& data);
   ONode* NewOpNode(const std::vector<DNode*>& inputs,
       const std::vector<DNode*>& outputs, const Op& op);
@@ -35,6 +35,7 @@ class Dag {
     return index_to_node_.end();
   }
   void RegisterMonitor(DagMonitor<Dag<Data, Op>>*);
+  void ClearMonitor();
   template<typename NodePrinter=DagHelper<Data, Op>> std::string PrintDag() const;
 
  private:

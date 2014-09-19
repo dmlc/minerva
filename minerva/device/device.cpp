@@ -21,7 +21,9 @@ Device::~Device() {
 
 #ifdef HAS_CUDA
 
-GpuDevice::GpuDevice(uint64_t id, DeviceListener* l) : Device(id, l), pool_(1) {
+GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : Device(id, l), pool_(1), device_(gid) {
+  CHECK_EQ(cudaSetDevice(device_), cudaSuccess);
+  cudaFree(0);
   auto allocator = [](size_t len) -> void* {
     void* ret;
     CHECK_EQ(cudaMalloc(&ret, len), cudaSuccess);
@@ -79,7 +81,7 @@ void GpuDevice::Execute(uint64_t nid) {
       size_t size = data.size.Prod() * sizeof(float);
       auto ptr = data_store_->CreateData(data.data_id, size);
       auto stream = GetSomeStream();
-      CHECK_EQ(cudaMemcpyAsync(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id), size, cudaMemcpyDefault, stream), cudaSuccess);
+      CHECK_EQ(cudaMemcpyAsync(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id).second, size, cudaMemcpyDefault, stream), cudaSuccess);
       remote_data_.insert(data.data_id);
       cudaStreamAddCallback(stream, [&](cudaStream_t, cudaError_t, void*) {
         listener_->OnOperationComplete(nid);
@@ -164,7 +166,7 @@ void CpuDevice::Execute(uint64_t nid) {
 #ifdef HAS_CUDA
       CHECK_EQ(cudaMemcpy(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id), size, cudaMemcpyDefault), cudaSuccess);
 #else
-      memcpy(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id), size);
+      memcpy(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id).second, size);
 #endif
       remote_data_.insert(data.data_id);
     }
