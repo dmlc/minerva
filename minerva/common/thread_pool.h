@@ -22,7 +22,7 @@ class ThreadPool {
       w.join();
     }
   }
-  void Push(const Tasasaskkk& task) {
+  void Push(const Task& task) {
     ++num_tasks_unfinished_;
     task_queue_.Push(task);
   }
