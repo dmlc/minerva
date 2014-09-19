@@ -8,7 +8,7 @@ using namespace std;
 using namespace minerva;
 
 const float epsW = 0.01, epsB = 0.01;
-const int numepochs = 100;
+const int numepochs = 200;
 const int mb_size = 256;
 const int num_mb_per_epoch = 235;
 
