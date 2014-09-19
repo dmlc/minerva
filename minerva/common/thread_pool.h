@@ -22,9 +22,7 @@ class ThreadPool {
       w.join();
     }
   }
-  template<class T>
-  void Push(const T& task) {
-    std::function<void()> fnptr = task;
+  void Push(const Tasasaskkk& task) {
     ++num_tasks_unfinished_;
     task_queue_.Push(task);
   }
@@ -50,5 +48,5 @@ class ThreadPool {
   }
 };
 
-}
+}  // namespace minerva
 

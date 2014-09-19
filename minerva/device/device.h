@@ -9,6 +9,7 @@
 #include "procedures/device_listener.h"
 #include "common/common.h"
 #include "common/concurrent_blocking_queue.h"
+#include "common/thread_pool.h"
 
 namespace minerva {
 
@@ -64,9 +65,11 @@ class CpuDevice : public Device {
   void PushTask(uint64_t);
   std::pair<MemType, float*> GetPtr(uint64_t);
   std::string Name() const;
- 
+
  private:
+  static const size_t kDefaultThreadNum = 1;
   void Execute(uint64_t);
+  ThreadPool pool_;
   DISALLOW_COPY_AND_ASSIGN(CpuDevice);
 };
 
