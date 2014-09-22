@@ -1,5 +1,4 @@
 #include "basic.h"
-#include "common/nvector.h"
 #include "op/closure.h"
 #include <cmath>
 #include <glog/logging.h>
@@ -13,10 +12,10 @@ namespace basic {
 void Arithmetic(DataList& inputs, DataList& outputs, ArithmeticClosure& closure) {
   CHECK_EQ(inputs.size(), 2) << "(arithmetic) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(arithmetic) #outputs is wrong!";
-  float* left_data = inputs[0].GetCpuData();
-  float* right_data = inputs[1].GetCpuData();
-  float* res_data = outputs[0].GetCpuData();
-  int length = outputs[0].Size().Prod();
+  float* left_data = inputs[0].data();
+  float* right_data = inputs[1].data();
+  float* res_data = outputs[0].data();
+  int length = outputs[0].size().Prod();
   switch(closure.type) {
     case ArithmeticType::kAdd:
       for (int i = 0; i < length; ++i) {
@@ -45,9 +44,9 @@ void ArithmeticConst(DataList& inputs, DataList& outputs, ArithmeticConstClosure
   CHECK_EQ(inputs.size(), 1) << "(arithmetic const) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(arithmetic const) #outputs is wrong!";
   float val = closure.val;
-  float* in_data = inputs[0].GetCpuData();
-  float* res_data = outputs[0].GetCpuData();
-  int length = outputs[0].Size().Prod();
+  float* in_data = inputs[0].data();
+  float* res_data = outputs[0].data();
+  int length = outputs[0].size().Prod();
   switch(closure.type) {
     case ArithmeticType::kAdd:
       if(closure.side == 0) {  // const on left
@@ -99,9 +98,9 @@ void ArithmeticConst(DataList& inputs, DataList& outputs, ArithmeticConstClosure
 void Elewise(DataList& inputs, DataList& outputs, ElewiseClosure& closure) {
   CHECK_EQ(inputs.size(), 1) << "(elewise) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(elewise) #outputs is wrong!";
-  float* in_data = inputs[0].GetCpuData();
-  float* res_data = outputs[0].GetCpuData();
-  int length = outputs[0].Size().Prod();
+  float* in_data = inputs[0].data();
+  float* res_data = outputs[0].data();
+  int length = outputs[0].size().Prod();
   switch(closure.type) {
     case ElewiseType::kExp:
       for (int i = 0; i < length; ++i) {
@@ -129,12 +128,12 @@ void Elewise(DataList& inputs, DataList& outputs, ElewiseClosure& closure) {
 void MatMult(DataList& inputs, DataList& outputs, MatMultClosure& closure) {
   CHECK_EQ(inputs.size(), 2) << "(matmult) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(matmult) #outputs is wrong!";
-  float* left_data = inputs[0].GetCpuData();
-  float* right_data = inputs[1].GetCpuData();
-  float* res_data = outputs[0].GetCpuData();
-  int m = outputs[0].Size()[0];
-  int n = outputs[0].Size()[1];
-  int o = inputs[0].Size()[1];
+  float* left_data = inputs[0].data();
+  float* right_data = inputs[1].data();
+  float* res_data = outputs[0].data();
+  int m = outputs[0].size()[0];
+  int n = outputs[0].size()[1];
+  int o = inputs[0].size()[1];
   // ATTENTION: the data is column major !!
   for (int i = 0; i < m; ++i) {
     for (int j = 0; j < n; ++j) {
@@ -149,10 +148,10 @@ void MatMult(DataList& inputs, DataList& outputs, MatMultClosure& closure) {
 void Transpose(DataList& inputs, DataList& outputs, TransposeClosure& closure) {
   CHECK_EQ(inputs.size(), 1) << "(transpose) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(transpose) #outputs is wrong!";
-  float* in_data = inputs[0].GetCpuData();
-  float* res_data = outputs[0].GetCpuData();
-  int m = outputs[0].Size()[0];
-  int n = outputs[0].Size()[1];
+  float* in_data = inputs[0].data();
+  float* res_data = outputs[0].data();
+  int m = outputs[0].size()[0];
+  int n = outputs[0].size()[1];
   for (int i = 0; i < m; ++i) {
     for (int j = 0; j < n; ++j) {
       res_data[i + j * m] = in_data[j + i * n];
@@ -163,11 +162,11 @@ void Transpose(DataList& inputs, DataList& outputs, TransposeClosure& closure) {
 void Reduction(DataList& inputs, DataList& outputs, ReductionClosure& closure) {
   CHECK_EQ(inputs.size(), 1) << "(reduction) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(reduction) #outputs is wrong!";
-  float* in_data = inputs[0].GetCpuData();
-  float* res_data = outputs[0].GetCpuData();
-  auto in_max = inputs[0].Size();
+  float* in_data = inputs[0].data();
+  float* res_data = outputs[0].data();
+  auto in_max = inputs[0].size();
   auto in_range = ScaleRange::MakeRangeFromOrigin(in_max);
-  auto res_max = outputs[0].Size();
+  auto res_max = outputs[0].size();
   auto res_range = ScaleRange::MakeRangeFromOrigin(res_max);
   auto accumulator = Scale::Origin(in_max.NumDims());
   do {
@@ -193,8 +192,8 @@ void Reduction(DataList& inputs, DataList& outputs, ReductionClosure& closure) {
 
 void Randn(DataList& output, RandnClosure& closure) {
   CHECK_EQ(output.size(), 1) << "wrong number of randn output";
-  int length = output[0].Size().Prod();
-  float* data = output[0].GetCpuData();
+  int length = output[0].size().Prod();
+  float* data = output[0].data();
   default_random_engine generator;
   normal_distribution<float> distribution(closure.mu, closure.var); // TODO only float for now
   for (int i = 0; i < length; ++i) {
@@ -204,35 +203,10 @@ void Randn(DataList& output, RandnClosure& closure) {
 
 void Fill(DataList& output, FillClosure& closure) {
   CHECK_EQ(output.size(), 1) << "wrong number of fill constant output";
-  int length = output[0].Size().Prod();
-  float* data = output[0].GetCpuData();
+  int length = output[0].size().Prod();
+  float* data = output[0].data();
   for (int i = 0; i < length; ++i) {
     data[i] = closure.val;
-  }
-}
-
-void Assemble(DataList& inputs, DataList& outputs, AssembleClosure& closure) {
-  CHECK_EQ(outputs.size(), 1) << "wrong number of assemble output";
-  size_t numdims = outputs[0].Size().NumDims();
-  float* dest = outputs[0].GetCpuData();
-  Scale srcstart = Scale::Origin(numdims);
-  for (auto& i: inputs) {
-    NCopy(i.GetCpuData(), i.Size(), srcstart,
-        dest, outputs[0].Size(), i.Offset(),
-        i.Size());
-  }
-}
-
-void Split(DataList& inputs, DataList& outputs, SplitClosure& closure) {
-  CHECK_EQ(inputs.size(), 1) << "wrong number of split input";
-  DataShard& inds = inputs[0];
-  size_t numdims = inds.Size().NumDims();
-  float* src = inds.GetCpuData();
-  Scale dststart = Scale::Origin(numdims);
-  for(DataShard& outds : outputs) {
-    NCopy(src, inds.Size(), outds.Offset(),
-        outds.GetCpuData(), outds.Size(), dststart,
-        outds.Size());
   }
 }
 
@@ -240,9 +214,9 @@ void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& 
   CHECK_EQ(inputs.size(), 2) << "NormArithmetic kernel wrong #input";
   CHECK_EQ(outputs.size(), 1) << "NormArithmetic kernel wrong #output";
   // Normalizee is the chunk with full size, normalizer is the chunk with reduced dimensions
-  auto normalizee_size = inputs[0].Size();
-  auto normalizer_size = inputs[1].Size();
-  CHECK_EQ(normalizee_size, outputs[0].Size()) << "NormArithmetic kernel output size mismatch";
+  auto normalizee_size = inputs[0].size();
+  auto normalizer_size = inputs[1].size();
+  CHECK_EQ(normalizee_size, outputs[0].size()) << "NormArithmetic kernel output size mismatch";
   for (size_t i = 0; i < normalizee_size.NumDims(); ++i) {
     if (normalizer_size[i] != 1 && normalizer_size[i] != normalizee_size[i]) {
       CHECK(false) << "NormArithmetic kernel size mismatch";
@@ -250,9 +224,9 @@ void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& 
   }
   auto normalizee_range = ScaleRange::MakeRangeFromOrigin(normalizee_size);
   auto normalizer_range = ScaleRange::MakeRangeFromOrigin(normalizer_size);
-  auto normalizee_data = inputs[0].GetCpuData();
-  auto normalizer_data = inputs[1].GetCpuData();
-  auto res_data = outputs[0].GetCpuData();
+  auto normalizee_data = inputs[0].data();
+  auto normalizer_data = inputs[1].data();
+  auto res_data = outputs[0].data();
   // Memory copy
   memcpy(res_data, normalizee_data, normalizee_size.Prod() * sizeof(float));
   // Reuse of single element per iteration
@@ -295,19 +269,19 @@ void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& 
 void MaxIndex(DataList& inputs, DataList& outputs, MaxIndexClosure& closure) {
   CHECK_EQ(inputs.size(), 1) << "basic::MaxIndex #input wrong";
   CHECK_EQ(outputs.size(), 1) << "basic::MaxIndex #output wrong";
-  float* in_data = inputs[0].GetCpuData();
-  float* res_data = outputs[0].GetCpuData();
-  auto in_max = inputs[0].Size();
+  float* in_data = inputs[0].data();
+  float* res_data = outputs[0].data();
+  auto in_max = inputs[0].size();
   auto in_range = ScaleRange::MakeRangeFromOrigin(in_max);
-  auto res_max = outputs[0].Size();
+  auto res_max = outputs[0].size();
   auto res_range = ScaleRange::MakeRangeFromOrigin(res_max);
   Scale dims{closure.dim};
   // Interval and strike for a single iteration
   int interval = 1;
   for (int i = 0; i < closure.dim; ++i) {
-    interval *= inputs[0].Size()[i];
+    interval *= inputs[0].size()[i];
   }
-  int strike = inputs[0].Size()[closure.dim];
+  int strike = inputs[0].size()[closure.dim];
   auto iterator = Scale::Origin(in_max.NumDims());
   do {
     size_t offset = in_range.Flatten(iterator);
@@ -323,42 +297,5 @@ void MaxIndex(DataList& inputs, DataList& outputs, MaxIndexClosure& closure) {
   } while (iterator.IncrWithDimensionsFixed(res_max, dims));
 }
 
-void NCopy(float* src, const Scale& srcsize, const Scale& srcstart,
-    float* dst, const Scale& dstsize, const Scale& dststart,
-    const Scale& copysize) {
-  size_t numdims = srcsize.NumDims();
-  CHECK_EQ(srcstart.NumDims(), numdims) << "copy error: wrong #dims";
-  CHECK_EQ(copysize.NumDims(), numdims) << "copy error: wrong #dims";
-  CHECK_EQ(dstsize.NumDims(), numdims) << "copy error: wrong #dims";
-  CHECK_EQ(dststart.NumDims(), numdims) << "copy error: wrong #dims";
-  Scale srcend = srcstart + copysize;
-  Scale dstend = dststart + copysize;
-  CHECK_LE(dstend, dstsize) << "copy error: not enough dest space";
-  Scale percopysize = Scale::Constant(numdims, 1);
-  for(size_t i = 0; i < numdims; ++i) {
-    percopysize[i] = copysize[i];
-    if(!(srcstart[i] == 0 && srcend[i] == srcsize[i]
-          && dststart[i] == 0 && dstend[i] == dstsize[i])) {
-      // remainings are non-contigous parts
-      break;
-    }
-  }
-  Scale copystart = Scale::Origin(numdims);
-  ScaleRange srcrange = ScaleRange::MakeRangeFromOrigin(srcsize);
-  ScaleRange dstrange = ScaleRange::MakeRangeFromOrigin(dstsize);
-  int copytimes = 0;
-  int percopylen = percopysize.Prod();
-  do {
-    size_t srcoff = srcrange.Flatten(srcstart + copystart);
-    size_t dstoff = dstrange.Flatten(dststart + copystart);
-    // do memcopy
-    memcpy(dst + dstoff, src + srcoff, percopylen * sizeof(float));
-    ++copytimes;
-    // incr copy_start
-    copystart = copystart + percopysize - 1; // similar to "end = start + len - 1"
-  } while(copystart.IncrOne(copysize));
-  VLOG(1) << "Copy times in NCopy:" << copytimes;
-}
-
-} // end of namespace basic
-} // end of namespace minerva
+}  // end of namespace basic
+}  // end of namespace minerva

@@ -21,7 +21,7 @@ Device::~Device() {
 
 #ifdef HAS_CUDA
 
-GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : Device(id, l), pool_(1), device_(gid) {
+GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : Device(id, l), device_(gid), pool_(1) {
   CHECK_EQ(cudaSetDevice(device_), cudaSuccess);
   cudaFree(0);
   auto allocator = [](size_t len) -> void* {
@@ -33,14 +33,14 @@ GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : Device(id, l), p
     CHECK_EQ(cudaFree(ptr), cudaSuccess);
   };
   data_store_ = new DataStore(allocator, deallocator);
-  for (int i = 0; i < kDefaultStreamNum; ++i) {
+  for (size_t i = 0; i < kDefaultStreamNum; ++i) {
     CHECK_EQ(cudaStreamCreate(&stream_[i]), cudaSuccess);
   }
 }
 
 GpuDevice::~GpuDevice() {
   pool_.WaitForAllFinished();
-  for (int i = 0; i < kDefaultStreamNum; ++i) {
+  for (size_t i = 0; i < kDefaultStreamNum; ++i) {
     CHECK_EQ(cudaStreamDestroy(stream_[i]), cudaSuccess);
   }
   delete data_store_;
@@ -50,7 +50,7 @@ void GpuDevice::PushTask(uint64_t id) {
   pool_.Push(bind(&GpuDevice::Execute, this, id));
 }
 
-pair<MemType, void*> GpuDevice::GetPtr(uint64_t id) {
+pair<Device::MemType, float*> GpuDevice::GetPtr(uint64_t id) {
   return make_pair(MemType::kGpu, data_store_->GetData(id));
 }
 
@@ -60,11 +60,23 @@ string GpuDevice::Name() const {
   return ss.str();
 }
 
-void GpuDevice::GetSomeStream() {
+cudaStream_t GpuDevice::GetSomeStream() {
   static int s = 0;
   int ret = s;
-  s = (++s) % kDefaultStreamNum;
-  return ret;
+  ++s;
+  s %= kDefaultStreamNum;
+  return stream_[ret];
+}
+
+struct CallbackData {
+  DeviceListener* listener;
+  uint64_t id;
+};
+
+void CUDART_CB cudaStreamCallback(cudaStream_t, cudaError_t, void* user_data) {
+  CallbackData* d = reinterpret_cast<CallbackData*>(user_data);
+  d->listener->OnOperationComplete(d->id);
+  delete d;
 }
 
 void GpuDevice::Execute(uint64_t nid) {
@@ -83,9 +95,8 @@ void GpuDevice::Execute(uint64_t nid) {
       auto stream = GetSomeStream();
       CHECK_EQ(cudaMemcpyAsync(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id).second, size, cudaMemcpyDefault, stream), cudaSuccess);
       remote_data_.insert(data.data_id);
-      cudaStreamAddCallback(stream, [&](cudaStream_t, cudaError_t, void*) {
-        listener_->OnOperationComplete(nid);
-      }, 0, 0);
+      CallbackData* d = new CallbackData{listener_, nid};
+      CHECK_EQ(cudaStreamAddCallback(stream, cudaStreamCallback, d, 0), cudaSuccess);
     }
   } else {
     auto op_node = dynamic_cast<PhysicalOpNode*>(node);
@@ -111,11 +122,11 @@ void GpuDevice::Execute(uint64_t nid) {
     DLOG(INFO) << "GPU device execute node #" << nid << ": " << op.compute_fn->Name();
     CudaRuntimeContext ctx;
     ctx.impl_type = ImplType::kCuda;
-    ctx.stream = GetSomeStream();
+    auto stream = GetSomeStream();
+    ctx.stream = stream;
     op.compute_fn->Execute(input_shards, output_shards, ctx);
-    cudaStreamAddCallback(stream, [&](cudaStream_t, cudaError_t, void*) {
-      listener_->OnOperationComplete(nid);
-    }, 0, 0);
+    CallbackData* d = new CallbackData{listener_, nid};
+    CHECK_EQ(cudaStreamAddCallback(stream, cudaStreamCallback, d, 0), cudaSuccess);
   }
 }
 
@@ -164,7 +175,7 @@ void CpuDevice::Execute(uint64_t nid) {
       size_t size = data.size.Prod() * sizeof(float);
       auto ptr = data_store_->CreateData(data.data_id, size);
 #ifdef HAS_CUDA
-      CHECK_EQ(cudaMemcpy(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id), size, cudaMemcpyDefault), cudaSuccess);
+      CHECK_EQ(cudaMemcpy(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id).second, size, cudaMemcpyDefault), cudaSuccess);
 #else
       memcpy(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id).second, size);
 #endif

@@ -11,8 +11,8 @@ class DataShard {
  public:
   DataShard(float* data, const Scale& size);
   // Getters
-  Scale size();
-  float* data();
+  const Scale& size() const;
+  float* data() const;
 
  private:
   float* data_;

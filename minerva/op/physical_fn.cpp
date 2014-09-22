@@ -1,6 +1,5 @@
 #include "op/physical_fn.h"
 #include "system/minerva_system.h"
-#include "system/data_store.h"
 
 using namespace std;
 
@@ -9,11 +8,11 @@ namespace minerva {
 DataShard::DataShard(float* data, const Scale& size): data_(data), size_(size) {
 }
 
-Scale DataShard::size() {
+const Scale& DataShard::size() const {
   return size_;
 }
 
-float* DataShard::data() {
+float* DataShard::data() const {
   return data_;
 }
 

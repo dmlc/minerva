@@ -2,6 +2,7 @@
 #include <glog/logging.h>
 #include "narray/io/file_loader.h"
 #include "op/impl/basic.h"
+#include "system/minerva_system.h"
 
 using namespace std;
 
@@ -21,14 +22,11 @@ string FileLoaderOp::Name() const {
 void SimpleFileLoader::Load(const string& fname, const Scale& size, const DataList& out_shards) {
   CHECK_EQ(out_shards.size(), 1) << "(simple file loader) #outputs is wrong";
   size_t numvalue = size.Prod();
-  float* ptr = new float[numvalue]; // TODO should use data_store
+  float* ptr = new float[numvalue];
   ifstream fin(fname.c_str());
   fin.read(reinterpret_cast<char*>(ptr), numvalue * sizeof(float));
   fin.close();
-  // partition the file content
-  size_t numdims = size.NumDims();
-  Scale dststart = Scale::Origin(numdims);
-  // TODO memcpy(ptr, 
+  memcpy(out_shards[0].data(), ptr, numvalue * sizeof(float));
   delete[] ptr;
 }
 

@@ -5,11 +5,11 @@
 namespace minerva {
 
 template<typename D, typename O>
-typename Dag<D, O>::DNode* Dag<D, O>::~Dag() {
+Dag<D, O>::~Dag() {
   ClearMonitor();
   auto index_to_node = index_to_node_;
   for (auto i : index_to_node) {
-    DeleteNode(i.second);
+    DeleteNode(i.first);
   }
 }
 
@@ -74,7 +74,7 @@ void Dag<D, O>::DeleteNode(uint64_t id) {
   for (auto succ : node->successors_) {
     CHECK_EQ(succ->predecessors_.erase(node), 1);
   }
-  for (auto pred : node->predcessors_) {
+  for (auto pred : node->predecessors_) {
     CHECK_EQ(pred->successors_.erase(node), 1);
   }
   for (auto mon : monitors_) {
@@ -89,7 +89,7 @@ void Dag<D, O>::DeleteNode(uint64_t id) {
 
 template<typename D, typename O>
 DagNode* Dag<D, O>::GetNode(uint64_t nid) const {
-  return index_to_node_.at(nid)->second;
+  return index_to_node_.at(nid);
 }
 
 template<typename D, typename O>

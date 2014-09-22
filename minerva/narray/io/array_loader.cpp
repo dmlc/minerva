@@ -7,18 +7,12 @@ using namespace std;
 
 namespace minerva {
 
-void ArrayLoaderOp::Execute(DataList& inputs, DataList& outputs, const Context& context) {
+void ArrayLoaderOp::Execute(const DataList&, const DataList& outputs, const Context& context) {
   CHECK_EQ(context.impl_type, ImplType::kBasic) << "vector loader only has basic implementation";
-  Scale dst_start = Scale::Origin(closure.size.NumDims());
-  for (auto& ds: outputs) {
-    basic::NCopy(closure.data.get(), closure.size, ds.Offset(), ds.GetCpuData(), ds.Size(), dst_start, ds.Size());
-  }
+  CHECK_EQ(outputs.size(), 1) << "takes 1 output";
+  memcpy(outputs[0].data(), closure.data.get(), outputs[0].size().Prod() * sizeof(float));
 }
 
-NVector<Chunk> ArrayLoaderOp::Expand(const NVector<Scale>& part_sizes) {
-  ArrayLoaderOp* op = new ArrayLoaderOp(*this);
-  return {Chunk::Compute({}, part_sizes.ToVector(), op), part_sizes.Size()};
-}
 
 std::string ArrayLoaderOp::Name() const {
   return "array loader";

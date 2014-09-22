@@ -18,8 +18,6 @@ INSTALL_COMPUTE_FN(ElewiseClosure, basic::Elewise, NO_IMPL, NO_IMPL);
 INSTALL_COMPUTE_FN(MatMultClosure, basic::MatMult, NO_IMPL, NO_IMPL);
 INSTALL_COMPUTE_FN(TransposeClosure, basic::Transpose, NO_IMPL, NO_IMPL);
 INSTALL_COMPUTE_FN(ReductionClosure, basic::Reduction, NO_IMPL, NO_IMPL);
-INSTALL_COMPUTE_FN(AssembleClosure, basic::Assemble, NO_IMPL, NO_IMPL);
-INSTALL_COMPUTE_FN(SplitClosure, basic::Split, NO_IMPL, NO_IMPL);
 INSTALL_COMPUTE_FN(NormArithmeticClosure, basic::NormArithmetic, NO_IMPL, NO_IMPL);
 INSTALL_COMPUTE_FN(MaxIndexClosure, basic::MaxIndex, NO_IMPL, NO_IMPL);
 

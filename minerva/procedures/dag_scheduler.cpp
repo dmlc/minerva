@@ -86,7 +86,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
   queue<uint64_t> queue;
   for (auto id : targets) {
     // `targets` should consist of only data nodes
-    CHECK_EQ(dag_->GetNode(id)->Type(), DagNode::NodeType::kDataNode);
+    CHECK_EQ(static_cast<int>(dag_->GetNode(id)->Type()), static_cast<int>(DagNode::NodeType::kDataNode));
     switch (rt_info_.GetState(id)) {
       case NodeState::kBirth:
         queue.push(id);

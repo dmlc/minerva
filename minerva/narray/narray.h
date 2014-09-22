@@ -25,7 +25,7 @@ class NArray {
   static std::vector<NArray> Compute(
       const std::vector<NArray>& params,
       const std::vector<Scale>& result_sizes,
-      LogicalComputeFn* fn);
+      PhysicalComputeFn* fn);
   static NArray ComputeOne(
       const std::vector<NArray>& params,
       const Scale& size,

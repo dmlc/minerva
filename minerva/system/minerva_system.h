@@ -40,12 +40,12 @@ class MinervaSystem :
   void Eval(const std::vector<NArray>& narrs);
   void EvalAsync(const std::vector<NArray>& narrs);
   void WaitForEvalFinish();
+  uint64_t GenerateDataId();
   uint64_t current_device_id_;
 
  private:
   MinervaSystem();
   void LoadBuiltinDagMonitors();
-  void IncrExternRC(PhysicalDataNode*, int amount = 1);
   void ExecutePhysicalDag(const std::vector<uint64_t>& pids);
   PhysicalDag* physical_dag_;
   DagScheduler* dag_scheduler_;

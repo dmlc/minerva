@@ -30,7 +30,9 @@ RuntimeInfoMap::RuntimeInfoMap() {
 }
 
 void RuntimeInfoMap::AddNode(uint64_t id) {
-  CHECK_EQ(info_.find(id), info_.end());
+  if (info_.find(id) != info_.end()) {
+    CHECK(false);
+  }
   info_[id];
 }
 
@@ -51,7 +53,7 @@ NodeState RuntimeInfoMap::GetState(uint64_t id) {
 
 void RuntimeInfoMap::KillNode(uint64_t id) {
   CHECK_EQ(info_.at(id).state, NodeState::kDead);
-  CHECK_EQ(dead_nodes_.insert(id), 1);
+  CHECK(dead_nodes_.insert(id).second);
 }
 
 unordered_set<uint64_t> RuntimeInfoMap::dead_nodes() {

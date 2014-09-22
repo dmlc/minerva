@@ -3,7 +3,6 @@
 #include "op/physical_fn.h"
 #include "op/closure.h"
 #include "op/impl/bundle.h"
-#include "device/device_info.h"
 #include <sstream>
 #include <vector>
 #include <glog/logging.h>
@@ -46,9 +45,9 @@ class ReductionOp : public PhyComputeFnWithClosure<ReductionClosure> {
  public:
   std::string Name() const {
    switch (closure.type) {
-     case SUM:
+     case ReductionType::kSum:
        return "sum";
-     case MAX:
+     case ReductionType::kMax:
        return "max";
    }
    return "reduction N/A";
@@ -66,10 +65,10 @@ class ElewiseOp : public PhyComputeFnWithClosure<ElewiseClosure> {
  public:
   std::string Name() const {
     switch(closure.type) {
-      case EXP:      return "exp";
-      case LN:       return "ln";
-      case SIGMOID:  return "sigmoid";
-      case NEGATIVE: return "-";
+      case ElewiseType::kExp:      return "exp";
+      case ElewiseType::kLn:       return "ln";
+      case ElewiseType::kSigmoid:  return "sigmoid";
+      case ElewiseType::kNegative: return "-";
     };
     return "NA";
   }
@@ -79,10 +78,10 @@ class ArithmeticOp : public PhyComputeFnWithClosure<ArithmeticClosure> {
  public:
   std::string Name() const {
     switch(closure.type) {
-      case ADD:   return "+";
-      case SUB:   return "-";
-      case MULT:  return ".*";
-      case DIV:   return "./";
+      case ArithmeticType::kAdd:   return "+";
+      case ArithmeticType::kSub:   return "-";
+      case ArithmeticType::kMult:  return ".*";
+      case ArithmeticType::kDiv:   return "./";
     };
     return "NA";
   }
@@ -96,10 +95,10 @@ class ArithmeticConstOp : public PhyComputeFnWithClosure<ArithmeticConstClosure>
       ss << closure.val;
     }
     switch(closure.type) {
-      case ADD:   ss << "+."; break;
-      case SUB:   ss << "-."; break;
-      case MULT:  ss << ".*"; break;
-      case DIV:   ss << "./"; break;
+      case ArithmeticType::kAdd:   ss << "+."; break;
+      case ArithmeticType::kSub:   ss << "-."; break;
+      case ArithmeticType::kMult:  ss << ".*"; break;
+      case ArithmeticType::kDiv:   ss << "./"; break;
     };
     if(closure.side == 1) { // right
       ss << closure.val;
@@ -113,16 +112,16 @@ class NormArithmeticOp: public PhyComputeFnWithClosure<NormArithmeticClosure> {
   std::string Name() const {
     std::stringstream ss;
     switch (closure.type) {
-      case ADD:
+      case ArithmeticType::kAdd:
         ss << "+";
         break;
-      case SUB:
+      case ArithmeticType::kSub:
         ss << "-";
         break;
-      case MULT:
+      case ArithmeticType::kMult:
         ss << ".*";
         break;
-      case DIV:
+      case ArithmeticType::kDiv:
         ss << "./";
         break;
     }

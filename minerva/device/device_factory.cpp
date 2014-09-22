@@ -27,7 +27,7 @@ uint64_t DeviceFactory::CreateCpuDevice() {
 uint64_t DeviceFactory::CreateGpuDevice(int gid) {
   auto id = GenerateDeviceId();
   Device* d = new GpuDevice(id, listener_, gid);
-  CHECK(device_storage_.emplace(id, id).second);
+  CHECK(device_storage_.emplace(id, d).second);
   return id;
 }
 

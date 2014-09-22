@@ -68,31 +68,31 @@ pair<Device::MemType, float*> MinervaSystem::GetPtr(uint64_t device_id, uint64_t
 }
 
 void MinervaSystem::Eval(const vector<NArray>& narrs) {
-  DLOG(INFO) << "Evaluation(synchronous) start...";
-  vector<uint64_t> pid_to_eval;
-  for(uint64_t id : lid_to_eval) {
-    const vector<uint64_t>& pnids = expand_engine_->GetPhysicalNodes(id).ToVector();
-    pid_to_eval.insert(pid_to_eval.end(), pnids.begin(), pnids.end());
-  }
+  LOG(INFO) << "Evaluation(synchronous) start...";
+  vector<uint64_t> pid_to_eval = Map<uint64_t>(narrs, [](const NArray& n) {
+    return n.data_node_->node_id();
+  });
   ExecutePhysicalDag(pid_to_eval);
   WaitForEvalFinish();
-
   LOG(INFO) << "Evaluation completed!";
 }
 
-void MinervaSystem::EvalAsync(const std::vector<NArray>& narrs) {
+void MinervaSystem::EvalAsync(const vector<NArray>& narrs) {
   LOG(INFO) << "Evaluation(a-synchronous) start...";
-  vector<uint64_t> pid_to_eval;
-  for (uint64_t id : lid_to_eval) {
-    const vector<uint64_t>& pnids = expand_engine_->GetPhysicalNodes(id).ToVector();
-    pid_to_eval.insert(pid_to_eval.end(), pnids.begin(), pnids.end());
-  }
+  vector<uint64_t> pid_to_eval = Map<uint64_t>(narrs, [](const NArray& n) {
+    return n.data_node_->node_id();
+  });
   ExecutePhysicalDag(pid_to_eval);
 }
 
 void MinervaSystem::WaitForEvalFinish() {
   dag_scheduler_->WaitForFinish();
   dag_scheduler_->GCNodes();  // GC useless physical nodes
+}
+
+uint64_t MinervaSystem::GenerateDataId() {
+  static uint64_t data_id = 0;
+  return data_id++;
 }
 
 MinervaSystem::MinervaSystem() {
@@ -106,13 +106,4 @@ void MinervaSystem::ExecutePhysicalDag(const std::vector<uint64_t>& pids) {
   dag_scheduler_->Process(pids);
 }
 
-void MinervaSystem::IncrExternRC(PhysicalDataNode* dnode, int amount) {
-  CHECK_NOTNULL(dnode);
-  dnode->data_.extern_rc += amount;
-  if(expand_engine_->node_states().GetState(dnode->node_id()) == NodeState::kCompleted) {
-    extern_rc_changed_ldnodes_.insert(dnode->node_id());
-  }
-  expand_engine_->OnIncrExternRC(dnode, amount);
-}
-
-} // end of namespace minerva
+}  // end of namespace minerva

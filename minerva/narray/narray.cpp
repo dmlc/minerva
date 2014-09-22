@@ -52,20 +52,19 @@ vector<NArray> NArray::Compute(
     const vector<NArray>& params,
     const vector<Scale>& result_sizes,
     PhysicalComputeFn* fn) {
-  auto& physical_dag = MinervaSystem::Instance().physical_dag();
-  auto& data_store = MinervaSystem::Instance().data_store();
-  auto device_info = MinervaSystem::Instance().device_info();
-  auto rst = Map<NArray>(result_sizes, [&](const Scale& scale) {
-    return NArray(physical_dag.NewDataNode(PhysicalData(size, device_info, data_store.GenerateDataId())));
+  auto& physical_dag = ms.physical_dag();
+  auto current_device_id = ms.current_device_id_;
+  auto rst = Map<NArray>(result_sizes, [&](const Scale& size) {
+    return NArray(physical_dag.NewDataNode(PhysicalData(size, current_device_id, ms.GenerateDataId())));
   });
   auto rst_data_nodes = Map<PhysicalDataNode*>(rst, [](const NArray& i) {
-    return i.data_node();
+    return i.data_node_;
   });
   auto param_data_nodes = Map<PhysicalDataNode*>(params, [](const NArray& i) {
-    return i.data_node();
+    return i.data_node_;
   });
-  fn->device_info = device_info;
-  ldag.NewOpNode(param_data_nodes, rst_data_nodes, {fn});
+  fn->device_id = current_device_id;
+  ms.physical_dag().NewOpNode(param_data_nodes, rst_data_nodes, {fn});
   return rst;
 }
 
