@@ -35,12 +35,12 @@ using namespace minerva;
 float epsW = 0.001;
 float epsB = 0.001;
 
-int num_epochs = 100;
+int num_epochs = 1;
 
 //dataset description
 int num_train_samples = 60000;
 int minibatch_size = 256;
-int num_minibatches = 235;
+int num_minibatches = 4;
 
 uint64_t cpuDevice;
 uint64_t gpuDevice;

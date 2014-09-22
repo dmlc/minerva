@@ -144,14 +144,12 @@ namespace cuda {
 
   static void FindConfiguration(size_t size, int & num_blocks, int & num_threads)
   {
-    /*int blocks = int((size + num_threads - 1)/ num_threads);
-    if (blocks < 0 || blocks > 128)
+    num_threads = 32;
+    num_blocks = int((size + num_threads - 1)/ num_threads);
+    if (num_blocks < 0 || num_blocks > 128)
     {
-      blocks = 128;
+      num_blocks = 128;
     }
-    return blocks;*/
-    num_blocks = 1;
-    num_threads = 1;
   }
 
 void CudaPerformDotMult(float* a, float* b, float* c, size_t size, cudaStream_t stream) {
@@ -250,6 +248,79 @@ void CudaPerformNormOnRow(float* matrix, float* col, float* res, int m, int n,
   CudaPerformNormOnRowKernel <<<block, thread, 0, stream >> >(matrix, col, res, m, n, type);
   CheckCudaError("CudaPerformNormOnRow");
 }
+
+class EXPOp
+{
+public:
+  __device__ inline void operator()(float* in, float* out, float v) const
+  {
+    *out = expf(*in);
+  }
+};
+
+class LNOp
+{
+public:
+  __device__ inline void operator()(float* in, float* out, float v) const
+  {
+    *out = log(*in);
+  }
+};
+
+class NegativeOp
+{
+public:
+  __device__ inline void operator()(float* in, float* out, float v) const
+  {
+    *out = -(*in);
+  }
+};
+
+class SigmoidOp
+{
+public:
+  __device__ inline void operator()(float* in, float* out, float v) const
+  {
+    float x = *in;
+#if 0
+    *out = 1 / (1 + exp(-x));
+#else
+    *out = x / (1 + abs(x));
+#endif
+  }
+};
+
+void CudaPerformEleWise(float* in, float* out, size_t size, 
+  const ElewiseType & type, cudaStream_t stream)
+{
+  int block, thread;
+  FindConfiguration(size, block, thread);
+  switch (type)
+  {
+  case EXP:
+    EXPOp expop;
+    CudaPerformPerElementKernel << <block, thread, 0, stream >> >(in, out, 0, size, expop);
+    break;
+  case LN:
+    LNOp lnop;
+    CudaPerformPerElementKernel << <block, thread, 0, stream >> >(in, out, 0, size, lnop);
+    break;
+  case SIGMOID:
+    SigmoidOp sigmoidop;
+    CudaPerformPerElementKernel << <block, thread, 0, stream >> >(in, out, 0, size, sigmoidop);
+    break;
+  case NEGATIVE:
+    NegativeOp negop;
+    CudaPerformPerElementKernel << <block, thread, 0, stream >> >(in, out, 0, size, negop);
+    break;
+  }
+  
+  CheckCudaError("CudaPerformLeftConstSub");
+}
+
+
+
+
 
 }
 }

@@ -23,6 +23,9 @@ void CudaPerformNormOnCol(float* matrix, float* row, float* res, int m, int n,
 void CudaPerformNormOnRow(float* matrix, float* col, float* res, int m, int n,
   const ArithmeticType & type, cudaStream_t);
 
+void CudaPerformEleWise(float* in, float* out, size_t size,
+  const ElewiseType & type, cudaStream_t);
+
 }
 }
 #endif

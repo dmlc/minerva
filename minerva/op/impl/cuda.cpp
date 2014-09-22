@@ -137,7 +137,52 @@ namespace minerva {
       {
         CHECK(false) << "both two dimensions of normalizer are not 1";
       }
-
     }
+
+    void Reduction(DataList& inputs, DataList& outputs,
+      ReductionClosure& closure, const CudaRuntimeContext& context)
+    {
+      //CHECK_EQ(inputs.size(), 1) << "(reduction) #inputs is wrong!";
+      //CHECK_EQ(outputs.size(), 1) << "(reduction) #outputs is wrong!";
+      //float* in_data = inputs[0].GetGpuData();
+      //float* res_data = outputs[0].GetGpuData();
+      //auto in_max = inputs[0].Size();
+      //auto res_max = outputs[0].Size();
+      //auto accumulator = Scale::Origin(in_max.NumDims());
+      //do {
+      //  auto cur = accumulator;
+      //  float tmp = in_data[in_range.Flatten(cur)];
+      //  while (cur.IncrDimensions(in_max, closure.dims_to_reduce)) {
+      //    float tmp2 = in_data[in_range.Flatten(cur)];
+      //    // TODO Moving switch out of loop to optimize
+      //    switch (closure.type) {
+      //    case SUM:
+      //      tmp += tmp2;
+      //      break;
+      //    case MAX:
+      //      if (tmp < tmp2) {
+      //        tmp = tmp2;
+      //      }
+      //      break;
+      //    }
+      //  }
+      //  res_data[res_range.Flatten(accumulator)] = tmp;
+      //} while (accumulator.IncrWithDimensionsFixed(res_max, closure.dims_to_reduce));
+    }
+
+    void MaxIndex(DataList&, DataList&, MaxIndexClosure&, const CudaRuntimeContext&)
+    {}
+
+    void Elewise(DataList& inputs, DataList& outputs, 
+      ElewiseClosure& closure, const CudaRuntimeContext& context)
+    {
+      CHECK_EQ(inputs.size(), 1) << "(elewise) #inputs is wrong!";
+      CHECK_EQ(outputs.size(), 1) << "(elewise) #outputs is wrong!";
+      float* in_data = inputs[0].GetGpuData();
+      float* res_data = outputs[0].GetGpuData();
+      int length = outputs[0].Size().Prod();
+      CudaPerformEleWise(in_data, res_data, length, closure.type, context.stream);
+    }
+
   }
 }
