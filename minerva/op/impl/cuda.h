@@ -10,6 +10,7 @@ void Arithmetic(DataList&, DataList&, ArithmeticClosure&, const CudaRuntimeConte
 void MatMult(DataList&, DataList&, MatMultClosure&, const CudaRuntimeContext&);
 void ArithmeticConst(DataList&, DataList&, ArithmeticConstClosure&, const CudaRuntimeContext&);
 void Transpose(DataList&, DataList&, TransposeClosure&, const CudaRuntimeContext&);
+void NormArithmetic(DataList&, DataList&, NormArithmeticClosure&, const CudaRuntimeContext &);
 
 }
 }

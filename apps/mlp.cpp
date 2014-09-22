@@ -42,26 +42,35 @@ int num_train_samples = 60000;
 int minibatch_size = 256;
 int num_minibatches = 235;
 
+uint64_t cpuDevice;
+uint64_t gpuDevice;
+
+#if 1
+
 //Fully layer
 struct Layer {
   int length;
   NArray bias;
   Layer(int len): length(len) {
-    bias = NArray::Constant({length, 1}, 0.0);
+    bias = NArray::Constant({ length, 1 }, 0.0, {1, 1});
   }
 };
-vector<Layer> layers = {
-  Layer(28*28), Layer(256), Layer(10)
-};
+
+vector<Layer> layers;
 vector<NArray> weights;
-int num_layers = layers.size();
+int num_layers;
 
 void InitNetwork() {
+  layers = {
+    Layer(28 * 28), Layer(256), Layer(10)
+  };
+  num_layers = layers.size();
+
   for(int i = 0; i < num_layers - 1; ++i) {
     int row = layers[i + 1].length;
     int col = layers[i].length;
     float var = sqrt(4.0 / (row + col));
-    weights.push_back(NArray::Randn({row, col}, 0.0, var));
+    weights.push_back(NArray::Randn({ row, col }, 0.0, var, {1, 1}));
   }
 }
 
@@ -87,26 +96,37 @@ void PrintTrainingAccuracy(NArray o, NArray t) {
 void TrainNetwork() {
   ////////////////////////////////TRAIN NETWORK/////////////////////////////////////
   //load data
-  DBLoader loader("./data/mnist/");
+  const string train_data_file = "/home/data/data/mnist/train_small/traindata_0";
+  const string train_label_file = "/home/data/data/mnist/train_small/trainlabel_0";
+  const string test_data_file = "/home/data/data/mnist/test/testdata_0";
+  const string test_label_file = "/home/data/data/mnist/test/testlabel_0";
+
+  OneFileMBLoader train_data_loader(train_data_file, {layers.front().length});
+  OneFileMBLoader train_label_loader(train_label_file, {layers.back().length});
 
   for(int i = 0; i < num_epochs; i++) {
     for(int j = 0; j < num_minibatches; j++) {
-      loader.LoadNext(minibatch_size);
 
       vector<NArray> acts, sens;
       acts.resize(num_layers);
       sens.resize(num_layers);
 
-      acts[0] = loader.GetData();
+      MinervaSystem & ms = MinervaSystem::Instance();
+      ms.set_device_id(cpuDevice);
+
+      acts[0] = train_data_loader.LoadNext(minibatch_size);
+      NArray target = train_label_loader.LoadNext(minibatch_size);
+
+      ms.set_device_id(gpuDevice);
       // FF
       for(int k = 1; k < num_layers; ++k) {
-        // acts[k] = weights[k] * acts[k-1] + layers[k].bias.Tile({1, num_minibatches});
-        acts[k] = (weights[k] * acts[k - 1]).NormArithmetic(layers[k].bias, ADD);
+        acts[k] = (weights[k - 1] * acts[k - 1]).NormArithmetic(layers[k].bias, ADD);
         acts[k] = Elewise::Sigmoid(acts[k]);
       }
       // Error
       acts[num_layers-1] = Softmax(acts[num_layers-1]);
-      NArray target = loader.GetLabel();
+      
+
       PrintTrainingAccuracy(acts[num_layers-1], target);
       sens[num_layers-1] = target - acts[num_layers-1];
       // BP
@@ -126,7 +146,15 @@ void TrainNetwork() {
   }
 }
 
+#endif
+
 int main(int argc, char** argv) {
+  MinervaSystem & ms = MinervaSystem::Instance();
+  ms.Initialize(&argc, &argv);
+  cpuDevice = ms.CreateCPUDevice();
+  gpuDevice = ms.CreateGPUDevice(0);
+  
+  
   InitNetwork();
   TrainNetwork();
 }

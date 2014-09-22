@@ -5,6 +5,7 @@
 
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
+#include "common/cuda_utils.h"
 #endif
 
 using namespace std;
@@ -22,7 +23,7 @@ DataStore::~DataStore() {
     }
 #ifdef HAS_CUDA
     if ((ptr = i.second.data_ptrs[GPU])) {
-      CHECK_EQ(cudaFree(ptr), cudaSuccess);
+      CUDA_CALL(cudaFree(ptr));
     }
 #endif
   }
@@ -47,7 +48,7 @@ void DataStore::CreateData(uint64_t id, MemTypes type, size_t length, int rc) {
       break;
     case GPU:
 #ifdef HAS_CUDA
-      CHECK_EQ(cudaMalloc(&ds.data_ptrs[type], length * sizeof(float)), cudaSuccess);
+      CUDA_CALL(cudaMalloc(&ds.data_ptrs[type], length * sizeof(float)));
 #else
       CHECK(false);
 #endif
@@ -76,7 +77,9 @@ float* DataStore::GetCPUData(uint64_t id) {
 	{
 		CHECK_NE(ds.data_ptrs[DataStore::GPU], static_cast<void*>(0)) << "id=" << id << " was not created!";
 		data = malloc(sizeof(float)*ds.length);
-		cudaMemcpy(data, ds.data_ptrs[DataStore::GPU], sizeof(float)*ds.length, cudaMemcpyDeviceToHost);
+#ifdef HAS_CUDA
+		CUDA_CALL(cudaMemcpy(data, ds.data_ptrs[DataStore::GPU], sizeof(float)*ds.length, cudaMemcpyDeviceToHost));
+#endif
 	}
 	
 	return (float*)data;
@@ -157,7 +160,7 @@ void DataStore::GC(uint64_t id) {
   }
 #ifdef HAS_CUDA
   if ((ptr = ds.data_ptrs[GPU])) {
-    CHECK_EQ(cudaFree(ptr), cudaSuccess);
+    CUDA_CALL(cudaFree(ptr));
   }
 #endif
   data_states_.erase(id);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common/scale.h"
+#include "./op_types.h"
 
 namespace minerva {
 
@@ -13,25 +14,6 @@ namespace minerva {
   CONV,
   // TODO how to generate this when adding new closure types ?
 };*/
-
-enum ArithmeticType {
-  ADD = 0,
-  SUB,
-  MULT,
-  DIV,
-};
-
-enum ElewiseType {
-  EXP = 0,
-  LN,
-  SIGMOID,
-  NEGATIVE,
-};
-
-enum ReductionType {
-  SUM = 0,
-  MAX,
-};
 
 struct AssembleClosure {
 };

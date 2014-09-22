@@ -65,8 +65,8 @@ OneFileMBLoader::OneFileMBLoader(const string& name, const Scale& s):
   data_file_name_(name), sample_shape_(s), sample_start_index_(0) {
   partition_shapes_per_sample_ = sample_shape_.ToNVector();
   ifstream fin(name.c_str(), ios::binary);
-  fin.read(reinterpret_cast<char*>(&num_samples_), 4);
   fin.read(reinterpret_cast<char*>(&sample_length_), 4);
+  fin.read(reinterpret_cast<char*>(&num_samples_), 4);
   fin.close();
   CHECK_EQ(sample_shape_.Prod(), sample_length_) << "size of each sample mismatch!";
 }
