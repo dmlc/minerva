@@ -13,7 +13,8 @@ struct ArrayLoaderClosure {
 };
 
 class ArrayLoaderOp :
-  public PhyComputeFnWithClosure<ArrayLoaderClosure> {
+  public PhysicalComputeFn,
+  public ClosureTrait<ArrayLoaderClosure> {
  public:
   void Execute(const DataList&, const DataList&, const Context&);
   std::string Name() const;

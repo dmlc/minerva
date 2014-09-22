@@ -9,7 +9,7 @@ using namespace std;
 namespace minerva {
 namespace basic {
 
-void Arithmetic(DataList& inputs, DataList& outputs, ArithmeticClosure& closure) {
+void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosure& closure) {
   CHECK_EQ(inputs.size(), 2) << "(arithmetic) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(arithmetic) #outputs is wrong!";
   float* left_data = inputs[0].data();
@@ -40,7 +40,7 @@ void Arithmetic(DataList& inputs, DataList& outputs, ArithmeticClosure& closure)
   }
 }
 
-void ArithmeticConst(DataList& inputs, DataList& outputs, ArithmeticConstClosure& closure) {
+void ArithmeticConst(const DataList& inputs, const DataList& outputs, ArithmeticConstClosure& closure) {
   CHECK_EQ(inputs.size(), 1) << "(arithmetic const) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(arithmetic const) #outputs is wrong!";
   float val = closure.val;
@@ -95,7 +95,7 @@ void ArithmeticConst(DataList& inputs, DataList& outputs, ArithmeticConstClosure
   }
 }
 
-void Elewise(DataList& inputs, DataList& outputs, ElewiseClosure& closure) {
+void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& closure) {
   CHECK_EQ(inputs.size(), 1) << "(elewise) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(elewise) #outputs is wrong!";
   float* in_data = inputs[0].data();
@@ -125,7 +125,7 @@ void Elewise(DataList& inputs, DataList& outputs, ElewiseClosure& closure) {
   }
 }
 
-void MatMult(DataList& inputs, DataList& outputs, MatMultClosure& closure) {
+void MatMult(const DataList& inputs, const DataList& outputs, MatMultClosure& closure) {
   CHECK_EQ(inputs.size(), 2) << "(matmult) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(matmult) #outputs is wrong!";
   float* left_data = inputs[0].data();
@@ -145,7 +145,7 @@ void MatMult(DataList& inputs, DataList& outputs, MatMultClosure& closure) {
   }
 }
 
-void Transpose(DataList& inputs, DataList& outputs, TransposeClosure& closure) {
+void Transpose(const DataList& inputs, const DataList& outputs, TransposeClosure& closure) {
   CHECK_EQ(inputs.size(), 1) << "(transpose) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(transpose) #outputs is wrong!";
   float* in_data = inputs[0].data();
@@ -159,7 +159,7 @@ void Transpose(DataList& inputs, DataList& outputs, TransposeClosure& closure) {
   }
 }
 
-void Reduction(DataList& inputs, DataList& outputs, ReductionClosure& closure) {
+void Reduction(const DataList& inputs, const DataList& outputs, ReductionClosure& closure) {
   CHECK_EQ(inputs.size(), 1) << "(reduction) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(reduction) #outputs is wrong!";
   float* in_data = inputs[0].data();
@@ -190,7 +190,7 @@ void Reduction(DataList& inputs, DataList& outputs, ReductionClosure& closure) {
   } while (accumulator.IncrWithDimensionsFixed(res_max, closure.dims_to_reduce));
 }
 
-void Randn(DataList& output, RandnClosure& closure) {
+void Randn(const DataList& output, RandnClosure& closure) {
   CHECK_EQ(output.size(), 1) << "wrong number of randn output";
   int length = output[0].size().Prod();
   float* data = output[0].data();
@@ -201,7 +201,7 @@ void Randn(DataList& output, RandnClosure& closure) {
   }
 }
 
-void Fill(DataList& output, FillClosure& closure) {
+void Fill(const DataList& output, FillClosure& closure) {
   CHECK_EQ(output.size(), 1) << "wrong number of fill constant output";
   int length = output[0].size().Prod();
   float* data = output[0].data();
@@ -210,7 +210,7 @@ void Fill(DataList& output, FillClosure& closure) {
   }
 }
 
-void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& closure) {
+void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithmeticClosure& closure) {
   CHECK_EQ(inputs.size(), 2) << "NormArithmetic kernel wrong #input";
   CHECK_EQ(outputs.size(), 1) << "NormArithmetic kernel wrong #output";
   // Normalizee is the chunk with full size, normalizer is the chunk with reduced dimensions
@@ -266,7 +266,7 @@ void NormArithmetic(DataList& inputs, DataList& outputs, NormArithmeticClosure& 
   }
 }
 
-void MaxIndex(DataList& inputs, DataList& outputs, MaxIndexClosure& closure) {
+void MaxIndex(const DataList& inputs, const DataList& outputs, MaxIndexClosure& closure) {
   CHECK_EQ(inputs.size(), 1) << "basic::MaxIndex #input wrong";
   CHECK_EQ(outputs.size(), 1) << "basic::MaxIndex #output wrong";
   float* in_data = inputs[0].data();

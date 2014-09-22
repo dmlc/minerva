@@ -1,6 +1,6 @@
 #include "narray/narray_elewise.h"
 #include "narray/narray.h"
-#include "op/logical_op.h"
+#include "op/physical_op.h"
 #include "system/minerva_system.h"
 
 using namespace std;
@@ -8,11 +8,11 @@ using namespace std;
 namespace minerva {
 
 // Helper functions
-static NArray UnaryElewiseCompute(NArray narr, LogicalComputeFn* op) {
+static NArray UnaryElewiseCompute(NArray narr, PhysicalComputeFn* op) {
   return NArray::ComputeOne({narr}, narr.Size(), op);
 }
 
-static NArray BinaryElewiseCompute(NArray lhs, NArray rhs, LogicalComputeFn* op) {
+static NArray BinaryElewiseCompute(NArray lhs, NArray rhs, PhysicalComputeFn* op) {
   CHECK_EQ(lhs.Size(), rhs.Size()) << "size must match";
   return NArray::ComputeOne({lhs, rhs}, lhs.Size(), op);
 }

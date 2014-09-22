@@ -1,5 +1,5 @@
 #include "narray/narray.h"
-#include "op/shared_op.h"
+#include "op/physical_op.h"
 #include <glog/logging.h>
 
 using namespace std;
@@ -7,11 +7,11 @@ using namespace std;
 namespace minerva {
 
 // Lazy reductions
-NArray NArray::Sum(int dim) {
+NArray NArray::Sum(int dim) const {
   return Sum(Scale{dim});
 }
 
-NArray NArray::Sum(const Scale& dims) {
+NArray NArray::Sum(const Scale& dims) const {
   auto size = Size();
   for (auto i : dims) {
     size[i] = 1;
@@ -22,11 +22,11 @@ NArray NArray::Sum(const Scale& dims) {
   return NArray::ComputeOne({*this}, size, reduction_op);
 }
 
-NArray NArray::Max(int dim) {
+NArray NArray::Max(int dim) const {
   return Max(Scale{dim});
 }
 
-NArray NArray::Max(const Scale& dims) {
+NArray NArray::Max(const Scale& dims) const {
   auto size = Size();
   for (auto i : dims) {
     size[i] = 1;
@@ -37,7 +37,7 @@ NArray NArray::Max(const Scale& dims) {
   return NArray::ComputeOne({*this}, size, reduction_op);
 }
 
-NArray NArray::MaxIndex(int dim) {
+NArray NArray::MaxIndex(int dim) const {
   auto size = Size();
   size[dim] = 1;
   MaxIndexOp* op = new MaxIndexOp();
@@ -46,19 +46,19 @@ NArray NArray::MaxIndex(int dim) {
 }
 
 // Non-lazy reductions
-float NArray::Sum() {
+float NArray::Sum() const {
   // TODO
   CHECK(false) << "not implemented";
   return 0;
 }
 
-float NArray::Max() {
+float NArray::Max() const {
   // TODO
   CHECK(false) << "not implemented";
   return 0;
 }
 
-int NArray::CountZero() {
+int NArray::CountZero() const {
   int* value = reinterpret_cast<int*>(Get());
   int size = Size().Prod();
   int counter = 0;

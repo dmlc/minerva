@@ -50,7 +50,6 @@ class MinervaSystem :
   PhysicalDag* physical_dag_;
   DagScheduler* dag_scheduler_;
   DeviceFactory* device_factory_;
-  std::unordered_set<uint64_t> extern_rc_changed_ldnodes_;
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
 };
 
