@@ -18,8 +18,8 @@ void MinervaSystem::UniversalMemcpy(pair<Device::MemType, float*> to, pair<Devic
 #ifdef HAS_CUDA
   CHECK_EQ(cudaMemcpy(to.second, from.second, size, cudaMemcpyDefault), cudaSuccess);
 #else
-  CHECK_EQ(to.first, Device::MemType::kCpu);
-  CHECK_EQ(from.first, Device::MemType::kCpu);
+  CHECK_EQ(static_cast<int>(to.first), static_cast<int>(Device::MemType::kCpu));
+  CHECK_EQ(static_cast<int>(from.first), static_cast<int>(Device::MemType::kCpu));
   memcpy(to.second, from.second, size);
 #endif
 }
@@ -54,7 +54,7 @@ uint64_t MinervaSystem::CreateGPUDevice(int gid) {
 
 #endif
 
-shared_ptr<float> MinervaSystem::GetValue(NArray& narr) {
+shared_ptr<float> MinervaSystem::GetValue(const NArray& narr) {
   auto& data = narr.data_node_->data_;
   shared_ptr<float> ret(new float[data.size.Prod()], [](float* p) {
     delete[] p;
@@ -65,6 +65,16 @@ shared_ptr<float> MinervaSystem::GetValue(NArray& narr) {
 
 pair<Device::MemType, float*> MinervaSystem::GetPtr(uint64_t device_id, uint64_t data_id) {
   return device_factory_->GetDevice(device_id)->GetPtr(data_id);
+}
+
+void MinervaSystem::IncrExternRC(PhysicalDataNode* node) {
+  ++(node->data_.extern_rc);
+  dag_scheduler_->OnExternRCUpdate(node);
+}
+
+void MinervaSystem::DecrExternRC(PhysicalDataNode* node) {
+  --(node->data_.extern_rc);
+  dag_scheduler_->OnExternRCUpdate(node);
 }
 
 void MinervaSystem::Eval(const vector<NArray>& narrs) {

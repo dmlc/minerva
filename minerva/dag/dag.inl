@@ -18,9 +18,8 @@ typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
   for (auto mon : monitors_) {
     mon->OnBeginModify();
   }
-  DNode* ret = new DNode(NewIndex());
-  ret->data_ = data;
-  CHECK_EQ(index_to_node_.insert(std::make_pair(ret->node_id(), ret)), 1);
+  DNode* ret = new DNode(NewIndex(), data);
+  CHECK(index_to_node_.insert(std::make_pair(ret->node_id(), ret)).second);
   for (auto mon : monitors_) {
     mon->OnCreateNode(ret);
   }
@@ -40,7 +39,7 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
   }
   ONode* ret = new ONode(NewIndex());
   ret->op_ = op;
-  CHECK_EQ(index_to_node_.insert(std::make_pair(ret->node_id(), ret)), 1);
+  CHECK(index_to_node_.insert(std::make_pair(ret->node_id(), ret)).second);
   for (auto mon : monitors_) {
     mon->OnCreateNode(ret);
   }

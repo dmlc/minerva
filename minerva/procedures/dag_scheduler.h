@@ -31,7 +31,7 @@ class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<Physica
   void WaitForFinish();
   void GCNodes();
   // Monitor external reference changes
-  void OnIncrExternRC(PhysicalDataNode*, int);
+  void OnExternRCUpdate(PhysicalDataNode*);
   // DAG monitor
   void OnCreateNode(DagNode*);
   void OnDeleteNode(DagNode*);
@@ -44,7 +44,6 @@ class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<Physica
   void Process(const std::vector<uint64_t>&);
 
  private:
-  int CalcTotalReferenceCount(PhysicalDataNode*);
   void FreeDataNodeRes(PhysicalDataNode*);
   std::recursive_mutex m_;
   // Runtime information

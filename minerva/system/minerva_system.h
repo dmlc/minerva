@@ -35,8 +35,10 @@ class MinervaSystem :
 #ifdef HAS_CUDA
   uint64_t CreateGPUDevice(int gid);
 #endif
-  std::shared_ptr<float> GetValue(NArray& narr);
+  std::shared_ptr<float> GetValue(const NArray& narr);
   std::pair<Device::MemType, float*> GetPtr(uint64_t, uint64_t);
+  void IncrExternRC(PhysicalDataNode*);
+  void DecrExternRC(PhysicalDataNode*);
   void Eval(const std::vector<NArray>& narrs);
   void EvalAsync(const std::vector<NArray>& narrs);
   void WaitForEvalFinish();

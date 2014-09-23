@@ -59,7 +59,8 @@ float NArray::Max() const {
 }
 
 int NArray::CountZero() const {
-  int* value = reinterpret_cast<int*>(Get());
+  auto ptr = Get();
+  int* value = reinterpret_cast<int*>(ptr.get());
   int size = Size().Prod();
   int counter = 0;
   for (int i = 0; i < size; ++i) {

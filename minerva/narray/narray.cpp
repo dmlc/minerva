@@ -94,7 +94,7 @@ NArray& NArray::operator=(const NArray& other) {
     return *this;
   }
   if (data_node_ != nullptr) {
-    ms.IncrExternRC(data_node_, -1);
+    ms.DecrExternRC(data_node_);
   }
   data_node_ = other.data_node_;
   if (data_node_ != nullptr) {
@@ -108,7 +108,7 @@ NArray& NArray::operator=(NArray&& other) {
     return *this;
   }
   if (data_node_ != nullptr) {
-    ms.IncrExternRC(data_node_, -1);
+    ms.DecrExternRC(data_node_);
   }
   data_node_ = other.data_node_;
   other.data_node_ = nullptr;
@@ -117,7 +117,7 @@ NArray& NArray::operator=(NArray&& other) {
 
 NArray::~NArray() {
   if (data_node_ != nullptr) {
-    ms.IncrExternRC(data_node_, -1);
+    ms.DecrExternRC(data_node_);
   }
 }
 
@@ -175,13 +175,14 @@ void NArray::EvalAsync() const {
   MinervaSystem::Instance().EvalAsync({*this});
 }
 
-float* NArray::Get() const {
+shared_ptr<float> NArray::Get() const {
   Eval();
   return MinervaSystem::Instance().GetValue(*this);
 }
 
 void NArray::ToStream(ostream& out, const FileFormat& format) const {
-  float* value = Get();
+  shared_ptr<float> ptr = Get();
+  float* value = ptr.get();
   if (format.binary) {
     out.write(reinterpret_cast<char*>(value), Size().Prod() * sizeof(float));
   } else {
@@ -198,7 +199,7 @@ void NArray::ToFile(const std::string& filename, const FileFormat& format) const
 }
 
 NArray::NArray(PhysicalDataNode* node) : data_node_(node) {
-  if (data_node != nullptr) {
+  if (data_node_ != nullptr) {
     ms.IncrExternRC(data_node_);
   }
 }

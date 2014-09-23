@@ -83,7 +83,7 @@ class NArray {
   // System
   void Eval() const;
   void EvalAsync() const;
-  float* Get() const;
+  std::shared_ptr<float> Get() const;
   void ToStream(std::ostream& out, const FileFormat& format) const;
   void ToFile(const std::string& filename, const FileFormat& format) const;
 
