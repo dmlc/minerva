@@ -1,4 +1,5 @@
 #pragma once
+#ifdef HAS_CUDA
 #include "op/context.h"
 #include "op/physical_fn.h"
 #include "op/closure.h"
@@ -17,3 +18,4 @@ void Elewise(const DataList&, const DataList&, ElewiseClosure&, const CudaRuntim
 
 }
 }
+#endif

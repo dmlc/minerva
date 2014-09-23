@@ -1,6 +1,4 @@
 #pragma once
-#include <cublas.h>
-#include <cuda.h>
 #include <vector>
 #include <string>
 #include <utility>
@@ -11,6 +9,10 @@
 #include "common/common.h"
 #include "common/concurrent_blocking_queue.h"
 #include "common/thread_pool.h"
+#ifdef HAS_CUDA
+#include <cuda.h>
+#include <cublas.h>
+#endif
 
 namespace minerva {
 

@@ -1,3 +1,5 @@
+#ifdef HAS_CUDA
+
 #include "op/impl/cuda.h"
 #include "op/impl/cuda/cuda_perform.h"
 #include "op/context.h"
@@ -289,3 +291,4 @@ void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& cl
 }
 }
 
+#endif
