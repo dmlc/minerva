@@ -117,6 +117,53 @@ __global__ static void CudaPerformReductionOnRowKernel(float* matrix, float* col
   }
 }
 
+__global__ static void CudaPerformMaxIndexOnColKernel(float* matrix, float* row,
+  int m, int n)
+{
+  // TODO: this is inefficient
+  int col_id = threadIdx.x + blockIdx.x * blockDim.x;
+  int step = gridDim.x * blockDim.x;
+  while (col_id < n)
+  {
+    float* mat = matrix + row_id;
+    float maxv = *mat;
+    int maxid = 0;
+    for (int i = 0; i < m; i++)
+    {
+      if (mat[col_id*n + i] > maxv)
+      {
+        maxv = mat[col_id*n + i];
+        maxid = i;
+      }
+    }
+    row[col_id] = maxid;
+    col_id += step;
+  }
+}
+
+__global__ static void CudaPerformReductionOnRowKernel(float* matrix, float* col,
+  int m, int n)
+{
+  int row_id = threadIdx.x + blockIdx.x * blockDim.x;
+  int step = gridDim.x * blockDim.x;
+  while (row_id < m)
+  {
+    float* mat = matrix + row_id;
+    float maxv = *mat;
+    int maxid = 0;
+    for (int i = 0; i < n; i++)
+    {
+      if (mat[i*m + row_id] > maxv)
+      {
+        maxv = mat[i*m + row_id];
+        maxid = i;
+      }
+    }
+    col[row_id] = maxid;
+    row_id += step;
+  }
+}
+
 namespace minerva {
 namespace cuda {
 
@@ -381,7 +428,7 @@ namespace cuda {
       CudaPerformReductionOnColKernel <<<block, thread, 0, stream >>>(in, out, m, n, MaxOp);
       break;
     }    
-    CheckCudaError("CudaPerformLeftConstDiv");
+    CheckCudaError("CudaPerformReductionOnCol");
   }
 
   void CudaPerformReductionOnRow(float* in, float* out, int m, int n,
@@ -398,10 +445,26 @@ namespace cuda {
       CudaPerformReductionOnRowKernel <<<block, thread, 0, stream >>>(in, out, m, n, MaxOp);
       break;
     }    
-    CheckCudaError("CudaPerformLeftConstDiv");
+    CheckCudaError("CudaPerformReductionOnRow");
   }
 
+  void CudaPerformMaxIndexOnCol(float* in, float* out, int m, int n,
+    cudaStream_t stream)
+  {
+    int block, thread;
+    FindConfiguration(n, block, thread);
+    CudaPerformMaxIndexOnColKernel <<<block, thread, 0, stream >>>(in, out, m, n);
+    CheckCudaError("CudaPerformMaxIndexOnCol");
+  }
 
+  void CudaPerformMaxIndexOnRow(float* in, float* out, int m, int n,
+    cudaStream_t stream)
+  {
+    int block, thread;
+    FindConfiguration(m, block, thread);
+    CudaPerformMaxIndexOnColKernel << <block, thread, 0, stream >> >(in, out, m, n);
+    CheckCudaError("CudaPerformMaxIndexOnRow");
+  }
 
 }
 }

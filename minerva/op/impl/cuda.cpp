@@ -158,31 +158,69 @@ namespace minerva {
       auto out_data = outputs[1].GetGpuData();
 
       // TODO: support other types of norm op
-      CHECK_EQ(in_size.NumDims(), 2) << "currently support 2D normalizee matrix only";
-      CHECK_EQ(out_size.NumDims(), 2) << "currently support 2D normalizer matrix only";
+      CHECK_EQ(in_size.NumDims(), 2) << "currently support 2D reduction matrix only";
+      CHECK_EQ(out_size.NumDims(), 2) << "currently support 2D reduction matrix only";
 
       int m = in_size[0];
       int n = in_size[1];
       if (out_size[0] == 1)
       {
-        CHECK_EQ(in_size[1], out_size[1]) << "we can only do norm on one dimmension";
+        CHECK_EQ(in_size[1], out_size[1]) << "we can only do reduction on one dimmension";
         CudaPerformReductionOnCol(in_data, out_data, m, n, closure.type, context.stream);
       }
       else if (out_size[1] == 1)
       {
-        CHECK_EQ(in_size[0], out_size[0]) << "we can only do norm on one dimmension";
+        CHECK_EQ(in_size[0], out_size[0]) << "we can only do reduction on one dimmension";
         CudaPerformReductionOnRow(in_data, out_data, m, n, closure.type, context.stream);
       }
       else
       {
-        CHECK(false) << "both two dimensions of normalizer are not 1";
+        CHECK(false) << "both two dimensions of reduction are not 1";
       }
     }
 
     void MaxIndex(DataList& inputs, DataList& outputs, 
       MaxIndexClosure& closure, const CudaRuntimeContext& context)
     {
-      
+      //TODO: don't use float to store index, use int or long long
+      CHECK_EQ(inputs.size(), 1) << "MaxIndex kernel wrong #input";
+      CHECK_EQ(outputs.size(), 1) << "MaxIndex kernel wrong #output";
+      // Normalizee is the chunk with full size, normalizer is the chunk with reduced dimensions
+      auto in_size = inputs[0].Size();
+      auto out_size = outputs[0].Size();
+
+      CHECK_EQ(in_size, outputs[0].Size()) << "MaxIndex kernel output size mismatch";
+      for (size_t i = 0; i < in_size.NumDims(); ++i) {
+        if (out_size[i] != 1 && out_size[i] != in_size[i]) {
+          CHECK(false) << "MaxIndex kernel size mismatch";
+        }
+      }
+
+      auto in_data = inputs[0].GetGpuData();
+      auto out_data = outputs[1].GetGpuData();
+
+      // TODO: support other types of norm op
+      CHECK_EQ(in_size.NumDims(), 2) << "currently support 2D MaxIndex matrix only";
+      CHECK_EQ(out_size.NumDims(), 2) << "currently support 2D MaxIndex matrix only";
+      CHECK(closure.dim == 0 || closure.dim == 1) 
+        << "currently support MaxIndex on first or second dim only";
+
+      int m = in_size[0];
+      int n = in_size[1];
+      if (out_size[0] == 1)
+      {
+        CHECK_EQ(in_size[1], out_size[1]) << "we can only do MaxIndex on one dimmension";
+        CudaPerformMaxIndexOnCol(in_data, out_data, m, n, context.stream);
+      }
+      else if (out_size[1] == 1)
+      {
+        CHECK_EQ(in_size[0], out_size[0]) << "we can only do MaxIndex on one dimmension";
+        CudaPerformMaxIndexOnRow(in_data, out_data, m, n, context.stream);
+      }
+      else
+      {
+        CHECK(false) << "both two dimensions of normalizer are not 1";
+      }
     }
 
     void Elewise(DataList& inputs, DataList& outputs, 
