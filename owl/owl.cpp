@@ -137,7 +137,7 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("argmax", fp_maxidx)
     .def("count_zero", &m::NArray::CountZero)
     // normalize
-    .def("normalize", &m::NArray::NormArithmetic)
+    .def("norm_arithmetic", &m::NArray::NormArithmetic)
     // misc
     .def("trans", &m::NArray::Trans)
     .def("tofile", &owl::NArrayToFile)

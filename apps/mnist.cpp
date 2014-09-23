@@ -30,7 +30,10 @@ NArray weights[num_layers - 1], bias[num_layers - 1];
 
 void GenerateInitWeight() {
   for (int i = 0; i < num_layers - 1; ++ i)
+  {
     weights[i] = NArray::Randn({lsize[i + 1], lsize[i]}, 0.0, sqrt(4.0 / (lsize[0] + lsize[1])), {1, 1});
+    bias[i] = NArray::Constant({lsize[i + 1], 1}, 1.0, {1, 1});
+  }
   FileFormat format;
   format.binary = true;
   for (int i = 0; i < num_layers - 1; ++ i)
@@ -41,7 +44,7 @@ void InitWeight() {
   SimpleFileLoader* loader = new SimpleFileLoader;
   for (int i = 0; i < num_layers - 1; ++ i) {
     weights[i] = NArray::LoadFromFile({lsize[i + 1], lsize[i]}, weight_init_files[i], loader, {1, 1});
-    bias[i] = NArray::Constant({lsize[i + 1], 1}, 0.0, {1, 1});
+    bias[i] = NArray::Constant({lsize[i + 1], 1}, 1.0, {1, 1});
   }
 }
 
@@ -76,7 +79,8 @@ int main(int argc, char** argv) {
   MinervaSystem::Instance().Initialize(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  if(FLAGS_init) {
+  GenerateInitWeight();
+/*  if(FLAGS_init) {
     cout << "Generate initial weights" << endl;
     GenerateInitWeight();
     cout << "Finished!" << endl;
@@ -85,7 +89,7 @@ int main(int argc, char** argv) {
     cout << "Init weights and bias" << endl;
     InitWeight();
   }
-
+*/
   cout << "Training procedure:" << endl;
   OneFileMBLoader train_data_loader(train_data_file, {lsize[0]});
   OneFileMBLoader train_label_loader(train_label_file, {lsize[num_layers - 1]});
@@ -100,20 +104,22 @@ int main(int argc, char** argv) {
       NArray label = train_label_loader.LoadNext(mb_size);
       // ff
       acts[0] = data;
-      for (int k = 1; k < num_layers; ++ k)
+      for (int k = 1; k < num_layers - 1; ++ k) {
         acts[k] = Elewise::Sigmoid((weights[k - 1] * acts[k - 1]).NormArithmetic(bias[k - 1], ADD));
+      }
       // softmax
-      acts[num_layers - 1] = Softmax(acts[num_layers - 1]);
+      acts[num_layers - 1] = Softmax((weights[num_layers - 2] * acts[num_layers - 2]).NormArithmetic(bias[num_layers - 2], ADD));
       // bp
-      sens[num_layers - 1] = label - acts[num_layers - 1];
+      sens[num_layers - 1] = acts[num_layers - 1] - label;
       for (int k = num_layers - 2; k >= 1; -- k) {
+        NArray d_act = Elewise::Mult(acts[k], 1 - acts[k]);
         sens[k] = weights[k].Trans() * sens[k + 1];
-        sens[k] = Elewise::Mult(sens[k], 1 - sens[k]);
+        sens[k] = Elewise::Mult(sens[k], d_act);
       }
 
       // Update bias
-      for(int k = 1; k < num_layers; ++ k) { // no input layer
-        bias[k - 1] -= epsB * sens[k].Sum(1) / mb_size;
+      for(int k = 0; k < num_layers - 1; ++ k) { // no input layer
+        bias[k] -= epsB * sens[k + 1].Sum(1) / mb_size;
       }
       // Update weight
       for(int k = 0; k < num_layers - 1; ++ k) {
