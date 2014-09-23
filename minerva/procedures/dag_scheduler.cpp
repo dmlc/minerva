@@ -52,6 +52,7 @@ void DagScheduler::OnCreateNode(DagNode* node) {
 }
 
 void DagScheduler::OnDeleteNode(DagNode* node) {
+  // TODO Freedatanode resource
   rt_info_.RemoveNode(node->node_id());
 }
 
@@ -118,8 +119,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
     }
     if (node->Type() == DagNode::NodeType::kOpNode) {
       for (auto succ : node->successors_) {
-        auto succ_node = dynamic_cast<PhysicalDataNode*>(succ);
-        CHECK_NOTNULL(succ_node);
+        auto succ_node = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(succ));
         if (succ_node->successors_.size() + succ_node->data_.extern_rc == 0) {
           rt_info_.At(succ->node_id()).state = NodeState::kDead;
           rt_info_.KillNode(succ->node_id());
@@ -129,8 +129,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
       }
       ri.reference_count = -1;
     } else {
-      auto cast_node = dynamic_cast<PhysicalDataNode*>(node);
-      CHECK_NOTNULL(cast_node);
+      auto cast_node = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(node));
       ri.reference_count = cast_node->successors_.size();
     }
     if (ri.num_triggers_needed == 0) {
@@ -167,8 +166,7 @@ void DagScheduler::DispatcherRoutine() {
       if (node->Type() == DagNode::NodeType::kOpNode) {
         for (auto pred : node->predecessors_) {
           auto& pred_ri = rt_info_.At(pred->node_id());
-          auto pred_node = dynamic_cast<PhysicalDataNode*>(pred);
-          CHECK_NOTNULL(pred_node);
+          auto pred_node = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(pred));
           // Reference count decreasing to zero, not able to recover access anymore
           if (--pred_ri.reference_count == 0 && pred_node->data_.extern_rc == 0) {
             FreeDataNodeRes(pred_node);

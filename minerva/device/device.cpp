@@ -82,8 +82,7 @@ void CUDART_CB cudaStreamCallback(cudaStream_t, cudaError_t, void* user_data) {
 void GpuDevice::Execute(uint64_t nid) {
   auto node = MinervaSystem::Instance().physical_dag().GetNode(nid);
   if (node->Type() == DagNode::NodeType::kDataNode) {  // Data node
-    auto data_node = dynamic_cast<PhysicalDataNode*>(node);
-    CHECK_NOTNULL(data_node);
+    auto data_node = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(node));
     auto& data = data_node->data_;
     if (data.device_id == device_id_) {  // Local
       DLOG(INFO) << "GPU device input data #" << nid << " is local";
@@ -99,8 +98,7 @@ void GpuDevice::Execute(uint64_t nid) {
       CHECK_EQ(cudaStreamAddCallback(stream, cudaStreamCallback, d, 0), cudaSuccess);
     }
   } else {
-    auto op_node = dynamic_cast<PhysicalOpNode*>(node);
-    CHECK_NOTNULL(op_node);
+    auto op_node = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node));
     DataList input_shards;
     for (auto i : op_node->inputs_) {
       if (i->data_.device_id == device_id_) {  // Input is local
@@ -164,8 +162,7 @@ string CpuDevice::Name() const {
 void CpuDevice::Execute(uint64_t nid) {
   auto node = MinervaSystem::Instance().physical_dag().GetNode(nid);
   if (node->Type() == DagNode::NodeType::kDataNode) {  // Data node
-    auto data_node = dynamic_cast<PhysicalDataNode*>(node);
-    CHECK_NOTNULL(data_node);
+    auto data_node = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(node));
     auto& data = data_node->data_;
     if (data.device_id == device_id_) {  // Local
       DLOG(INFO) << "CPU device input data #" << nid << " is local";
@@ -182,8 +179,7 @@ void CpuDevice::Execute(uint64_t nid) {
       remote_data_.insert(data.data_id);
     }
   } else {
-    auto op_node = dynamic_cast<PhysicalOpNode*>(node);
-    CHECK_NOTNULL(op_node);
+    auto op_node = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node));
     DataList input_shards;
     for (auto i : op_node->inputs_) {
       if (i->data_.device_id == device_id_) {  // Input is local

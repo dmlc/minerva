@@ -6,7 +6,6 @@ namespace minerva {
 
 template<typename D, typename O>
 Dag<D, O>::~Dag() {
-  ClearMonitor();
   auto index_to_node = index_to_node_;
   for (auto i : index_to_node) {
     DeleteNode(i.first);
@@ -44,6 +43,7 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
     mon->OnCreateNode(ret);
   }
   for (auto in : inputs) {
+    // There are possible duplicates in `inputs` 
     if (ret->AddParent(in)) {
       for (auto mon : monitors_) {
         mon->OnCreateEdge(in, ret);
