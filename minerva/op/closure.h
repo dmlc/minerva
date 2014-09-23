@@ -1,7 +1,6 @@
 #pragma once
 
 #include "common/scale.h"
-#include "./op_types.h"
 
 namespace minerva {
 
