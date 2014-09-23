@@ -1,4 +1,6 @@
 #pragma once
+#include <cublas.h>
+#include <cuda.h>
 #include <vector>
 #include <string>
 #include <utility>

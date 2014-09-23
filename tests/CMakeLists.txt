@@ -8,6 +8,9 @@ enable_testing()
 
 add_library(unittest_main STATIC unittest_main.cpp)
 target_link_libraries(unittest_main minerva gtest)
+if (CUDA_FOUND)
+  CUDA_ADD_CUBLAS_TO_TARGET(unittest_main)
+endif (CUDA_FOUND)
 
 set(unittest_list "")
 set(test_list "")
