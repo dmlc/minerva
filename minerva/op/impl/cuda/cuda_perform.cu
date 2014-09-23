@@ -294,7 +294,7 @@ namespace cuda {
   {
     int block, thread;
     FindConfiguration(size, block, thread);
-    CudaPerformDotKernel <<<block, thread, 0, stream >>>(in, out, val, size, ReverseDivOp);
+    CudaPerformDotKernel <<<block, thread, 0, stream >>>(in, out, val, size, ReverseDivOp());
     CheckCudaError("CudaPerformLeftConstDiv");
   }
 
