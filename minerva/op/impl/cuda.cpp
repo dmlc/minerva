@@ -109,8 +109,7 @@ namespace minerva {
           CHECK(false) << "NormArithmetic kernel size mismatch";
         }
       }
-      auto normalizee_range = ScaleRange::MakeRangeFromOrigin(normalizee_size);
-      auto normalizer_range = ScaleRange::MakeRangeFromOrigin(normalizer_size);
+
       auto normalizee_data = inputs[0].GetGpuData();
       auto normalizer_data = inputs[1].GetGpuData();
       auto res_data = outputs[0].GetGpuData();
@@ -142,36 +141,49 @@ namespace minerva {
     void Reduction(DataList& inputs, DataList& outputs,
       ReductionClosure& closure, const CudaRuntimeContext& context)
     {
-      //CHECK_EQ(inputs.size(), 1) << "(reduction) #inputs is wrong!";
-      //CHECK_EQ(outputs.size(), 1) << "(reduction) #outputs is wrong!";
-      //float* in_data = inputs[0].GetGpuData();
-      //float* res_data = outputs[0].GetGpuData();
-      //auto in_max = inputs[0].Size();
-      //auto res_max = outputs[0].Size();
-      //auto accumulator = Scale::Origin(in_max.NumDims());
-      //do {
-      //  auto cur = accumulator;
-      //  float tmp = in_data[in_range.Flatten(cur)];
-      //  while (cur.IncrDimensions(in_max, closure.dims_to_reduce)) {
-      //    float tmp2 = in_data[in_range.Flatten(cur)];
-      //    // TODO Moving switch out of loop to optimize
-      //    switch (closure.type) {
-      //    case SUM:
-      //      tmp += tmp2;
-      //      break;
-      //    case MAX:
-      //      if (tmp < tmp2) {
-      //        tmp = tmp2;
-      //      }
-      //      break;
-      //    }
-      //  }
-      //  res_data[res_range.Flatten(accumulator)] = tmp;
-      //} while (accumulator.IncrWithDimensionsFixed(res_max, closure.dims_to_reduce));
+      CHECK_EQ(inputs.size(), 1) << "Reduction kernel wrong #input";
+      CHECK_EQ(outputs.size(), 1) << "Reduction kernel wrong #output";
+      // Normalizee is the chunk with full size, normalizer is the chunk with reduced dimensions
+      auto in_size = inputs[0].Size();
+      auto out_size = outputs[0].Size();
+
+      CHECK_EQ(in_size, outputs[0].Size()) << "Reduction kernel output size mismatch";
+      for (size_t i = 0; i < in_size.NumDims(); ++i) {
+        if (out_size[i] != 1 && out_size[i] != in_size[i]) {
+          CHECK(false) << "Reduction kernel size mismatch";
+        }
+      }
+
+      auto in_data = inputs[0].GetGpuData();
+      auto out_data = outputs[1].GetGpuData();
+
+      // TODO: support other types of norm op
+      CHECK_EQ(in_size.NumDims(), 2) << "currently support 2D normalizee matrix only";
+      CHECK_EQ(out_size.NumDims(), 2) << "currently support 2D normalizer matrix only";
+
+      int m = in_size[0];
+      int n = in_size[1];
+      if (out_size[0] == 1)
+      {
+        CHECK_EQ(in_size[1], out_size[1]) << "we can only do norm on one dimmension";
+        CudaPerformReductionOnCol(in_data, out_data, m, n, closure.type, context.stream);
+      }
+      else if (out_size[1] == 1)
+      {
+        CHECK_EQ(in_size[0], out_size[0]) << "we can only do norm on one dimmension";
+        CudaPerformReductionOnRow(in_data, out_data, m, n, closure.type, context.stream);
+      }
+      else
+      {
+        CHECK(false) << "both two dimensions of normalizer are not 1";
+      }
     }
 
-    void MaxIndex(DataList&, DataList&, MaxIndexClosure&, const CudaRuntimeContext&)
-    {}
+    void MaxIndex(DataList& inputs, DataList& outputs, 
+      MaxIndexClosure& closure, const CudaRuntimeContext& context)
+    {
+      
+    }
 
     void Elewise(DataList& inputs, DataList& outputs, 
       ElewiseClosure& closure, const CudaRuntimeContext& context)

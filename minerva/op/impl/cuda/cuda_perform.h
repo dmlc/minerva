@@ -22,6 +22,10 @@ void CudaPerformNormOnCol(float* matrix, float* row, float* res, int m, int n,
   const ArithmeticType & type, cudaStream_t);
 void CudaPerformNormOnRow(float* matrix, float* col, float* res, int m, int n,
   const ArithmeticType & type, cudaStream_t);
+void CudaPerformReductionOnCol(float* in, float* out, int m, int n,
+  const ReductionType & type, cudaStream_t);
+void CudaPerformReductionOnRow(float* in, float* out, int m, int n,
+  const ReductionType & type, cudaStream_t);
 
 void CudaPerformEleWise(float* in, float* out, size_t size,
   const ElewiseType & type, cudaStream_t);

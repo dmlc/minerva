@@ -1,76 +1,47 @@
-/**
-* Function explanation:
-* NArray NArray::Tile(NArray m, vector<int> reptimes);
-*     // This function repeat the original matrix m by the times given on each dimension.
-*     // For example:
-*     // If m is a 3x5 matrix, m1 = NArray::Tile(m, {1, 2}); then m1 is a 3x10 matrix.
-*
-* NArray NArray::NormRandom(vector<int> dims, float mu, float var);
-*     // This function generates a matrix of given dims. The value is filled by a normal distribution
-*     // of parameter (mu, var)
-*
-* NArray Elewise::XXX(NArray m);
-*     // All such functions are element-wise functions. The name is just its functionality, e.g. Exp, Ln, ...
-*
-* NArray Reduction::Max(NArray m, int dim);
-* NArray Reduction::Sum(NArray m, int dim);
-*     // Those functions perform aggregation on the given dimension.
-*     // For example:
-*     // If m is a 3x5 matrix, m1 = Reduction::Max(m, 0); then m1 is a 1x5 matrix.
-*
-* NArray Reduction::MaxIndex(NArray m, int dim);
-*     // Similar to the reduction functions above, but the returned function contains the indices of the max values.
-*/
+#include <minerva.h>
+#include <fstream>
+#include <gflags/gflags.h>
 
-#include <vector>
-#include <cmath>
-#include <iostream>
-
-#include "minerva.h"
+DEFINE_bool(init, false, "Only generate init weights");
 
 using namespace std;
 using namespace minerva;
 
-//Renew params
-float epsW = 0.001;
-float epsB = 0.001;
+const float epsW = 0.01, epsB = 0.01;
+const int numepochs = 200;
+const int mb_size = 256;
+const int num_mb_per_epoch = 235;
 
-int num_epochs = 1;
+const string weight_init_files[] = { "weights[0]_init.dat", "weights[1]_init.dat", };
+const string weight_out_files[] = { "weights[0]_trained.dat", "weights[1]_trained.dat", };
+const string bias_out_files[] = { "b2_trained.dat", "b3_trained.dat" };
+const string train_data_file = "/home/hct/data/mnist/traindata.dat";
+const string train_label_file = "/home/hct/data/mnist/trainlabel.dat";
+const string test_data_file = "/home/hct/data/mnist/testdata.dat";
+const string test_label_file = "/home/hct/data/mnist/testlabel.dat";
 
-//dataset description
-int num_train_samples = 60000;
-int minibatch_size = 256;
-int num_minibatches = 4;
+const int num_layers = 3;
+const int lsize[num_layers] = { 784, 256, 10 };
+const int l1parts = 1, l2parts = 1, l3parts = 1;
+const NVector<Scale> l1_part_shape = Scale{ lsize[0] }.EquallySplit({ l1parts });
+const NVector<Scale> l2_part_shape = Scale{ lsize[1] }.EquallySplit({ l2parts });
+const NVector<Scale> l3_part_shape = Scale{ lsize[2] }.EquallySplit({ l3parts });
+NArray weights[num_layers - 1], bias[num_layers - 1];
 
-uint64_t cpuDevice;
-uint64_t gpuDevice;
+void GenerateInitWeight() {
+  for (int i = 0; i < num_layers - 1; ++i)
+    weights[i] = NArray::Randn({ lsize[i + 1], lsize[i] }, 0.0, sqrt(4.0 / (lsize[0] + lsize[1])), { 1, 1 });
+  FileFormat format;
+  format.binary = true;
+  for (int i = 0; i < num_layers - 1; ++i)
+    weights[i].ToFile(weight_init_files[i], format);
+}
 
-#if 1
-
-//Fully layer
-struct Layer {
-  int length;
-  NArray bias;
-  Layer(int len): length(len) {
-    bias = NArray::Constant({ length, 1 }, 0.0, {1, 1});
-  }
-};
-
-vector<Layer> layers;
-vector<NArray> weights;
-int num_layers;
-
-void InitNetwork() {
-  layers = {
-    Layer(28 * 28), Layer(256), Layer(10)
-  };
-  num_layers = layers.size();
-
-  for(int i = 0; i < num_layers - 1; ++i) {
-    int row = layers[i + 1].length;
-    int col = layers[i].length;
-    float var = sqrt(4.0 / (row + col));
-    weights.push_back(NArray::Randn({ row, col }, 0.0, var, {1, 1}));
+void InitWeight() {
+  SimpleFileLoader* loader = new SimpleFileLoader;
+  for (int i = 0; i < num_layers - 1; ++i) {
+    weights[i] = NArray::LoadFromFile({ lsize[i + 1], lsize[i] }, weight_init_files[i], loader, { 1, 1 });
+    bias[i] = NArray::Constant({ lsize[i + 1], 1 }, 0.0, { 1, 1 });
   }
 }
 
@@ -88,73 +59,84 @@ void PrintTrainingAccuracy(NArray o, NArray t) {
   NArray predict = o.MaxIndex(0);
   //get groundtruth
   NArray groundtruth = t.MaxIndex(0);;
-  int correct = (predict - groundtruth).CountZero();
-  cout << "Training Error: " << (minibatch_size - correct) / minibatch_size << endl;
+  float correct = (predict - groundtruth).CountZero();
+  cout << "Training Error: " << (mb_size - correct) / mb_size << endl;
 }
 
-//give initial value to the weight in the DNN
-void TrainNetwork() {
-  ////////////////////////////////TRAIN NETWORK/////////////////////////////////////
-  //load data
-  const string train_data_file = "/home/data/data/mnist/train_small/traindata_0";
-  const string train_label_file = "/home/data/data/mnist/train_small/trainlabel_0";
-  const string test_data_file = "/home/data/data/mnist/test/testdata_0";
-  const string test_label_file = "/home/data/data/mnist/test/testlabel_0";
+void Print(NArray m) {
+  //cout << MinervaSystem::Instance().logical_dag().PrintDag() << endl;
+  float* ptr = m.Get();
+  for (int i = 0; i < 10; ++i)
+    cout << ptr[i] << " ";
+  cout << endl;
+  delete[] ptr;
+}
 
-  OneFileMBLoader train_data_loader(train_data_file, {layers.front().length});
-  OneFileMBLoader train_label_loader(train_label_file, {layers.back().length});
+int main(int argc, char** argv) {
+  MinervaSystem::Instance().Initialize(&argc, &argv);
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  for(int i = 0; i < num_epochs; i++) {
-    for(int j = 0; j < num_minibatches; j++) {
+  if (FLAGS_init) {
+    cout << "Generate initial weights" << endl;
+    GenerateInitWeight();
+    cout << "Finished!" << endl;
+    return 0;
+  }
+  else {
+    cout << "Init weights and bias" << endl;
+    InitWeight();
+  }
 
-      vector<NArray> acts, sens;
-      acts.resize(num_layers);
-      sens.resize(num_layers);
+  cout << "Training procedure:" << endl;
+  OneFileMBLoader train_data_loader(train_data_file, { lsize[0] });
+  OneFileMBLoader train_label_loader(train_label_file, { lsize[num_layers - 1] });
+  train_data_loader.set_partition_shapes_per_sample(l1_part_shape);
+  train_label_loader.set_partition_shapes_per_sample(l3_part_shape);
 
-      MinervaSystem & ms = MinervaSystem::Instance();
-      ms.set_device_id(cpuDevice);
-
-      acts[0] = train_data_loader.LoadNext(minibatch_size);
-      NArray target = train_label_loader.LoadNext(minibatch_size);
-
-      ms.set_device_id(gpuDevice);
-      // FF
-      for(int k = 1; k < num_layers; ++k) {
-        acts[k] = (weights[k - 1] * acts[k - 1]).NormArithmetic(layers[k].bias, ADD);
-        acts[k] = Elewise::Sigmoid(acts[k]);
-      }
-      // Error
-      acts[num_layers-1] = Softmax(acts[num_layers-1]);
-      
-
-      PrintTrainingAccuracy(acts[num_layers-1], target);
-      sens[num_layers-1] = target - acts[num_layers-1];
-      // BP
-      for(int k = num_layers - 2; k > 0; --k) {
-        sens[k] = weights[k].Trans() * sens[k+1];
+  NArray acts[num_layers], sens[num_layers];
+  for (int epoch = 0; epoch < numepochs; ++epoch) {
+    cout << "  Epoch #" << epoch << endl;
+    for (int mb = 0; mb < num_mb_per_epoch; ++mb) {
+      NArray data = train_data_loader.LoadNext(mb_size);
+      NArray label = train_label_loader.LoadNext(mb_size);
+      // ff
+      acts[0] = data;
+      for (int k = 1; k < num_layers; ++k)
+        acts[k] = Elewise::Sigmoid((weights[k - 1] * acts[k - 1]).NormArithmetic(bias[k - 1], ADD));
+      // softmax
+      acts[num_layers - 1] = Softmax(acts[num_layers - 1]);
+      // bp
+      sens[num_layers - 1] = label - acts[num_layers - 1];
+      for (int k = num_layers - 2; k >= 1; --k) {
+        sens[k] = weights[k].Trans() * sens[k + 1];
         sens[k] = Elewise::Mult(sens[k], 1 - sens[k]);
       }
+
       // Update bias
-      for(int k = 1; k < num_layers; ++k) { // no input layer
-        layers[k].bias -= epsB * sens[k].Sum(1) / minibatch_size;
+      for (int k = 1; k < num_layers; ++k) { // no input layer
+        bias[k - 1] -= epsB * sens[k].Sum(1) / mb_size;
       }
       // Update weight
-      for(int k = 0; k < num_layers - 1; ++k) {
-        weights[k] -= epsW * sens[k+1] * acts[k].Trans() / minibatch_size;
+      for (int k = 0; k < num_layers - 1; ++k) {
+        weights[k] -= epsW * sens[k + 1] * acts[k].Trans() / mb_size;
+      }
+
+      if (mb % 20 == 0) {
+        PrintTrainingAccuracy(acts[num_layers - 1], label);
       }
     }
   }
-}
+  // [optional] output logical dag file
+  ofstream ldagfout("mnist_ldag.txt");
+  ldagfout << MinervaSystem::Instance().logical_dag().PrintDag() << endl;
+  ldagfout.close();
+  // output weights
+  cout << "Write weight to files" << endl;
+  FileFormat format;
+  format.binary = true;
+  weights[0].ToFile(weight_out_files[0], format);
+  weights[1].ToFile(weight_out_files[1], format);
 
-#endif
-
-int main(int argc, char** argv) {
-  MinervaSystem & ms = MinervaSystem::Instance();
-  ms.Initialize(&argc, &argv);
-  cpuDevice = ms.CreateCPUDevice();
-  gpuDevice = ms.CreateGPUDevice(0);
-  
-  
-  InitNetwork();
-  TrainNetwork();
+  cout << "Training finished." << endl;
+  return 0;
 }
