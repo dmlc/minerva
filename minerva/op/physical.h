@@ -8,19 +8,15 @@ namespace minerva {
 class PhysicalComputeFn;
 
 struct PhysicalData {
-  PhysicalData(): extern_rc(0), data_id(0), device_id(0), mapped_to_lnode(false), mapped_lnid(0) {
+  PhysicalData(const Scale& s, uint64_t d, uint64_t id) : size(s), device_id(d), data_id(id) {
   }
-  Scale size, offset, offset_index;
-  int extern_rc;
-  uint64_t data_id;
+  Scale size;
+  int extern_rc = 0;
   uint64_t device_id;
-  bool mapped_to_lnode;
-  uint64_t mapped_lnid;
+  uint64_t data_id;
 };
 
 struct PhysicalOp {
-  // TODO Use compute_fn->device_info to determine device
-  ImplType impl_type;
   PhysicalComputeFn* compute_fn;
 };
 

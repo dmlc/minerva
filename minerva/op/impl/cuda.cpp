@@ -9,22 +9,22 @@ namespace cuda {
 void Arithmetic(DataList& inputs, DataList& outputs, ArithmeticClosure& closure, const CudaRuntimeContext& context) {
   CHECK_EQ(inputs.size(), 2) << "Arithmetic takes 2 inputs";
   CHECK_EQ(outputs.size(), 1) << "Arithmetic takes 1 output";
-  float* left = inputs[0].GetGpuData();
-  float* right = inputs[1].GetGpuData();
-  float* res = outputs[0].GetGpuData();
-  size_t size = outputs[0].Size().Prod();
+  float* left = inputs[0].data();
+  float* right = inputs[1].data();
+  float* res = outputs[0].data();
+  size_t size = outputs[0].size().Prod();
 #ifdef HAS_CUDA
   switch (closure.type) {
-    case ADD:
+    case ArithmeticType::kAdd:
       CudaPerformArithmeticAdd(res, left, right, size, context.stream);
       break;
-    case SUB:
+    case ArithmeticType::kSub:
       CudaPerformArithmeticSub(res, left, right, size, context.stream);
       break;
-    case MULT:
+    case ArithmeticType::kMult:
       CudaPerformArithmeticMult(res, left, right, size, context.stream);
       break;
-    case DIV:
+    case ArithmeticType::kDiv:
       CudaPerformArithmeticDiv(res, left, right, size, context.stream);
       break;
   }

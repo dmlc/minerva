@@ -2,21 +2,9 @@
 #include <iostream>
 #include <op/impl/basic.h>
 #include <gtest/gtest.h>
-#include <device/data_store.h>
-#include <common/inspector.h>
 
 using namespace minerva;
 using namespace std;
-
-namespace minerva {
-
-template<> class Inspector<Device> {
-  public: DataStore* GetDataStore(uint64_t device_id) {
-    return MinervaSystem::Instance().GetDevice(device_id)->data_store_;
-  }
-};
-
-}
 
 PhysicalData MakeData(Scale s, Scale o, Scale oi, uint64_t id) {
   PhysicalData pdata;
@@ -24,7 +12,6 @@ PhysicalData MakeData(Scale s, Scale o, Scale oi, uint64_t id) {
   pdata.offset = o;
   pdata.offset_index = oi;
   pdata.data_id = id;
-  pdata.device_id = 0;
   return pdata;
 }
 
@@ -33,24 +20,23 @@ void Fill(float* arr, float val, size_t len) {
 }
 
 TEST(Assemble, Assemble2D) {
-  MinervaSystem& ms = MinervaSystem::Instance();
-  DataStore* dstore = Inspector<Device>().GetDataStore(0);
+  DataStore& dstore = MinervaSystem::Instance().data_store();
   Scale s1 = {2, 3}, s2 = {2, 3}, s3 = {2, 3}, s4 = {2, 3};
   Scale o1 = {0, 0}, o2 = {0, 3}, o3 = {2, 0}, o4 = {2, 3};
   Scale oi1 = {0, 0}, oi2 = {0, 1}, oi3 = {1, 0}, oi4 = {1, 1};
   Scale srst = {4, 6};
-  uint64_t id1 = ms.GenerateDataID();
-  uint64_t id2 = ms.GenerateDataID();
-  uint64_t id3 = ms.GenerateDataID();
-  uint64_t id4 = ms.GenerateDataID();
-  dstore->CreateData(id1, DataStore::CPU, s1.Prod());
-  dstore->CreateData(id2, DataStore::CPU, s2.Prod());
-  dstore->CreateData(id3, DataStore::CPU, s3.Prod());
-  dstore->CreateData(id4, DataStore::CPU, s4.Prod());
-  Fill(dstore->GetData(id1, DataStore::CPU), 1, s1.Prod());
-  Fill(dstore->GetData(id2, DataStore::CPU), 2, s2.Prod());
-  Fill(dstore->GetData(id3, DataStore::CPU), 3, s3.Prod());
-  Fill(dstore->GetData(id4, DataStore::CPU), 4, s4.Prod());
+  uint64_t id1 = dstore.GenerateDataId();
+  uint64_t id2 = dstore.GenerateDataId();
+  uint64_t id3 = dstore.GenerateDataId();
+  uint64_t id4 = dstore.GenerateDataId();
+  dstore.CreateData(id1, DataStore::CPU, s1.Prod());
+  dstore.CreateData(id2, DataStore::CPU, s2.Prod());
+  dstore.CreateData(id3, DataStore::CPU, s3.Prod());
+  dstore.CreateData(id4, DataStore::CPU, s4.Prod());
+  Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
+  Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
+  Fill(dstore.GetData(id3, DataStore::CPU), 3, s3.Prod());
+  Fill(dstore.GetData(id4, DataStore::CPU), 4, s4.Prod());
   vector<PhysicalData> dvec;
   dvec.push_back(MakeData(s1, o1, oi1, id1));
   dvec.push_back(MakeData(s2, o2, oi2, id2));
@@ -59,8 +45,8 @@ TEST(Assemble, Assemble2D) {
   vector<DataShard> inds;
   for_each(dvec.begin(), dvec.end(), [&] (PhysicalData& pd) { inds.push_back(DataShard(pd)); });
   // make output
-  uint64_t rstid = ms.GenerateDataID();
-  dstore->CreateData(rstid, DataStore::CPU, srst.Prod());
+  uint64_t rstid = dstore.GenerateDataId();
+  dstore.CreateData(rstid, DataStore::CPU, srst.Prod());
   PhysicalData rstpd; rstpd.size = srst; rstpd.data_id = rstid;
   vector<DataShard> outds{DataShard(rstpd)};
   // assemble
@@ -75,26 +61,25 @@ TEST(Assemble, Assemble2D) {
 }
 
 TEST(Assemble, Assemble3DSplitIn1stDimension) {
-  MinervaSystem& ms = MinervaSystem::Instance();
-  DataStore* dstore = Inspector<Device>().GetDataStore(0);
+  DataStore& dstore = MinervaSystem::Instance().data_store();
   Scale s1 = {2, 6, 8}, s2 = {2, 6, 8};
   Scale o1 = {0, 0, 0}, o2 = {2, 0, 0};
   Scale oi1 = {0, 0, 0}, oi2 = {1, 0, 0};
   Scale srst = {4, 6, 8};
-  uint64_t id1 = ms.GenerateDataID();
-  uint64_t id2 = ms.GenerateDataID();
-  dstore->CreateData(id1, DataStore::CPU, s1.Prod());
-  dstore->CreateData(id2, DataStore::CPU, s2.Prod());
-  Fill(dstore->GetData(id1, DataStore::CPU), 1, s1.Prod());
-  Fill(dstore->GetData(id2, DataStore::CPU), 2, s2.Prod());
+  uint64_t id1 = dstore.GenerateDataId();
+  uint64_t id2 = dstore.GenerateDataId();
+  dstore.CreateData(id1, DataStore::CPU, s1.Prod());
+  dstore.CreateData(id2, DataStore::CPU, s2.Prod());
+  Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
+  Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
   vector<PhysicalData> dvec;
   dvec.push_back(MakeData(s1, o1, oi1, id1));
   dvec.push_back(MakeData(s2, o2, oi2, id2));
   vector<DataShard> inds;
   for_each(dvec.begin(), dvec.end(), [&] (PhysicalData& pd) { inds.push_back(DataShard(pd)); });
   // make output
-  uint64_t rstid = ms.GenerateDataID();
-  dstore->CreateData(rstid, DataStore::CPU, srst.Prod());
+  uint64_t rstid = dstore.GenerateDataId();
+  dstore.CreateData(rstid, DataStore::CPU, srst.Prod());
   PhysicalData rstpd; rstpd.size = srst; rstpd.data_id = rstid;
   vector<DataShard> outds{DataShard(rstpd)};
   // assemble
@@ -109,27 +94,26 @@ TEST(Assemble, Assemble3DSplitIn1stDimension) {
 }
 
 TEST(Assemble, Assemble3DSplitIn2ndDimension) {
-  MinervaSystem& ms = MinervaSystem::Instance();
-  DataStore* dstore = Inspector<Device>().GetDataStore(0);
+  DataStore& dstore = MinervaSystem::Instance().data_store();
   Scale s1 = {4, 3, 8}, s2 = {4, 3, 8};
   Scale o1 = {0, 0, 0}, o2 = {0, 3, 0};
   Scale oi1 = {0, 0, 0}, oi2 = {0, 1, 0};
   Scale srst = {4, 6, 8};
   Scale numparts = {1, 2 ,1};
-  uint64_t id1 = ms.GenerateDataID();
-  uint64_t id2 = ms.GenerateDataID();
-  dstore->CreateData(id1, DataStore::CPU, s1.Prod());
-  dstore->CreateData(id2, DataStore::CPU, s2.Prod());
-  Fill(dstore->GetData(id1, DataStore::CPU), 1, s1.Prod());
-  Fill(dstore->GetData(id2, DataStore::CPU), 2, s2.Prod());
+  uint64_t id1 = dstore.GenerateDataId();
+  uint64_t id2 = dstore.GenerateDataId();
+  dstore.CreateData(id1, DataStore::CPU, s1.Prod());
+  dstore.CreateData(id2, DataStore::CPU, s2.Prod());
+  Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
+  Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
   vector<PhysicalData> dvec;
   dvec.push_back(MakeData(s1, o1, oi1, id1));
   dvec.push_back(MakeData(s2, o2, oi2, id2));
   vector<DataShard> inds;
   for_each(dvec.begin(), dvec.end(), [&] (PhysicalData& pd) { inds.push_back(DataShard(pd)); });
   // make output
-  uint64_t rstid = ms.GenerateDataID();
-  dstore->CreateData(rstid, DataStore::CPU, srst.Prod());
+  uint64_t rstid = dstore.GenerateDataId();
+  dstore.CreateData(rstid, DataStore::CPU, srst.Prod());
   PhysicalData rstpd; rstpd.size = srst; rstpd.data_id = rstid;
   vector<DataShard> outds{DataShard(rstpd)};
   // assemble
@@ -144,27 +128,26 @@ TEST(Assemble, Assemble3DSplitIn2ndDimension) {
 }
 
 TEST(Assemble, Assemble3DSplitIn3rdDimension) {
-  MinervaSystem& ms = MinervaSystem::Instance();
-  DataStore* dstore = Inspector<Device>().GetDataStore(0);
+  DataStore& dstore = MinervaSystem::Instance().data_store();
   Scale s1 = {4, 6, 4}, s2 = {4, 6, 4};
   Scale o1 = {0, 0, 0}, o2 = {0, 0, 4};
   Scale oi1 = {0, 0, 0}, oi2 = {0, 0, 1};
   Scale srst = {4, 6, 8};
   Scale numparts = {1, 1 ,2};
-  uint64_t id1 = ms.GenerateDataID();
-  uint64_t id2 = ms.GenerateDataID();
-  dstore->CreateData(id1, DataStore::CPU, s1.Prod());
-  dstore->CreateData(id2, DataStore::CPU, s2.Prod());
-  Fill(dstore->GetData(id1, DataStore::CPU), 1, s1.Prod());
-  Fill(dstore->GetData(id2, DataStore::CPU), 2, s2.Prod());
+  uint64_t id1 = dstore.GenerateDataId();
+  uint64_t id2 = dstore.GenerateDataId();
+  dstore.CreateData(id1, DataStore::CPU, s1.Prod());
+  dstore.CreateData(id2, DataStore::CPU, s2.Prod());
+  Fill(dstore.GetData(id1, DataStore::CPU), 1, s1.Prod());
+  Fill(dstore.GetData(id2, DataStore::CPU), 2, s2.Prod());
   vector<PhysicalData> dvec;
   dvec.push_back(MakeData(s1, o1, oi1, id1));
   dvec.push_back(MakeData(s2, o2, oi2, id2));
   vector<DataShard> inds;
   for_each(dvec.begin(), dvec.end(), [&] (PhysicalData& pd) { inds.push_back(DataShard(pd)); });
   // make output
-  uint64_t rstid = ms.GenerateDataID();
-  dstore->CreateData(rstid, DataStore::CPU, srst.Prod());
+  uint64_t rstid = dstore.GenerateDataId();
+  dstore.CreateData(rstid, DataStore::CPU, srst.Prod());
   PhysicalData rstpd; rstpd.size = srst; rstpd.data_id = rstid;
   vector<DataShard> outds{DataShard(rstpd)};
   // assemble

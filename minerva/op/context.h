@@ -1,6 +1,5 @@
 #pragma once
 #include <iostream>
-
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #endif
@@ -30,7 +29,7 @@ struct Context {
   };
 };
 
-struct CudaRuntimeContext: public Context {
+struct CudaRuntimeContext : public Context {
 #ifdef HAS_CUDA
   cudaStream_t stream;
 #endif

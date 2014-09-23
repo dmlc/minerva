@@ -46,5 +46,5 @@ std::vector<U> Map(const std::vector<T>& original, Fn fn) {
   return res;
 }
 
-}
+}  // namespace minerva
 

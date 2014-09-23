@@ -1,20 +1,8 @@
 #include <minerva.h>
 #include <gtest/gtest.h>
-#include <device/data_store.h>
-#include <common/inspector.h>
 
 using namespace minerva;
 using namespace std;
-
-namespace minerva {
-
-template<> class Inspector<Device> {
-  public: DataStore* GetDataStore(uint64_t device_id) {
-    return MinervaSystem::Instance().GetDevice(device_id)->data_store_;
-  }
-};
-
-}
 
 TEST(GCCorrectness, EvalInLoop) {
   MinervaSystem& ms = MinervaSystem::Instance();
@@ -26,7 +14,7 @@ TEST(GCCorrectness, EvalInLoop) {
     narr.Eval();
     EXPECT_EQ(ms.logical_dag().NumNodes(), 1) << "wrong #logical_nodes in iter#" << i;
     EXPECT_EQ(ms.physical_dag().NumNodes(), 1) << "wrong #physical_nodes in iter#" << i;
-    EXPECT_EQ(Inspector<Device>().GetDataStore(0)->GetTotalBytes(DataStore::CPU), 320) << "wrong memory usage in iter#" << i;
+    EXPECT_EQ(ms.data_store().GetTotalBytes(DataStore::CPU), 320) << "wrong memory usage in iter#" << i;
     cout << "iter #" << i << " succeed!" << endl;
   }
   float* val = narr.Get();

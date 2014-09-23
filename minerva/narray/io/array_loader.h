@@ -1,9 +1,8 @@
 #pragma once
-#include "op/physical.h"
-#include "op/logical.h"
-#include "common/nvector.h"
 #include "op/context.h"
+#include "op/physical_fn.h"
 #include <string>
+#include <memory>
 #include <vector>
 
 namespace minerva {
@@ -13,13 +12,11 @@ struct ArrayLoaderClosure {
   Scale size;
 };
 
-class ArrayLoaderOp:
-  public LogicalDataGenFn,
+class ArrayLoaderOp :
   public PhysicalComputeFn,
   public ClosureTrait<ArrayLoaderClosure> {
  public:
-  void Execute(DataList&, DataList&, const Context&);
-  NVector<Chunk> Expand(const NVector<Scale>&);
+  void Execute(const DataList&, const DataList&, const Context&);
   std::string Name() const;
 };
 

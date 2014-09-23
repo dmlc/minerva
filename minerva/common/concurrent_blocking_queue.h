@@ -1,15 +1,15 @@
 #pragma once
-#include "bool_flag.h"
-#include "common.h"
 #include <list>
 #include <mutex>
 #include <condition_variable>
 #include <thread>
 #include <cstdio>
+#include "bool_flag.h"
+#include "common.h"
 
-template <typename T> class ConcurrentBlockingQueue {
+template<typename T> class ConcurrentBlockingQueue {
  public:
-  ConcurrentBlockingQueue(): exit_now_(false) {
+  ConcurrentBlockingQueue() : exit_now_(false) {
   }
   void Push(const T& e) {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -37,6 +37,7 @@ template <typename T> class ConcurrentBlockingQueue {
     rv.swap(queue_);
     return rv;
   }
+  // Call `SignalForKill` before destruction
   void SignalForKill() {
     std::unique_lock<std::mutex> lock(mutex_);
     exit_now_.Write(true);
@@ -48,10 +49,10 @@ template <typename T> class ConcurrentBlockingQueue {
   }
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(ConcurrentBlockingQueue);
   std::list<T> queue_;
   std::mutex mutex_;
   std::condition_variable cv_;
   BoolFlag exit_now_;
+  DISALLOW_COPY_AND_ASSIGN(ConcurrentBlockingQueue);
 };
 

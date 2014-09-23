@@ -1,18 +1,16 @@
 #pragma once
 #include <vector>
 #include <glog/logging.h>
-#include "dag/logical_dag.h"
-#include "dag/physical_dag.h"
 
 namespace minerva {
 
-template<class DagType>
+template<typename DagType>
 class DagProcedure {
  public:
-  virtual void Process(DagType&, const std::vector<uint64_t>&) = 0;
+  virtual void Process(const std::vector<uint64_t>&) = 0;
+ protected:
+  DagType* dag_;
 };
 
-class LogicalDagProcedure : public DagProcedure<LogicalDag> { };
-class PhysicalDagProcedure : public DagProcedure<PhysicalDag> { };
+}  // namespace minerva
 
-}

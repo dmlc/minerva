@@ -1,9 +1,11 @@
 #pragma once
+#include <cstdint>
 
 namespace minerva {
 
-struct DeviceInfoTrait {
+struct DeviceIdTrait {
   uint64_t device_id;
 };
 
 }
+

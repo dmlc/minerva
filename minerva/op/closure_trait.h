@@ -8,4 +8,5 @@ struct ClosureTrait {
   T closure;
 };
 
-} // end of namespace minerva
+}  // end of namespace minerva
+

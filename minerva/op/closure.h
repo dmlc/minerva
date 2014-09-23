@@ -4,33 +4,23 @@
 
 namespace minerva {
 
-/*enum ClosureType {
-  ARITHMETIC = 0,
-  ARITHMETIC_CONST,
-  ELEWISE,
-  MAT_MULT,
-  REDUCTION,
-  CONV,
-  // TODO how to generate this when adding new closure types ?
-};*/
-
-enum ArithmeticType {
-  ADD = 0,
-  SUB,
-  MULT,
-  DIV,
+enum class ArithmeticType {
+  kAdd = 0,
+  kSub,
+  kMult,
+  kDiv,
 };
 
-enum ElewiseType {
-  EXP = 0,
-  LN,
-  SIGMOID,
-  NEGATIVE,
+enum class ElewiseType {
+  kExp = 0,
+  kLn,
+  kSigmoid,
+  kNegative,
 };
 
-enum ReductionType {
-  SUM = 0,
-  MAX,
+enum class ReductionType {
+  kSum = 0,
+  kMax,
 };
 
 struct AssembleClosure {
@@ -87,3 +77,4 @@ struct SplitClosure {
 };
 
 } // end of namespace minerva
+

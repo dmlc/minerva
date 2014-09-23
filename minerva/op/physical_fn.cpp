@@ -1,32 +1,20 @@
 #include "op/physical_fn.h"
 #include "system/minerva_system.h"
 
+using namespace std;
+
 namespace minerva {
 
-DataShard::DataShard(const PhysicalData& d) {
-  data_ = MinervaSystem::Instance().GetDevice(d.device_id)->GetData(d.data_id);
-  size_ = d.size;
-  offset_ = d.offset;
+DataShard::DataShard(float* data, const Scale& size): data_(data), size_(size) {
 }
 
-DataShard::DataShard(float* data, Scale size, Scale offset): data_(data), size_(size), offset_(offset) {
-}
-
-// return data untransformed (NO memory copy)
-float* DataShard::GetCpuData() {
-  return data_;
-}
-
-float* DataShard::GetGpuData() {
-  return data_;
-}
-
-Scale DataShard::Offset() {
-  return offset_;
-}
-
-Scale DataShard::Size() {
+const Scale& DataShard::size() const {
   return size_;
 }
 
+float* DataShard::data() const {
+  return data_;
 }
+
+}  // namespace minerva
+
