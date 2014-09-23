@@ -26,10 +26,13 @@ void CudaPerformReductionOnCol(float* in, float* out, int m, int n,
   const ReductionType & type, cudaStream_t);
 void CudaPerformReductionOnRow(float* in, float* out, int m, int n,
   const ReductionType & type, cudaStream_t);
+void CudaPerformMaxIndexOnCol(float* in, float* out, int m, int n,
+  cudaStream_t);
+void CudaPerformMaxIndexOnRow(float* in, float* out, int m, int n,
+  cudaStream_t);
 
 void CudaPerformEleWise(float* in, float* out, size_t size,
   const ElewiseType & type, cudaStream_t);
-
 }
 }
 #endif
