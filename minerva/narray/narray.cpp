@@ -67,7 +67,15 @@ vector<NArray> NArray::Compute(
 }
 
 NArray NArray::ComputeOne(const vector<NArray>& params, const Scale& size, PhysicalComputeFn* fn) {
-  return NArray::Compute(params, {size}, fn)[0];
+  auto& physical_dag = MinervaSystem::Instance().physical_dag();
+  auto current_device_id = MinervaSystem::Instance().current_device_id_;
+  auto rst = NArray(physical_dag.NewDataNode(PhysicalData(size, current_device_id, MinervaSystem::Instance().GenerateDataId())));
+  auto param_data_nodes = Map<PhysicalDataNode*>(params, [](const NArray& i) {
+    return i.data_node_;
+  });
+  fn->device_id = current_device_id;
+  MinervaSystem::Instance().physical_dag().NewOpNode(param_data_nodes, {rst.data_node_}, {fn});
+  return rst;
 }
 
 NArray NArray::GenerateOne(const Scale& size, PhysicalComputeFn* fn) {

@@ -39,8 +39,8 @@ class Scale {
       vec_.push_back(*it);
     }
   }
-  Scale(const Scale& other): vec_(other.vec_) {}
-  Scale(Scale&& other): vec_(std::move(other.vec_)) {}
+  Scale(const Scale& other) : vec_(other.vec_) {}
+  Scale(Scale&& other) : vec_(std::move(other.vec_)) {}
   Scale& operator=(const Scale& other) {
     if (this == &other) {
       return *this;
