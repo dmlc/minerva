@@ -12,8 +12,8 @@ const int numepochs = 200;
 const int mb_size = 256;
 const int num_mb_per_epoch = 235;
 
-const string weight_init_files[] = { "weights[0]_init.dat", "weights[1]_init.dat", };
-const string weight_out_files[] = { "weights[0]_trained.dat", "weights[1]_trained.dat", };
+const string weight_init_files[] = { "w12.dat", "w23.dat", };
+const string weight_out_files[] = { "w12.dat", "w23.dat", };
 const string bias_out_files[] = { "b2_trained.dat", "b3_trained.dat" };
 const string train_data_file = "/home/serailhydra/data/mnist/traindata.dat";
 const string train_label_file = "/home/serailhydra/data/mnist/trainlabel.dat";
