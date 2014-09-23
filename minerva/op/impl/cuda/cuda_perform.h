@@ -2,7 +2,6 @@
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-#include "op/op_types.h"
 
 namespace minerva {
 namespace cuda {
@@ -18,21 +17,29 @@ void CudaPerformTranspose(float* a, float* c, int m, int n, cublasHandle_t);
 void CudaPerformLeftConstSub(float* in, float* out, float val, size_t, cudaStream_t);
 void CudaPerformLeftConstDiv(float* in, float* out, float val, size_t, cudaStream_t);
 
-void CudaPerformNormOnCol(float* matrix, float* row, float* res, int m, int n,
-  const ArithmeticType & type, cudaStream_t);
-void CudaPerformNormOnRow(float* matrix, float* col, float* res, int m, int n,
-  const ArithmeticType & type, cudaStream_t);
-void CudaPerformReductionOnCol(float* in, float* out, int m, int n,
-  const ReductionType & type, cudaStream_t);
-void CudaPerformReductionOnRow(float* in, float* out, int m, int n,
-  const ReductionType & type, cudaStream_t);
-void CudaPerformMaxIndexOnCol(float* in, float* out, int m, int n,
-  cudaStream_t);
-void CudaPerformMaxIndexOnRow(float* in, float* out, int m, int n,
-  cudaStream_t);
+void CudaPerformNormAddOnCol(float* matrix, float* row, float* res, int m, int n, cudaStream_t);
+void CudaPerformNormSubOnCol(float* matrix, float* row, float* res, int m, int n, cudaStream_t);
+void CudaPerformNormMultOnCol(float* matrix, float* row, float* res, int m, int n, cudaStream_t);
+void CudaPerformNormDivOnCol(float* matrix, float* row, float* res, int m, int n, cudaStream_t);
 
-void CudaPerformEleWise(float* in, float* out, size_t size,
-  const ElewiseType & type, cudaStream_t);
+void CudaPerformNormAddOnRow(float* matrix, float* row, float* res, int m, int n, cudaStream_t);
+void CudaPerformNormSubOnRow(float* matrix, float* row, float* res, int m, int n, cudaStream_t);
+void CudaPerformNormMultOnRow(float* matrix, float* row, float* res, int m, int n, cudaStream_t);
+void CudaPerformNormDivOnRow(float* matrix, float* row, float* res, int m, int n, cudaStream_t);
+
+void CudaPerformReductionSumOnCol(float* in, float* out, int m, int n, cudaStream_t);
+void CudaPerformReductionMaxOnCol(float* in, float* out, int m, int n, cudaStream_t);
+void CudaPerformReductionSumOnRow(float* in, float* out, int m, int n, cudaStream_t);
+void CudaPerformReductionMaxOnRow(float* in, float* out, int m, int n, cudaStream_t);
+
+void CudaPerformMaxIndexOnCol(float* in, float* out, int m, int n, cudaStream_t);
+void CudaPerformMaxIndexOnRow(float* in, float* out, int m, int n, cudaStream_t);
+
+void CudaPerformElewiseExp(float* in, float* out, size_t size, cudaStream_t);
+void CudaPerformElewiseLn(float* in, float* out, size_t size, cudaStream_t);
+void CudaPerformElewiseSigmoid(float* in, float* out, size_t size, cudaStream_t);
+void CudaPerformElewiseNegative(float* in, float* out, size_t size, cudaStream_t);
+
 }
 }
 #endif
