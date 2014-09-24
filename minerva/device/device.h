@@ -11,7 +11,7 @@
 #include "common/thread_pool.h"
 #ifdef HAS_CUDA
 #include <cuda.h>
-#include <cublas.h>
+#include <cublas_v2.h>
 #endif
 
 namespace minerva {
@@ -27,6 +27,7 @@ class Device {
   virtual void PushTask(uint64_t) = 0;
   virtual std::pair<MemType, float*> GetPtr(uint64_t);
   virtual std::string Name() const;
+  virtual void FreeDataIfExist(uint64_t);
 
  protected:
   std::unordered_set<uint64_t> local_data_;
@@ -41,7 +42,6 @@ class Device {
 };
 
 #ifdef HAS_CUDA
-
 class GpuDevice : public Device {
  public:
   GpuDevice(uint64_t, DeviceListener*, int);
@@ -56,10 +56,10 @@ class GpuDevice : public Device {
   void Execute(uint64_t);
   cudaStream_t GetSomeStream();
   cudaStream_t stream_[kDefaultStreamNum];
+  cublasHandle_t handle_;
   ThreadPool pool_;
   DISALLOW_COPY_AND_ASSIGN(GpuDevice);
 };
-
 #endif
 
 class CpuDevice : public Device {

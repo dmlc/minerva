@@ -14,6 +14,7 @@ DagScheduler::DagScheduler(PhysicalDag* d) : dispatcher_(&DagScheduler::Dispatch
 
 DagScheduler::~DagScheduler() {
   dispatcher_queue_.SignalForKill();
+  dispatcher_.join();
 }
 
 void DagScheduler::WaitForFinish() {

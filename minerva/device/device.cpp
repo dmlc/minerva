@@ -19,29 +19,39 @@ Device::Device(uint64_t d, DeviceListener* l) : device_id_(d), data_store_(0), l
 Device::~Device() {
 }
 
-#ifdef HAS_CUDA
+void Device::FreeDataIfExist(uint64_t id) {
+  auto d = local_data_.erase(id) + remote_data_.erase(id);
+  if (d == 1) {
+    data_store_->FreeData(id);
+  } else if (d != 0) {
+    CHECK(false) << "duplicate data";
+  }
+}
 
+#ifdef HAS_CUDA
 GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : Device(id, l), device_(gid), pool_(1) {
-  CHECK_EQ(cudaSetDevice(device_), cudaSuccess);
-  cudaFree(0);
+  CUDA_CALL(cudaSetDevice(device_));
+  cudaFree(0);  // Initialize
   auto allocator = [](size_t len) -> void* {
     void* ret;
-    CHECK_EQ(cudaMalloc(&ret, len), cudaSuccess);
+    CUDA_CALL(cudaMalloc(&ret, len));
     return ret;
   };
   auto deallocator = [](void* ptr) {
-    CHECK_EQ(cudaFree(ptr), cudaSuccess);
+    CUDA_CALL(cudaFree(ptr));
   };
   data_store_ = new DataStore(allocator, deallocator);
   for (size_t i = 0; i < kDefaultStreamNum; ++i) {
-    CHECK_EQ(cudaStreamCreate(&stream_[i]), cudaSuccess);
+    CUDA_CALL(cudaStreamCreate(&stream_[i]));
   }
+  CUBLAS_CALL(cublasCreate(&handle_));
 }
 
 GpuDevice::~GpuDevice() {
   pool_.WaitForAllFinished();
+  CUBLAS_CALL(cublasDestroy(handle_));
   for (size_t i = 0; i < kDefaultStreamNum; ++i) {
-    CHECK_EQ(cudaStreamDestroy(stream_[i]), cudaSuccess);
+    CUDA_CALL(cudaStreamDestroy(stream_[i]));
   }
   delete data_store_;
 }
@@ -92,10 +102,10 @@ void GpuDevice::Execute(uint64_t nid) {
       size_t size = data.size.Prod() * sizeof(float);
       auto ptr = data_store_->CreateData(data.data_id, size);
       auto stream = GetSomeStream();
-      CHECK_EQ(cudaMemcpyAsync(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id).second, size, cudaMemcpyDefault, stream), cudaSuccess);
-      remote_data_.insert(data.data_id);
+      CUDA_CALL(cudaMemcpyAsync(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id).second, size, cudaMemcpyDefault, stream));
+      CHECK(remote_data_.insert(data.data_id).second);
       CallbackData* d = new CallbackData{listener_, nid};
-      CHECK_EQ(cudaStreamAddCallback(stream, cudaStreamCallback, d, 0), cudaSuccess);
+      CUDA_CALL(cudaStreamAddCallback(stream, cudaStreamCallback, d, 0));
     }
   } else {
     auto op_node = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node));
@@ -103,7 +113,7 @@ void GpuDevice::Execute(uint64_t nid) {
     for (auto i : op_node->inputs_) {
       if (i->data_.device_id == device_id_) {  // Input is local
         CHECK_EQ(local_data_.count(i->data_.data_id), 1);
-      } else { // Input is remote
+      } else {  // Input is remote
         CHECK_EQ(remote_data_.count(i->data_.data_id), 1);
       }
       input_shards.emplace_back(data_store_->GetData(i->data_.data_id), i->data_.size);
@@ -122,9 +132,10 @@ void GpuDevice::Execute(uint64_t nid) {
     ctx.impl_type = ImplType::kCuda;
     auto stream = GetSomeStream();
     ctx.stream = stream;
+    ctx.handle = handle_;
     op.compute_fn->Execute(input_shards, output_shards, ctx);
     CallbackData* d = new CallbackData{listener_, nid};
-    CHECK_EQ(cudaStreamAddCallback(stream, cudaStreamCallback, d, 0), cudaSuccess);
+    CUDA_CALL(cudaStreamAddCallback(stream, cudaStreamCallback, d, 0));
   }
 }
 
@@ -172,11 +183,11 @@ void CpuDevice::Execute(uint64_t nid) {
       size_t size = data.size.Prod() * sizeof(float);
       auto ptr = data_store_->CreateData(data.data_id, size);
 #ifdef HAS_CUDA
-      CHECK_EQ(cudaMemcpy(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id).second, size, cudaMemcpyDefault), cudaSuccess);
+      CUDA_CALL(cudaMemcpy(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id).second, size, cudaMemcpyDefault));
 #else
       memcpy(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id).second, size);
 #endif
-      remote_data_.insert(data.data_id);
+      CHECK(remote_data_.insert(data.data_id).second);
     }
   } else {
     auto op_node = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node));

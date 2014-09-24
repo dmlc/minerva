@@ -9,6 +9,7 @@
 #include "op/impl/basic.h"
 #include "dag/dag_printer.h"
 #include "procedures/dag_scheduler.h"
+#include "common/cuda_utils.h"
 
 using namespace std;
 
@@ -16,7 +17,7 @@ namespace minerva {
 
 void MinervaSystem::UniversalMemcpy(pair<Device::MemType, float*> to, pair<Device::MemType, float*> from, size_t size) {
 #ifdef HAS_CUDA
-  CHECK_EQ(cudaMemcpy(to.second, from.second, size, cudaMemcpyDefault), cudaSuccess);
+  CUDA_CALL(cudaMemcpy(to.second, from.second, size, cudaMemcpyDefault));
 #else
   CHECK_EQ(static_cast<int>(to.first), static_cast<int>(Device::MemType::kCpu));
   CHECK_EQ(static_cast<int>(from.first), static_cast<int>(Device::MemType::kCpu));

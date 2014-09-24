@@ -16,7 +16,7 @@ class DeviceManager {
 #endif
   Device* GetDevice(uint64_t id);
   void FreeData(uint64_t id);
-  
+
  private:
   uint64_t GenerateDeviceId();
   DeviceListener* listener_;

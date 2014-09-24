@@ -37,6 +37,12 @@ Device* DeviceManager::GetDevice(uint64_t id) {
   return device_storage_.at(id);
 }
 
+void DeviceManager::FreeData(uint64_t id) {
+  for (auto i : device_storage_) {
+    i.second->FreeDataIfExist(id);
+  }
+}
+
 uint64_t DeviceManager::GenerateDeviceId() {
   static uint64_t index_counter = 0;
   return index_counter++;
