@@ -1,10 +1,14 @@
 #pragma once
 
+#ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
+#endif
 #include <glog/logging.h>
 #include <string>
 #include <algorithm>
+
+#ifdef HAS_CUDA
 
 #define CUDA_CALL(func) CHECK_EQ((func), cudaSuccess)<<"cudaError: "<<cudaGetErrorString(cudaGetLastError())
 
@@ -57,3 +61,4 @@ inline const char *_cudaGetErrorEnum(cublasStatus_t error)
   CHECK_EQ(e, CUBLAS_STATUS_SUCCESS) << "cublasError: " << _cudaGetErrorEnum(e); \
 } while (0)
 
+#endif

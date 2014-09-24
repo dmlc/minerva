@@ -1,10 +1,10 @@
 #pragma once
-#ifdef HAS_CUDA
 #include "op/context.h"
 #include "op/physical_fn.h"
 #include "op/closure.h"
 
 namespace minerva {
+#ifdef HAS_CUDA
 namespace cuda {
 
 void Arithmetic(const DataList&, const DataList&, ArithmeticClosure&, const CudaRuntimeContext&);
@@ -17,5 +17,5 @@ void MaxIndex(const DataList&, const DataList&, MaxIndexClosure&, const CudaRunt
 void Elewise(const DataList&, const DataList&, ElewiseClosure&, const CudaRuntimeContext&);
 
 }
-}
 #endif
+}

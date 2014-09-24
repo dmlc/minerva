@@ -10,7 +10,9 @@ namespace minerva {
 void ArrayLoaderOp::Execute(const DataList&, const DataList& outputs, const Context& context) {
   CHECK_EQ(context.impl_type, ImplType::kBasic) << "vector loader only has basic implementation";
   CHECK_EQ(outputs.size(), 1) << "takes 1 output";
-  memcpy(outputs[0].data(), closure.data.get(), outputs[0].size().Prod() * sizeof(float));
+  CHECK(closure.data) << "probably executed";
+  memcpy(outputs[0].data(), closure.data.get(), closure.size.Prod() * sizeof(float));
+  closure.data.reset();
 }
 
 

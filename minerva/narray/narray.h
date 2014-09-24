@@ -17,7 +17,7 @@ class NArray {
   // Static constructors
   static NArray Constant(const Scale& size, float val);
   static NArray Randn(const Scale& size, float mu, float var);
-  static NArray LoadFromFile(const Scale& size, const std::string& fname, IFileLoader* loader);
+  static NArray LoadFromFile(const Scale& size, const std::string& fname, std::shared_ptr<IFileLoader> loader);
   static NArray Zeros(const Scale& size);
   static NArray Ones(const Scale& size);
   static NArray MakeNArray(const Scale& size, std::shared_ptr<float> array);

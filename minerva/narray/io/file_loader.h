@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include "op/physical.h"
 #include "op/physical_fn.h"
 #include "op/context.h"
@@ -14,7 +15,7 @@ class IFileLoader {
 struct FileLoaderClosure {
   std::string fname;
   Scale size;
-  IFileLoader* loader;
+  std::shared_ptr<IFileLoader> loader;
 };
 
 class FileLoaderOp :
@@ -31,3 +32,4 @@ class SimpleFileLoader : public IFileLoader {
 };
 
 }
+

@@ -17,7 +17,7 @@ class FnBundle {
         case ImplType::kBasic: basic_fn(i, o, c); break;\
         case ImplType::kMkl: mkl_fn(i, o, c); break;\
         case ImplType::kCuda: cuda_fn(i, o, c, dynamic_cast<const CudaRuntimeContext&>(context)); break; \
-        default: NO_IMPL(i, o, c); break;\
+        default: NO_IMPL(i, o, c, context); break;\
       }\
     }\
   };
@@ -28,9 +28,9 @@ class FnBundle {
     static void Call(const DataList& d, closure_name& c, const Context& context) {\
       switch (context.impl_type) {\
         case ImplType::kBasic: basic_fn(d, c); break;\
-        case ImplType::kMkl: mkl_fn(d, c, dynamic_cast<const CudaRuntimeContext&>(context)); break;\
-        case ImplType::kCuda: cuda_fn(d, c); break;\
-        default: NO_IMPL(d, c); break;\
+        case ImplType::kMkl: mkl_fn(d, c); break;\
+        case ImplType::kCuda: cuda_fn(d, c, dynamic_cast<const CudaRuntimeContext&>(context)); break;\
+        default: NO_IMPL(d, c, context); break;\
       }\
     }\
   };
@@ -44,7 +44,7 @@ class FnBundle {
       switch (context.impl_type) {\
         case ImplType::kBasic: basic_fn(i, o, c); break;\
         case ImplType::kMkl: mkl_fn(i, o, c); break;\
-        default: NO_IMPL(i, o, c); break;\
+        default: NO_IMPL(i, o, c, context); break;\
       }\
     }\
   };
@@ -55,8 +55,8 @@ class FnBundle {
     static void Call(const DataList& d, closure_name& c, const Context& context) {\
       switch (context.impl_type) {\
         case ImplType::kBasic: basic_fn(d, c); break;\
-        case ImplType::kMkl: mkl_fn(d, c, dynamic_cast<const CudaRuntimeContext&>(context)); break;\
-        default: NO_IMPL(d, c); break;\
+        case ImplType::kMkl: mkl_fn(d, c); break;\
+        default: NO_IMPL(d, c, context); break;\
       }\
     }\
   };

@@ -25,7 +25,7 @@ NArray NArray::Randn(const Scale& size, float mu, float var) {
   return NArray::GenerateOne(size, randn_op);
 }
 
-NArray NArray::LoadFromFile(const Scale& size, const std::string& fname, IFileLoader* loader) {
+NArray NArray::LoadFromFile(const Scale& size, const string& fname, shared_ptr<IFileLoader> loader) {
   FileLoaderOp* loader_op = new FileLoaderOp();
   loader_op->closure = {fname, size, loader};
   return NArray::GenerateOne(size, loader_op);
