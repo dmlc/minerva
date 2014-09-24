@@ -66,11 +66,11 @@ void DagScheduler::OnCreateEdge(DagNode* from, DagNode*) {
   if (from->Type() == DagNode::NodeType::kDataNode) {
     switch (rt_info_.GetState(from->node_id())) {
       case NodeState::kReady:
-      case NodeState::kRunning:
       case NodeState::kCompleted:
         ++(rt_info_.At(from->node_id()).reference_count);
         break;
       default:
+        CHECK(false) << "invalid node state of id " << from->node_id();
         break;
     }
   }
@@ -82,6 +82,11 @@ void DagScheduler::OnBeginModify() {
 
 void DagScheduler::OnFinishModify() {
   m_.unlock();
+}
+
+// Device listener
+void DagScheduler::OnOperationComplete(uint64_t id) {
+  dispatcher_queue_.Push({TaskType::kToComplete, id});
 }
 
 void DagScheduler::Process(const vector<uint64_t>& targets) {
@@ -113,7 +118,6 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
         case NodeState::kBirth:
           queue.push(pred->node_id());
         case NodeState::kReady:
-        case NodeState::kRunning:
           // Set triggers count
           ++ri.num_triggers_needed;
           break;
@@ -134,15 +138,10 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
     }
     if (ri.num_triggers_needed == 0) {
       DLOG(INFO) << "starting node id " << node_id;
-      ri.state = NodeState::kRunning;
       ++num_nodes_yet_to_finish_;
       dispatcher_queue_.Push({TaskType::kToRun, node_id});
     }
   }
-}
-
-void DagScheduler::OnOperationComplete(uint64_t id) {
-  dispatcher_queue_.Push({TaskType::kToComplete, id});
 }
 
 void FreeDataNodeRes(PhysicalDataNode* node) {
@@ -158,13 +157,13 @@ void DagScheduler::DispatcherRoutine() {
     auto node = dag_->GetNode(node_id);
     auto& ri = rt_info_.At(node_id);
     if (task.first == TaskType::kToRun) {  // Now task to dispatch
-      DLOG(INFO) << "dispatching node id " << node_id;
       uint64_t device_id;
       if (node->Type() == DagNode::NodeType::kOpNode) {
         device_id = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node))->op_.compute_fn->device_id;
       } else {
         device_id = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(node))->data_.device_id;
       }
+      DLOG(INFO) << "dispatching node id " << node_id << " to device " << device_id;
       MinervaSystem::Instance().device_manager().GetDevice(device_id)->PushTask(node_id);
     } else {  // Task completed
       DLOG(INFO) << "finishing node id " << node_id;
@@ -199,7 +198,6 @@ void DagScheduler::DispatcherRoutine() {
           if (ri.state == NodeState::kReady) {
             if (--ri.num_triggers_needed == 0) {
               DLOG(INFO) << "trigger node id " << succ->node_id();
-              ri.state = NodeState::kRunning;
               ++num_nodes_yet_to_finish_;
               dispatcher_queue_.Push({TaskType::kToRun, succ->node_id()});
             }

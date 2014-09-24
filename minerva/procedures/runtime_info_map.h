@@ -12,7 +12,6 @@ namespace minerva {
 enum class NodeState {
   kBirth = 0,
   kReady,
-  kRunning,
   kCompleted,
   kDead
 };
