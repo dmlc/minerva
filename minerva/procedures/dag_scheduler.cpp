@@ -2,6 +2,7 @@
 #include <queue>
 #include <list>
 #include <glog/logging.h>
+#include "system/minerva_system.h"
 
 using namespace std;
 
@@ -32,10 +33,11 @@ void DagScheduler::GCNodes() {
 }
 
 void DagScheduler::OnExternRCUpdate(PhysicalDataNode* node) {
+  lock_guard<recursive_mutex> lck(m_);
   switch (rt_info_.GetState(node->node_id())) {
     case NodeState::kCompleted: {
       auto& ri = rt_info_.At(node->node_id());
-      if (node->data_.extern_rc == 0 && ri.reference_count == 0) {
+      if (ri.reference_count == 0 && node->data_.extern_rc == 0 ) {
         FreeDataNodeRes(node);
         ri.state = NodeState::kDead;
         rt_info_.KillNode(node->node_id());
@@ -48,11 +50,15 @@ void DagScheduler::OnExternRCUpdate(PhysicalDataNode* node) {
 }
 
 void DagScheduler::OnCreateNode(DagNode* node) {
+  lock_guard<recursive_mutex> lck(m_);
   rt_info_.AddNode(node->node_id());
 }
 
 void DagScheduler::OnDeleteNode(DagNode* node) {
-  // TODO Freedatanode resource
+  lock_guard<recursive_mutex> lck(m_);
+  if (node->Type() == DagNode::NodeType::kDataNode) {
+    FreeDataNodeRes(CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(node)));
+  }
   rt_info_.RemoveNode(node->node_id());
 }
 
@@ -119,13 +125,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
     }
     if (node->Type() == DagNode::NodeType::kOpNode) {
       for (auto succ : node->successors_) {
-        auto succ_node = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(succ));
-        if (succ_node->successors_.size() + succ_node->data_.extern_rc == 0) {
-          rt_info_.At(succ->node_id()).state = NodeState::kDead;
-          rt_info_.KillNode(succ->node_id());
-        } else {
-          rt_info_.At(succ->node_id()).state = NodeState::kReady;
-        }
+        rt_info_.At(succ->node_id()).state = NodeState::kReady;
       }
       ri.reference_count = -1;
     } else {
@@ -146,7 +146,7 @@ void DagScheduler::OnOperationComplete(uint64_t id) {
 }
 
 void FreeDataNodeRes(PhysicalDataNode* node) {
-  // TODO Notify device to free data storage
+  MinervaSystem::Instance().device_manager().FreeData(node->node_id());
 }
 
 void DagScheduler::DispatcherRoutine() {
@@ -159,7 +159,13 @@ void DagScheduler::DispatcherRoutine() {
     auto& ri = rt_info_.At(node_id);
     if (task.first == TaskType::kToRun) {  // Now task to dispatch
       DLOG(INFO) << "dispatching node id " << node_id;
-      // TODO dispatch to some device
+      uint64_t device_id;
+      if (node->Type() == DagNode::NodeType::kOpNode) {
+        device_id = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node))->op_.compute_fn->device_id;
+      } else {
+        device_id = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(node))->data_.device_id;
+      }
+      MinervaSystem::Instance().device_manager().GetDevice(device_id)->PushTask(node_id);
     } else {  // Task completed
       DLOG(INFO) << "finishing node id " << node_id;
       // Change current state and predecessors' reference counts
@@ -179,6 +185,12 @@ void DagScheduler::DispatcherRoutine() {
         rt_info_.KillNode(node_id);
       } else {
         ri.state = NodeState::kCompleted;
+        auto data_node = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(node));
+        if (ri.reference_count == 0 && data_node->data_.extern_rc == 0) {
+          FreeDataNodeRes(data_node);
+          ri.state = NodeState::kDead;
+          rt_info_.KillNode(node_id);
+        }
       }
       // Trigger successors
       {
