@@ -5,23 +5,23 @@ namespace minerva {
 
 class Elewise {
  public:
-  static NArray Mult(NArray, NArray);
-  static NArray Exp(NArray);
-  static NArray Ln(NArray);
-  static NArray Sigmoid(NArray);
+  static NArray Mult(const NArray&, const NArray&);
+  static NArray Exp(const NArray&);
+  static NArray Ln(const NArray&);
+  static NArray Sigmoid(const NArray&);
 };
 
-NArray operator+(NArray, NArray);
-NArray operator-(NArray, NArray);
-NArray operator/(NArray, NArray);
-NArray operator+(float, NArray);
-NArray operator-(float, NArray);
-NArray operator*(float, NArray);
-NArray operator/(float, NArray);
-NArray operator+(NArray, float);
-NArray operator-(NArray, float);
-NArray operator*(NArray, float);
-NArray operator/(NArray, float);
+NArray operator+(const NArray&, const NArray&);
+NArray operator-(const NArray&, const NArray&);
+NArray operator/(const NArray&, const NArray&);
+NArray operator+(float, const NArray&);
+NArray operator-(float, const NArray&);
+NArray operator*(float, const NArray&);
+NArray operator/(float, const NArray&);
+NArray operator+(const NArray&, float);
+NArray operator-(const NArray&, float);
+NArray operator*(const NArray&, float);
+NArray operator/(const NArray&, float);
 
 }
 

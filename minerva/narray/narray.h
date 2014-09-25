@@ -17,7 +17,7 @@ class NArray {
   // Static constructors
   static NArray Constant(const Scale& size, float val);
   static NArray Randn(const Scale& size, float mu, float var);
-  static NArray LoadFromFile(const Scale& size, const std::string& fname, IFileLoader* loader);
+  static NArray LoadFromFile(const Scale& size, const std::string& fname, std::shared_ptr<IFileLoader> loader);
   static NArray Zeros(const Scale& size);
   static NArray Ones(const Scale& size);
   static NArray MakeNArray(const Scale& size, std::shared_ptr<float> array);
@@ -41,32 +41,32 @@ class NArray {
   NArray& operator=(NArray&&);
   ~NArray();
   // Element-wise operations
-  friend NArray operator+(NArray, NArray);
-  friend NArray operator-(NArray, NArray);
-  friend NArray operator/(NArray, NArray);
-  friend NArray operator+(float, NArray);
-  friend NArray operator-(float, NArray);
-  friend NArray operator*(float, NArray);
-  friend NArray operator/(float, NArray);
-  friend NArray operator+(NArray, float);
-  friend NArray operator-(NArray, float);
-  friend NArray operator*(NArray, float);
-  friend NArray operator/(NArray, float);
-  void operator+=(NArray);
-  void operator-=(NArray);
-  void operator*=(NArray);
-  void operator/=(NArray);
+  friend NArray operator+(const NArray&, const NArray&);
+  friend NArray operator-(const NArray&, const NArray&);
+  friend NArray operator/(const NArray&, const NArray&);
+  friend NArray operator+(float, const NArray&);
+  friend NArray operator-(float, const NArray&);
+  friend NArray operator*(float, const NArray&);
+  friend NArray operator/(float, const NArray&);
+  friend NArray operator+(const NArray&, float);
+  friend NArray operator-(const NArray&, float);
+  friend NArray operator*(const NArray&, float);
+  friend NArray operator/(const NArray&, float);
+  void operator+=(const NArray&);
+  void operator-=(const NArray&);
+  void operator*=(const NArray&);
+  void operator/=(const NArray&);
   void operator+=(float);
   void operator-=(float);
   void operator*=(float);
   void operator/=(float);
   NArray operator-();
   // Matmult
-  friend NArray operator*(NArray, NArray);
+  friend NArray operator*(const NArray&, const NArray&);
   // Shape
   const Scale& Size() const { return data_node_->data_.size; }
   int Size(int dim) const { return data_node_->data_.size[dim]; }
-  NArray Reshape(const Scale& dims) const;
+  NArray Reshape(const Scale& dims) const;  // TODO
   NArray Trans() const;
   // Lazy reductions
   NArray Sum(int dim) const;
@@ -75,10 +75,10 @@ class NArray {
   NArray Max(const Scale& dims) const;
   NArray MaxIndex(int dim) const;
   // Replicate matrix
-  NArray NormArithmetic(NArray, ArithmeticType) const;
+  NArray NormArithmetic(const NArray&, ArithmeticType) const;
   // Non-lazy reductions
-  float Sum() const; // TODO
-  float Max() const; // TODO
+  float Sum() const;  // TODO
+  float Max() const;  // TODO
   int CountZero() const;
   // System
   void Eval() const;
@@ -91,6 +91,9 @@ class NArray {
   NArray(PhysicalDataNode*);
   PhysicalDataNode* data_node_;
 };
+
+// Matmult
+NArray operator*(const NArray&, const NArray&);
 
 } // end of namespace minerva
 

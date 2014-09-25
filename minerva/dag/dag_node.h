@@ -32,7 +32,6 @@ class DagNode {
 template<typename Data, typename Op>
 class DataNode : public DagNode {
  public:
-  DataNode(uint64_t id) : DagNode(id) {}
   DataNode(uint64_t id, const Data& data) : DagNode(id), data_(data) {}
   ~DataNode() {
     DagHelper<Data, Op>::FreeData(data_);

@@ -11,8 +11,6 @@ ostream& operator<<(ostream& os, NodeState s) {
       return os << "Birth";
     case NodeState::kReady:
       return os << "Ready";
-    case NodeState::kRunning:
-      return os << "Running";
     case NodeState::kCompleted:
       return os << "Completed";
     case NodeState::kDead:

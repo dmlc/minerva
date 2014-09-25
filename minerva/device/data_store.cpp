@@ -1,7 +1,4 @@
 #include "data_store.h"
-#ifdef HAS_CUDA
-#include <cuda_runtime.h>
-#endif
 
 using namespace std;
 
@@ -51,7 +48,7 @@ void DataStore::FreeData(uint64_t id) {
   lock_guard<mutex> lck(access_mutex_);
   auto& ds = data_states_.at(id);
   deallocator_(ds.ptr);
-  data_states_.erase(id);
+  CHECK_EQ(data_states_.erase(id), 1);
 }
 
 }  // namespace minerva

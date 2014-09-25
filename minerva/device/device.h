@@ -1,6 +1,4 @@
 #pragma once
-#include <cublas.h>
-#include <cuda.h>
 #include <vector>
 #include <string>
 #include <utility>
@@ -11,6 +9,10 @@
 #include "common/common.h"
 #include "common/concurrent_blocking_queue.h"
 #include "common/thread_pool.h"
+#ifdef HAS_CUDA
+#include <cuda.h>
+#include <cublas_v2.h>
+#endif
 
 namespace minerva {
 
@@ -23,8 +25,9 @@ class Device {
   Device(uint64_t, DeviceListener*);
   virtual ~Device();
   virtual void PushTask(uint64_t) = 0;
-  virtual std::pair<MemType, float*> GetPtr(uint64_t);
-  virtual std::string Name() const;
+  virtual std::pair<MemType, float*> GetPtr(uint64_t) = 0;
+  virtual std::string Name() const = 0;
+  virtual void FreeDataIfExist(uint64_t);
 
  protected:
   std::unordered_set<uint64_t> local_data_;
@@ -39,7 +42,6 @@ class Device {
 };
 
 #ifdef HAS_CUDA
-
 class GpuDevice : public Device {
  public:
   GpuDevice(uint64_t, DeviceListener*, int);
@@ -52,12 +54,12 @@ class GpuDevice : public Device {
   static const size_t kDefaultStreamNum = 16;
   const int device_;
   void Execute(uint64_t);
-  cudaStream_t GetSomeStream();
+  size_t RoundRobinAlloc();
   cudaStream_t stream_[kDefaultStreamNum];
+  cublasHandle_t handle_[kDefaultStreamNum];
   ThreadPool pool_;
   DISALLOW_COPY_AND_ASSIGN(GpuDevice);
 };
-
 #endif
 
 class CpuDevice : public Device {

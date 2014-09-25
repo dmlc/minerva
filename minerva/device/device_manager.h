@@ -6,21 +6,22 @@
 
 namespace minerva {
 
-class DeviceFactory {
+class DeviceManager {
  public:
-  DeviceFactory(DeviceListener*);
-  ~DeviceFactory();
+  DeviceManager(DeviceListener*);
+  ~DeviceManager();
   uint64_t CreateCpuDevice();
 #ifdef HAS_CUDA
   uint64_t CreateGpuDevice(int gid);
 #endif
   Device* GetDevice(uint64_t id);
-  
+  void FreeData(uint64_t id);
+
  private:
   uint64_t GenerateDeviceId();
   DeviceListener* listener_;
   std::unordered_map<uint64_t, Device*> device_storage_;
-  DISALLOW_COPY_AND_ASSIGN(DeviceFactory);
+  DISALLOW_COPY_AND_ASSIGN(DeviceManager);
 };
 
 }  // namespace minerva

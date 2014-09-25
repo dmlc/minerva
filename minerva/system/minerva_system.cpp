@@ -9,6 +9,7 @@
 #include "op/impl/basic.h"
 #include "dag/dag_printer.h"
 #include "procedures/dag_scheduler.h"
+#include "common/cuda_utils.h"
 
 using namespace std;
 
@@ -16,7 +17,7 @@ namespace minerva {
 
 void MinervaSystem::UniversalMemcpy(pair<Device::MemType, float*> to, pair<Device::MemType, float*> from, size_t size) {
 #ifdef HAS_CUDA
-  CHECK_EQ(cudaMemcpy(to.second, from.second, size, cudaMemcpyDefault), cudaSuccess);
+  CUDA_CALL(cudaMemcpy(to.second, from.second, size, cudaMemcpyDefault));
 #else
   CHECK_EQ(static_cast<int>(to.first), static_cast<int>(Device::MemType::kCpu));
   CHECK_EQ(static_cast<int>(from.first), static_cast<int>(Device::MemType::kCpu));
@@ -31,25 +32,26 @@ void MinervaSystem::Initialize(int* argc, char*** argv) {
   google::InitGoogleLogging((*argv)[0]);
   physical_dag_ = new PhysicalDag();
   dag_scheduler_ = new DagScheduler(physical_dag_);
-  device_factory_ = new DeviceFactory(dag_scheduler_);
+  device_manager_ = new DeviceManager(dag_scheduler_);
   current_device_id_ = -1;
   LoadBuiltinDagMonitors();
 }
 
 void MinervaSystem::Finalize() {
-  delete device_factory_;
+  physical_dag_->ClearMonitor();
+  delete device_manager_;
   delete dag_scheduler_;
   delete physical_dag_;
 }
 
-uint64_t MinervaSystem::CreateCPUDevice() {
-  return device_factory_->CreateCpuDevice();
+uint64_t MinervaSystem::CreateCpuDevice() {
+  return device_manager_->CreateCpuDevice();
 }
 
 #ifdef HAS_CUDA
 
-uint64_t MinervaSystem::CreateGPUDevice(int gid) {
-  return device_factory_->CreateGpuDevice(gid);
+uint64_t MinervaSystem::CreateGpuDevice(int gid) {
+  return device_manager_->CreateGpuDevice(gid);
 }
 
 #endif
@@ -64,7 +66,7 @@ shared_ptr<float> MinervaSystem::GetValue(const NArray& narr) {
 }
 
 pair<Device::MemType, float*> MinervaSystem::GetPtr(uint64_t device_id, uint64_t data_id) {
-  return device_factory_->GetDevice(device_id)->GetPtr(data_id);
+  return device_manager_->GetDevice(device_id)->GetPtr(data_id);
 }
 
 void MinervaSystem::IncrExternRC(PhysicalDataNode* node) {
@@ -112,7 +114,7 @@ void MinervaSystem::LoadBuiltinDagMonitors() {
   physical_dag_->RegisterMonitor(dag_scheduler_);
 }
 
-void MinervaSystem::ExecutePhysicalDag(const std::vector<uint64_t>& pids) {
+void MinervaSystem::ExecutePhysicalDag(const vector<uint64_t>& pids) {
   dag_scheduler_->Process(pids);
 }
 

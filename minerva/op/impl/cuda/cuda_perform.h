@@ -2,8 +2,10 @@
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
+#endif
 
 namespace minerva {
+#ifdef HAS_CUDA
 namespace cuda {
 
 void CudaPerformDotMult(float*, float*, float*, size_t, cudaStream_t);
@@ -41,5 +43,5 @@ void CudaPerformElewiseSigmoid(float* in, float* out, size_t size, cudaStream_t)
 void CudaPerformElewiseNegative(float* in, float* out, size_t size, cudaStream_t);
 
 }
-}
 #endif
+}

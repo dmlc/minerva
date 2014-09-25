@@ -12,8 +12,6 @@ using namespace std;
 
 namespace minerva {
 
-static MinervaSystem& ms = MinervaSystem::Instance();
-
 // Static constructors
 NArray NArray::Constant(const Scale& size, float val) {
   FillOp* fill_op = new FillOp();
@@ -27,7 +25,7 @@ NArray NArray::Randn(const Scale& size, float mu, float var) {
   return NArray::GenerateOne(size, randn_op);
 }
 
-NArray NArray::LoadFromFile(const Scale& size, const std::string& fname, IFileLoader* loader) {
+NArray NArray::LoadFromFile(const Scale& size, const string& fname, shared_ptr<IFileLoader> loader) {
   FileLoaderOp* loader_op = new FileLoaderOp();
   loader_op->closure = {fname, size, loader};
   return NArray::GenerateOne(size, loader_op);
@@ -42,7 +40,7 @@ NArray NArray::Ones(const Scale& size) {
 }
 
 NArray NArray::MakeNArray(const Scale& size, shared_ptr<float> array) {
-  ArrayLoaderOp* loader_op = new ArrayLoaderOp;
+  ArrayLoaderOp* loader_op = new ArrayLoaderOp();
   loader_op->closure = {array, size};
   return NArray::GenerateOne(size, loader_op);
 }
@@ -52,10 +50,10 @@ vector<NArray> NArray::Compute(
     const vector<NArray>& params,
     const vector<Scale>& result_sizes,
     PhysicalComputeFn* fn) {
-  auto& physical_dag = ms.physical_dag();
-  auto current_device_id = ms.current_device_id_;
+  auto& physical_dag = MinervaSystem::Instance().physical_dag();
+  auto current_device_id = MinervaSystem::Instance().current_device_id_;
   auto rst = Map<NArray>(result_sizes, [&](const Scale& size) {
-    return NArray(physical_dag.NewDataNode(PhysicalData(size, current_device_id, ms.GenerateDataId())));
+    return NArray(physical_dag.NewDataNode(PhysicalData(size, current_device_id, MinervaSystem::Instance().GenerateDataId())));
   });
   auto rst_data_nodes = Map<PhysicalDataNode*>(rst, [](const NArray& i) {
     return i.data_node_;
@@ -64,12 +62,20 @@ vector<NArray> NArray::Compute(
     return i.data_node_;
   });
   fn->device_id = current_device_id;
-  ms.physical_dag().NewOpNode(param_data_nodes, rst_data_nodes, {fn});
+  MinervaSystem::Instance().physical_dag().NewOpNode(param_data_nodes, rst_data_nodes, {fn});
   return rst;
 }
 
 NArray NArray::ComputeOne(const vector<NArray>& params, const Scale& size, PhysicalComputeFn* fn) {
-  return NArray::Compute(params, {size}, fn)[0];
+  auto& physical_dag = MinervaSystem::Instance().physical_dag();
+  auto current_device_id = MinervaSystem::Instance().current_device_id_;
+  auto rst = NArray(physical_dag.NewDataNode(PhysicalData(size, current_device_id, MinervaSystem::Instance().GenerateDataId())));
+  auto param_data_nodes = Map<PhysicalDataNode*>(params, [](const NArray& i) {
+    return i.data_node_;
+  });
+  fn->device_id = current_device_id;
+  MinervaSystem::Instance().physical_dag().NewOpNode(param_data_nodes, {rst.data_node_}, {fn});
+  return rst;
 }
 
 NArray NArray::GenerateOne(const Scale& size, PhysicalComputeFn* fn) {
@@ -81,12 +87,12 @@ NArray::NArray() : data_node_(nullptr) {}
 
 NArray::NArray(const NArray& other) : data_node_(other.data_node_) {
   if (data_node_ != nullptr) {
-    ms.IncrExternRC(data_node_);
+    MinervaSystem::Instance().IncrExternRC(data_node_);
   }
 }
 
 NArray::NArray(NArray&& other) : data_node_(other.data_node_) {
-  other.data_node_ = 0;
+  other.data_node_ = nullptr;
 }
 
 NArray& NArray::operator=(const NArray& other) {
@@ -94,11 +100,11 @@ NArray& NArray::operator=(const NArray& other) {
     return *this;
   }
   if (data_node_ != nullptr) {
-    ms.DecrExternRC(data_node_);
+    MinervaSystem::Instance().DecrExternRC(data_node_);
   }
   data_node_ = other.data_node_;
   if (data_node_ != nullptr) {
-    ms.IncrExternRC(data_node_);
+    MinervaSystem::Instance().IncrExternRC(data_node_);
   }
   return *this;
 }
@@ -108,7 +114,7 @@ NArray& NArray::operator=(NArray&& other) {
     return *this;
   }
   if (data_node_ != nullptr) {
-    ms.DecrExternRC(data_node_);
+    MinervaSystem::Instance().DecrExternRC(data_node_);
   }
   data_node_ = other.data_node_;
   other.data_node_ = nullptr;
@@ -117,17 +123,17 @@ NArray& NArray::operator=(NArray&& other) {
 
 NArray::~NArray() {
   if (data_node_ != nullptr) {
-    ms.DecrExternRC(data_node_);
+    MinervaSystem::Instance().DecrExternRC(data_node_);
   }
 }
 
 // Matmult
-NArray operator*(NArray lhs, NArray rhs) {
+NArray operator*(const NArray& lhs, const NArray& rhs) {
   CHECK_EQ(lhs.Size().NumDims(), 2) << "eligible only for 2D";
   CHECK_EQ(rhs.Size().NumDims(), 2) << "eligible only for 2D";
   CHECK_EQ(lhs.Size(1), rhs.Size(0)) << "size must match";
   Scale newsize = {lhs.Size(0), rhs.Size(1)};
-  MatMultOp* matmult_op = new MatMultOp;
+  MatMultOp* matmult_op = new MatMultOp();
   return NArray::ComputeOne({lhs, rhs}, newsize, matmult_op);
 }
 
@@ -141,12 +147,12 @@ NArray NArray::Reshape(const Scale& dims) const {
 NArray NArray::Trans() const {
   CHECK_EQ(Size().NumDims(), 2) << "eligible only for 2D";
   Scale newsize = {Size(1), Size(0)};
-  TransOp* trans_op = new TransOp;
+  TransOp* trans_op = new TransOp();
   return NArray::ComputeOne({*this}, newsize, trans_op);
 }
 
 // Replicate matrix
-NArray NArray::NormArithmetic(NArray rhs, ArithmeticType type) const {
+NArray NArray::NormArithmetic(const NArray& rhs, ArithmeticType type) const {
   auto& lhs = *this;
   CHECK_EQ(lhs.Size().NumDims(), rhs.Size().NumDims()) << "NormArithmetic #dimension mismatch";
   vector<int> dims_to_replicate;
@@ -160,7 +166,7 @@ NArray NArray::NormArithmetic(NArray rhs, ArithmeticType type) const {
       dims_to_replicate.push_back(i);
     }
   }
-  NormArithmeticOp* op = new NormArithmeticOp;
+  NormArithmeticOp* op = new NormArithmeticOp();
   op->closure.type = type;
   op->closure.dims_to_replicate = dims_to_replicate;
   return NArray::ComputeOne({lhs, rhs}, lhs.Size(), op);
@@ -200,9 +206,9 @@ void NArray::ToFile(const std::string& filename, const FileFormat& format) const
 
 NArray::NArray(PhysicalDataNode* node) : data_node_(node) {
   if (data_node_ != nullptr) {
-    ms.IncrExternRC(data_node_);
+    MinervaSystem::Instance().IncrExternRC(data_node_);
   }
 }
 
-}
+}  // namespace minerva
 

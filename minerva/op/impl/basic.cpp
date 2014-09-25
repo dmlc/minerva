@@ -174,7 +174,6 @@ void Reduction(const DataList& inputs, const DataList& outputs, ReductionClosure
     float tmp = in_data[in_range.Flatten(cur)];
     while (cur.IncrDimensions(in_max, closure.dims_to_reduce)) {
       float tmp2 = in_data[in_range.Flatten(cur)];
-      // TODO Moving switch out of loop to optimize
       switch (closure.type) {
         case ReductionType::kSum:
           tmp += tmp2;
@@ -195,7 +194,7 @@ void Randn(const DataList& output, RandnClosure& closure) {
   int length = output[0].size().Prod();
   float* data = output[0].data();
   default_random_engine generator;
-  normal_distribution<float> distribution(closure.mu, closure.var); // TODO only float for now
+  normal_distribution<float> distribution(closure.mu, closure.var);
   for (int i = 0; i < length; ++i) {
     data[i] = distribution(generator);
   }
@@ -299,3 +298,4 @@ void MaxIndex(const DataList& inputs, const DataList& outputs, MaxIndexClosure& 
 
 }  // end of namespace basic
 }  // end of namespace minerva
+

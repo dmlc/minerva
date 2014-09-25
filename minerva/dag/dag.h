@@ -45,7 +45,7 @@ class Dag {
   DISALLOW_COPY_AND_ASSIGN(Dag);
 };
 
-} // end of namespace minerva
+}  // end of namespace minerva
 
 #include "dag.inl"
 

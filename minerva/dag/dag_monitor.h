@@ -7,10 +7,10 @@ template<typename DagType>
 class DagMonitor {
  public:
   virtual void OnCreateNode(DagNode*) = 0;
-  virtual void OnDeleteNode(DagNode*);
-  virtual void OnCreateEdge(DagNode*, DagNode*);
-  virtual void OnBeginModify();
-  virtual void OnFinishModify();
+  virtual void OnDeleteNode(DagNode*) = 0;
+  virtual void OnCreateEdge(DagNode*, DagNode*) = 0;
+  virtual void OnBeginModify() = 0;
+  virtual void OnFinishModify() = 0;
 };
 
 }

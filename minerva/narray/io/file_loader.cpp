@@ -10,7 +10,9 @@ namespace minerva {
 
 void FileLoaderOp::Execute(const DataList&, const DataList& outputs, const Context& context) {
   CHECK_EQ(context.impl_type, ImplType::kBasic) << "file loader operator only has basic implementation";
+  CHECK(closure.loader) << "probably executed";
   closure.loader->Load(closure.fname, closure.size, outputs);
+  closure.loader.reset();
 }
 
 string FileLoaderOp::Name() const {
@@ -22,12 +24,9 @@ string FileLoaderOp::Name() const {
 void SimpleFileLoader::Load(const string& fname, const Scale& size, const DataList& out_shards) {
   CHECK_EQ(out_shards.size(), 1) << "(simple file loader) #outputs is wrong";
   size_t numvalue = size.Prod();
-  float* ptr = new float[numvalue];
   ifstream fin(fname.c_str());
-  fin.read(reinterpret_cast<char*>(ptr), numvalue * sizeof(float));
+  fin.read(reinterpret_cast<char*>(out_shards[0].data()), numvalue * sizeof(float));
   fin.close();
-  memcpy(out_shards[0].data(), ptr, numvalue * sizeof(float));
-  delete[] ptr;
 }
 
 }  // end of namespace minerva

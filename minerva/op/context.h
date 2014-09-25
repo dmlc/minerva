@@ -30,14 +30,14 @@ struct Context {
   };
 };
 
-struct CudaRuntimeContext : public Context {
 #ifdef HAS_CUDA
+struct CudaRuntimeContext : public Context {
   cudaStream_t stream;
   cublasHandle_t handle;
-  float * one;
-  float * zero;
-#endif
+  float* one;
+  float* zero;
 };
+#endif
 
 }
 

@@ -3,9 +3,12 @@
 #include "op/context.h"
 #include "op/closure.h"
 #include <glog/logging.h>
+#ifdef HAS_CUDA
 #include <cuda_runtime.h>
+#endif
 
 namespace minerva {
+#ifdef HAS_CUDA
 namespace cuda {
 
 void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosure& closure, const CudaRuntimeContext& context) {
@@ -17,7 +20,6 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
   size_t size = outputs[0].size().Prod();
   int m = inputs[0].size()[0];
   int n = inputs[0].size()[1];
-#ifdef HAS_CUDA
   switch (closure.type) {
     case ArithmeticType::kAdd:
       CudaPerformAdd(left, right, res, m, n, context.handle);
@@ -33,7 +35,6 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
       CudaPerformDotDiv(res, left, right, size, context.stream);
       break;
   }
-#endif
 }
 
 void MatMult(const DataList& inputs, const DataList& outputs, MatMultClosure& closure, const CudaRuntimeContext & context) {
@@ -287,5 +288,6 @@ void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& cl
 }
 
 }
+#endif
 }
 
