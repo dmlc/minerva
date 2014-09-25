@@ -5,6 +5,7 @@
 #include <sstream>
 #include "system/minerva_system.h"
 #include "op/context.h"
+#include "common/cuda_utils.h"
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #endif
@@ -43,14 +44,14 @@ GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : Device(id, l), d
   data_store_ = new DataStore(allocator, deallocator);
   for (size_t i = 0; i < kDefaultStreamNum; ++i) {
     CUDA_CALL(cudaStreamCreate(&stream_[i]));
+    CUBLAS_CALL(cublasCreate(&handle_[i]));
   }
-  CUBLAS_CALL(cublasCreate(&handle_));
 }
 
 GpuDevice::~GpuDevice() {
   pool_.WaitForAllFinished();
-  CUBLAS_CALL(cublasDestroy(handle_));
   for (size_t i = 0; i < kDefaultStreamNum; ++i) {
+    CUBLAS_CALL(cublasDestroy(handle_[i]));
     CUDA_CALL(cudaStreamDestroy(stream_[i]));
   }
   delete data_store_;
@@ -70,12 +71,11 @@ string GpuDevice::Name() const {
   return ss.str();
 }
 
-cudaStream_t GpuDevice::GetSomeStream() {
+size_t GpuDevice::RoundRobinAlloc() {
   static int s = 0;
   int ret = s;
-  ++s;
-  s %= kDefaultStreamNum;
-  return stream_[ret];
+  s = (s + 1) % kDefaultStreamNum;
+  return ret;
 }
 
 struct CallbackData {
@@ -92,31 +92,23 @@ void CUDART_CB cudaStreamCallback(cudaStream_t, cudaError_t, void* user_data) {
 void GpuDevice::Execute(uint64_t nid) {
   auto node = MinervaSystem::Instance().physical_dag().GetNode(nid);
   if (node->Type() == DagNode::NodeType::kDataNode) {  // Data node
-    auto data_node = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(node));
-    auto& data = data_node->data_;
-    if (data.device_id == device_id_) {  // Local
-      DLOG(INFO) << "GPU device input data #" << nid << " is local";
-      CHECK_EQ(local_data_.count(data.data_id), 1);
-    } else if (!remote_data_.count(data.data_id)){  // Remote and not copied
-      DLOG(INFO) << "GPU device input data #" << nid << " is remote";
-      size_t size = data.size.Prod() * sizeof(float);
-      auto ptr = data_store_->CreateData(data.data_id, size);
-      auto stream = GetSomeStream();
-      CUDA_CALL(cudaMemcpyAsync(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id).second, size, cudaMemcpyDefault, stream));
-      CHECK(remote_data_.insert(data.data_id).second);
-      CallbackData* d = new CallbackData{listener_, nid};
-      CUDA_CALL(cudaStreamAddCallback(stream, cudaStreamCallback, d, 0));
-    }
-  } else {
+    listener_->OnOperationComplete(node->node_id());
+  } else {  // Op node
     auto op_node = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node));
+    auto rr = RoundRobinAlloc();
     DataList input_shards;
     for (auto i : op_node->inputs_) {
-      if (i->data_.device_id == device_id_) {  // Input is local
-        CHECK_EQ(local_data_.count(i->data_.data_id), 1);
-      } else {  // Input is remote
-        CHECK_EQ(remote_data_.count(i->data_.data_id), 1);
+      auto& r_data = i->data_;
+      if (r_data.device_id == device_id_) {  // Input is local
+        CHECK_EQ(local_data_.count(r_data.data_id), 1);
+      } else if (!remote_data_.count(r_data.data_id)) {  // Input is remote and not copied
+        DLOG(INFO) << "GPU device input data #" << i->node_id() << " is remote and to be copied";
+        size_t size = r_data.size.Prod() * sizeof(float);
+        auto ptr = data_store_->CreateData(r_data.data_id, size);
+        CUDA_CALL(cudaMemcpyAsync(ptr, MinervaSystem::Instance().GetPtr(r_data.device_id, r_data.data_id).second, size, cudaMemcpyDefault, stream_[rr]));
+        CHECK(remote_data_.insert(r_data.data_id).second);
       }
-      input_shards.emplace_back(data_store_->GetData(i->data_.data_id), i->data_.size);
+      input_shards.emplace_back(data_store_->GetData(r_data.data_id), r_data.size);
     }
     DataList output_shards;
     for (auto i : op_node->outputs_) {
@@ -130,12 +122,11 @@ void GpuDevice::Execute(uint64_t nid) {
     DLOG(INFO) << "GPU device execute node #" << nid << ": " << op.compute_fn->Name();
     CudaRuntimeContext ctx;
     ctx.impl_type = ImplType::kCuda;
-    auto stream = GetSomeStream();
-    ctx.stream = stream;
-    ctx.handle = handle_;
+    ctx.stream = stream_[rr];
+    ctx.handle = handle_[rr];
     op.compute_fn->Execute(input_shards, output_shards, ctx);
     CallbackData* d = new CallbackData{listener_, nid};
-    CUDA_CALL(cudaStreamAddCallback(stream, cudaStreamCallback, d, 0));
+    CUDA_CALL(cudaStreamAddCallback(stream_[rr], cudaStreamCallback, d, 0));
   }
 }
 
@@ -179,24 +170,24 @@ void CpuDevice::Execute(uint64_t nid) {
       DLOG(INFO) << "CPU device input data #" << nid << " is local";
       CHECK_EQ(local_data_.count(data.data_id), 1);
     } else if (!remote_data_.count(data.data_id)){  // Remote and not copied
-      DLOG(INFO) << "CPU device input data #" << nid << " is remote";
-      size_t size = data.size.Prod() * sizeof(float);
-      auto ptr = data_store_->CreateData(data.data_id, size);
-#ifdef HAS_CUDA
-      CUDA_CALL(cudaMemcpy(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id).second, size, cudaMemcpyDefault));
-#else
-      memcpy(ptr, MinervaSystem::Instance().GetPtr(data.device_id, data.data_id).second, size);
-#endif
-      CHECK(remote_data_.insert(data.data_id).second);
     }
   } else {
     auto op_node = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node));
     DataList input_shards;
     for (auto i : op_node->inputs_) {
-      if (i->data_.device_id == device_id_) {  // Input is local
+      auto& r_data = i->data_;
+      if (r_data.device_id == device_id_) {  // Input is local
         CHECK_EQ(local_data_.count(i->data_.data_id), 1);
-      } else { // Input is remote
-        CHECK_EQ(remote_data_.count(i->data_.data_id), 1);
+      } else if (!remote_data_.count(r_data.data_id)) { // Input is remote and not copied
+        DLOG(INFO) << "CPU device input data #" << i->node_id() << " is remote and not copied";
+        size_t size = r_data.size.Prod() * sizeof(float);
+        auto ptr = data_store_->CreateData(r_data.data_id, size);
+#ifdef HAS_CUDA
+        CUDA_CALL(cudaMemcpy(ptr, MinervaSystem::Instance().GetPtr(r_data.device_id, r_data.data_id).second, size, cudaMemcpyDefault));
+#else
+        memcpy(ptr, MinervaSystem::Instance().GetPtr(r_data.device_id, r_data.data_id).second, size);
+#endif
+        CHECK(remote_data_.insert(r_data.data_id).second);
       }
       input_shards.emplace_back(data_store_->GetData(i->data_.data_id), i->data_.size);
     }

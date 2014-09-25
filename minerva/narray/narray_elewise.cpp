@@ -52,31 +52,31 @@ NArray Elewise::Sigmoid(const NArray& narr) {
   return ElewiseHelper(narr, ElewiseType::kSigmoid);
 }
 
-NArray operator+(const NArray& lhs, NArray rhs) {
+NArray operator+(const NArray& lhs, const NArray& rhs) {
   return ArithmeticHelper(lhs, rhs, ArithmeticType::kAdd);
 }
 
-NArray operator-(const NArray& lhs, NArray rhs) {
+NArray operator-(const NArray& lhs, const NArray& rhs) {
   return ArithmeticHelper(lhs, rhs, ArithmeticType::kSub);
 }
 
-NArray operator/(const NArray& lhs, NArray rhs) {
+NArray operator/(const NArray& lhs, const NArray& rhs) {
   return ArithmeticHelper(lhs, rhs, ArithmeticType::kDiv);
 }
 
-NArray operator+(float lhs, NArray rhs) {
+NArray operator+(float lhs, const NArray& rhs) {
   return ArithmeticConstHelper(rhs, lhs, 0, ArithmeticType::kAdd);
 }
 
-NArray operator-(float lhs, NArray rhs) {
+NArray operator-(float lhs, const NArray& rhs) {
   return ArithmeticConstHelper(rhs, lhs, 0, ArithmeticType::kSub);
 }
 
-NArray operator*(float lhs, NArray rhs) {
+NArray operator*(float lhs, const NArray& rhs) {
   return ArithmeticConstHelper(rhs, lhs, 0, ArithmeticType::kMult);
 }
 
-NArray operator/(float lhs, NArray rhs) {
+NArray operator/(float lhs, const NArray& rhs) {
   return ArithmeticConstHelper(rhs, lhs, 0, ArithmeticType::kDiv);
 }
 

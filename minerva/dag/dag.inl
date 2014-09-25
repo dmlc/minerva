@@ -43,7 +43,7 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
     mon->OnCreateNode(ret);
   }
   for (auto in : inputs) {
-    // There are possible duplicates in `inputs` 
+    // There are possible duplicates in `inputs`
     if (ret->AddParent(in)) {
       for (auto mon : monitors_) {
         mon->OnCreateEdge(in, ret);

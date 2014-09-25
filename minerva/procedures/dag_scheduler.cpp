@@ -64,10 +64,14 @@ void DagScheduler::OnDeleteNode(DagNode* node) {
 }
 
 void DagScheduler::OnCreateEdge(DagNode* from, DagNode*) {
+  lock_guard<recursive_mutex> lck(m_);
   if (from->Type() == DagNode::NodeType::kDataNode) {
     switch (rt_info_.GetState(from->node_id())) {
+      case NodeState::kBirth:
+        break;
       case NodeState::kReady:
       case NodeState::kCompleted:
+        // TODO Uniform API for reference_count management
         ++(rt_info_.At(from->node_id()).reference_count);
         break;
       default:
@@ -145,7 +149,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
   }
 }
 
-void FreeDataNodeRes(PhysicalDataNode* node) {
+void DagScheduler::FreeDataNodeRes(PhysicalDataNode* node) {
   MinervaSystem::Instance().device_manager().FreeData(node->node_id());
 }
 

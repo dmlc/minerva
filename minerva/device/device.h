@@ -25,8 +25,8 @@ class Device {
   Device(uint64_t, DeviceListener*);
   virtual ~Device();
   virtual void PushTask(uint64_t) = 0;
-  virtual std::pair<MemType, float*> GetPtr(uint64_t);
-  virtual std::string Name() const;
+  virtual std::pair<MemType, float*> GetPtr(uint64_t) = 0;
+  virtual std::string Name() const = 0;
   virtual void FreeDataIfExist(uint64_t);
 
  protected:
@@ -54,9 +54,9 @@ class GpuDevice : public Device {
   static const size_t kDefaultStreamNum = 16;
   const int device_;
   void Execute(uint64_t);
-  cudaStream_t GetSomeStream();
+  size_t RoundRobinAlloc();
   cudaStream_t stream_[kDefaultStreamNum];
-  cublasHandle_t handle_;
+  cublasHandle_t handle_[kDefaultStreamNum];
   ThreadPool pool_;
   DISALLOW_COPY_AND_ASSIGN(GpuDevice);
 };
