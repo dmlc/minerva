@@ -104,6 +104,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
     switch (rt_info_.GetState(id)) {
       case NodeState::kBirth:
         queue.push(id);
+        rt_info_.At(id).state = NodeState::kReady;
         break;
       case NodeState::kDead:
         CHECK(false) << "invalid node state of id " << id;
@@ -117,11 +118,11 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
     auto node = dag_->GetNode(node_id);
     auto& ri = rt_info_.At(node_id);
     queue.pop();
-    ri.state = NodeState::kReady;
     for (auto pred : node->predecessors_) {
       switch (rt_info_.GetState(pred->node_id())) {
         case NodeState::kBirth:
           queue.push(pred->node_id());
+          rt_info_.At(pred->node_id()).state = NodeState::kReady;
         case NodeState::kReady:
           // Set triggers count
           ++ri.num_triggers_needed;

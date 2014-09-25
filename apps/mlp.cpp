@@ -1,8 +1,5 @@
 #include <minerva.h>
 #include <fstream>
-#include <gflags/gflags.h>
-
-DEFINE_bool(init, false, "Only generate init weights");
 
 using namespace std;
 using namespace minerva;
@@ -67,7 +64,6 @@ void PrintTrainingAccuracy(NArray o, NArray t) {
 int main(int argc, char** argv) {
   MinervaSystem& ms = MinervaSystem::Instance();
   ms.Initialize(&argc, &argv);
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
   uint64_t cpuDevice = ms.CreateCpuDevice();
   ms.current_device_id_ = cpuDevice;
 

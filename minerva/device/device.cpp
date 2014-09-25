@@ -185,6 +185,7 @@ void CpuDevice::Execute(uint64_t nid) {
       input_shards.emplace_back(data_store_->GetData(i->data_.data_id), i->data_.size);
     }
     DataList output_shards;
+    DLOG(INFO) << "CPU device execute node #" << nid << ": " << op_node->op_.compute_fn->Name();
     for (auto i : op_node->outputs_) {
       size_t size = i->data_.size.Prod() * sizeof(float);
       DLOG(INFO) << "create output data for node #" << i->node_id();
