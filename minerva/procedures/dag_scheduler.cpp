@@ -142,7 +142,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
       ri.reference_count = cast_node->successors_.size();
     }
     if (ri.num_triggers_needed == 0) {
-      DLOG(INFO) << "starting node id " << node_id;
+      DLOG(INFO) << "starting from node #" << node_id;
       ++num_nodes_yet_to_finish_;
       dispatcher_queue_.Push({TaskType::kToRun, node_id});
     }
@@ -150,7 +150,8 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
 }
 
 void DagScheduler::FreeDataNodeRes(PhysicalDataNode* node) {
-  MinervaSystem::Instance().device_manager().FreeData(node->node_id());
+  DLOG(INFO) << "free data node resource for node #" << node->node_id() << " data #" << node->data_.data_id;
+  MinervaSystem::Instance().device_manager().FreeData(node->data_.data_id);
 }
 
 void DagScheduler::DispatcherRoutine() {
@@ -168,10 +169,10 @@ void DagScheduler::DispatcherRoutine() {
       } else {
         device_id = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(node))->data_.device_id;
       }
-      DLOG(INFO) << "dispatching node id " << node_id << " to device " << device_id;
+      DLOG(INFO) << "dispatching node #" << node_id << " to device " << device_id;
       MinervaSystem::Instance().device_manager().GetDevice(device_id)->PushTask(node_id);
     } else {  // Task completed
-      DLOG(INFO) << "finishing node id " << node_id;
+      DLOG(INFO) << "finishing node #" << node_id;
       // Change current state and predecessors' reference counts
       if (node->Type() == DagNode::NodeType::kOpNode) {
         for (auto pred : node->predecessors_) {
@@ -202,7 +203,7 @@ void DagScheduler::DispatcherRoutine() {
           auto& ri = rt_info_.At(succ->node_id());
           if (ri.state == NodeState::kReady) {
             if (--ri.num_triggers_needed == 0) {
-              DLOG(INFO) << "trigger node id " << succ->node_id();
+              DLOG(INFO) << "trigger node #" << succ->node_id();
               ++num_nodes_yet_to_finish_;
               dispatcher_queue_.Push({TaskType::kToRun, succ->node_id()});
             }
