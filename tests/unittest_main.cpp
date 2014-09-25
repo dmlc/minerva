@@ -8,16 +8,17 @@ uint64_t gpuDevice;
 
 class MinervaTestEnvironment : public testing::Environment {
  public:
-  MinervaTestEnvironment(int* argc, char*** argv): argc(argc), argv(argv) {
+  MinervaTestEnvironment(int* argc, char*** argv) : argc(argc), argv(argv) {
   }
   void SetUp() {
     MinervaSystem::Instance().Initialize(argc, argv);
-    cpuDevice = MinervaSystem::Instance().CreateCPUDevice();
-    gpuDevice = MinervaSystem::Instance().CreateGPUDevice(0);
+    cpuDevice = MinervaSystem::Instance().CreateCpuDevice();
+    gpuDevice = MinervaSystem::Instance().CreateGpuDevice(0);
   }
   void TearDown() {
     MinervaSystem::Instance().Finalize();
   }
+
  private:
   int* argc;
   char*** argv;
@@ -28,3 +29,4 @@ int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
+
