@@ -1,7 +1,7 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
-#include "minerva.h"
+#include <minerva.h>
 
 using namespace std;
 using namespace minerva;

@@ -26,3 +26,4 @@ TEST(ScaleTest, FlattenIndexWithNonOriginStart) {
   EXPECT_EQ(range.Flatten({2, 3}), 9);
   EXPECT_EQ(range.Flatten({4, 3}), 11);
 }
+
