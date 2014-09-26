@@ -2,6 +2,8 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <unordered_map>
+#include <mutex>
 #include "device/data_store.h"
 #include "op/physical.h"
 #include "op/physical_fn.h"
@@ -69,9 +71,11 @@ class CpuDevice : public Device {
   void PushTask(uint64_t);
   std::pair<MemType, float*> GetPtr(uint64_t);
   std::string Name() const;
+  void FreeDataIfExist(uint64_t);
 
  private:
-  static const size_t kDefaultThreadNum = 1;
+  std::unordered_map<uint64_t, std::mutex> copy_locks_;
+  static const size_t kDefaultThreadNum = 8;
   void Execute(uint64_t);
   ThreadPool pool_;
   DISALLOW_COPY_AND_ASSIGN(CpuDevice);

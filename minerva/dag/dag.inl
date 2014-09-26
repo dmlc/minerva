@@ -66,6 +66,7 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
 
 template<typename D, typename O>
 void Dag<D, O>::DeleteNode(uint64_t id) {
+  DLOG(INFO) << "delete node #" << id;
   for (auto mon : monitors_) {
     mon->OnBeginModify();
   }

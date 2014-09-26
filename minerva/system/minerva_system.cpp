@@ -33,7 +33,7 @@ void MinervaSystem::Initialize(int* argc, char*** argv) {
   physical_dag_ = new PhysicalDag();
   dag_scheduler_ = new DagScheduler(physical_dag_);
   device_manager_ = new DeviceManager(dag_scheduler_);
-  current_device_id_ = -1;
+  current_device_id_ = 0;
   LoadBuiltinDagMonitors();
 }
 
@@ -80,7 +80,7 @@ void MinervaSystem::DecrExternRC(PhysicalDataNode* node) {
 }
 
 void MinervaSystem::Eval(const vector<NArray>& narrs) {
-  LOG(INFO) << "Evaluation(synchronous) start...";
+  LOG(INFO) << "evaluation(synchronous) start...";
   vector<uint64_t> pid_to_eval = Map<uint64_t>(narrs, [](const NArray& n) {
     return n.data_node_->node_id();
   });
@@ -90,7 +90,7 @@ void MinervaSystem::Eval(const vector<NArray>& narrs) {
 }
 
 void MinervaSystem::EvalAsync(const vector<NArray>& narrs) {
-  LOG(INFO) << "Evaluation(a-synchronous) start...";
+  LOG(INFO) << "evaluation(a-synchronous) start...";
   vector<uint64_t> pid_to_eval = Map<uint64_t>(narrs, [](const NArray& n) {
     return n.data_node_->node_id();
   });

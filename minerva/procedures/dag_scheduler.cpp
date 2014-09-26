@@ -71,7 +71,6 @@ void DagScheduler::OnCreateEdge(DagNode* from, DagNode*) {
         break;
       case NodeState::kReady:
       case NodeState::kCompleted:
-        // TODO Uniform API for reference_count management
         ++(rt_info_.At(from->node_id()).reference_count);
         break;
       default:
@@ -104,6 +103,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
     switch (rt_info_.GetState(id)) {
       case NodeState::kBirth:
         queue.push(id);
+        rt_info_.At(id).state = NodeState::kReady;
         break;
       case NodeState::kDead:
         CHECK(false) << "invalid node state of id " << id;
@@ -117,11 +117,11 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
     auto node = dag_->GetNode(node_id);
     auto& ri = rt_info_.At(node_id);
     queue.pop();
-    ri.state = NodeState::kReady;
     for (auto pred : node->predecessors_) {
       switch (rt_info_.GetState(pred->node_id())) {
         case NodeState::kBirth:
           queue.push(pred->node_id());
+          rt_info_.At(pred->node_id()).state = NodeState::kReady;
         case NodeState::kReady:
           // Set triggers count
           ++ri.num_triggers_needed;
@@ -142,7 +142,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
       ri.reference_count = cast_node->successors_.size();
     }
     if (ri.num_triggers_needed == 0) {
-      DLOG(INFO) << "starting node id " << node_id;
+      DLOG(INFO) << "starting from node #" << node_id;
       ++num_nodes_yet_to_finish_;
       dispatcher_queue_.Push({TaskType::kToRun, node_id});
     }
@@ -150,7 +150,8 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
 }
 
 void DagScheduler::FreeDataNodeRes(PhysicalDataNode* node) {
-  MinervaSystem::Instance().device_manager().FreeData(node->node_id());
+  DLOG(INFO) << "free data node resource for node #" << node->node_id() << " data #" << node->data_.data_id;
+  MinervaSystem::Instance().device_manager().FreeData(node->data_.data_id);
 }
 
 void DagScheduler::DispatcherRoutine() {
@@ -168,10 +169,10 @@ void DagScheduler::DispatcherRoutine() {
       } else {
         device_id = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(node))->data_.device_id;
       }
-      DLOG(INFO) << "dispatching node id " << node_id << " to device " << device_id;
+      DLOG(INFO) << "dispatching node #" << node_id << " to device " << device_id;
       MinervaSystem::Instance().device_manager().GetDevice(device_id)->PushTask(node_id);
     } else {  // Task completed
-      DLOG(INFO) << "finishing node id " << node_id;
+      DLOG(INFO) << "finishing node #" << node_id;
       // Change current state and predecessors' reference counts
       if (node->Type() == DagNode::NodeType::kOpNode) {
         for (auto pred : node->predecessors_) {
@@ -202,7 +203,7 @@ void DagScheduler::DispatcherRoutine() {
           auto& ri = rt_info_.At(succ->node_id());
           if (ri.state == NodeState::kReady) {
             if (--ri.num_triggers_needed == 0) {
-              DLOG(INFO) << "trigger node id " << succ->node_id();
+              DLOG(INFO) << "trigger node #" << succ->node_id();
               ++num_nodes_yet_to_finish_;
               dispatcher_queue_.Push({TaskType::kToRun, succ->node_id()});
             }
