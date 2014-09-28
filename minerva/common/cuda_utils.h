@@ -9,11 +9,18 @@
 #include <algorithm>
 
 #ifdef HAS_CUDA
-inline void CheckCudaError(const char* msg) {
-  cudaDeviceSynchronize();
-  cudaError_t e = cudaGetLastError();
-  CHECK_EQ(e, cudaSuccess) << msg << " CUDA: " << cudaGetErrorString(e);
-}
+
+#if 0
+#define CheckCudaError(msg) do { cudaDeviceSynchronize(); \
+  cudaError_t e = cudaGetLastError(); \
+  CHECK_EQ(e, cudaSuccess) << msg << " CUDA: " << cudaGetErrorString(e); \
+} while (0)
+#else
+#define CheckCudaError(msg) do { \
+  cudaError_t e = cudaGetLastError(); \
+  CHECK_EQ(e, cudaSuccess) << msg << " CUDA: " << cudaGetErrorString(e); \
+} while (0)
+#endif
 
 inline const char* CudaGetErrorEnum(cublasStatus_t error) {
   switch (error) {

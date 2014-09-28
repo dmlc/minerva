@@ -193,8 +193,11 @@ void NArray::ToStream(ostream& out, const FileFormat& format) const {
     out.write(reinterpret_cast<char*>(value), Size().Prod() * sizeof(float));
   } else {
     for (int i = 0; i < Size().Prod(); ++i) {
+      if (i % Size()[0] == 0)
+        out << endl;
       out << setprecision(4) << value[i] << "\t";
     }
+    out << endl;
   }
 }
 

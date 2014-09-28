@@ -175,7 +175,6 @@ void Reduction(const DataList& inputs, const DataList& outputs,
   auto in_size = inputs[0].size();
   auto out_size = outputs[0].size();
 
-  CHECK_EQ(in_size, outputs[0].size()) << "Reduction kernel output size mismatch";
   for (size_t i = 0; i < in_size.NumDims(); ++i) {
     if (out_size[i] != 1 && out_size[i] != in_size[i]) {
       CHECK(false) << "Reduction kernel size mismatch";
@@ -183,7 +182,7 @@ void Reduction(const DataList& inputs, const DataList& outputs,
   }
 
   auto in_data = inputs[0].data();
-  auto out_data = outputs[1].data();
+  auto out_data = outputs[0].data();
 
   // TODO: support other types of norm op
   CHECK_EQ(in_size.NumDims(), 2) << "currently support 2D reduction matrix only";
@@ -231,7 +230,6 @@ void MaxIndex(const DataList& inputs, const DataList& outputs,
   auto in_size = inputs[0].size();
   auto out_size = outputs[0].size();
 
-  CHECK_EQ(in_size, outputs[0].size()) << "MaxIndex kernel output size mismatch";
   for (size_t i = 0; i < in_size.NumDims(); ++i) {
     if (out_size[i] != 1 && out_size[i] != in_size[i]) {
       CHECK(false) << "MaxIndex kernel size mismatch";
@@ -239,7 +237,7 @@ void MaxIndex(const DataList& inputs, const DataList& outputs,
   }
 
   auto in_data = inputs[0].data();
-  auto out_data = outputs[1].data();
+  auto out_data = outputs[0].data();
 
   // TODO: support other types of norm op
   CHECK_EQ(in_size.NumDims(), 2) << "currently support 2D MaxIndex matrix only";

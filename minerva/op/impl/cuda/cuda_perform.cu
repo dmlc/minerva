@@ -48,10 +48,9 @@ __global__ static void CudaPerformNormOnColKernel(float* matrix, float* row, flo
   int step = gridDim.x * blockDim.x;
   while (row_id < m)
   {
-    float* mat = matrix + row_id;
     for (int i = 0; i < n; i++)
     {
-      res[i*n + row_id] = func(mat[i*m + row_id], row[i]);
+      res[i*m + row_id] = func(matrix[i*m + row_id], row[i]);
     }
     row_id += step;
   }
@@ -66,10 +65,9 @@ __global__ static void CudaPerformNormOnRowKernel(float* matrix, float* col, flo
   int step = gridDim.x * blockDim.x;
   while (row_id < m)
   {
-    float* mat = matrix + row_id;
     for (int i = 0; i < n; i++)
     {
-      res[i*n + row_id] = func(mat[i*m + row_id], col[row_id]);
+      res[i*m + row_id] = func(matrix[i*m + row_id], col[row_id]);
     }
     row_id += step;
   }
@@ -85,11 +83,10 @@ __global__ static void CudaPerformReductionOnColKernel(float* matrix, float* row
   int step = gridDim.x * blockDim.x;
   while (col_id < n)
   {
-    float* mat = matrix + col_id;
-    float r = *mat;
+    float r = matrix[col_id * m];
     for (int i = 0; i < m; i++)
     {
-      r = func(r, mat[col_id*n + i]);
+      r = func(r, matrix[col_id * m + i]);
     }
     row[col_id] = r;
     col_id += step;
@@ -105,11 +102,10 @@ __global__ static void CudaPerformReductionOnRowKernel(float* matrix, float* col
   int step = gridDim.x * blockDim.x;
   while (row_id < m)
   {
-    float* mat = matrix + row_id;
-    float r = *mat;
+    float r = matrix[row_id];
     for (int i = 0; i < n; i++)
     {
-      r = func(r, mat[i*m + row_id]);
+      r = func(r, matrix[i * m + row_id]);
     }
     col[row_id] = r;
     row_id += step;
@@ -124,14 +120,13 @@ __global__ static void CudaPerformMaxIndexOnColKernel(float* matrix, float* row,
   int step = gridDim.x * blockDim.x;
   while (col_id < n)
   {
-    float* mat = matrix + col_id;
-    float maxv = *mat;
+    float maxv = matrix[col_id * m];
     int maxid = 0;
     for (int i = 0; i < m; i++)
     {
-      if (mat[col_id*n + i] > maxv)
+      if (matrix[col_id * m + i] > maxv)
       {
-        maxv = mat[col_id*n + i];
+        maxv = matrix[col_id * m + i];
         maxid = i;
       }
     }
@@ -187,11 +182,7 @@ class SigmoidOp
 public:
   __device__ inline float operator()(float a) const
   {
-#if 0
     return 1 / (1 + exp(-a));
-#else
-    return a / (1 + abs(a));
-#endif
   }
 };
 

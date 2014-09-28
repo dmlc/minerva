@@ -118,6 +118,7 @@ void GpuDevice::Execute(uint64_t nid) {
       CHECK(local_data_.insert(i->data_.data_id).second);
       output_shards.emplace_back(ptr, i->data_.size);
     }
+
     auto& op = op_node->op_;
     CHECK_NOTNULL(op.compute_fn);
     DLOG(INFO) << "GPU device execute node #" << nid << ": " << op.compute_fn->Name();
