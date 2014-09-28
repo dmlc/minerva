@@ -122,7 +122,7 @@ NArray& NArray::operator=(NArray&& other) {
 }
 
 NArray::~NArray() {
-  if (data_node_ != nullptr) {
+  if (data_node_ != nullptr && MinervaSystem::IsAlive()) {
     MinervaSystem::Instance().DecrExternRC(data_node_);
   }
 }
