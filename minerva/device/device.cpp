@@ -46,6 +46,7 @@ GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : Device(id, l), d
   for (size_t i = 0; i < kDefaultStreamNum; ++i) {
     CUDA_CALL(cudaStreamCreate(&stream_[i]));
     CUBLAS_CALL(cublasCreate(&handle_[i]));
+    CUBLAS_CALL(cublasSetStream(handle_[i], stream_[i]));
   }
 }
 
