@@ -53,12 +53,13 @@ class GpuDevice : public Device {
   std::string Name() const;
 
  private:
-  static const size_t kDefaultStreamNum = 16;
+  static const size_t kParallelism = 16;
   const int device_;
   void Execute(uint64_t);
   size_t RoundRobinAlloc();
-  cudaStream_t stream_[kDefaultStreamNum];
-  cublasHandle_t handle_[kDefaultStreamNum];
+  std::unordered_map<uint64_t, std::mutex> copy_locks_;
+  cudaStream_t stream_[kParallelism];
+  cublasHandle_t handle_[kParallelism];
   ThreadPool pool_;
   DISALLOW_COPY_AND_ASSIGN(GpuDevice);
 };
