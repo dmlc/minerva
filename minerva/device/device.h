@@ -55,8 +55,7 @@ class GpuDevice : public Device {
  private:
   static const size_t kParallelism = 16;
   const int device_;
-  void Execute(uint64_t);
-  size_t RoundRobinAlloc();
+  void Execute(uint64_t, int);
   std::unordered_map<uint64_t, std::mutex> copy_locks_;
   cudaStream_t stream_[kParallelism];
   cublasHandle_t handle_[kParallelism];
@@ -77,7 +76,7 @@ class CpuDevice : public Device {
  private:
   std::unordered_map<uint64_t, std::mutex> copy_locks_;
   static const size_t kDefaultThreadNum = 8;
-  void Execute(uint64_t);
+  void Execute(uint64_t, int);
   ThreadPool pool_;
   DISALLOW_COPY_AND_ASSIGN(CpuDevice);
 };

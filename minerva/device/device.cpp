@@ -60,7 +60,7 @@ GpuDevice::~GpuDevice() {
 }
 
 void GpuDevice::PushTask(uint64_t id) {
-  pool_.Push(bind(&GpuDevice::Execute, this, id));
+  pool_.Push(bind(&GpuDevice::Execute, this, id, placeholders::_1));
 }
 
 pair<Device::MemType, float*> GpuDevice::GetPtr(uint64_t id) {
@@ -73,18 +73,10 @@ string GpuDevice::Name() const {
   return ss.str();
 }
 
-size_t GpuDevice::RoundRobinAlloc() {
-  static int s = 0;
-  int ret = s;
-  s = (s + 1) % kParallelism;
-  return ret;
-}
-
-void GpuDevice::Execute(uint64_t nid) {
+void GpuDevice::Execute(uint64_t nid, int thrid) {
   auto node = MinervaSystem::Instance().physical_dag().GetNode(nid);
   if (node->Type() == DagNode::NodeType::kOpNode) {  // Op node
     auto op_node = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node));
-    auto rr = RoundRobinAlloc();
     DataList input_shards;
     for (auto i : op_node->inputs_) {
       auto& input_data = i->data_;
@@ -96,8 +88,8 @@ void GpuDevice::Execute(uint64_t nid) {
           DLOG(INFO) << "GPU device input node #" << i->node_id() << " is remote and to be copied";
           size_t size = input_data.size.Prod() * sizeof(float);
           auto ptr = data_store_->CreateData(input_data.data_id, size);
-          CUDA_CALL(cudaMemcpyAsync(ptr, MinervaSystem::Instance().GetPtr(input_data.device_id, input_data.data_id).second, size, cudaMemcpyDefault, stream_[rr]));
-          CUDA_CALL(cudaStreamSynchronize(stream_[rr]));
+          CUDA_CALL(cudaMemcpyAsync(ptr, MinervaSystem::Instance().GetPtr(input_data.device_id, input_data.data_id).second, size, cudaMemcpyDefault, stream_[thrid]));
+          CUDA_CALL(cudaStreamSynchronize(stream_[thrid]));
           CHECK(remote_data_.insert(input_data.data_id).second);
         }
       }
@@ -115,10 +107,10 @@ void GpuDevice::Execute(uint64_t nid) {
     DLOG(INFO) << "GPU device execute node #" << nid << ": " << op.compute_fn->Name();
     CudaRuntimeContext ctx;
     ctx.impl_type = ImplType::kCuda;
-    ctx.stream = stream_[rr];
-    ctx.handle = handle_[rr];
+    ctx.stream = stream_[thrid];
+    ctx.handle = handle_[thrid];
     op.compute_fn->Execute(input_shards, output_shards, ctx);
-    CUDA_CALL(cudaStreamSynchronize(stream_[rr]));
+    CUDA_CALL(cudaStreamSynchronize(stream_[thrid]));
   }
   listener_->OnOperationComplete(nid);
 }
@@ -141,7 +133,7 @@ CpuDevice::~CpuDevice() {
 }
 
 void CpuDevice::PushTask(uint64_t id) {
-  pool_.Push(bind(&CpuDevice::Execute, this, id));
+  pool_.Push(bind(&CpuDevice::Execute, this, id, placeholders::_1));
 }
 
 pair<Device::MemType, float*> CpuDevice::GetPtr(uint64_t id) {
@@ -159,7 +151,7 @@ void CpuDevice::FreeDataIfExist(uint64_t id) {
   copy_locks_.erase(id);
 }
 
-void CpuDevice::Execute(uint64_t nid) {
+void CpuDevice::Execute(uint64_t nid, int thrid) {
   auto node = MinervaSystem::Instance().physical_dag().GetNode(nid);
   if (node->Type() == DagNode::NodeType::kOpNode) {  // Op node
     auto op_node = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node));
