@@ -31,7 +31,7 @@ void Device::FreeDataIfExist(uint64_t id) {
 }
 
 #ifdef HAS_CUDA
-GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : Device(id, l), device_(gid), pool_(1) {
+GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : Device(id, l), device_(gid), pool_(kParallelism) {
   CUDA_CALL(cudaSetDevice(device_));
   cudaFree(0);  // Initialize
   auto allocator = [](size_t len) -> void* {
@@ -43,7 +43,7 @@ GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : Device(id, l), d
     CUDA_CALL(cudaFree(ptr));
   };
   data_store_ = new DataStore(allocator, deallocator);
-  for (size_t i = 0; i < kDefaultStreamNum; ++i) {
+  for (size_t i = 0; i < kParallelism; ++i) {
     CUDA_CALL(cudaStreamCreate(&stream_[i]));
     CUBLAS_CALL(cublasCreate(&handle_[i]));
     CUBLAS_CALL(cublasSetStream(handle_[i], stream_[i]));
@@ -52,7 +52,7 @@ GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : Device(id, l), d
 
 GpuDevice::~GpuDevice() {
   pool_.WaitForAllFinished();
-  for (size_t i = 0; i < kDefaultStreamNum; ++i) {
+  for (size_t i = 0; i < kParallelism; ++i) {
     CUBLAS_CALL(cublasDestroy(handle_[i]));
     CUDA_CALL(cudaStreamDestroy(stream_[i]));
   }
@@ -76,26 +76,13 @@ string GpuDevice::Name() const {
 size_t GpuDevice::RoundRobinAlloc() {
   static int s = 0;
   int ret = s;
-  s = (s + 1) % kDefaultStreamNum;
+  s = (s + 1) % kParallelism;
   return ret;
-}
-
-struct CallbackData {
-  DeviceListener* listener;
-  uint64_t id;
-};
-
-void CUDART_CB cudaStreamCallback(cudaStream_t, cudaError_t, void* user_data) {
-  CallbackData* d = reinterpret_cast<CallbackData*>(user_data);
-  d->listener->OnOperationComplete(d->id);
-  delete d;
 }
 
 void GpuDevice::Execute(uint64_t nid) {
   auto node = MinervaSystem::Instance().physical_dag().GetNode(nid);
-  if (node->Type() == DagNode::NodeType::kDataNode) {  // Data node
-    listener_->OnOperationComplete(node->node_id());
-  } else {  // Op node
+  if (node->Type() == DagNode::NodeType::kOpNode) {  // Op node
     auto op_node = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node));
     auto rr = RoundRobinAlloc();
     DataList input_shards;
@@ -103,12 +90,16 @@ void GpuDevice::Execute(uint64_t nid) {
       auto& input_data = i->data_;
       if (input_data.device_id == device_id_) {  // Input is local
         CHECK_EQ(local_data_.count(input_data.data_id), 1);
-      } else if (!remote_data_.count(input_data.data_id)) {  // Input is remote and not copied
-        DLOG(INFO) << "GPU device input node #" << i->node_id() << " is remote and to be copied";
-        size_t size = input_data.size.Prod() * sizeof(float);
-        auto ptr = data_store_->CreateData(input_data.data_id, size);
-        CUDA_CALL(cudaMemcpyAsync(ptr, MinervaSystem::Instance().GetPtr(input_data.device_id, input_data.data_id).second, size, cudaMemcpyDefault, stream_[rr]));
-        CHECK(remote_data_.insert(input_data.data_id).second);
+      } else {
+        lock_guard<mutex> lck(copy_locks_[input_data.data_id]);
+        if (!remote_data_.count(input_data.data_id)) {  // Input is remote and not copied
+          DLOG(INFO) << "GPU device input node #" << i->node_id() << " is remote and to be copied";
+          size_t size = input_data.size.Prod() * sizeof(float);
+          auto ptr = data_store_->CreateData(input_data.data_id, size);
+          CUDA_CALL(cudaMemcpyAsync(ptr, MinervaSystem::Instance().GetPtr(input_data.device_id, input_data.data_id).second, size, cudaMemcpyDefault, stream_[rr]));
+          CUDA_CALL(cudaStreamSynchronize(stream_[rr]));
+          CHECK(remote_data_.insert(input_data.data_id).second);
+        }
       }
       input_shards.emplace_back(data_store_->GetData(input_data.data_id), input_data.size);
     }
@@ -119,7 +110,6 @@ void GpuDevice::Execute(uint64_t nid) {
       CHECK(local_data_.insert(i->data_.data_id).second);
       output_shards.emplace_back(ptr, i->data_.size);
     }
-
     auto& op = op_node->op_;
     CHECK_NOTNULL(op.compute_fn);
     DLOG(INFO) << "GPU device execute node #" << nid << ": " << op.compute_fn->Name();
@@ -128,9 +118,9 @@ void GpuDevice::Execute(uint64_t nid) {
     ctx.stream = stream_[rr];
     ctx.handle = handle_[rr];
     op.compute_fn->Execute(input_shards, output_shards, ctx);
-    CallbackData* d = new CallbackData{listener_, nid};
-    CUDA_CALL(cudaStreamAddCallback(stream_[rr], cudaStreamCallback, d, 0));
+    CUDA_CALL(cudaStreamSynchronize(stream_[rr]));
   }
+  listener_->OnOperationComplete(nid);
 }
 
 #endif
