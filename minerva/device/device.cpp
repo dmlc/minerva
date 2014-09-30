@@ -149,6 +149,7 @@ string CpuDevice::Name() const {
 void CpuDevice::FreeDataIfExist(uint64_t id) {
   Device::FreeDataIfExist(id);
   copy_locks_.erase(id);
+  //TODO Same thing for GPU
 }
 
 void CpuDevice::Execute(uint64_t nid, int thrid) {

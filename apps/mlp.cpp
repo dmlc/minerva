@@ -7,7 +7,7 @@ using namespace minerva;
 const float epsW = 0.01, epsB = 0.01;
 const int numepochs = 10;
 const int mb_size = 256;
-const int num_mb_per_epoch = 253;
+const int num_mb_per_epoch = 30;
 
 const string weight_init_files[] = { "w12.dat", "w23.dat" };
 const string weight_out_files[] = { "w12.dat", "w23.dat" };
@@ -85,8 +85,6 @@ int main(int argc, char** argv) {
   cout << "Training procedure:" << endl;
   ifstream data_file_in(train_data_file.c_str());
   ifstream label_file_in(train_label_file.c_str());
-  FileFormat format{ false };
-
   NArray acts[num_layers], sens[num_layers];
   for(int epoch = 0; epoch < numepochs; ++ epoch) {
     cout << "  Epoch #" << epoch << endl;
@@ -109,33 +107,26 @@ int main(int argc, char** argv) {
       // ff
       for (int k = 1; k < num_layers - 1; ++ k) {
         NArray wacts = weights[k - 1] * acts[k - 1];
-        wacts.ToFile("wacts" + to_string(k), format);
         NArray wactsnorm = wacts.NormArithmetic(bias[k - 1], ArithmeticType::kAdd);
-        wactsnorm.ToFile("wactsnorm" + to_string(k), format);
         acts[k] = Elewise::Sigmoid((weights[k - 1] * acts[k - 1]).NormArithmetic(bias[k - 1], ArithmeticType::kAdd));
-        acts[k].ToFile("acts" + to_string(k), format);
       }
       // softmax
       acts[num_layers - 1] = Softmax((weights[num_layers - 2] * acts[num_layers - 2]).NormArithmetic(bias[num_layers - 2], ArithmeticType::kAdd));
-      acts[num_layers - 1].ToFile("acts" + to_string(num_layers - 1), format);
       // bp
       sens[num_layers - 1] = acts[num_layers - 1] - label;
       for (int k = num_layers - 2; k >= 1; -- k) {
         NArray d_act = Elewise::Mult(acts[k], 1 - acts[k]);
         sens[k] = weights[k].Trans() * sens[k + 1];
         sens[k] = Elewise::Mult(sens[k], d_act);
-        sens[k].ToFile("sens" + to_string(k), format);
       }
 
       // Update bias
       for(int k = 0; k < num_layers - 1; ++ k) { // no input layer
         bias[k] -= epsB * sens[k + 1].Sum(1) / mb_size;
-        bias[k].ToFile("bias" + to_string(k), format);
       }
       // Update weight
       for(int k = 0; k < num_layers - 1; ++ k) {
         weights[k] -= epsW * sens[k + 1] * acts[k].Trans() / mb_size;
-        weights[k].ToFile("weights" + to_string(k), format);
       }
 
       if (mb % 20 == 0) {
@@ -149,8 +140,6 @@ int main(int argc, char** argv) {
   cout << "Write weight to files" << endl;
   //FileFormat format;
   //format.binary = true;
-  weights[0].ToFile(weight_out_files[0], format);
-  weights[1].ToFile(weight_out_files[1], format);
   weights.clear();
   bias.clear();
   cout << "Training finished." << endl;
