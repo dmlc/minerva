@@ -50,7 +50,11 @@ void ThreadedDevice::FreeDataIfExist(uint64_t id) {
   Device::FreeDataIfExist(id);
 }
 
+void ThreadedDevice::PreExecute() {
+}
+
 void ThreadedDevice::Execute(uint64_t nid, int thrid) {
+  PreExecute();
   auto node = MinervaSystem::Instance().physical_dag().GetNode(nid);
   if (node->Type() == DagNode::NodeType::kOpNode) {  // Op node
     auto op_node = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node));
@@ -125,6 +129,10 @@ string GpuDevice::Name() const {
   stringstream ss;
   ss << "GPU device " << device_id_;
   return ss.str();
+}
+
+void GpuDevice::PreExecute() {
+  CUDA_CALL(cudaSetDevice(device_));
 }
 
 void GpuDevice::DoCopyRemoteData(float* dst, float* src, size_t size, int thrid) {

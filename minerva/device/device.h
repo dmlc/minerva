@@ -55,6 +55,7 @@ class ThreadedDevice : public Device {
 
  protected:
   virtual void Execute(uint64_t, int);
+  virtual void PreExecute();
   virtual void DoCopyRemoteData(float*, float*, size_t, int) = 0;
   virtual void DoExecute(const DataList&, const DataList&, PhysicalOp&, int) = 0;
   ConcurrentUnorderedMap<uint64_t, std::mutex> copy_locks_;
@@ -75,10 +76,11 @@ class GpuDevice : public ThreadedDevice {
  private:
   static const size_t kParallelism = 16;
   const int device_;
-  void DoCopyRemoteData(float*, float*, size_t, int);
-  void DoExecute(const DataList&, const DataList&, PhysicalOp&, int);
   cudaStream_t stream_[kParallelism];
   cublasHandle_t handle_[kParallelism];
+  void PreExecute();
+  void DoCopyRemoteData(float*, float*, size_t, int);
+  void DoExecute(const DataList&, const DataList&, PhysicalOp&, int);
   DISALLOW_COPY_AND_ASSIGN(GpuDevice);
 };
 #endif
