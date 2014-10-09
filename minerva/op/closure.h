@@ -60,11 +60,6 @@ struct NormArithmeticClosure {
   Scale dims_to_replicate;
 };
 
-struct ConvInfo {
-  int numfilters;
-  Scale filtersize, stride, paddingsize;
-};
-
 struct RandnClosure {
   float mu, var;
 };
