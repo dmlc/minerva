@@ -1,35 +1,50 @@
 #pragma once
-#include <narray/narray.h>
+#include <string>
+#include "narray/narray.h"
 
 namespace minerva {
 
-class ImageBatch {
+class ImageBatch : public NArray {
  public:
-  NArray GetImage(int);
-
- private:
-  NArray narray_;
-  int num_images_;
-  int num_feature_maps_;
-  int height_;
-  int width_;
+  ImageBatch();
+  ImageBatch(const ImageBatch&);
+  ImageBatch(const NArray&);
+  ~ImageBatch();
+  ImageBatch& operator=(const ImageBatch&);
+  int GetNumImages() const;
+  int GetNumFeatureMaps() const;
+  int GetHeight() const;
+  int GetWidth() const;
 };
 
-class Filter {
+class Filter : public NArray {
  public:
   Filter();
-
- private:
-  NArray narray_;
-  int num_outputs_;
-  int num_inputs_;
-  int height_;
-  int width_;
+  Filter(const Filter&);
+  Filter(const NArray&);
+  ~Filter();
+  Filter& operator=(const Filter&);
+  int GetNumOutputs();
+  int GetNumInputs();
+  int GetHeight();
+  int GetWidth();
 };
 
 struct ConvInfo {
   int pad_height;
   int pad_width;
+  int stride_vertical;
+  int stride_horizontal;
+};
+
+struct PoolingInfo {
+  enum Algorithm {
+    kMax,
+    kAverage
+  };
+  Algorithm algorithm;
+  int height;
+  int width;
   int stride_vertical;
   int stride_horizontal;
 };
@@ -43,18 +58,6 @@ enum class ActivationAlgorithm {
   kSigmoid,
   kRelu,
   kTanh
-};
-
-struct PoolingInfo {
-  enum Algorithm {
-    kMax,
-    kAverage
-  };
-  Algorithm algorithm;
-  int height;
-  int width;
-  int stride_vertical;
-  int stride_horizontal;
 };
 
 }  // namespace minerva
