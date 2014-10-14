@@ -52,19 +52,19 @@ ImageBatch& ImageBatch::operator=(NArray&& n) {
 }
 
 int ImageBatch::GetNumImages() const {
-  return Size(0);
+  return Size(3);
 }
 
 int ImageBatch::GetNumFeatureMaps() const {
-  return Size(1);
-}
-
-int ImageBatch::GetHeight() const {
   return Size(2);
 }
 
+int ImageBatch::GetHeight() const {
+  return Size(1);
+}
+
 int ImageBatch::GetWidth() const {
-  return Size(3);
+  return Size(0);
 }
 
 Filter::Filter(const Filter& f) : NArray(f) {
@@ -115,19 +115,19 @@ Filter& Filter::operator=(NArray&& n) {
 }
 
 int Filter::GetNumOutputs() const {
-  return Size(0);
+  return Size(3);
 }
 
 int Filter::GetNumInputs() const {
-  return Size(1);
-}
-
-int Filter::GetHeight() const {
   return Size(2);
 }
 
+int Filter::GetHeight() const {
+  return Size(1);
+}
+
 int Filter::GetWidth() const {
-  return Size(3);
+  return Size(0);
 }
 
 }  // namespace minerva

@@ -42,6 +42,8 @@ void CudaPerformElewiseLn(float* in, float* out, size_t size, cudaStream_t);
 void CudaPerformElewiseSigmoid(float* in, float* out, size_t size, cudaStream_t);
 void CudaPerformElewiseNegative(float* in, float* out, size_t size, cudaStream_t);
 
+void CudaPerformConvForward(float* img, float* filter, float* bias, float* out, int pad_height, int pad_width, int stride_vertical, int stride_horizontal, int num_images, int num_inputs, int num_outputs, int filter_height, int filter_width);
+
 }
 #endif
 }

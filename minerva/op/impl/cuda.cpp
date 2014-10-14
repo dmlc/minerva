@@ -285,6 +285,12 @@ void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& cl
   }
 }
 
+void ConvForward(const DataList& inputs, const DataList& outputs, ConvForwardClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 3) << "(conv forward) #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(conv forward) #outputs wrong";
+  CudaPerformConvForward(inputs[0].data(), inputs[1].data(), inputs[2].data(), outputs[0].data(), closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, closure.num_images, closure.num_inputs, closure.num_outputs, closure.filter_height, closure.filter_width);
+}
+
 }
 #endif
 }

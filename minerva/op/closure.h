@@ -65,7 +65,17 @@ struct NormArithmeticClosure {
   Scale dims_to_replicate;
 };
 
-typedef ConvInfo ConvClosure;
+struct ConvForwardClosure {
+  int pad_height;
+  int pad_width;
+  int stride_vertical;
+  int stride_horizontal;
+  int num_images;
+  int num_inputs;
+  int num_outputs;
+  int filter_height;
+  int filter_width;
+};
 
 typedef PoolingInfo PoolingClosure;
 

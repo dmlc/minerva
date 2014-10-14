@@ -15,6 +15,7 @@ void NormArithmetic(const DataList&, const DataList&, NormArithmeticClosure&, co
 void Reduction(const DataList&, const DataList&, ReductionClosure&, const CudaRuntimeContext&);
 void MaxIndex(const DataList&, const DataList&, MaxIndexClosure&, const CudaRuntimeContext&);
 void Elewise(const DataList&, const DataList&, ElewiseClosure&, const CudaRuntimeContext&);
+void ConvForward(const DataList&, const DataList&, ConvForwardClosure&, const CudaRuntimeContext&);
 
 }
 #endif

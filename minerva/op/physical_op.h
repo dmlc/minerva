@@ -107,7 +107,7 @@ class ArithmeticConstOp : public PhyComputeFnWithClosure<ArithmeticConstClosure>
   }
 };
 
-class NormArithmeticOp: public PhyComputeFnWithClosure<NormArithmeticClosure> {
+class NormArithmeticOp : public PhyComputeFnWithClosure<NormArithmeticClosure> {
  public:
   std::string Name() const {
     std::stringstream ss;
@@ -126,6 +126,17 @@ class NormArithmeticOp: public PhyComputeFnWithClosure<NormArithmeticClosure> {
         break;
     }
     ss << " norm";
+    return ss.str();
+  }
+};
+
+class ConvForwardOp : public PhyComputeFnWithClosure<ConvForwardClosure> {
+ public:
+  std::string Name() const {
+    std::stringstream ss;
+    ss << "pad:" << closure.pad_width << "*" << closure.pad_width;
+    ss << " stride:" << closure.stride_horizontal << "*" << closure.stride_vertical;
+    ss << " conv ff";
     return ss.str();
   }
 };
