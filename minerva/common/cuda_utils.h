@@ -3,12 +3,10 @@
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-#endif
+#include <cudnn.h>
 #include <glog/logging.h>
 #include <string>
 #include <algorithm>
-
-#ifdef HAS_CUDA
 
 #if 0
 #define CheckCudaError(msg) do { cudaDeviceSynchronize(); \
@@ -22,7 +20,7 @@
 } while (0)
 #endif
 
-inline const char* CudaGetErrorEnum(cublasStatus_t error) {
+inline const char* CublasGetErrorEnum(cublasStatus_t error) {
   switch (error) {
     case CUBLAS_STATUS_SUCCESS:
       return "CUBLAS_STATUS_SUCCESS";
@@ -53,7 +51,11 @@ inline const char* CudaGetErrorEnum(cublasStatus_t error) {
 } while (0)
 
 #define CUBLAS_CALL(func) do { cublasStatus_t e = (func); \
-  CHECK_EQ(e, CUBLAS_STATUS_SUCCESS) << "CUBLAS: " << CudaGetErrorEnum(e); \
+  CHECK_EQ(e, CUBLAS_STATUS_SUCCESS) << "CUBLAS: " << CublasGetErrorEnum(e); \
+} while (0)
+
+#define CUDNN_CALL(func) do { cudnnStatus_t e = (func); \
+  CHECK_EQ(e, CUDNN_STATUS_SUCCESS); \
 } while (0)
 
 #endif

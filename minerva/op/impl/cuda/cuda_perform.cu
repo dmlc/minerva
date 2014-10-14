@@ -443,7 +443,19 @@ void CudaPerformElewiseNegative(float* in, float* out, size_t size, cudaStream_t
 }
 
 void CudaPerformConvForward(float* img, float* filter, float* bias, float* out, int pad_height, int pad_width, int stride_vertical, int stride_horizontal, int num_images, int num_inputs, int num_outputs, int filter_height, int filter_width) {
+  cudnnTensor4dDescriptor_t img_desc;
+  cudnnTensor4dDescriptor_t filter_desc;
+  cudnnTensor4dDescriptor_t bias_desc;
+  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&img_desc));
+  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&filter_desc));
+  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&bias_desc));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(img_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, num_inputs,
 
+  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(bias_desc));
+  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(filter_desc));
+  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(image_desc));
+}
 
 }  // namespace cuda
 }  // namespace minerva
+
