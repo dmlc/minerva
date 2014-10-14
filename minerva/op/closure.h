@@ -1,6 +1,6 @@
 #pragma once
-
 #include "common/scale.h"
+#include "narray/conv_closure.h"
 
 namespace minerva {
 
@@ -23,21 +23,12 @@ enum class ReductionType {
   kMax,
 };
 
-struct AssembleClosure {
+struct RandnClosure {
+  float mu, var;
 };
 
-struct ArithmeticClosure {
-  ArithmeticType type;
-};
-
-struct ArithmeticConstClosure {
-  ArithmeticType type;
+struct FillClosure {
   float val;
-  int side; // 0 is left const, 1 is right const
-};
-
-struct ElewiseClosure {
-  ElewiseType type;
 };
 
 struct MatMultClosure {
@@ -55,20 +46,35 @@ struct MaxIndexClosure {
   int dim;
 };
 
+struct ElewiseClosure {
+  ElewiseType type;
+};
+
+struct ArithmeticClosure {
+  ArithmeticType type;
+};
+
+struct ArithmeticConstClosure {
+  ArithmeticType type;
+  float val;
+  int side; // 0 is left const, 1 is right const
+};
+
 struct NormArithmeticClosure {
   ArithmeticType type;
   Scale dims_to_replicate;
 };
 
-struct RandnClosure {
-  float mu, var;
+typedef ConvInfo ConvClosure;
+
+typedef PoolingInfo PoolingClosure;
+
+struct SoftmaxClosure {
+  SoftmaxAlgorithm algorithm;
 };
 
-struct FillClosure {
-  float val;
-};
-
-struct SplitClosure {
+struct ActivationClosure {
+  ActivationAlgorithm algorithm;
 };
 
 }  // end of namespace minerva
