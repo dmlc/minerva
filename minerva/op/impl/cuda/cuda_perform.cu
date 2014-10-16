@@ -442,18 +442,102 @@ void CudaPerformElewiseNegative(float* in, float* out, size_t size, cudaStream_t
   CheckCudaError("CudaPerformEleWiseNegative");
 }
 
-void CudaPerformConvForward(float* img, float* filter, float* bias, float* out, int pad_height, int pad_width, int stride_vertical, int stride_horizontal, int num_images, int num_inputs, int num_outputs, int filter_height, int filter_width) {
-  cudnnTensor4dDescriptor_t img_desc;
-  cudnnTensor4dDescriptor_t filter_desc;
+void CudaPerformConvForward(float* bottom, float* filter, float* bias, float* top, int num_images, int bottom_num_channels, int top_num_channels, int bottom_height, int bottom_width, int pad_height, int pad_width, int stride_vertical, int stride_horizontal, int filter_height, int filter_width, cudaStream_t stream, cudnnHandle_t handle) {
+  cudnnTensor4dDescriptor_t bottom_desc;
+  cudnnFilterDescriptor_t filter_desc;
   cudnnTensor4dDescriptor_t bias_desc;
-  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&img_desc));
-  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&filter_desc));
-  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&bias_desc));
-  CUDNN_CALL(cudnnSetTensor4dDescriptor(img_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, num_inputs,
+  cudnnConvolutionDescriptor_t conv_desc;
+  cudnnTensor4dDescriptor_t top_desc;
 
+  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&bottom_desc));
+  CUDNN_CALL(cudnnCreateFilterDescriptor(&filter_desc));
+  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&bias_desc));
+  CUDNN_CALL(cudnnCreateConvolutionDescriptor(&conv_desc));
+  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&top_desc));
+
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(bottom_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, bottom_num_channels, bottom_height, bottom_width));
+  CUDNN_CALL(cudnnSetFilterDescriptor(filter_desc, CUDNN_DATA_FLOAT, top_num_channels, bottom_num_channels, filter_height, filter_width));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(bias_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, top_num_channels, 1, 1));
+  CUDNN_CALL(cudnnSetConvolutionDescriptor(conv_desc, bottom_desc, filter_desc, pad_height, pad_width, stride_vertical, stride_horizontal, 1, 1, CUDNN_CONVOLUTION));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(top_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, top_num_channels, (bottom_height + 2 * pad_height - filter_height) / stride_vertical + 1, (bottom_width + 2 * pad_width - filter_width) / stride_horizontal + 1));
+
+  float one = 1;
+  CUDNN_CALL(cudnnConvolutionForward(handle, bottom_desc, bottom, filter_desc, filter, conv_desc, top_desc, top, CUDNN_RESULT_NO_ACCUMULATE));
+  CUDNN_CALL(cudnnAddTensor4d(handle, CUDNN_ADD_SAME_C, &one, bias_desc, bias, top_desc, top));
+  CUDA_CALL(cudaStreamSynchronize(stream));  // Synchronize before destruction
+
+  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(top_desc));
+  CUDNN_CALL(cudnnDestroyConvolutionDescriptor(conv_desc));
   CUDNN_CALL(cudnnDestroyTensor4dDescriptor(bias_desc));
-  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(filter_desc));
-  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(image_desc));
+  CUDNN_CALL(cudnnDestroyFilterDescriptor(filter_desc));
+  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(bottom_desc));
+}
+
+void CudaPerformConvBackwardData(float* top_diff, float* filter, float* bottom_diff, int num_images, int bottom_num_channels, int top_num_channels, int top_height, int top_width, int pad_height, int pad_width, int stride_vertical, int stride_horizontal, int filter_height, int filter_width, cudaStream_t stream, cudnnHandle_t handle) {
+  cudnnTensor4dDescriptor_t bottom_diff_desc;
+  cudnnFilterDescriptor_t filter_desc;
+  cudnnConvolutionDescriptor_t conv_desc;
+  cudnnTensor4dDescriptor_t top_diff_desc;
+
+  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&bottom_diff_desc));
+  CUDNN_CALL(cudnnCreateFilterDescriptor(&filter_desc));
+  CUDNN_CALL(cudnnCreateConvolutionDescriptor(&conv_desc));
+  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&top_diff_desc));
+
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(bottom_diff_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, bottom_num_channels, (top_height - 1) * stride_vertical + filter_height - 2 * pad_height, (top_width - 1) * stride_horizontal + filter_width - 2 * pad_width));
+  CUDNN_CALL(cudnnSetFilterDescriptor(filter_desc, CUDNN_DATA_FLOAT, top_num_channels, bottom_num_channels, filter_height, filter_width));
+  CUDNN_CALL(cudnnSetConvolutionDescriptor(conv_desc, bottom_diff_desc, filter_desc, pad_height, pad_width, stride_vertical, stride_horizontal, 1, 1, CUDNN_CONVOLUTION));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(top_diff_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, top_num_channels, top_height, top_width));
+
+  CUDNN_CALL(cudnnConvolutionBackwardData(handle, filter_desc, filter, top_diff_desc, top_diff, conv_desc, bottom_diff_desc, bottom_diff, CUDNN_RESULT_NO_ACCUMULATE));
+  CUDA_CALL(cudaStreamSynchronize(stream));  // Synchronize before destruction
+
+  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(top_diff_desc));
+  CUDNN_CALL(cudnnDestroyConvolutionDescriptor(conv_desc));
+  CUDNN_CALL(cudnnDestroyFilterDescriptor(filter_desc));
+  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(bottom_diff_desc));
+}
+
+void CudaPerformConvBackwardFilter(float* bottom, float* top_diff, float* filter_diff, int num_images, int bottom_num_channels, int top_num_channels, int bottom_height, int bottom_width, int pad_height, int pad_width, int stride_vertical, int stride_horizontal, int filter_height, int filter_width, cudaStream_t stream, cudnnHandle_t handle) {
+  cudnnTensor4dDescriptor_t bottom_desc;
+  cudnnFilterDescriptor_t filter_diff_desc;
+  cudnnConvolutionDescriptor_t conv_desc;
+  cudnnTensor4dDescriptor_t top_diff_desc;
+
+  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&bottom_desc));
+  CUDNN_CALL(cudnnCreateFilterDescriptor(&filter_diff_desc));
+  CUDNN_CALL(cudnnCreateConvolutionDescriptor(&conv_desc));
+  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&top_diff_desc));
+
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(bottom_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, bottom_num_channels, bottom_height, bottom_width));
+  CUDNN_CALL(cudnnSetFilterDescriptor(filter_diff_desc, CUDNN_DATA_FLOAT, top_num_channels, bottom_num_channels, filter_height, filter_width));
+  CUDNN_CALL(cudnnSetConvolutionDescriptor(conv_desc, bottom_desc, filter_diff_desc, pad_height, pad_width, stride_vertical, stride_horizontal, 1, 1, CUDNN_CONVOLUTION));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(top_diff_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, top_num_channels, (bottom_height + 2 * pad_height - filter_height) / stride_vertical + 1, (bottom_width + 2 * pad_width - filter_width) / stride_horizontal + 1));
+
+  CUDNN_CALL(cudnnConvolutionBackwardFilter(handle, bottom_desc, bottom, top_diff_desc, top_diff, conv_desc, filter_diff_desc, filter_diff, CUDNN_RESULT_NO_ACCUMULATE));
+  CUDA_CALL(cudaStreamSynchronize(stream));  // Synchronize before destruction
+
+  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(top_diff_desc));
+  CUDNN_CALL(cudnnDestroyConvolutionDescriptor(conv_desc));
+  CUDNN_CALL(cudnnDestroyFilterDescriptor(filter_diff_desc));
+  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(bottom_desc));
+}
+
+void CudaPerformConvBackwardBias(float* top_diff, float* bias_diff, int num_images, int top_num_channels, int top_height, int top_width, cudaStream_t stream, cudnnHandle_t handle) {
+  cudnnTensor4dDescriptor_t bias_diff_desc;
+  cudnnTensor4dDescriptor_t top_diff_desc;
+
+  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&bias_diff_desc));
+  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&top_diff_desc));
+
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(bias_diff_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, top_num_channels, 1, 1));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(top_diff_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, top_num_channels, top_height, top_width));
+
+  CUDNN_CALL(cudnnConvolutionBackwardBias(handle, top_diff_desc, top_diff, bias_diff_desc, bias_diff, CUDNN_RESULT_NO_ACCUMULATE));
+  CUDA_CALL(cudaStreamSynchronize(stream));  // Synchronize before destruction
+
+  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(top_diff_desc));
+  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(bias_diff_desc));
 }
 
 }  // namespace cuda

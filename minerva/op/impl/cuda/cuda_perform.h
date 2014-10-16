@@ -2,6 +2,7 @@
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
+#include <cudnn.h>
 #endif
 
 namespace minerva {
@@ -42,8 +43,12 @@ void CudaPerformElewiseLn(float* in, float* out, size_t size, cudaStream_t);
 void CudaPerformElewiseSigmoid(float* in, float* out, size_t size, cudaStream_t);
 void CudaPerformElewiseNegative(float* in, float* out, size_t size, cudaStream_t);
 
-void CudaPerformConvForward(float* img, float* filter, float* bias, float* out, int pad_height, int pad_width, int stride_vertical, int stride_horizontal, int num_images, int num_inputs, int num_outputs, int filter_height, int filter_width);
+void CudaPerformConvForward(float* bottom, float* filter, float* bias, float* top, int num_images, int bottom_num_channels, int top_num_channels, int bottom_height, int bottom_width, int pad_height, int pad_width, int stride_vertical, int stride_horizontal, int filter_height, int filter_width, cudaStream_t stream, cudnnHandle_t handle);
+void CudaPerformConvBackwardData(float* top_diff, float* filter, float* bottom_diff, int num_images, int bottom_num_channels, int top_num_channels, int top_height, int top_width, int pad_height, int pad_width, int stride_vertical, int stride_horizontal, int filter_height, int filter_width, cudaStream_t stream, cudnnHandle_t handle);
+void CudaPerformConvBackwardFilter(float* bottom, float* top_diff, float* filter_diff, int num_images, int bottom_num_channels, int top_num_channels, int bottom_height, int bottom_width, int pad_height, int pad_width, int stride_vertical, int stride_horizontal, int filter_height, int filter_width, cudaStream_t stream, cudnnHandle_t handle);
+void CudaPerformConvBackwardBias(float* top_diff, float* bias_diff, int num_images, int top_num_channels, int top_height, int top_width, cudaStream_t stream, cudnnHandle_t handle);
 
 }
 #endif
 }
+

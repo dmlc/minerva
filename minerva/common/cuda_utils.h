@@ -43,20 +43,51 @@ inline const char* CublasGetErrorEnum(cublasStatus_t error) {
     default:
       break;
   }
-  return "<unknown>";
+  return "Unknown cuBLAS status";
 }
 
-#define CUDA_CALL(func) do { cudaError_t e = (func); \
+inline const char* CudnnGetErrorString(cudnnStatus_t status) {
+  switch (status) {
+    case CUDNN_STATUS_SUCCESS:
+      return "CUDNN_STATUS_SUCCESS";
+    case CUDNN_STATUS_NOT_INITIALIZED:
+      return "CUDNN_STATUS_NOT_INITIALIZED";
+    case CUDNN_STATUS_ALLOC_FAILED:
+      return "CUDNN_STATUS_ALLOC_FAILED";
+    case CUDNN_STATUS_BAD_PARAM:
+      return "CUDNN_STATUS_BAD_PARAM";
+    case CUDNN_STATUS_INTERNAL_ERROR:
+      return "CUDNN_STATUS_INTERNAL_ERROR";
+    case CUDNN_STATUS_INVALID_VALUE:
+      return "CUDNN_STATUS_INVALID_VALUE";
+    case CUDNN_STATUS_ARCH_MISMATCH:
+      return "CUDNN_STATUS_ARCH_MISMATCH";
+    case CUDNN_STATUS_MAPPING_ERROR:
+      return "CUDNN_STATUS_MAPPING_ERROR";
+    case CUDNN_STATUS_EXECUTION_FAILED:
+      return "CUDNN_STATUS_EXECUTION_FAILED";
+    case CUDNN_STATUS_NOT_SUPPORTED:
+      return "CUDNN_STATUS_NOT_SUPPORTED";
+    case CUDNN_STATUS_LICENSE_ERROR:
+      return "CUDNN_STATUS_LICENSE_ERROR";
+  }
+  return "Unknown cuDNN status";
+}
+
+#define CUDA_CALL(func) { \
+  cudaError_t e = (func); \
   CHECK_EQ(e, cudaSuccess) << "CUDA: " << cudaGetErrorString(e); \
-} while (0)
+}
 
-#define CUBLAS_CALL(func) do { cublasStatus_t e = (func); \
-  CHECK_EQ(e, CUBLAS_STATUS_SUCCESS) << "CUBLAS: " << CublasGetErrorEnum(e); \
-} while (0)
+#define CUBLAS_CALL(func) { \
+  cublasStatus_t e = (func); \
+  CHECK_EQ(e, CUBLAS_STATUS_SUCCESS) << "cuBLAS: " << CublasGetErrorEnum(e); \
+}
 
-#define CUDNN_CALL(func) do { cudnnStatus_t e = (func); \
-  CHECK_EQ(e, CUDNN_STATUS_SUCCESS); \
-} while (0)
+#define CUDNN_CALL(func) { \
+  cudnnStatus_t e = (func); \
+  CHECK_EQ(e, CUDNN_STATUS_SUCCESS) << "cuDNN: " << CudnnGetErrorString(e); \
+}
 
 #endif
 
