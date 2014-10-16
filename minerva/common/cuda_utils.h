@@ -8,18 +8,6 @@
 #include <string>
 #include <algorithm>
 
-#if 0
-#define CheckCudaError(msg) do { cudaDeviceSynchronize(); \
-  cudaError_t e = cudaGetLastError(); \
-  CHECK_EQ(e, cudaSuccess) << msg << " CUDA: " << cudaGetErrorString(e); \
-} while (0)
-#else
-#define CheckCudaError(msg) do { \
-  cudaError_t e = cudaGetLastError(); \
-  CHECK_EQ(e, cudaSuccess) << msg << " CUDA: " << cudaGetErrorString(e); \
-} while (0)
-#endif
-
 inline const char* CublasGetErrorEnum(cublasStatus_t error) {
   switch (error) {
     case CUBLAS_STATUS_SUCCESS:
@@ -72,6 +60,11 @@ inline const char* CudnnGetErrorString(cudnnStatus_t status) {
       return "CUDNN_STATUS_LICENSE_ERROR";
   }
   return "Unknown cuDNN status";
+}
+
+#define CheckCudaError(msg) { \
+  cudaError_t e = cudaGetLastError(); \
+  CHECK_EQ(e, cudaSuccess) << msg << " CUDA: " << cudaGetErrorString(e); \
 }
 
 #define CUDA_CALL(func) { \
