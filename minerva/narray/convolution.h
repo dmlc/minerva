@@ -1,6 +1,6 @@
 #pragma once
 #include "narray/image_batch.h"
-#include "narray/conv_closure.h"
+#include "narray/convolution_info.h"
 
 namespace minerva {
 

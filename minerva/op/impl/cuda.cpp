@@ -115,7 +115,6 @@ void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithme
   auto normalizee_data = inputs[0].data();
   auto normalizer_data = inputs[1].data();
   auto res_data = outputs[0].data();
-
   // TODO: support other types of norm op
   CHECK(normalizee_size.NumDims() == 2) << "currently support 2D normalizee matrix only, got "
     << normalizee_size.NumDims();
@@ -124,8 +123,7 @@ void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithme
 
   int m = normalizee_size[0];
   int n = normalizee_size[1];
-  if (normalizer_size[0] == 1)
-  {
+  if (normalizer_size[0] == 1) {
     CHECK_EQ(normalizee_size[1], normalizer_size[1]) << "we can only do norm on one dimmension";
     switch(closure.type) {
       case ArithmeticType::kAdd:
@@ -141,9 +139,7 @@ void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithme
         CudaPerformNormDivOnCol(normalizee_data, normalizer_data, res_data, m, n, context.stream);
         break;
     }
-  }
-  else if (normalizer_size[1] == 1)
-  {
+  } else if (normalizer_size[1] == 1) {
     CHECK_EQ(normalizee_size[0], normalizer_size[0]) << "we can only do norm on one dimmension";
     switch(closure.type) {
       case ArithmeticType::kAdd:
@@ -159,19 +155,15 @@ void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithme
         CudaPerformNormDivOnRow(normalizee_data, normalizer_data, res_data, m, n, context.stream);
         break;
     }
-  }
-  else
-  {
+  } else {
     CHECK(false) << "both two dimensions of normalizer are not 1";
   }
 }
 
 void Reduction(const DataList& inputs, const DataList& outputs,
-  ReductionClosure& closure, const CudaRuntimeContext& context)
-{
+  ReductionClosure& closure, const CudaRuntimeContext& context) {
   CHECK_EQ(inputs.size(), 1) << "Reduction kernel wrong #input";
   CHECK_EQ(outputs.size(), 1) << "Reduction kernel wrong #output";
-  // Normalizee is the chunk with full size, normalizer is the chunk with reduced dimensions
   auto in_size = inputs[0].size();
   auto out_size = outputs[0].size();
 
@@ -190,8 +182,7 @@ void Reduction(const DataList& inputs, const DataList& outputs,
 
   int m = in_size[0];
   int n = in_size[1];
-  if (out_size[0] == 1)
-  {
+  if (out_size[0] == 1) {
     CHECK_EQ(in_size[1], out_size[1]) << "we can only do reduction on one dimmension";
     switch (closure.type) {
       case ReductionType::kSum:
@@ -201,9 +192,7 @@ void Reduction(const DataList& inputs, const DataList& outputs,
         CudaPerformReductionMaxOnCol(in_data, out_data, m, n, context.stream);
         break;
     }
-  }
-  else if (out_size[1] == 1)
-  {
+  } else if (out_size[1] == 1) {
     CHECK_EQ(in_size[0], out_size[0]) << "we can only do reduction on one dimmension";
     switch (closure.type) {
       case ReductionType::kSum:
@@ -213,20 +202,15 @@ void Reduction(const DataList& inputs, const DataList& outputs,
         CudaPerformReductionMaxOnRow(in_data, out_data, m, n, context.stream);
         break;
     }
-  }
-  else
-  {
+  } else {
     CHECK(false) << "both two dimensions of reduction are not 1";
   }
 }
 
 void MaxIndex(const DataList& inputs, const DataList& outputs,
-  MaxIndexClosure& closure, const CudaRuntimeContext& context)
-{
-  //TODO: don't use float to store index, use int or long long
+  MaxIndexClosure& closure, const CudaRuntimeContext& context) {
   CHECK_EQ(inputs.size(), 1) << "MaxIndex kernel wrong #input";
   CHECK_EQ(outputs.size(), 1) << "MaxIndex kernel wrong #output";
-  // Normalizee is the chunk with full size, normalizer is the chunk with reduced dimensions
   auto in_size = inputs[0].size();
   auto out_size = outputs[0].size();
 
@@ -238,7 +222,6 @@ void MaxIndex(const DataList& inputs, const DataList& outputs,
 
   auto in_data = inputs[0].data();
   auto out_data = outputs[0].data();
-
   // TODO: support other types of norm op
   CHECK_EQ(in_size.NumDims(), 2) << "currently support 2D MaxIndex matrix only";
   CHECK_EQ(out_size.NumDims(), 2) << "currently support 2D MaxIndex matrix only";
@@ -247,18 +230,13 @@ void MaxIndex(const DataList& inputs, const DataList& outputs,
 
   int m = in_size[0];
   int n = in_size[1];
-  if (out_size[0] == 1)
-  {
+  if (out_size[0] == 1) {
     CHECK_EQ(in_size[1], out_size[1]) << "we can only do MaxIndex on one dimmension";
     CudaPerformMaxIndexOnCol(in_data, out_data, m, n, context.stream);
-  }
-  else if (out_size[1] == 1)
-  {
+  } else if (out_size[1] == 1) {
     CHECK_EQ(in_size[0], out_size[0]) << "we can only do MaxIndex on one dimmension";
     CudaPerformMaxIndexOnRow(in_data, out_data, m, n, context.stream);
-  }
-  else
-  {
+  } else {
     CHECK(false) << "both two dimensions of normalizer are not 1";
   }
 }
@@ -288,7 +266,7 @@ void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& cl
 void ConvForward(const DataList& inputs, const DataList& outputs, ConvForwardClosure& closure, const CudaRuntimeContext& context) {
   CHECK_EQ(inputs.size(), 3) << "(conv forward) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(conv forward) #outputs wrong";
-  CudaPerformConvForward(inputs[0].data(), inputs[1].data(), inputs[2].data(), outputs[0].data(), closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, closure.num_images, closure.num_inputs, closure.num_outputs, closure.filter_height, closure.filter_width);
+  /// CudaPerformConvForward(inputs[0].data(), inputs[1].data(), inputs[2].data(), outputs[0].data(), closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, closure.num_images, closure.num_inputs, closure.num_outputs, closure.filter_height, closure.filter_width);
 }
 
 }
