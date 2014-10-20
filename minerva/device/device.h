@@ -16,6 +16,7 @@
 #ifdef HAS_CUDA
 #include <cuda.h>
 #include <cublas_v2.h>
+#include <cudnn.h>
 #endif
 
 namespace minerva {
@@ -77,7 +78,8 @@ class GpuDevice : public ThreadedDevice {
   static const size_t kParallelism = 16;
   const int device_;
   cudaStream_t stream_[kParallelism];
-  cublasHandle_t handle_[kParallelism];
+  cublasHandle_t cublas_handle_[kParallelism];
+  cudnnHandle_t cudnn_handle_[kParallelism];
   void PreExecute();
   void DoCopyRemoteData(float*, float*, size_t, int);
   void DoExecute(const DataList&, const DataList&, PhysicalOp&, int);
