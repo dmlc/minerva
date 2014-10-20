@@ -134,8 +134,8 @@ class ConvForwardOp : public PhyComputeFnWithClosure<ConvForwardClosure> {
  public:
   std::string Name() const {
     std::stringstream ss;
-    ss << "pad:" << closure.pad_width << "*" << closure.pad_width;
-    ss << " stride:" << closure.stride_horizontal << "*" << closure.stride_vertical;
+    ss << "pad:" << closure.pad_height << "*" << closure.pad_width;
+    ss << " stride:" << closure.stride_vertical << "*" << closure.stride_horizontal;
     ss << " conv ff";
     return ss.str();
   }
@@ -145,8 +145,8 @@ class ConvBackwardDataOp : public PhyComputeFnWithClosure<ConvBackwardDataClosur
  public:
   std::string Name() const {
     std::stringstream ss;
-    ss << "pad:" << closure.pad_width << "*" << closure.pad_width;
-    ss << " stride:" << closure.stride_horizontal << "*" << closure.stride_vertical;
+    ss << "pad:" << closure.pad_height << "*" << closure.pad_width;
+    ss << " stride:" << closure.stride_vertical << "*" << closure.stride_horizontal;
     ss << " conv bp data";
     return ss.str();
   }
@@ -156,8 +156,8 @@ class ConvBackwardFilterOp : public PhyComputeFnWithClosure<ConvBackwardFilterCl
  public:
   std::string Name() const {
     std::stringstream ss;
-    ss << "pad:" << closure.pad_width << "*" << closure.pad_width;
-    ss << " stride:" << closure.stride_horizontal << "*" << closure.stride_vertical;
+    ss << "pad:" << closure.pad_height << "*" << closure.pad_width;
+    ss << " stride:" << closure.stride_vertical << "*" << closure.stride_horizontal;
     ss << " conv bp filter";
     return ss.str();
   }
@@ -223,6 +223,38 @@ class ActivationBackwardOp : public PhyComputeFnWithClosure<ActivationBackwardCl
         return "tanh bp";
     }
     return "unknown activation bp";
+  }
+};
+
+class PoolingForwardOp : public PhyComputeFnWithClosure<PoolingForwardClosure> {
+ public:
+  std::string Name() const {
+    std::stringstream ss;
+    switch (closure.algorithm) {
+      case PoolingInfo::Algorithm::kMax:
+        ss << "max pooling ff";
+      case PoolingInfo::Algorithm::kAverage:
+        ss << "average pooling ff";
+    }
+    ss << " " << closure.height << "*" << closure.width;
+    ss << " stride:" << closure.stride_horizontal << "*" << closure.stride_vertical;
+    return ss.str();
+  }
+};
+
+class PoolingBackwardOp : public PhyComputeFnWithClosure<PoolingBackwardClosure> {
+ public:
+  std::string Name() const {
+    std::stringstream ss;
+    switch (closure.algorithm) {
+      case PoolingInfo::Algorithm::kMax:
+        ss << "max pooling bp";
+      case PoolingInfo::Algorithm::kAverage:
+        ss << "average pooling bp";
+    }
+    ss << " " << closure.height << "*" << closure.width;
+    ss << " stride:" << closure.stride_horizontal << "*" << closure.stride_vertical;
+    return ss.str();
   }
 };
 

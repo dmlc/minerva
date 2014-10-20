@@ -97,5 +97,17 @@ typedef ActivationClosure<0> ActivationForwardClosure;
 
 typedef ActivationClosure<1> ActivationBackwardClosure;
 
+template<int i> struct PoolingClosure {
+  PoolingInfo::Algorithm algorithm;
+  int height;
+  int width;
+  int stride_vertical;
+  int stride_horizontal;
+};
+
+typedef PoolingClosure<0> PoolingForwardClosure;
+
+typedef PoolingClosure<1> PoolingBackwardClosure;
+
 }  // end of namespace minerva
 

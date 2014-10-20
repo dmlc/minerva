@@ -67,30 +67,68 @@ NArray Convolution::ConvBackwardBias(ImageBatch diff) {
   return NArray::ComputeOne({diff}, new_size, op);
 }
 
-ImageBatch SoftmaxForward(ImageBatch src, SoftmaxAlgorithm algorithm) {
+ImageBatch Convolution::SoftmaxForward(ImageBatch src, SoftmaxAlgorithm algorithm) {
   SoftmaxForwardOp* op = new SoftmaxForwardOp();
   op->closure.algorithm = algorithm;
   return NArray::ComputeOne({src}, src.Size(), op);
 }
 
-ImageBatch SoftmaxBackward(ImageBatch diff, ImageBatch top, SoftmaxAlgorithm algorithm) {
-  CHECK(diff.Size() == top.Size()) << "inputs sizes mismatch";
+ImageBatch Convolution::SoftmaxBackward(ImageBatch diff, ImageBatch top, SoftmaxAlgorithm algorithm) {
+  CHECK_EQ(diff.Size(), top.Size()) << "inputs sizes mismatch";
   SoftmaxForwardOp* op = new SoftmaxForwardOp();
   op->closure.algorithm = algorithm;
   return NArray::ComputeOne({diff, top}, diff.Size(), op);
 }
 
-ImageBatch ActivationForward(ImageBatch src, ActivationAlgorithm algorithm) {
+ImageBatch Convolution::ActivationForward(ImageBatch src, ActivationAlgorithm algorithm) {
   ActivationForwardOp* op = new ActivationForwardOp();
   op->closure.algorithm = algorithm;
   return NArray::ComputeOne({src}, src.Size(), op);
 }
 
-ImageBatch ActivationBackward(ImageBatch diff, ImageBatch top, ImageBatch bottom, ActivationAlgorithm algorithm) {
-  CHECK(diff.Size() == top.Size() && diff.Size() == bottom.Size()) << "inputs sizes mismatch";
+ImageBatch Convolution::ActivationBackward(ImageBatch diff, ImageBatch top, ImageBatch bottom, ActivationAlgorithm algorithm) {
+  CHECK_EQ(diff.Size(), top.Size()) << "inputs sizes mismatch";
+  CHECK_EQ(diff.Size(), bottom.Size()) << "inputs sizes mismatch";
   ActivationBackwardOp* op = new ActivationBackwardOp();
   op->closure.algorithm = algorithm;
   return NArray::ComputeOne({diff, top, bottom}, diff.Size(), op);
+}
+
+ImageBatch Convolution::PoolingForward(ImageBatch src, PoolingInfo info) {
+  Scale new_size {
+    src.GetNumImages(),
+    src.GetNumFeatureMaps(),
+    (src.GetHeight() - info.height) / info.stride_vertical + 1,
+    (src.GetWidth() - info.width) / info.stride_horizontal + 1
+  };
+  PoolingForwardOp* op = new PoolingForwardOp();
+  op->closure = {
+    info.algorithm,
+    info.height,
+    info.width,
+    info.stride_vertical,
+    info.stride_horizontal
+  };
+  return NArray::ComputeOne({src}, new_size, op);
+}
+
+ImageBatch Convolution::PoolingBackward(ImageBatch diff, ImageBatch top, ImageBatch bottom, PoolingInfo info) {
+  CHECK_EQ(diff.Size(), top.Size()) << "inputs sizes mismatch";
+  CHECK_EQ(diff.GetNumImages(), bottom.GetNumImages()) << "#images mismatch";
+  CHECK_EQ(diff.GetNumFeatureMaps(), bottom.GetNumFeatureMaps()) << "#channels mismatch";
+  int bottom_height = (diff.GetHeight() - 1) * info.stride_vertical + info.height;
+  int bottom_width = (diff.GetWidth() - 1) * info.stride_horizontal + info.width;
+  CHECK_EQ(bottom.GetHeight(), bottom_height) << "height mismatch";
+  CHECK_EQ(bottom.GetWidth(), bottom_width) << "width mismatch";
+  PoolingBackwardOp* op = new PoolingBackwardOp();
+  op->closure = {
+    info.algorithm,
+    info.height,
+    info.width,
+    info.stride_vertical,
+    info.stride_horizontal
+  };
+  return NArray::ComputeOne({diff, top, bottom}, bottom.Size(), op);
 }
 
 }  // namespace minerva

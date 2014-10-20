@@ -407,6 +407,46 @@ void ActivationBackward(const DataList& inputs, const DataList& outputs, Activat
   }
 }
 
+void PoolingForward(const DataList& inputs, const DataList& outputs, PoolingForwardClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 1) << "(pooling forward) #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(pooling forward) #inputs wrong";
+  auto& bottom = inputs[0];
+  auto& top = outputs[0];
+  int num_images = bottom.size()[3];
+  int num_channels = bottom.size()[2];
+  int bottom_height = bottom.size()[1];
+  int bottom_width = bottom.size()[0];
+  switch (closure.algorithm) {
+    case PoolingInfo::Algorithm::kMax:
+      CudaPerformMaxPoolingForward(bottom.data(), top.data(), num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, context.stream, context.cudnn_handle);
+    case PoolingInfo::Algorithm::kAverage:
+      CudaPerformAveragePoolingForward(bottom.data(), top.data(), num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, context.stream, context.cudnn_handle);
+    default:
+      CHECK(false) << "pooling algorithm not supported";
+  }
+}
+
+void PoolingBackward(const DataList& inputs, const DataList& outputs, PoolingBackwardClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 3) << "(pooling backward) #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(pooling backward) #inputs wrong";
+  auto& top_diff = inputs[0];
+  auto& top = inputs[1];
+  auto& bottom = inputs[1];
+  auto& bottom_diff = outputs[0];
+  int num_images = top_diff.size()[3];
+  int num_channels = top_diff.size()[2];
+  int bottom_height = bottom.size()[1];
+  int bottom_width = bottom.size()[0];
+  switch (closure.algorithm) {
+    case PoolingInfo::Algorithm::kMax:
+      CudaPerformMaxPoolingBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, context.stream, context.cudnn_handle);
+    case PoolingInfo::Algorithm::kAverage:
+      CudaPerformAveragePoolingBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, context.stream, context.cudnn_handle);
+    default:
+      CHECK(false) << "pooling algorithm not supported";
+  }
+}
+
 }
 #endif
 }

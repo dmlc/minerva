@@ -23,6 +23,8 @@ void SoftmaxForward(const DataList&, const DataList&, SoftmaxForwardClosure&, co
 void SoftmaxBackward(const DataList&, const DataList&, SoftmaxBackwardClosure&, const CudaRuntimeContext&);
 void ActivationForward(const DataList&, const DataList&, ActivationForwardClosure&, const CudaRuntimeContext&);
 void ActivationBackward(const DataList&, const DataList&, ActivationBackwardClosure&, const CudaRuntimeContext&);
+void PoolingForward(const DataList&, const DataList&, PoolingForwardClosure&, const CudaRuntimeContext&);
+void PoolingBackward(const DataList&, const DataList&, PoolingBackwardClosure&, const CudaRuntimeContext&);
 
 }
 #endif
