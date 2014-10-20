@@ -67,5 +67,31 @@ NArray Convolution::ConvBackwardBias(ImageBatch diff) {
   return NArray::ComputeOne({diff}, new_size, op);
 }
 
+ImageBatch SoftmaxForward(ImageBatch src, SoftmaxAlgorithm algorithm) {
+  SoftmaxForwardOp* op = new SoftmaxForwardOp();
+  op->closure.algorithm = algorithm;
+  return NArray::ComputeOne({src}, src.Size(), op);
+}
+
+ImageBatch SoftmaxBackward(ImageBatch diff, ImageBatch top, SoftmaxAlgorithm algorithm) {
+  CHECK(diff.Size() == top.Size()) << "inputs sizes mismatch";
+  SoftmaxForwardOp* op = new SoftmaxForwardOp();
+  op->closure.algorithm = algorithm;
+  return NArray::ComputeOne({diff, top}, diff.Size(), op);
+}
+
+ImageBatch ActivationForward(ImageBatch src, ActivationAlgorithm algorithm) {
+  ActivationForwardOp* op = new ActivationForwardOp();
+  op->closure.algorithm = algorithm;
+  return NArray::ComputeOne({src}, src.Size(), op);
+}
+
+ImageBatch ActivationBackward(ImageBatch diff, ImageBatch top, ImageBatch bottom, ActivationAlgorithm algorithm) {
+  CHECK(diff.Size() == top.Size() && diff.Size() == bottom.Size()) << "inputs sizes mismatch";
+  ActivationBackwardOp* op = new ActivationBackwardOp();
+  op->closure.algorithm = algorithm;
+  return NArray::ComputeOne({diff, top, bottom}, diff.Size(), op);
+}
+
 }  // namespace minerva
 

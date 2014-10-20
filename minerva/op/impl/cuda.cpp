@@ -324,6 +324,89 @@ void ConvBackwardBias(const DataList& inputs, const DataList& outputs, ConvBackw
   CudaPerformConvBackwardBias(top_diff.data(), bias_diff.data(), num_images, top_num_channels, top_height, top_width, context.stream, context.cudnn_handle);
 }
 
+void SoftmaxForward(const DataList& inputs, const DataList& outputs, SoftmaxForwardClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 1) << "(softmax forward) #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(softmax forward) #outputs wrong";
+  auto& bottom = inputs[0];
+  auto& top = outputs[0];
+  int num_images = bottom.size()[3];
+  int num_channels = bottom.size()[2];
+  int height = bottom.size()[1];
+  int width = bottom.size()[0];
+  switch (closure.algorithm) {
+    case SoftmaxAlgorithm::kInstance:
+      CudaPerformInstanceSoftmaxForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+    case SoftmaxAlgorithm::kChannel:
+      CudaPerformChannelSoftmaxForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+    default:
+      CHECK(false) << "softmax algorithm not supported";
+  }
+}
+
+void SoftmaxBackward(const DataList& inputs, const DataList& outputs, SoftmaxBackwardClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 2) << "(softmax backward) #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(softmax backward) #outputs wrong";
+  auto& top_diff = inputs[0];
+  auto& top = inputs[1];
+  auto& bottom_diff = outputs[0];
+  int num_images = top_diff.size()[3];
+  int num_channels = top_diff.size()[2];
+  int height = top_diff.size()[1];
+  int width = top_diff.size()[0];
+  switch (closure.algorithm) {
+    case SoftmaxAlgorithm::kInstance:
+      CudaPerformInstanceSoftmaxBackward(top_diff.data(), top.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+    case SoftmaxAlgorithm::kChannel:
+      CudaPerformChannelSoftmaxBackward(top_diff.data(), top.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+    default:
+      CHECK(false) << "softmax algorithm not supported";
+  }
+}
+
+void ActivationForward(const DataList& inputs, const DataList& outputs, ActivationForwardClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 1) << "(activation forward) #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(activation forward) #outputs wrong";
+  auto& bottom = inputs[0];
+  auto& top = outputs[0];
+  int num_images = bottom.size()[3];
+  int num_channels = bottom.size()[2];
+  int height = bottom.size()[1];
+  int width = bottom.size()[0];
+  switch (closure.algorithm) {
+    case ActivationAlgorithm::kSigmoid:
+      CudaPerformSigmoidForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+    case ActivationAlgorithm::kRelu:
+      CudaPerformReluForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+    case ActivationAlgorithm::kTanh:
+      CudaPerformTanhForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+    default:
+      CHECK(false) << "activation algorithm not supported";
+  }
+}
+
+void ActivationBackward(const DataList& inputs, const DataList& outputs, ActivationBackwardClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 3) << "(activation backward) #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(activation backward) #outputs wrong";
+  auto& top_diff = inputs[0];
+  auto& top = inputs[1];
+  auto& bottom = inputs[2];
+  auto& bottom_diff = outputs[0];
+  int num_images = top_diff.size()[3];
+  int num_channels = top_diff.size()[2];
+  int height = top_diff.size()[1];
+  int width = top_diff.size()[0];
+  switch (closure.algorithm) {
+    case ActivationAlgorithm::kSigmoid:
+      CudaPerformSigmoidBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+    case ActivationAlgorithm::kRelu:
+      CudaPerformReluBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+    case ActivationAlgorithm::kTanh:
+      CudaPerformTanhBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+    default:
+      CHECK(false) << "activation algorithm not supported";
+  }
+}
+
 }
 #endif
 }

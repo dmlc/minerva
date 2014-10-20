@@ -170,5 +170,61 @@ class ConvBackwardBiasOp : public PhyComputeFnWithClosure<ConvBackwardBiasClosur
   }
 };
 
+class SoftmaxForwardOp : public PhyComputeFnWithClosure<SoftmaxForwardClosure> {
+ public:
+  std::string Name() const {
+    switch (closure.algorithm) {
+      case SoftmaxAlgorithm::kInstance:
+        return "instance softmax ff";
+      case SoftmaxAlgorithm::kChannel:
+        return "channel softmax ff";
+    }
+    return "unknown softmax ff";
+  }
+};
+
+class SoftmaxBackwardOp : public PhyComputeFnWithClosure<SoftmaxBackwardClosure> {
+ public:
+  std::string Name() const {
+    switch (closure.algorithm) {
+      case SoftmaxAlgorithm::kInstance:
+        return "instance softmax bp";
+      case SoftmaxAlgorithm::kChannel:
+        return "channel softmax bp";
+    }
+    return "unknown softmax bp";
+  }
+};
+
+class ActivationForwardOp : public PhyComputeFnWithClosure<ActivationForwardClosure> {
+ public:
+  std::string Name() const {
+    switch (closure.algorithm) {
+      case ActivationAlgorithm::kSigmoid:
+        return "sigmoid ff";
+      case ActivationAlgorithm::kRelu:
+        return "relu ff";
+      case ActivationAlgorithm::kTanh:
+        return "tanh ff";
+    }
+    return "unknown activation ff";
+  }
+};
+
+class ActivationBackwardOp : public PhyComputeFnWithClosure<ActivationBackwardClosure> {
+ public:
+  std::string Name() const {
+    switch (closure.algorithm) {
+      case ActivationAlgorithm::kSigmoid:
+        return "sigmoid bp";
+      case ActivationAlgorithm::kRelu:
+        return "relu bp";
+      case ActivationAlgorithm::kTanh:
+        return "tanh bp";
+    }
+    return "unknown activation bp";
+  }
+};
+
 }  // namespace minerva
 

@@ -19,6 +19,10 @@ void ConvForward(const DataList&, const DataList&, ConvForwardClosure&, const Cu
 void ConvBackwardData(const DataList&, const DataList&, ConvBackwardDataClosure&, const CudaRuntimeContext&);
 void ConvBackwardFilter(const DataList&, const DataList&, ConvBackwardFilterClosure&, const CudaRuntimeContext&);
 void ConvBackwardBias(const DataList&, const DataList&, ConvBackwardBiasClosure&, const CudaRuntimeContext&);
+void SoftmaxForward(const DataList&, const DataList&, SoftmaxForwardClosure&, const CudaRuntimeContext&);
+void SoftmaxBackward(const DataList&, const DataList&, SoftmaxBackwardClosure&, const CudaRuntimeContext&);
+void ActivationForward(const DataList&, const DataList&, ActivationForwardClosure&, const CudaRuntimeContext&);
+void ActivationBackward(const DataList&, const DataList&, ActivationBackwardClosure&, const CudaRuntimeContext&);
 
 }
 #endif

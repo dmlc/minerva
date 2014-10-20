@@ -81,13 +81,21 @@ typedef ConvClosure<2> ConvBackwardFilterClosure;
 struct ConvBackwardBiasClosure {
 };
 
-struct SoftmaxClosure {
+template<int i> struct SoftmaxClosure {
   SoftmaxAlgorithm algorithm;
 };
 
-struct ActivationClosure {
+typedef SoftmaxClosure<0> SoftmaxForwardClosure;
+
+typedef SoftmaxClosure<1> SoftmaxBackwardClosure;
+
+template<int i> struct ActivationClosure {
   ActivationAlgorithm algorithm;
 };
+
+typedef ActivationClosure<0> ActivationForwardClosure;
+
+typedef ActivationClosure<1> ActivationBackwardClosure;
 
 }  // end of namespace minerva
 
