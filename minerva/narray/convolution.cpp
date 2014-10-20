@@ -7,6 +7,8 @@ ImageBatch Convolution::ConvForward(ImageBatch src, Filter filter, NArray bias, 
   CHECK_EQ(src.GetNumFeatureMaps(), filter.GetNumInputs()) << "#input channels mismatch";
   CHECK_EQ(bias.Size().NumDims(), 1) << "bias dimension mismatch";
   CHECK_EQ(bias.Size()[0], filter.GetNumOutputs()) << "bias size mismatch";
+  CHECK_EQ((src.GetHeight() + 2 * info.pad_height - filter.GetHeight()) % info.stride_vertical, 0) << "filter height mismatch";
+  CHECK_EQ((src.GetWidth() + 2 * info.pad_width - filter.GetWidth()) % info.stride_horizontal, 0) << "filter width mismatch";
   Scale new_size {
     src.GetNumImages(),
     filter.GetNumOutputs(),
@@ -95,6 +97,8 @@ ImageBatch Convolution::ActivationBackward(ImageBatch diff, ImageBatch top, Imag
 }
 
 ImageBatch Convolution::PoolingForward(ImageBatch src, PoolingInfo info) {
+  CHECK_EQ((src.GetHeight() - info.height) % info.stride_vertical, 0) << "window height mismatch";
+  CHECK_EQ((src.GetWidth() - info.width) % info.stride_horizontal, 0) << "window width mismatch";
   Scale new_size {
     src.GetNumImages(),
     src.GetNumFeatureMaps(),
