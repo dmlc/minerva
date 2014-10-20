@@ -4,10 +4,10 @@
 namespace minerva {
 
 ImageBatch Convolution::ConvForward(ImageBatch src, Filter filter, NArray bias, ConvInfo info) {
-  CHECK_EQ(src.GetNumFeatureMaps(), filter.GetNumInputs()) << "num of inputs mismatch";
+  CHECK_EQ(src.GetNumFeatureMaps(), filter.GetNumInputs()) << "#input channels mismatch";
   CHECK_EQ(bias.Size().NumDims(), 1) << "bias dimension mismatch";
   CHECK_EQ(bias.Size()[0], filter.GetNumOutputs()) << "bias size mismatch";
-  Scale new_size{
+  Scale new_size {
     src.GetNumImages(),
     filter.GetNumOutputs(),
     (src.GetHeight() + 2 * info.pad_height - filter.GetHeight()) / info.stride_vertical + 1,
@@ -18,14 +18,53 @@ ImageBatch Convolution::ConvForward(ImageBatch src, Filter filter, NArray bias, 
     info.pad_height,
     info.pad_width,
     info.stride_vertical,
-    info.stride_horizontal,
-    src.GetNumImages(),
-    filter.GetNumInputs(),
-    filter.GetNumOutputs(),
-    filter.GetHeight(),
-    filter.GetWidth()
+    info.stride_horizontal
   };
   return NArray::ComputeOne({src, filter, bias}, new_size, op);
+}
+
+ImageBatch Convolution::ConvBackwardData(ImageBatch diff, Filter filter, ConvInfo info) {
+  CHECK_EQ(diff.GetNumFeatureMaps(), filter.GetNumOutputs()) << "#output channels mismatch";
+  Scale new_size {
+    diff.GetNumImages(),
+    filter.GetNumInputs(),
+    (diff.GetHeight() - 1) * info.stride_vertical + filter.GetHeight() - 2 * info.pad_height,
+    (diff.GetWidth() - 1) * info.stride_horizontal + filter.GetWidth() - 2 * info.pad_width
+  };
+  ConvBackwardDataOp* op = new ConvBackwardDataOp();
+  op->closure = {
+    info.pad_height,
+    info.pad_width,
+    info.stride_vertical,
+    info.stride_horizontal
+  };
+  return NArray::ComputeOne({diff, filter}, new_size, op);
+}
+
+Filter Convolution::ConvBackwardFilter(ImageBatch diff, ImageBatch bottom, ConvInfo info) {
+  CHECK_EQ(diff.GetNumImages(), bottom.GetNumImages()) << "#images mismatch";
+  Scale new_size {
+    diff.GetNumFeatureMaps(),
+    bottom.GetNumFeatureMaps(),
+    (diff.GetHeight() - 1) * info.stride_vertical - bottom.GetHeight() - 2 * info.pad_height,
+    (diff.GetWidth() - 1) * info.stride_horizontal - bottom.GetWidth() + 2 * info.pad_width
+  };
+  ConvBackwardFilterOp* op = new ConvBackwardFilterOp();
+  op->closure = {
+    info.pad_height,
+    info.pad_width,
+    info.stride_vertical,
+    info.stride_horizontal
+  };
+  return NArray::ComputeOne({diff, bottom}, new_size, op);
+}
+
+NArray Convolution::ConvBackwardBias(ImageBatch diff) {
+  Scale new_size {
+    diff.GetNumFeatureMaps()
+  };
+  ConvBackwardBiasOp* op = new ConvBackwardBiasOp();
+  return NArray::ComputeOne({diff}, new_size, op);
 }
 
 }  // namespace minerva

@@ -22,10 +22,10 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
   int n = inputs[0].size()[1];
   switch (closure.type) {
     case ArithmeticType::kAdd:
-      CudaPerformAdd(left, right, res, m, n, context.handle);
+      CudaPerformAdd(left, right, res, m, n, context.cublas_handle);
       break;
     case ArithmeticType::kSub:
-      CudaPerformSub(left, right, res, m, n, context.handle);
+      CudaPerformSub(left, right, res, m, n, context.cublas_handle);
       break;
     case ArithmeticType::kMult:
       CudaPerformDotMult(left, right, res, size, context.stream);
@@ -47,7 +47,7 @@ void MatMult(const DataList& inputs, const DataList& outputs, MatMultClosure& cl
   int k = inputs[0].size()[1];
   int n = outputs[0].size()[1];
   // ATTENTION: the data is column major !!
-  CudaPerformMatMult(left_data, right_data, res_data, m, n, k, context.handle);
+  CudaPerformMatMult(left_data, right_data, res_data, m, n, k, context.cublas_handle);
 }
 
 void ArithmeticConst(const DataList& inputs, const DataList& outputs,
@@ -75,14 +75,14 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs,
       }
       break;
     case ArithmeticType::kMult:
-      CudaPerformScale(in_data, res_data, m, n, val, context.handle);
+      CudaPerformScale(in_data, res_data, m, n, val, context.cublas_handle);
       break;
     case ArithmeticType::kDiv:
       if (closure.side == 0) {// const on left
         CudaPerformLeftConstDiv(in_data, res_data, val, size, context.stream);
       }
       else {// const on right
-        CudaPerformScale(in_data, res_data, m, n, 1 / val, context.handle);
+        CudaPerformScale(in_data, res_data, m, n, 1 / val, context.cublas_handle);
       }
       break;
   }
@@ -94,7 +94,7 @@ void Transpose(const DataList& inputs, const DataList& outputs,
   float* res_data = outputs[0].data();
   int m = inputs[0].size()[0];
   int n = inputs[0].size()[1];
-  CudaPerformTranspose(in_data, res_data, m, n, context.handle);
+  CudaPerformTranspose(in_data, res_data, m, n, context.cublas_handle);
 }
 
 void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithmeticClosure& closure,
@@ -266,7 +266,62 @@ void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& cl
 void ConvForward(const DataList& inputs, const DataList& outputs, ConvForwardClosure& closure, const CudaRuntimeContext& context) {
   CHECK_EQ(inputs.size(), 3) << "(conv forward) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(conv forward) #outputs wrong";
-  /// CudaPerformConvForward(inputs[0].data(), inputs[1].data(), inputs[2].data(), outputs[0].data(), closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, closure.num_images, closure.num_inputs, closure.num_outputs, closure.filter_height, closure.filter_width);
+  auto& bottom = inputs[0];
+  auto& filter = inputs[1];
+  auto& bias = inputs[2];
+  auto& top = outputs[0];
+  int num_images = bottom.size()[3];
+  int bottom_num_channels = bottom.size()[2];
+  int top_num_channels = top.size()[2];
+  int bottom_height = bottom.size()[1];
+  int bottom_width = bottom.size()[0];
+  int filter_height = filter.size()[1];
+  int filter_width = filter.size()[0];
+  CudaPerformConvForward(bottom.data(), filter.data(), bias.data(), top.data(), num_images, bottom_num_channels, top_num_channels, bottom_height, bottom_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
+}
+
+void ConvBackwardData(const DataList& inputs, const DataList& outputs, ConvBackwardDataClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 2) << "(conv backward data) #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(conv backward data) #outputs wrong";
+  auto& top_diff = inputs[0];
+  auto& filter = inputs[1];
+  auto& bottom_diff = outputs[0];
+  int num_images = top_diff.size()[3];
+  int bottom_num_channels = bottom_diff.size()[2];
+  int top_num_channels = top_diff.size()[2];
+  int top_height = top_diff.size()[1];
+  int top_width = top_diff.size()[0];
+  int filter_height = filter.size()[1];
+  int filter_width = filter.size()[0];
+  CudaPerformConvBackwardData(top_diff.data(), filter.data(), bottom_diff.data(), num_images, bottom_num_channels, top_num_channels, top_height, top_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
+}
+
+void ConvBackwardFilter(const DataList& inputs, const DataList& outputs, ConvBackwardFilterClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 2) << "(conv backward filter) #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(conv backward filter) #outputs wrong";
+  auto& top_diff = inputs[0];
+  auto& bottom = inputs[1];
+  auto& filter_diff = outputs[0];
+  int num_images = top_diff.size()[3];
+  int bottom_num_channels = bottom.size()[2];
+  int top_num_channels = top_diff.size()[2];
+  int bottom_height = bottom.size()[1];
+  int bottom_width = bottom.size()[0];
+  int filter_height = filter_diff.size()[1];
+  int filter_width = filter_diff.size()[0];
+  CudaPerformConvBackwardFilter(bottom.data(), top_diff.data(), filter_diff.data(), num_images, bottom_num_channels, top_num_channels, bottom_height, bottom_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
+}
+
+void ConvBackwardBias(const DataList& inputs, const DataList& outputs, ConvBackwardBiasClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 1) << "(conv backward bias) #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(conv backward bias) #outputs wrong";
+  auto& top_diff = inputs[0];
+  auto& bias_diff = outputs[0];
+  int num_images = top_diff.size()[3];
+  int top_num_channels = top_diff.size()[2];
+  int top_height = top_diff.size()[1];
+  int top_width = top_diff.size()[0];
+  CudaPerformConvBackwardBias(top_diff.data(), bias_diff.data(), num_images, top_num_channels, top_height, top_width, context.stream, context.cudnn_handle);
 }
 
 }

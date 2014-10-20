@@ -141,5 +141,34 @@ class ConvForwardOp : public PhyComputeFnWithClosure<ConvForwardClosure> {
   }
 };
 
-}
+class ConvBackwardDataOp : public PhyComputeFnWithClosure<ConvBackwardDataClosure> {
+ public:
+  std::string Name() const {
+    std::stringstream ss;
+    ss << "pad:" << closure.pad_width << "*" << closure.pad_width;
+    ss << " stride:" << closure.stride_horizontal << "*" << closure.stride_vertical;
+    ss << " conv bp data";
+    return ss.str();
+  }
+};
+
+class ConvBackwardFilterOp : public PhyComputeFnWithClosure<ConvBackwardFilterClosure> {
+ public:
+  std::string Name() const {
+    std::stringstream ss;
+    ss << "pad:" << closure.pad_width << "*" << closure.pad_width;
+    ss << " stride:" << closure.stride_horizontal << "*" << closure.stride_vertical;
+    ss << " conv bp filter";
+    return ss.str();
+  }
+};
+
+class ConvBackwardBiasOp : public PhyComputeFnWithClosure<ConvBackwardBiasClosure> {
+ public:
+  std::string Name() const {
+    return "conv bp bias";
+  }
+};
+
+}  // namespace minerva
 
