@@ -17,12 +17,21 @@ int main(int argc, char** argv) {
     int m = 3;
     int k = 2;
     NArray a = NArray::Randn({m, k}, 0.0, 1.0);
+    NArray b = NArray::Randn({m, 1}, 0.0, 1.0);
+    NArray e = NArray::Randn({1, k}, 0.0, 1.0);
     ms.current_device_id_ = gpuDevice;
-    NArray b = 1 - a;
+
+    NArray c = a.NormArithmetic(b, ArithmeticType::kAdd);
+    NArray d = a.NormArithmetic(e, ArithmeticType::kAdd);
+
     ms.current_device_id_ = cpuDevice;
     FileFormat format{false};
     a.ToFile("a.txt", format);
-    b.ToFile("b.txt", format);
+    b.ToFile("b.txt", format); 
+    e.ToFile("e.txt", format);
+
+    c.ToFile("c.txt", format);
+    d.ToFile("d.txt", format);
   }
   ms.Finalize();
 #endif

@@ -71,7 +71,6 @@ void DagScheduler::OnCreateEdge(DagNode* from, DagNode*) {
         break;
       case NodeState::kReady:
       case NodeState::kCompleted:
-        // TODO Uniform API for reference_count management
         ++(rt_info_.At(from->node_id()).reference_count);
         break;
       default:

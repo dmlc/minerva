@@ -70,6 +70,9 @@ flags = [
 #'../llvm/tools/clang/include',
 '-I',
 './minerva',
+'-isystem',
+'/usr/local/cuda/include',
+'-DHAS_CUDA'
 ]
 
 # Set this to the absolute path to the folder (NOT the file!) containing the

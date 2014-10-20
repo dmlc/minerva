@@ -2,6 +2,8 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <unordered_map>
+#include <mutex>
 #include "device/data_store.h"
 #include "op/physical.h"
 #include "op/physical_fn.h"
@@ -9,6 +11,8 @@
 #include "common/common.h"
 #include "common/concurrent_blocking_queue.h"
 #include "common/thread_pool.h"
+#include "common/concurrent_unordered_set.h"
+#include "common/concurrent_unordered_map.h"
 #ifdef HAS_CUDA
 #include <cuda.h>
 #include <cublas_v2.h>
@@ -25,13 +29,14 @@ class Device {
   Device(uint64_t, DeviceListener*);
   virtual ~Device();
   virtual void PushTask(uint64_t) = 0;
-  virtual std::pair<MemType, float*> GetPtr(uint64_t) = 0;
+  virtual std::pair<MemType, float*> GetPtr(uint64_t);
   virtual std::string Name() const = 0;
+  virtual MemType GetMemType() const = 0;
   virtual void FreeDataIfExist(uint64_t);
 
  protected:
-  std::unordered_set<uint64_t> local_data_;
-  std::unordered_set<uint64_t> remote_data_;
+  ConcurrentUnorderedSet<uint64_t> local_data_;
+  ConcurrentUnorderedSet<uint64_t> remote_data_;
   uint64_t device_id_;
   DataStore* data_store_;
   DeviceListener* listener_;
@@ -41,39 +46,56 @@ class Device {
   DISALLOW_COPY_AND_ASSIGN(Device);
 };
 
+class ThreadedDevice : public Device {
+ public:
+  ThreadedDevice(uint64_t, DeviceListener*, size_t);
+  ~ThreadedDevice();
+  void PushTask(uint64_t);
+  void FreeDataIfExist(uint64_t);
+
+ protected:
+  virtual void Execute(uint64_t, int);
+  virtual void PreExecute();
+  virtual void DoCopyRemoteData(float*, float*, size_t, int) = 0;
+  virtual void DoExecute(const DataList&, const DataList&, PhysicalOp&, int) = 0;
+  ConcurrentUnorderedMap<uint64_t, std::mutex> copy_locks_;
+  ThreadPool pool_;
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(ThreadedDevice);
+};
+
 #ifdef HAS_CUDA
-class GpuDevice : public Device {
+class GpuDevice : public ThreadedDevice {
  public:
   GpuDevice(uint64_t, DeviceListener*, int);
   ~GpuDevice();
-  void PushTask(uint64_t);
-  std::pair<MemType, float*> GetPtr(uint64_t);
+  MemType GetMemType() const;
   std::string Name() const;
 
  private:
-  static const size_t kDefaultStreamNum = 16;
+  static const size_t kParallelism = 16;
   const int device_;
-  void Execute(uint64_t);
-  size_t RoundRobinAlloc();
-  cudaStream_t stream_[kDefaultStreamNum];
-  cublasHandle_t handle_[kDefaultStreamNum];
-  ThreadPool pool_;
+  cudaStream_t stream_[kParallelism];
+  cublasHandle_t handle_[kParallelism];
+  void PreExecute();
+  void DoCopyRemoteData(float*, float*, size_t, int);
+  void DoExecute(const DataList&, const DataList&, PhysicalOp&, int);
   DISALLOW_COPY_AND_ASSIGN(GpuDevice);
 };
 #endif
 
-class CpuDevice : public Device {
+class CpuDevice : public ThreadedDevice {
  public:
   CpuDevice(uint64_t, DeviceListener*);
   ~CpuDevice();
-  void PushTask(uint64_t);
-  std::pair<MemType, float*> GetPtr(uint64_t);
+  MemType GetMemType() const;
   std::string Name() const;
 
  private:
-  static const size_t kDefaultThreadNum = 1;
-  void Execute(uint64_t);
-  ThreadPool pool_;
+  static const size_t kDefaultThreadNum = 8;
+  void DoCopyRemoteData(float*, float*, size_t, int);
+  void DoExecute(const DataList&, const DataList&, PhysicalOp&, int);
   DISALLOW_COPY_AND_ASSIGN(CpuDevice);
 };
 

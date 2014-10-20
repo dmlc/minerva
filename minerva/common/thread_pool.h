@@ -10,7 +10,7 @@ namespace minerva {
 
 class ThreadPool {
  public:
-  typedef std::function<void()> Task;
+  typedef std::function<void(int)> Task;
   ThreadPool(size_t numthreads) : num_tasks_unfinished_(0) {
     for(size_t thrid = 0; thrid < numthreads; ++thrid) {
       workers_.emplace_back(&ThreadPool::SimpleWorker, this, thrid);
@@ -42,7 +42,7 @@ class ThreadPool {
   void SimpleWorker(int thrid) {
     Task task;
     while (!task_queue_.Pop(task)) {
-      task();
+      task(thrid);
       --num_tasks_unfinished_;
     }
   }
