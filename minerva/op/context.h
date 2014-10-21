@@ -3,6 +3,7 @@
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #include <cublas.h>
+#include <cudnn.h>
 #endif
 
 namespace minerva {
@@ -33,9 +34,8 @@ struct Context {
 #ifdef HAS_CUDA
 struct CudaRuntimeContext : public Context {
   cudaStream_t stream;
-  cublasHandle_t handle;
-  float* one;
-  float* zero;
+  cublasHandle_t cublas_handle;
+  cudnnHandle_t cudnn_handle;
 };
 #endif
 

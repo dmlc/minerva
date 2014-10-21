@@ -42,6 +42,7 @@ void MinervaSystem::Finalize() {
   delete device_manager_;
   delete dag_scheduler_;
   delete physical_dag_;
+  google::ShutdownGoogleLogging();
   ShutDown();
 }
 

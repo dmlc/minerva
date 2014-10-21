@@ -9,6 +9,7 @@
 #include "common/cuda_utils.h"
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
+#include <cudnn.h>
 #endif
 
 using namespace std;
@@ -93,6 +94,7 @@ void ThreadedDevice::Execute(uint64_t nid, int thrid) {
 }
 
 #ifdef HAS_CUDA
+
 GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : ThreadedDevice(id, l, kParallelism), device_(gid) {
   CUDA_CALL(cudaSetDevice(device_));
   cudaFree(0);  // Initialize
@@ -107,15 +109,18 @@ GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : ThreadedDevice(i
   data_store_ = new DataStore(allocator, deallocator);
   for (size_t i = 0; i < kParallelism; ++i) {
     CUDA_CALL(cudaStreamCreate(&stream_[i]));
-    CUBLAS_CALL(cublasCreate(&handle_[i]));
-    CUBLAS_CALL(cublasSetStream(handle_[i], stream_[i]));
+    CUBLAS_CALL(cublasCreate(&cublas_handle_[i]));
+    CUBLAS_CALL(cublasSetStream(cublas_handle_[i], stream_[i]));
+    CUDNN_CALL(cudnnCreate(&cudnn_handle_[i]));
+    CUDNN_CALL(cudnnSetStream(cudnn_handle_[i], stream_[i]));
   }
 }
 
 GpuDevice::~GpuDevice() {
   pool_.WaitForAllFinished();
   for (size_t i = 0; i < kParallelism; ++i) {
-    CUBLAS_CALL(cublasDestroy(handle_[i]));
+    CUDNN_CALL(cudnnDestroy(cudnn_handle_[i]));
+    CUBLAS_CALL(cublasDestroy(cublas_handle_[i]));
     CUDA_CALL(cudaStreamDestroy(stream_[i]));
   }
   delete data_store_;
@@ -144,7 +149,8 @@ void GpuDevice::DoExecute(const DataList& in, const DataList& out, PhysicalOp& o
   CudaRuntimeContext ctx;
   ctx.impl_type = ImplType::kCuda;
   ctx.stream = stream_[thrid];
-  ctx.handle = handle_[thrid];
+  ctx.cublas_handle = cublas_handle_[thrid];
+  ctx.cudnn_handle = cudnn_handle_[thrid];
   op.compute_fn->Execute(in, out, ctx);
   CUDA_CALL(cudaStreamSynchronize(stream_[thrid]));
 }

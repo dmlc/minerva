@@ -1,6 +1,6 @@
 #pragma once
-
 #include "common/scale.h"
+#include "narray/convolution_info.h"
 
 namespace minerva {
 
@@ -23,21 +23,12 @@ enum class ReductionType {
   kMax,
 };
 
-struct AssembleClosure {
+struct RandnClosure {
+  float mu, var;
 };
 
-struct ArithmeticClosure {
-  ArithmeticType type;
-};
-
-struct ArithmeticConstClosure {
-  ArithmeticType type;
+struct FillClosure {
   float val;
-  int side; // 0 is left const, 1 is right const
-};
-
-struct ElewiseClosure {
-  ElewiseType type;
 };
 
 struct MatMultClosure {
@@ -55,26 +46,68 @@ struct MaxIndexClosure {
   int dim;
 };
 
+struct ElewiseClosure {
+  ElewiseType type;
+};
+
+struct ArithmeticClosure {
+  ArithmeticType type;
+};
+
+struct ArithmeticConstClosure {
+  ArithmeticType type;
+  float val;
+  int side; // 0 is left const, 1 is right const
+};
+
 struct NormArithmeticClosure {
   ArithmeticType type;
   Scale dims_to_replicate;
 };
 
-struct ConvInfo {
-  int numfilters;
-  Scale filtersize, stride, paddingsize;
+template<int i> struct ConvClosure {
+  int pad_height;
+  int pad_width;
+  int stride_vertical;
+  int stride_horizontal;
 };
 
-struct RandnClosure {
-  float mu, var;
+typedef ConvClosure<0> ConvForwardClosure;
+
+typedef ConvClosure<1> ConvBackwardDataClosure;
+
+typedef ConvClosure<2> ConvBackwardFilterClosure;
+
+struct ConvBackwardBiasClosure {
 };
 
-struct FillClosure {
-  float val;
+template<int i> struct SoftmaxClosure {
+  SoftmaxAlgorithm algorithm;
 };
 
-struct SplitClosure {
+typedef SoftmaxClosure<0> SoftmaxForwardClosure;
+
+typedef SoftmaxClosure<1> SoftmaxBackwardClosure;
+
+template<int i> struct ActivationClosure {
+  ActivationAlgorithm algorithm;
 };
+
+typedef ActivationClosure<0> ActivationForwardClosure;
+
+typedef ActivationClosure<1> ActivationBackwardClosure;
+
+template<int i> struct PoolingClosure {
+  PoolingInfo::Algorithm algorithm;
+  int height;
+  int width;
+  int stride_vertical;
+  int stride_horizontal;
+};
+
+typedef PoolingClosure<0> PoolingForwardClosure;
+
+typedef PoolingClosure<1> PoolingBackwardClosure;
 
 }  // end of namespace minerva
 

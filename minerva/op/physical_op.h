@@ -107,7 +107,7 @@ class ArithmeticConstOp : public PhyComputeFnWithClosure<ArithmeticConstClosure>
   }
 };
 
-class NormArithmeticOp: public PhyComputeFnWithClosure<NormArithmeticClosure> {
+class NormArithmeticOp : public PhyComputeFnWithClosure<NormArithmeticClosure> {
  public:
   std::string Name() const {
     std::stringstream ss;
@@ -130,5 +130,133 @@ class NormArithmeticOp: public PhyComputeFnWithClosure<NormArithmeticClosure> {
   }
 };
 
-}
+class ConvForwardOp : public PhyComputeFnWithClosure<ConvForwardClosure> {
+ public:
+  std::string Name() const {
+    std::stringstream ss;
+    ss << "pad:" << closure.pad_height << "*" << closure.pad_width;
+    ss << " stride:" << closure.stride_vertical << "*" << closure.stride_horizontal;
+    ss << " conv ff";
+    return ss.str();
+  }
+};
+
+class ConvBackwardDataOp : public PhyComputeFnWithClosure<ConvBackwardDataClosure> {
+ public:
+  std::string Name() const {
+    std::stringstream ss;
+    ss << "pad:" << closure.pad_height << "*" << closure.pad_width;
+    ss << " stride:" << closure.stride_vertical << "*" << closure.stride_horizontal;
+    ss << " conv bp data";
+    return ss.str();
+  }
+};
+
+class ConvBackwardFilterOp : public PhyComputeFnWithClosure<ConvBackwardFilterClosure> {
+ public:
+  std::string Name() const {
+    std::stringstream ss;
+    ss << "pad:" << closure.pad_height << "*" << closure.pad_width;
+    ss << " stride:" << closure.stride_vertical << "*" << closure.stride_horizontal;
+    ss << " conv bp filter";
+    return ss.str();
+  }
+};
+
+class ConvBackwardBiasOp : public PhyComputeFnWithClosure<ConvBackwardBiasClosure> {
+ public:
+  std::string Name() const {
+    return "conv bp bias";
+  }
+};
+
+class SoftmaxForwardOp : public PhyComputeFnWithClosure<SoftmaxForwardClosure> {
+ public:
+  std::string Name() const {
+    switch (closure.algorithm) {
+      case SoftmaxAlgorithm::kInstance:
+        return "instance softmax ff";
+      case SoftmaxAlgorithm::kChannel:
+        return "channel softmax ff";
+    }
+    return "unknown softmax ff";
+  }
+};
+
+class SoftmaxBackwardOp : public PhyComputeFnWithClosure<SoftmaxBackwardClosure> {
+ public:
+  std::string Name() const {
+    switch (closure.algorithm) {
+      case SoftmaxAlgorithm::kInstance:
+        return "instance softmax bp";
+      case SoftmaxAlgorithm::kChannel:
+        return "channel softmax bp";
+    }
+    return "unknown softmax bp";
+  }
+};
+
+class ActivationForwardOp : public PhyComputeFnWithClosure<ActivationForwardClosure> {
+ public:
+  std::string Name() const {
+    switch (closure.algorithm) {
+      case ActivationAlgorithm::kSigmoid:
+        return "sigmoid ff";
+      case ActivationAlgorithm::kRelu:
+        return "relu ff";
+      case ActivationAlgorithm::kTanh:
+        return "tanh ff";
+    }
+    return "unknown activation ff";
+  }
+};
+
+class ActivationBackwardOp : public PhyComputeFnWithClosure<ActivationBackwardClosure> {
+ public:
+  std::string Name() const {
+    switch (closure.algorithm) {
+      case ActivationAlgorithm::kSigmoid:
+        return "sigmoid bp";
+      case ActivationAlgorithm::kRelu:
+        return "relu bp";
+      case ActivationAlgorithm::kTanh:
+        return "tanh bp";
+    }
+    return "unknown activation bp";
+  }
+};
+
+class PoolingForwardOp : public PhyComputeFnWithClosure<PoolingForwardClosure> {
+ public:
+  std::string Name() const {
+    std::stringstream ss;
+    switch (closure.algorithm) {
+      case PoolingInfo::Algorithm::kMax:
+        ss << "max pooling ff";
+      case PoolingInfo::Algorithm::kAverage:
+        ss << "average pooling ff";
+    }
+    ss << " " << closure.height << "*" << closure.width;
+    ss << " stride:" << closure.stride_horizontal << "*" << closure.stride_vertical;
+    return ss.str();
+  }
+};
+
+class PoolingBackwardOp : public PhyComputeFnWithClosure<PoolingBackwardClosure> {
+ public:
+  std::string Name() const {
+    std::stringstream ss;
+    switch (closure.algorithm) {
+      case PoolingInfo::Algorithm::kMax:
+        ss << "max pooling bp";
+      case PoolingInfo::Algorithm::kAverage:
+        ss << "average pooling bp";
+    }
+    ss << " " << closure.height << "*" << closure.width;
+    ss << " stride:" << closure.stride_horizontal << "*" << closure.stride_vertical;
+    return ss.str();
+  }
+};
+
+}  // namespace minerva
 
