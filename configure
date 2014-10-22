@@ -28,8 +28,8 @@ function run_cleanall {
 	exit 0
 }
 
-EXTERNAL_LIB_PATH="$MKL_LIB_PATH,$GLOG_LIB_PATH,$BOOST_LIB_PATH,$GFLAGS_LIB_PATH,$GTEST_LIB_PATH"
-EXTERNAL_INCLUDE_PATH="$MKL_INCLUDE_PATH,$GLOG_INCLUDE_PATH,$BOOST_INCLUDE_PATH,$GFLAGS_INCLUDE_PATH,$GTEST_INCLUDE_PATH"
+EXTERNAL_LIB_PATH="$MKL_LIB_PATH,$GLOG_LIB_PATH,$BOOST_LIB_PATH,$GFLAGS_LIB_PATH,$GTEST_LIB_PATH,$CUDNN_INCLUDE_PATH"
+EXTERNAL_INCLUDE_PATH="$MKL_INCLUDE_PATH,$GLOG_INCLUDE_PATH,$BOOST_INCLUDE_PATH,$GFLAGS_INCLUDE_PATH,$GTEST_INCLUDE_PATH,$CUDNN_LIB_PATH"
 CXXFLAGS="$CXXFLAGS \
   -DEXTERNAL_LIB_PATH=$EXTERNAL_LIB_PATH\
   -DEXTERNAL_INCLUDE_PATH=$EXTERNAL_INCLUDE_PATH"
@@ -54,12 +54,6 @@ do
 	shift
 done
 
-#echo $want_help
-#echo $run_clean
-#echo $HAS_MKL
-#echo $MKL_ROOT
-#echo $CXXFLAGS
-
 #================================ help description =============================
 if test "x$want_help" = xyes; then
 	cat <<EOF
@@ -74,8 +68,6 @@ Configurations:
 EOF
 exit 0;
 fi
-
-#test -n "$want_help" && exit 0
 #===============================================================================
 
 #================================ clean build =============================
@@ -85,27 +77,6 @@ fi
 if test "x$run_cleanall" = xyes; then
 	run_cleanall;
 fi
-#===============================================================================
-
-#================================ MKL configuration =============================
-#if [ -d $MKL_ROOT ]; then
-#	echo "Found MKL in $MKL_ROOT"
-#	CXXFLAGS="$CXXFLAGS \
-#		-DMKL_FOUND=1 \
-#		-DMKL_ROOT=$MKL_ROOT \
-#		-DMKL_INCLUDE_PATH=$MKL_ROOT/include \
-#		-DMKL_LIBRARY_PATH=$MKL_ROOT/lib/intel64/ \
-#		-DINTEL_LIBRARY_PATH=$MKL_ROOT/../compiler/lib/intel64"
-#fi
-#===============================================================================
-
-#============================== external libraries =============================
-#echo "copy the dependency package files from $PACKAGE_PATH"
-#MTL_LIB=$PACKAGE_PATH/MTL-4.0.9261-Linux.tar.gz
-#if [ -f $MTL_LIB ]; then
-	#echo "copy mtl from $MTL_LIB"
-	#cp -v $MTL_LIB $DEPS_PATH/mtl/src/
-#fi
 #===============================================================================
 
 #================================ main configuration =============================
