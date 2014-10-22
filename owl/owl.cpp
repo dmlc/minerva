@@ -73,13 +73,12 @@ m::NArray RandnWrapper(const bp::list& s, float mean, float var) {
 m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
   std::vector<float> v = std::vector<float>(bp::stl_input_iterator<float>(val), bp::stl_input_iterator<float>());
   size_t length = bp::len(val);
-  float *arr = new float[length];
-  memcpy(arr, &(v[0]), sizeof(float) * length);
-  std::shared_ptr<float> valptr(arr);
+  shared_ptr<float> data(new float[length], [](float* ptr) {delete [] ptr;});
+  memcpy(data.get(), v.data(), sizeof(float) * length);
 //  for(size_t i = 0; i < length; ++i) {
 //    valptr.get()[i] = bp::extract<float>(val[i] * 1.0);
 //  }
-  return m::NArray::MakeNArray(ToScale(s), valptr);
+  return m::NArray::MakeNArray(ToScale(s), data);
 }
 /*
 m::NArray LoadFromFileWrapper(const bp::list& s, const std::string& fname, m::IFileLoader* loader) {
