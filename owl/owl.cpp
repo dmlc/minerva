@@ -28,6 +28,10 @@ uint64_t CreateCpuDevice() {
   return m::MinervaSystem::Instance().device_manager().CreateCpuDevice();
 }
 
+uint64_t CreateGpuDevice(int id) {
+  return m::MinervaSystem::Instance().device_manager().CreateGpuDevice(id);
+}
+
 void SetDevice(uint64_t id) {
   m::MinervaSystem::Instance().current_device_id_ = id;
 }
@@ -67,11 +71,14 @@ m::NArray RandnWrapper(const bp::list& s, float mean, float var) {
 }
 
 m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
+  std::vector<float> v = std::vector<float>(bp::stl_input_iterator<float>(val), bp::stl_input_iterator<float>());
   size_t length = bp::len(val);
-  std::shared_ptr<float> valptr(new float[length]);
-  for(size_t i = 0; i < length; ++i) {
-    valptr.get()[i] = bp::extract<float>(val[i] * 1.0);
-  }
+  float *arr = new float[length];
+  memcpy(arr, &(v[0]), sizeof(float) * length);
+  std::shared_ptr<float> valptr(arr);
+//  for(size_t i = 0; i < length; ++i) {
+//    valptr.get()[i] = bp::extract<float>(val[i] * 1.0);
+//  }
   return m::NArray::MakeNArray(ToScale(s), valptr);
 }
 /*
@@ -170,6 +177,7 @@ BOOST_PYTHON_MODULE(libowl) {
   //def("to_list", &owl::NArrayToList);
   def("initialize", &owl::Initialize);
   def("create_cpu_device", &owl::CreateCpuDevice);
+  def("create_gpu_device", &owl::CreateGpuDevice);
   def("set_device", &owl::SetDevice);
   def("wait_eval", &owl::WaitForEvalFinish);
 

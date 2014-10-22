@@ -57,9 +57,7 @@ void PrintTrainingAccuracy(NArray o, NArray t) {
   //get groundtruth
   NArray groundtruth = t.MaxIndex(0);
 
-  cout << predict.Size() << ' ' << groundtruth.Size() << endl;
   float correct = (predict - groundtruth).CountZero();
-  cout << "print error1" << endl;
   cout << "Training Error: " << (mb_size - correct) / mb_size << endl;
 }
 
