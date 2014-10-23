@@ -1,12 +1,8 @@
 #include <minerva.h>
 #include <gtest/gtest.h>
+#include "unittest_main.h"
 
 using namespace minerva;
-
-uint64_t cpuDevice;
-#ifdef HAS_CUDA
-uint64_t gpuDevice;
-#endif
 
 class MinervaTestEnvironment : public testing::Environment {
  public:
