@@ -218,6 +218,7 @@ void CudaPerformConvForward(float* bottom, float* filter, float* bias, float* to
   CUDNN_CALL(cudnnSetTensor4dDescriptor(top_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, top_num_channels, (bottom_height + 2 * pad_height - filter_height) / stride_vertical + 1, (bottom_width + 2 * pad_width - filter_width) / stride_horizontal + 1));
 
   float one = 1;
+  cudaMemsetAsync(top, 0, 16, stream);
   CUDNN_CALL(cudnnConvolutionForward(handle, bottom_desc, bottom, filter_desc, filter, conv_desc, top_desc, top, CUDNN_RESULT_NO_ACCUMULATE));
   CUDNN_CALL(cudnnAddTensor4d(handle, CUDNN_ADD_SAME_C, &one, bias_desc, bias, top_desc, top));
   CUDA_CALL(cudaStreamSynchronize(stream));  // Synchronize before destruction
