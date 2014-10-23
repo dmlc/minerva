@@ -1,6 +1,9 @@
-#include <minerva.h>
-#include <gtest/gtest.h>
 #include "unittest_main.h"
+
+uint64_t cpu_device;
+#ifdef HAS_CUDA
+uint64_t gpu_device;
+#endif
 
 using namespace minerva;
 
@@ -10,9 +13,9 @@ class MinervaTestEnvironment : public testing::Environment {
   }
   void SetUp() {
     MinervaSystem::Instance().Initialize(argc, argv);
-    cpuDevice = MinervaSystem::Instance().CreateCpuDevice();
+    cpu_device = MinervaSystem::Instance().CreateCpuDevice();
 #ifdef HAS_CUDA
-    gpuDevice = MinervaSystem::Instance().CreateGpuDevice(0);
+    gpu_device = MinervaSystem::Instance().CreateGpuDevice(0);
 #endif
   }
   void TearDown() {
