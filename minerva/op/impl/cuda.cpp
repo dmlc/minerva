@@ -31,6 +31,7 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
       CudaPerformDotMult(left, right, res, size, context.stream);
       break;
     case ArithmeticType::kDiv:
+      // TODO abort?
       abort();
       CudaPerformDotDiv(res, left, right, size, context.stream);
       break;
@@ -62,6 +63,7 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs,
   size_t size = inputs[0].size().Prod();
   switch (closure.type) {
     case ArithmeticType::kAdd:
+      // TODO abort?
       abort();
       break;
     case ArithmeticType::kSub:
