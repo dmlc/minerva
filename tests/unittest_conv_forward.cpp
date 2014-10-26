@@ -39,24 +39,29 @@ TEST(ConvForward, WithPadding) {
 
   float correct_raw[] = {0., 0., 0., 0., -10.77531046, 2.46662046, -8.15783683, -3.39263197, 1.37159808, -2.94898676, 8.88649318, 1.73765018, 0., 0., 0., 0., 0., 0., 0., 0., -2.02258181, 2.51361957, -5.4055992, -7.1166395, 2.7661521, -9.20120725, -5.21644148, -8.91871525, 0., 0., 0., 0., 0., 0., 0., 0., -3.44745653, -6.40158273, -3.71314271, 0.3923351, 3.02698958, 4.491947, 2.65839012, -1.9860927, 0., 0., 0., 0., 0., 0., 0., 0., 1.31699937, 14.63116656, 1.44270567, 0.73447695, 8.23517956, 0.60661888, -15.62188846, -3.58329566, 0., 0., 0., 0., 0., 0., 0., 0., 2.08497639, -4.07249358, 18.66651641, 6.14783777, 1.31717684, -4.4841956, -6.52985553, -0.29682908, 0., 0., 0., 0., 0., 0., 0., 0., 0.56237744, -2.9659237, 4.03724045, -6.57606811, -1.83133599, -6.22652985, 8.16616579, -1.71254919, 0., 0., 0., 0., 0., 0., 0., 0., 3.01241227, 10.37083895, -6.15325731, 0.39043997, 4.13404327, 3.69649448, 14.38453427, 5.79109786, 0., 0., 0., 0., 0., 0., 0., 0., 2.43877928, -1.85458057, -3.91390894, -14.46249078, -0.23694897, -2.71156414, -5.39709705, 4.75065548, 0., 0., 0., 0., 0., 0., 0., 0., -0.93115297, 1.27093017, 7.6771542, 0.30356486, 3.53618669, 2.93790454, -5.85610376, 0.64275865, 0., 0., 0., 0., 0., 0., 0., 0., 4.84311752, -4.43624068, -10.39836637, 7.86485313, -4.15228461, -1.52662407, -6.82905877, 1.85316356, 0., 0., 0., 0.};
 
+  float bias_raw[] = {1.324, 3.829, 2.112, 0.003, 0.28464628};
+
   auto& ms = MinervaSystem::Instance();
   Scale input_size{7, 6, 3, 2};
   Scale weight_size{5, 3, 3, 5};
   Scale correct_size{4, 4, 5, 2};
+  Scale bias_size{5};
   shared_ptr<float> input_ptr(new float[input_size.Prod()], [](float* ptr) { delete[] ptr; });
   shared_ptr<float> weight_ptr(new float[weight_size.Prod()], [](float* ptr) { delete[] ptr; });
+  shared_ptr<float> bias_ptr(new float[bias_size.Prod()], [](float* ptr) { delete[] ptr; });
   memcpy(input_ptr.get(), input_raw, input_size.Prod() * sizeof(float));
   memcpy(weight_ptr.get(), weight_raw, weight_size.Prod() * sizeof(float));
+  memcpy(bias_ptr.get(), bias_raw, bias_size.Prod() * sizeof(float));
 
   ms.current_device_id_ = cpu_device;
   ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
   Filter weight = NArray::MakeNArray(weight_size, weight_ptr);
-  NArray bias = NArray::Zeros({5});
+  NArray bias = NArray::MakeNArray(bias_size, bias_ptr);
   ConvInfo conv_info{3, 2, 3, 2};
   ms.current_device_id_ = gpu_device;
   ImageBatch output = Convolution::ConvForward(input, weight, bias, conv_info);
   auto output_ptr = output.Get();
   for (int i = 0; i < correct_size.Prod(); ++i) {
-    EXPECT_NEAR(output_ptr.get()[i], correct_raw[i], 0.001);
+    EXPECT_NEAR(output_ptr.get()[i], correct_raw[i] + bias_raw[(i / 16) % 5], 0.001);
   }
 }
