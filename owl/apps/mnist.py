@@ -16,15 +16,6 @@ class Layer(object):
         self.length = length
         self.bias = libowl.zeros([length, 1])
 
-def trans(x):
-    row = len(x)
-    col = len(x[0])
-    result = []
-    for i in xrange(row):
-        for j in xrange(col):
-            result.append(x[i][j])
-    return result
-
 def make_vector(x, y):
     result = []
     for i in xrange(x):
@@ -57,25 +48,18 @@ def init_network(layers, weights, data, label, minibatch_size = 256, num_minibat
         idx.append(i)
     random.shuffle(idx)
 
-    k = 0
+    s = 0
+    t = minibatch_size
+    l = layers[0].length
     for i in xrange(num_minibatches):
-        minibatch_data = []
-        minibatch_label = []
-        for j in xrange(minibatch_size):
-            minibatch_data.append(tmp_data[idx[k]])
-            minibatch_label.append(tmp_label[idx[k]])
-            k = k + 1
-            if k >= len(tmp_data):
-                break
+        minibatch_data = [tmp_data[j] for j in idx[s:t]]
+        minibatch_label = [tmp_label[j] for j in idx[s:t]]
 
-        #print len(reshape(minibatch_data, (len(minibatch_data) * len(minibatch_data[0]), 1)))
-        data.append(trans(minibatch_data))
-        label.append(trans(minibatch_label))
-        data.append(reshape(minibatch_data, (len(minibatch_data) * len(minibatch_data[0]), 1)).tolist())
-        label.append(reshape(minibatch_label, (len(minibatch_label) * len(minibatch_label[0]), 1)).tolist())
+        data.append(reshape(minibatch_data, (t - s) * l).tolist())
+        label.append(reshape(minibatch_label, (t - s) * 10).tolist())
 
-        if k >= len(tmp_data):
-            break
+        s = s + minibatch_size
+        t = min(t + minibatch_size, len(tmp_data))
 
 def softmax(m):
     maxval = m.max(0)
@@ -92,27 +76,35 @@ def print_training_accuracy(o, t, minibatch_size):
 def train_network(layers, weights, data, label,
                   num_epochs=100, num_train_samples=60000, minibatch_size=256,
                   num_minibatches=235, eps_w=0.01, eps_b=0.01):
+    cpuDevice = create_cpu_device()
+    gpuDevice0 = create_gpu_device(0)
+    gpuDevice1 = create_gpu_device(1)
+
     num_layers = len(layers)
     for i in xrange(num_epochs):
         print "epoch ", i
         for j in xrange(num_minibatches):
+            set_device(cpuDevice)
             acts = [None] * num_layers
             sens = [None] * num_layers
+            #acts[0] = libowl.zeros([layers[0].length, len(data[j]) / layers[0].length])
             acts[0] = make_narray([layers[0].length, len(data[j]) / layers[0].length], data[j])
+            #target = libowl.zeros([10, len(label[j]) / 10])
+            target = make_narray([10, len(label[j]) / 10], label[j])
+
+            set_device(gpuDevice0)
             # FF
             for k in xrange(1, num_layers):
                 acts[k] = weights[k - 1] * acts[k - 1]
                 acts[k].norm_arithmetic(layers[k].bias, libowl.arithmetic.add)
-                acts[k] = sigmoid(acts[k])
+                if k < (num_layers - 1):
+                    acts[k] = sigmoid(acts[k])
             # Error
             acts[-1] = softmax(acts[-1])
-            target = make_narray([10, len(label[j]) / 10], label[j])
-
-            if ((j % 20) == 0):
-                print_training_accuracy(acts[-1], target, minibatch_size)
-
             sens[-1] = acts[-1] - target
             # BP
+
+            #set_device(gpuDevice1)
             for k in reversed(xrange(num_layers - 1)):
                 d_act = libowl.mult(acts[k], 1 - acts[k])
                 sens[k] = weights[k].trans() * sens[k + 1];
@@ -124,6 +116,10 @@ def train_network(layers, weights, data, label,
             # Update weight
             for k in xrange(num_layers - 1):
                 weights[k] -= eps_w * sens[k + 1] * acts[k].trans() / minibatch_size
+
+            if ((j % 20) == 0):
+                set_device(cpuDevice)
+                print_training_accuracy(acts[-1], target, minibatch_size)
 
 if __name__ == '__main__':
     initialize(sys.argv)
