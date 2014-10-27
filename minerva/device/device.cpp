@@ -132,7 +132,7 @@ Device::MemType GpuDevice::GetMemType() const {
 
 string GpuDevice::Name() const {
   stringstream ss;
-  ss << "GPU device " << device_id_;
+  ss << "GPU device #" << device_id_;
   return ss.str();
 }
 
@@ -178,7 +178,7 @@ Device::MemType CpuDevice::GetMemType() const {
 
 string CpuDevice::Name() const {
   stringstream ss;
-  ss << "CPU device " << device_id_;
+  ss << "CPU device #" << device_id_;
   return ss.str();
 }
 

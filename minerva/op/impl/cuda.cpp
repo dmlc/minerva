@@ -31,6 +31,7 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
       CudaPerformDotMult(left, right, res, size, context.stream);
       break;
     case ArithmeticType::kDiv:
+      // TODO abort?
       abort();
       CudaPerformDotDiv(res, left, right, size, context.stream);
       break;
@@ -62,6 +63,7 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs,
   size_t size = inputs[0].size().Prod();
   switch (closure.type) {
     case ArithmeticType::kAdd:
+      // TODO abort?
       abort();
       break;
     case ArithmeticType::kSub:
@@ -336,8 +338,10 @@ void SoftmaxForward(const DataList& inputs, const DataList& outputs, SoftmaxForw
   switch (closure.algorithm) {
     case SoftmaxAlgorithm::kInstance:
       CudaPerformInstanceSoftmaxForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      break;
     case SoftmaxAlgorithm::kChannel:
       CudaPerformChannelSoftmaxForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      break;
     default:
       CHECK(false) << "softmax algorithm not supported";
   }
@@ -356,8 +360,10 @@ void SoftmaxBackward(const DataList& inputs, const DataList& outputs, SoftmaxBac
   switch (closure.algorithm) {
     case SoftmaxAlgorithm::kInstance:
       CudaPerformInstanceSoftmaxBackward(top_diff.data(), top.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      break;
     case SoftmaxAlgorithm::kChannel:
       CudaPerformChannelSoftmaxBackward(top_diff.data(), top.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      break;
     default:
       CHECK(false) << "softmax algorithm not supported";
   }
@@ -375,10 +381,13 @@ void ActivationForward(const DataList& inputs, const DataList& outputs, Activati
   switch (closure.algorithm) {
     case ActivationAlgorithm::kSigmoid:
       CudaPerformSigmoidForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      break;
     case ActivationAlgorithm::kRelu:
       CudaPerformReluForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      break;
     case ActivationAlgorithm::kTanh:
       CudaPerformTanhForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      break;
     default:
       CHECK(false) << "activation algorithm not supported";
   }
@@ -398,10 +407,13 @@ void ActivationBackward(const DataList& inputs, const DataList& outputs, Activat
   switch (closure.algorithm) {
     case ActivationAlgorithm::kSigmoid:
       CudaPerformSigmoidBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      break;
     case ActivationAlgorithm::kRelu:
       CudaPerformReluBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      break;
     case ActivationAlgorithm::kTanh:
       CudaPerformTanhBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      break;
     default:
       CHECK(false) << "activation algorithm not supported";
   }
@@ -419,8 +431,10 @@ void PoolingForward(const DataList& inputs, const DataList& outputs, PoolingForw
   switch (closure.algorithm) {
     case PoolingInfo::Algorithm::kMax:
       CudaPerformMaxPoolingForward(bottom.data(), top.data(), num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, context.stream, context.cudnn_handle);
+      break;
     case PoolingInfo::Algorithm::kAverage:
       CudaPerformAveragePoolingForward(bottom.data(), top.data(), num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, context.stream, context.cudnn_handle);
+      break;
     default:
       CHECK(false) << "pooling algorithm not supported";
   }
@@ -440,8 +454,10 @@ void PoolingBackward(const DataList& inputs, const DataList& outputs, PoolingBac
   switch (closure.algorithm) {
     case PoolingInfo::Algorithm::kMax:
       CudaPerformMaxPoolingBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, context.stream, context.cudnn_handle);
+      break;
     case PoolingInfo::Algorithm::kAverage:
       CudaPerformAveragePoolingBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, context.stream, context.cudnn_handle);
+      break;
     default:
       CHECK(false) << "pooling algorithm not supported";
   }
