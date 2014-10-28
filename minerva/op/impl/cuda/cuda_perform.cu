@@ -58,6 +58,13 @@ void CudaPerformTranspose(float* a, float* c, int m, int n, cublasHandle_t handl
   CUBLAS_CALL(cublasSgeam(handle, CUBLAS_OP_T, CUBLAS_OP_N, n, m, &one, a, m, &zero, c, n, c, n));
 }
 
+void CudaPerformConstAdd(float* in, float* out, float val, size_t size, cudaStream_t stream) {
+  int block, thread;
+  FindConfiguration(size, block, thread);
+  CudaPerformDotKernel<<<block, thread, 0, stream>>>(in, out, val, size, SumOp());
+  CheckCudaError("CudaPerformConstAdd");
+}
+
 void CudaPerformLeftConstSub(float* in, float* out, float val, size_t size, cudaStream_t stream) {
   int block, thread;
   FindConfiguration(size, block, thread);
@@ -70,6 +77,13 @@ void CudaPerformLeftConstDiv(float* in, float* out, float val, size_t size, cuda
   FindConfiguration(size, block, thread);
   CudaPerformDotKernel<<<block, thread, 0, stream>>>(in, out, val, size, ReverseDivOp());
   CheckCudaError("CudaPerformLeftConstDiv");
+}
+
+void CudaPerformRightConstSub(float* in, float* out, float val, size_t size, cudaStream_t stream) {
+  int block, thread;
+  FindConfiguration(size, block, thread);
+  CudaPerformDotKernel<<<block, thread, 0, stream>>>(in, out, val, size, SubOp());
+  CheckCudaError("CudaPerformRightConstSub");
 }
 
 void CudaPerformNormAddOnCol(float* matrix, float* row, float* res, int m, int n, cudaStream_t stream) {

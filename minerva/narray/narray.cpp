@@ -153,7 +153,7 @@ NArray NArray::Trans() const {
 // Replicate matrix
 NArray NArray::NormArithmetic(const NArray& rhs, ArithmeticType type) const {
   auto& lhs = *this;
-  CHECK_EQ(lhs.Size().NumDims(), rhs.Size().NumDims()) << "NormArithmetic #dimension mismatch";
+  CHECK_EQ(lhs.Size().NumDims(), rhs.Size().NumDims()) << "#dimension mismatch";
   vector<int> dims_to_replicate;
   // Dimensions to replicate
   for (size_t i = 0; i < lhs.Size().NumDims(); ++i) {
@@ -165,6 +165,7 @@ NArray NArray::NormArithmetic(const NArray& rhs, ArithmeticType type) const {
       dims_to_replicate.push_back(i);
     }
   }
+  CHECK_GT(dims_to_replicate.size(), 0) << "nothing to replicate";
   NormArithmeticOp* op = new NormArithmeticOp();
   op->closure.type = type;
   op->closure.dims_to_replicate = dims_to_replicate;

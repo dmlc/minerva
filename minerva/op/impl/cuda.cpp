@@ -31,9 +31,7 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
       CudaPerformDotMult(left, right, res, size, context.stream);
       break;
     case ArithmeticType::kDiv:
-      // TODO abort?
-      abort();
-      CudaPerformDotDiv(res, left, right, size, context.stream);
+      CudaPerformDotDiv(left, right, res, size, context.stream);
       break;
   }
 }
@@ -47,7 +45,6 @@ void MatMult(const DataList& inputs, const DataList& outputs, MatMultClosure& cl
   int m = inputs[0].size()[0];
   int k = inputs[0].size()[1];
   int n = outputs[0].size()[1];
-  // ATTENTION: the data is column major !!
   CudaPerformMatMult(left_data, right_data, res_data, m, n, k, context.cublas_handle);
 }
 
@@ -63,27 +60,22 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs,
   size_t size = inputs[0].size().Prod();
   switch (closure.type) {
     case ArithmeticType::kAdd:
-      // TODO abort?
-      abort();
+      CudaPerformConstAdd(in_data, res_data, val, size, context.stream);
       break;
     case ArithmeticType::kSub:
-      if (closure.side == 0)  // const on left
-      {
+      if (closure.side == 0) {  // const on left
         CudaPerformLeftConstSub(in_data, res_data, val, size, context.stream);
-      }
-      else
-      {
-        CHECK(false) << "we support const on left only";
+      } else {
+        CudaPerformRightConstSub(in_data, res_data, val, size, context.stream);
       }
       break;
     case ArithmeticType::kMult:
       CudaPerformScale(in_data, res_data, m, n, val, context.cublas_handle);
       break;
     case ArithmeticType::kDiv:
-      if (closure.side == 0) {// const on left
+      if (closure.side == 0) {  // const on left
         CudaPerformLeftConstDiv(in_data, res_data, val, size, context.stream);
-      }
-      else {// const on right
+      } else {  // const on right
         CudaPerformScale(in_data, res_data, m, n, 1 / val, context.cublas_handle);
       }
       break;
@@ -106,27 +98,15 @@ void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithme
   // Normalizee is the chunk with full size, normalizer is the chunk with reduced dimensions
   auto normalizee_size = inputs[0].size();
   auto normalizer_size = inputs[1].size();
-
-  CHECK_EQ(normalizee_size, outputs[0].size()) << "NormArithmetic kernel output size mismatch";
-  for (size_t i = 0; i < normalizee_size.NumDims(); ++i) {
-    if (normalizer_size[i] != 1 && normalizer_size[i] != normalizee_size[i]) {
-      CHECK(false) << "NormArithmetic kernel size mismatch";
-    }
-  }
-
   auto normalizee_data = inputs[0].data();
   auto normalizer_data = inputs[1].data();
   auto res_data = outputs[0].data();
   // TODO: support other types of norm op
-  CHECK(normalizee_size.NumDims() == 2) << "currently support 2D normalizee matrix only, got "
-    << normalizee_size.NumDims();
-  CHECK(normalizer_size.NumDims() == 2) << "currently support 2D normalizer matrix only, got "
-    << normalizer_size.NumDims();
-
+  CHECK_EQ(normalizee_size.NumDims(), 2) << "currently support 2D normalizee matrix only";
+  CHECK_EQ(closure.dims_to_replicate.NumDims(), 1) << "currently do norm on one dimension only";
   int m = normalizee_size[0];
   int n = normalizee_size[1];
-  if (normalizer_size[0] == 1) {
-    CHECK_EQ(normalizee_size[1], normalizer_size[1]) << "we can only do norm on one dimmension";
+  if (closure.dims_to_replicate[0] == 0) {
     switch(closure.type) {
       case ArithmeticType::kAdd:
         CudaPerformNormAddOnCol(normalizee_data, normalizer_data, res_data, m, n, context.stream);
@@ -141,8 +121,7 @@ void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithme
         CudaPerformNormDivOnCol(normalizee_data, normalizer_data, res_data, m, n, context.stream);
         break;
     }
-  } else if (normalizer_size[1] == 1) {
-    CHECK_EQ(normalizee_size[0], normalizer_size[0]) << "we can only do norm on one dimmension";
+  } else {
     switch(closure.type) {
       case ArithmeticType::kAdd:
         CudaPerformNormAddOnRow(normalizee_data, normalizer_data, res_data, m, n, context.stream);
@@ -157,8 +136,6 @@ void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithme
         CudaPerformNormDivOnRow(normalizee_data, normalizer_data, res_data, m, n, context.stream);
         break;
     }
-  } else {
-    CHECK(false) << "both two dimensions of normalizer are not 1";
   }
 }
 
@@ -168,24 +145,14 @@ void Reduction(const DataList& inputs, const DataList& outputs,
   CHECK_EQ(outputs.size(), 1) << "Reduction kernel wrong #output";
   auto in_size = inputs[0].size();
   auto out_size = outputs[0].size();
-
-  for (size_t i = 0; i < in_size.NumDims(); ++i) {
-    if (out_size[i] != 1 && out_size[i] != in_size[i]) {
-      CHECK(false) << "Reduction kernel size mismatch";
-    }
-  }
-
   auto in_data = inputs[0].data();
   auto out_data = outputs[0].data();
-
-  // TODO: support other types of norm op
+  // TODO: support other types of reduction op
   CHECK_EQ(in_size.NumDims(), 2) << "currently support 2D reduction matrix only";
-  CHECK_EQ(out_size.NumDims(), 2) << "currently support 2D reduction matrix only";
-
+  CHECK_EQ(closure.dims_to_reduce.NumDims(), 1) << "currently do reduction on one dimension only";
   int m = in_size[0];
   int n = in_size[1];
-  if (out_size[0] == 1) {
-    CHECK_EQ(in_size[1], out_size[1]) << "we can only do reduction on one dimmension";
+  if (closure.dims_to_reduce[0] == 0) {
     switch (closure.type) {
       case ReductionType::kSum:
         CudaPerformReductionSumOnCol(in_data, out_data, m, n, context.stream);
@@ -194,8 +161,7 @@ void Reduction(const DataList& inputs, const DataList& outputs,
         CudaPerformReductionMaxOnCol(in_data, out_data, m, n, context.stream);
         break;
     }
-  } else if (out_size[1] == 1) {
-    CHECK_EQ(in_size[0], out_size[0]) << "we can only do reduction on one dimmension";
+  } else {
     switch (closure.type) {
       case ReductionType::kSum:
         CudaPerformReductionSumOnRow(in_data, out_data, m, n, context.stream);
@@ -204,8 +170,6 @@ void Reduction(const DataList& inputs, const DataList& outputs,
         CudaPerformReductionMaxOnRow(in_data, out_data, m, n, context.stream);
         break;
     }
-  } else {
-    CHECK(false) << "both two dimensions of reduction are not 1";
   }
 }
 
@@ -215,31 +179,16 @@ void MaxIndex(const DataList& inputs, const DataList& outputs,
   CHECK_EQ(outputs.size(), 1) << "MaxIndex kernel wrong #output";
   auto in_size = inputs[0].size();
   auto out_size = outputs[0].size();
-
-  for (size_t i = 0; i < in_size.NumDims(); ++i) {
-    if (out_size[i] != 1 && out_size[i] != in_size[i]) {
-      CHECK(false) << "MaxIndex kernel size mismatch";
-    }
-  }
-
   auto in_data = inputs[0].data();
   auto out_data = outputs[0].data();
-  // TODO: support other types of norm op
+  // TODO: support other types of max index op
   CHECK_EQ(in_size.NumDims(), 2) << "currently support 2D MaxIndex matrix only";
-  CHECK_EQ(out_size.NumDims(), 2) << "currently support 2D MaxIndex matrix only";
-  CHECK(closure.dim == 0 || closure.dim == 1)
-    << "currently support MaxIndex on first or second dim only";
-
   int m = in_size[0];
   int n = in_size[1];
-  if (out_size[0] == 1) {
-    CHECK_EQ(in_size[1], out_size[1]) << "we can only do MaxIndex on one dimmension";
+  if (closure.dim == 0) {
     CudaPerformMaxIndexOnCol(in_data, out_data, m, n, context.stream);
-  } else if (out_size[1] == 1) {
-    CHECK_EQ(in_size[0], out_size[0]) << "we can only do MaxIndex on one dimmension";
-    CudaPerformMaxIndexOnRow(in_data, out_data, m, n, context.stream);
   } else {
-    CHECK(false) << "both two dimensions of normalizer are not 1";
+    CudaPerformMaxIndexOnRow(in_data, out_data, m, n, context.stream);
   }
 }
 

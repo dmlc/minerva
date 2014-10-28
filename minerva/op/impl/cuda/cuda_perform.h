@@ -17,8 +17,10 @@ void CudaPerformMatMult(float*, float*, float*, int, int, int, cublasHandle_t);
 void CudaPerformScale(float* in_data, float* res_data, int m, int n, float val, cublasHandle_t);
 void CudaPerformTranspose(float* a, float* c, int m, int n, cublasHandle_t);
 
+void CudaPerformConstAdd(float* in, float* out, float val, size_t, cudaStream_t);
 void CudaPerformLeftConstSub(float* in, float* out, float val, size_t, cudaStream_t);
 void CudaPerformLeftConstDiv(float* in, float* out, float val, size_t, cudaStream_t);
+void CudaPerformRightConstSub(float* in, float* out, float val, size_t, cudaStream_t);
 
 void CudaPerformNormAddOnCol(float* matrix, float* row, float* res, int m, int n, cudaStream_t);
 void CudaPerformNormSubOnCol(float* matrix, float* row, float* res, int m, int n, cudaStream_t);
