@@ -38,6 +38,8 @@ void CudaPerformReductionMaxOnRow(float* in, float* out, int m, int n, cudaStrea
 void CudaPerformMaxIndexOnCol(float* in, float* out, int m, int n, cudaStream_t);
 void CudaPerformMaxIndexOnRow(float* in, float* out, int m, int n, cudaStream_t);
 
+void CudaPerformReshape(float* in, float* out, size_t size, cudaStream_t);
+
 void CudaPerformElewiseExp(float* in, float* out, size_t size, cudaStream_t);
 void CudaPerformElewiseLn(float* in, float* out, size_t size, cudaStream_t);
 void CudaPerformElewiseSigmoid(float* in, float* out, size_t size, cudaStream_t);

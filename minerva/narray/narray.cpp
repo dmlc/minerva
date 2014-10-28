@@ -139,9 +139,8 @@ NArray operator*(const NArray& lhs, const NArray& rhs) {
 
 // Shape
 NArray NArray::Reshape(const Scale& dims) const {
-  // TODO
-  CHECK(false) << "not implemented";
-  return NArray();
+  CHECK_EQ(Size().Prod(), dims.Prod()) << "dimension mismatch";
+  return NArray::ComputeOne({*this}, dims, new ReshapeOp());
 }
 
 NArray NArray::Trans() const {

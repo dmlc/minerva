@@ -170,6 +170,10 @@ void CudaPerformMaxIndexOnRow(float* in, float* out, int m, int n, cudaStream_t 
   CheckCudaError("CudaPerformMaxIndexOnRow");
 }
 
+void CudaPerformReshape(float* in, float* out, size_t size, cudaStream_t stream) {
+  CUDA_CALL(cudaMemcpyAsync(out, in, size, cudaMemcpyDefault, stream));
+}
+
 void CudaPerformElewiseExp(float* in, float* out, size_t size, cudaStream_t stream) {
   int block, thread;
   FindConfiguration(size, block, thread);
