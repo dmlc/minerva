@@ -79,13 +79,6 @@ void CudaPerformLeftConstDiv(float* in, float* out, float val, size_t size, cuda
   CheckCudaError("CudaPerformLeftConstDiv");
 }
 
-void CudaPerformRightConstSub(float* in, float* out, float val, size_t size, cudaStream_t stream) {
-  int block, thread;
-  FindConfiguration(size, block, thread);
-  CudaPerformDotKernel<<<block, thread, 0, stream>>>(in, out, val, size, SubOp());
-  CheckCudaError("CudaPerformRightConstSub");
-}
-
 void CudaPerformNormAddOnCol(float* matrix, float* row, float* res, int m, int n, cudaStream_t stream) {
   int block, thread;
   FindConfiguration(m, block, thread);

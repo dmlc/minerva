@@ -15,7 +15,7 @@ NArray NArray::Sum(const Scale& dims) const {
   CHECK_GT(dims.NumDims(), 0) << "nothing to reduce";
   auto size = Size();
   for (auto i : dims) {
-    CHECK(0 <= i && i < size.NumDims()) << "dim out of bound";
+    CHECK(0 <= i && i < static_cast<int>(size.NumDims())) << "dim out of bound";
     size[i] = 1;
   }
   ReductionOp* reduction_op = new ReductionOp();
@@ -32,7 +32,7 @@ NArray NArray::Max(const Scale& dims) const {
   CHECK_GT(dims.NumDims(), 0) << "nothing to reduce";
   auto size = Size();
   for (auto i : dims) {
-    CHECK(0 <= i && i < size.NumDims()) << "dim out of bound";
+    CHECK(0 <= i && i < static_cast<int>(size.NumDims())) << "dim out of bound";
     size[i] = 1;
   }
   ReductionOp* reduction_op = new ReductionOp();
@@ -43,7 +43,7 @@ NArray NArray::Max(const Scale& dims) const {
 
 NArray NArray::MaxIndex(int dim) const {
   auto size = Size();
-  CHECK(0 <= dim && dim < size.NumDims()) << "dim out of bound";
+  CHECK(0 <= dim && dim < static_cast<int>(size.NumDims())) << "dim out of bound";
   size[dim] = 1;
   MaxIndexOp* op = new MaxIndexOp();
   op->closure.dim = dim;

@@ -66,7 +66,7 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs,
       if (closure.side == 0) {  // const on left
         CudaPerformLeftConstSub(in_data, res_data, val, size, context.stream);
       } else {
-        CudaPerformRightConstSub(in_data, res_data, val, size, context.stream);
+        CudaPerformConstAdd(in_data, res_data, -val, size, context.stream);
       }
       break;
     case ArithmeticType::kMult:
