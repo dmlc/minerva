@@ -243,6 +243,13 @@ void MaxIndex(const DataList& inputs, const DataList& outputs,
   }
 }
 
+void Reshape(const DataList& inputs, const DataList& outputs, ReshapeClosure&, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 1);
+  CHECK_EQ(outputs.size(), 1);
+  CudaPerformReshape(inputs[0].data(), outputs[0].data(), inputs[0].size().Prod() * sizeof(float), context.stream);
+}
+
+
 void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& closure, const CudaRuntimeContext& context) {
   CHECK_EQ(inputs.size(), 1) << "(elewise) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(elewise) #outputs is wrong!";
