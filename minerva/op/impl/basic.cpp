@@ -215,12 +215,6 @@ void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithme
   // Normalizee is the chunk with full size, normalizer is the chunk with reduced dimensions
   auto normalizee_size = inputs[0].size();
   auto normalizer_size = inputs[1].size();
-  CHECK_EQ(normalizee_size, outputs[0].size()) << "NormArithmetic kernel output size mismatch";
-  for (size_t i = 0; i < normalizee_size.NumDims(); ++i) {
-    if (normalizer_size[i] != 1 && normalizer_size[i] != normalizee_size[i]) {
-      CHECK(false) << "NormArithmetic kernel size mismatch";
-    }
-  }
   auto normalizee_range = ScaleRange::MakeRangeFromOrigin(normalizee_size);
   auto normalizer_range = ScaleRange::MakeRangeFromOrigin(normalizer_size);
   auto normalizee_data = inputs[0].data();

@@ -46,8 +46,8 @@ ImageBatch Convolution::ConvBackwardData(ImageBatch diff, Filter filter, ConvInf
 Filter Convolution::ConvBackwardFilter(ImageBatch diff, ImageBatch bottom, ConvInfo info) {
   CHECK_EQ(diff.GetNumImages(), bottom.GetNumImages()) << "#images mismatch";
   Scale new_size {
-    (diff.GetWidth() - 1) * info.stride_horizontal - bottom.GetWidth() + 2 * info.pad_width,
-    (diff.GetHeight() - 1) * info.stride_vertical - bottom.GetHeight() - 2 * info.pad_height,
+    -(diff.GetWidth() - 1) * info.stride_horizontal + bottom.GetWidth() + 2 * info.pad_width,
+    -(diff.GetHeight() - 1) * info.stride_vertical + bottom.GetHeight() + 2 * info.pad_height,
     bottom.GetNumFeatureMaps(),
     diff.GetNumFeatureMaps()
   };
