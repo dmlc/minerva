@@ -10,10 +10,10 @@ ImageBatch Convolution::ConvForward(ImageBatch src, Filter filter, NArray bias, 
   CHECK_EQ((src.GetHeight() + 2 * info.pad_height - filter.GetHeight()) % info.stride_vertical, 0) << "filter height mismatch";
   CHECK_EQ((src.GetWidth() + 2 * info.pad_width - filter.GetWidth()) % info.stride_horizontal, 0) << "filter width mismatch";
   Scale new_size {
-    src.GetNumImages(),
-    filter.GetNumOutputs(),
+    (src.GetWidth() + 2 * info.pad_width - filter.GetWidth()) / info.stride_horizontal + 1,
     (src.GetHeight() + 2 * info.pad_height - filter.GetHeight()) / info.stride_vertical + 1,
-    (src.GetWidth() + 2 * info.pad_width - filter.GetWidth()) / info.stride_horizontal + 1
+    filter.GetNumOutputs(),
+    src.GetNumImages()
   };
   ConvForwardOp* op = new ConvForwardOp();
   op->closure = {
@@ -28,10 +28,10 @@ ImageBatch Convolution::ConvForward(ImageBatch src, Filter filter, NArray bias, 
 ImageBatch Convolution::ConvBackwardData(ImageBatch diff, Filter filter, ConvInfo info) {
   CHECK_EQ(diff.GetNumFeatureMaps(), filter.GetNumOutputs()) << "#output channels mismatch";
   Scale new_size {
-    diff.GetNumImages(),
-    filter.GetNumInputs(),
+    (diff.GetWidth() - 1) * info.stride_horizontal + filter.GetWidth() - 2 * info.pad_width,
     (diff.GetHeight() - 1) * info.stride_vertical + filter.GetHeight() - 2 * info.pad_height,
-    (diff.GetWidth() - 1) * info.stride_horizontal + filter.GetWidth() - 2 * info.pad_width
+    filter.GetNumInputs(),
+    diff.GetNumImages()
   };
   ConvBackwardDataOp* op = new ConvBackwardDataOp();
   op->closure = {
@@ -46,10 +46,10 @@ ImageBatch Convolution::ConvBackwardData(ImageBatch diff, Filter filter, ConvInf
 Filter Convolution::ConvBackwardFilter(ImageBatch diff, ImageBatch bottom, ConvInfo info) {
   CHECK_EQ(diff.GetNumImages(), bottom.GetNumImages()) << "#images mismatch";
   Scale new_size {
-    diff.GetNumFeatureMaps(),
-    bottom.GetNumFeatureMaps(),
+    (diff.GetWidth() - 1) * info.stride_horizontal - bottom.GetWidth() + 2 * info.pad_width,
     (diff.GetHeight() - 1) * info.stride_vertical - bottom.GetHeight() - 2 * info.pad_height,
-    (diff.GetWidth() - 1) * info.stride_horizontal - bottom.GetWidth() + 2 * info.pad_width
+    bottom.GetNumFeatureMaps(),
+    diff.GetNumFeatureMaps()
   };
   ConvBackwardFilterOp* op = new ConvBackwardFilterOp();
   op->closure = {
@@ -100,10 +100,10 @@ ImageBatch Convolution::PoolingForward(ImageBatch src, PoolingInfo info) {
   CHECK_EQ((src.GetHeight() - info.height) % info.stride_vertical, 0) << "window height mismatch";
   CHECK_EQ((src.GetWidth() - info.width) % info.stride_horizontal, 0) << "window width mismatch";
   Scale new_size {
-    src.GetNumImages(),
-    src.GetNumFeatureMaps(),
+    (src.GetWidth() - info.width) / info.stride_horizontal + 1,
     (src.GetHeight() - info.height) / info.stride_vertical + 1,
-    (src.GetWidth() - info.width) / info.stride_horizontal + 1
+    src.GetNumFeatureMaps(),
+    src.GetNumImages()
   };
   PoolingForwardOp* op = new PoolingForwardOp();
   op->closure = {
