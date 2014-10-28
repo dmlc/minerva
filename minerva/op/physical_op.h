@@ -61,6 +61,13 @@ class MaxIndexOp : public PhyComputeFnWithClosure<MaxIndexClosure> {
   }
 };
 
+class ReshapeOp : public PhyComputeFnWithClosure<ReshapeClosure> {
+ public:
+  std::string Name() const {
+    return "reshape";
+  }
+};
+
 class ElewiseOp : public PhyComputeFnWithClosure<ElewiseClosure> {
  public:
   std::string Name() const {

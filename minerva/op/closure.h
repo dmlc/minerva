@@ -37,6 +37,9 @@ struct MatMultClosure {
 struct TransposeClosure {
 };
 
+struct ReshapeClosure {
+};
+
 struct ReductionClosure {
   ReductionType type;
   Scale dims_to_reduce;

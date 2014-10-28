@@ -296,6 +296,12 @@ void MaxIndex(const DataList& inputs, const DataList& outputs, MaxIndexClosure& 
   } while (iterator.IncrWithDimensionsFixed(res_max, dims));
 }
 
+void Reshape(const DataList& inputs, const DataList& outputs, ReshapeClosure&) {
+  CHECK_EQ(inputs.size(), 1);
+  CHECK_EQ(outputs.size(), 1);
+  memcpy(outputs[0].data(), inputs[0].data(), inputs[0].size().Prod() * sizeof(float));
+}
+
 }  // end of namespace basic
 }  // end of namespace minerva
 

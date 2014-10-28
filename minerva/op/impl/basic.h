@@ -13,6 +13,7 @@ extern void Transpose(const DataList&, const DataList&, TransposeClosure&);
 extern void Reduction(const DataList&, const DataList&, ReductionClosure&);
 extern void NormArithmetic(const DataList&, const DataList&, NormArithmeticClosure&);
 extern void MaxIndex(const DataList&, const DataList&, MaxIndexClosure&);
+extern void Reshape(const DataList&, const DataList&, ReshapeClosure&);
 
 extern void Randn(const DataList&, RandnClosure& );
 extern void Fill(const DataList&, FillClosure& );
