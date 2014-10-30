@@ -8,4 +8,3 @@
 #include "narray/convolution.h"
 #include "narray/convolution_info.h"
 #include "system/minerva_system.h"
-

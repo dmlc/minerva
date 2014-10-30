@@ -7,6 +7,7 @@ using namespace std;
 using namespace minerva;
 
 int main(int argc, char** argv) {
+#ifdef HAS_CUDA
   MinervaSystem& ms = MinervaSystem::Instance();
   ms.Initialize(&argc, &argv);
   {
@@ -33,5 +34,6 @@ int main(int argc, char** argv) {
     d.ToFile("d.txt", format);
   }
   ms.Finalize();
+#endif
   return 0;
 }

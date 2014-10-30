@@ -5,21 +5,20 @@ using namespace std;
 using namespace minerva;
 
 const float epsW = 0.01, epsB = 0.01;
-const int numepochs = 10;
+const int numepochs = 100;
 const int mb_size = 256;
-const int num_mb_per_epoch = 30;
+const int num_mb_per_epoch = 235;
 
 const string weight_init_files[] = { "w12.dat", "w23.dat" };
 const string weight_out_files[] = { "w12.dat", "w23.dat" };
 const string bias_out_files[] = { "b2_trained.dat", "b3_trained.dat" };
-const string train_data_file = "/home/hct/data/mnist/traindata.dat";
-const string train_label_file = "/home/hct/data/mnist/trainlabel.dat";
-const string test_data_file = "/home/hct/data/mnist/testdata.dat";
-const string test_label_file = "/home/hct/data/mnist/testlabel.dat";
+const string train_data_file = "/home/cs_user/data/mnist/traindata.dat";
+const string train_label_file = "/home/cs_user/data/mnist/trainlabel.dat";
+const string test_data_file = "/home/cs_user/data/mnist/testdata.dat";
+const string test_label_file = "/home/cs_user/data/mnist/testlabel.dat";
 
 const int num_layers = 3;
 const int lsize[num_layers] = {784, 256, 10};
-const int l1parts = 1, l2parts = 1, l3parts = 1;
 vector<NArray> weights;
 vector<NArray> bias;
 
@@ -83,11 +82,11 @@ int main(int argc, char** argv) {
   }
 */
   cout << "Training procedure:" << endl;
-  ifstream data_file_in(train_data_file.c_str());
-  ifstream label_file_in(train_label_file.c_str());
   NArray acts[num_layers], sens[num_layers];
   for(int epoch = 0; epoch < numepochs; ++ epoch) {
     cout << "  Epoch #" << epoch << endl;
+    ifstream data_file_in(train_data_file.c_str());
+    ifstream label_file_in(train_label_file.c_str());
     for(int mb = 0; mb < num_mb_per_epoch; ++ mb) {
 
       ms.current_device_id_ = cpuDevice;
@@ -108,7 +107,7 @@ int main(int argc, char** argv) {
       for (int k = 1; k < num_layers - 1; ++ k) {
         NArray wacts = weights[k - 1] * acts[k - 1];
         NArray wactsnorm = wacts.NormArithmetic(bias[k - 1], ArithmeticType::kAdd);
-        acts[k] = Elewise::Sigmoid((weights[k - 1] * acts[k - 1]).NormArithmetic(bias[k - 1], ArithmeticType::kAdd));
+        acts[k] = Elewise::Sigmoid(wactsnorm);
       }
       // softmax
       acts[num_layers - 1] = Softmax((weights[num_layers - 2] * acts[num_layers - 2]).NormArithmetic(bias[num_layers - 2], ArithmeticType::kAdd));
@@ -130,9 +129,12 @@ int main(int argc, char** argv) {
       }
 
       if (mb % 20 == 0) {
+        ms.current_device_id_ = cpuDevice;
         PrintTrainingAccuracy(acts[num_layers - 1], label);
       }
     }
+    data_file_in.close();
+    label_file_in.close();
   }
   ms.current_device_id_ = cpuDevice;
 
