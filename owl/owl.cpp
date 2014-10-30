@@ -1,5 +1,3 @@
-// Copyright 2014 Project Athena
-
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
 #include <boost/python/implicit.hpp>
@@ -103,7 +101,33 @@ void WaitForEvalFinish() {
   m::MinervaSystem::Instance().WaitForEvalFinish();
 }
 
+m::ImageBatch ConvForward(m::NArray src, m::NArray filter, m::NArray bias, m::ConvInfo info) {
+  return m::Convolution::ConvForward(m::ImageBatch(src), m::ImageBatch(filter), bias, info);
+}
+
+m::ConvInfo GetConvInfo(int pad_height, int pad_width, int stride_vertical, int stride_horizontal) {
+  m::ConvInfo result;
+  result.pad_height = pad_height;
+  result.pad_width = pad_width;
+  result.stride_vertical = stride_vertical;
+  result.stride_horizontal = stride_horizontal;
+  return result;
+}
+
 } // end of namespace owl
+
+BOOST_PYTHON_MODULE(libconv) {
+  using namespace boost::python;
+
+  def("conv_info", &owl::GetConvInfo);
+  def("conv_forward", &owl::ConvForward);
+  //def("act_forward", &owl::ActivationForward);
+  //def("pool_forward", &owl::PoolingForward);
+  //def("conv_backward_data", &owl::ConvBackwardData);
+  //def("conv_backward_filter", &owl::ConvBackwardFilter);
+  //def("conv_backward_bias", &owl::ConvBackwardBias);
+  //def("act_backward", &owl::ActivationBackward);
+}
 
 // python module
 BOOST_PYTHON_MODULE(libowl) {
@@ -189,3 +213,4 @@ BOOST_PYTHON_MODULE(libowl) {
   // utils
   def("softmax", &owl::Softmax);
 }
+
