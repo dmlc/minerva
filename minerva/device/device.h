@@ -34,6 +34,7 @@ class Device {
   virtual std::string Name() const = 0;
   virtual MemType GetMemType() const = 0;
   virtual void FreeDataIfExist(uint64_t);
+  virtual std::string GetMemUsage() const;
 
  protected:
   ConcurrentUnorderedSet<uint64_t> local_data_;

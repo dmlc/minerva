@@ -22,33 +22,25 @@ ImageBatch::~ImageBatch() {
 }
 
 ImageBatch& ImageBatch::operator=(const ImageBatch& b) {
-  if (this == &b) {
-    return *this;
-  }
-  return *this = b;
+  NArray::operator=(b);
+  return *this;
 }
 
 ImageBatch& ImageBatch::operator=(ImageBatch&& b) {
-  if (this == &b) {
-    return *this;
-  }
-  return *this = std::move(b);
+  NArray::operator=(std::move(b));
+  return *this;
 }
 
 ImageBatch& ImageBatch::operator=(const NArray& n) {
-  if (this == &n) {
-    return *this;
-  }
   CHECK_EQ(n.Size().NumDims(), 4);
-  return *this = n;
+  NArray::operator=(n);
+  return *this;
 }
 
 ImageBatch& ImageBatch::operator=(NArray&& n) {
-  if (this == &n) {
-    return *this;
-  }
   CHECK_EQ(n.Size().NumDims(), 4);
-  return *this = std::move(n);
+  NArray::operator=(std::move(n));
+  return *this;
 }
 
 int ImageBatch::GetNumImages() const {
@@ -85,33 +77,25 @@ Filter::~Filter() {
 }
 
 Filter& Filter::operator=(const Filter& f) {
-  if (this == &f) {
-    return *this;
-  }
-  return *this = f;
+  NArray::operator=(f);
+  return *this;
 }
 
 Filter& Filter::operator=(Filter&& f) {
-  if (this == &f) {
-    return *this;
-  }
-  return *this = std::move(f);
+  NArray::operator=(std::move(f));
+  return *this;
 }
 
 Filter& Filter::operator=(const NArray& n) {
-  if (this == &n) {
-    return *this;
-  }
   CHECK_EQ(n.Size().NumDims(), 4);
-  return *this = n;
+  NArray::operator=(n);
+  return *this;
 }
 
 Filter& Filter::operator=(NArray&& n) {
-  if (this == &n) {
-    return *this;
-  }
   CHECK_EQ(n.Size().NumDims(), 4);
-  return *this = std::move(n);
+  NArray::operator=(std::move(n));
+  return *this;
 }
 
 int Filter::GetNumOutputs() const {

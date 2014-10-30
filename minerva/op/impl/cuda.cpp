@@ -18,14 +18,12 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
   float* right = inputs[1].data();
   float* res = outputs[0].data();
   size_t size = outputs[0].size().Prod();
-  int m = inputs[0].size()[0];
-  int n = inputs[0].size()[1];
   switch (closure.type) {
     case ArithmeticType::kAdd:
-      CudaPerformAdd(left, right, res, m, n, context.cublas_handle);
+      CudaPerformAdd(left, right, res, size, context.cublas_handle);
       break;
     case ArithmeticType::kSub:
-      CudaPerformSub(left, right, res, m, n, context.cublas_handle);
+      CudaPerformSub(left, right, res, size, context.cublas_handle);
       break;
     case ArithmeticType::kMult:
       CudaPerformDotMult(left, right, res, size, context.stream);
@@ -55,8 +53,6 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs,
   float val = closure.val;
   float* in_data = inputs[0].data();
   float* res_data = outputs[0].data();
-  int m = inputs[0].size()[0];
-  int n = inputs[0].size()[1];
   size_t size = inputs[0].size().Prod();
   switch (closure.type) {
     case ArithmeticType::kAdd:
@@ -70,13 +66,13 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs,
       }
       break;
     case ArithmeticType::kMult:
-      CudaPerformScale(in_data, res_data, m, n, val, context.cublas_handle);
+      CudaPerformScale(in_data, res_data, size, val, context.cublas_handle);
       break;
     case ArithmeticType::kDiv:
       if (closure.side == 0) {  // const on left
         CudaPerformLeftConstDiv(in_data, res_data, val, size, context.stream);
       } else {  // const on right
-        CudaPerformScale(in_data, res_data, m, n, 1 / val, context.cublas_handle);
+        CudaPerformScale(in_data, res_data, size, 1 / val, context.cublas_handle);
       }
       break;
   }

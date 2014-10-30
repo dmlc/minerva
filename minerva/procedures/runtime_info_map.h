@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <mutex>
 #include <atomic>
-#include <iostream>
 #include "common/common.h"
 
 namespace minerva {

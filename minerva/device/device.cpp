@@ -35,6 +35,12 @@ void Device::FreeDataIfExist(uint64_t id) {
   }
 }
 
+string Device::GetMemUsage() const {
+  stringstream ss;
+  ss << "device #" << device_id_ << " used " << data_store_->GetTotalBytes() << "B";
+  return ss.str();
+}
+
 ThreadedDevice::ThreadedDevice(uint64_t id, DeviceListener* l, size_t p) : Device(id, l), pool_(p) {
 }
 
@@ -57,39 +63,37 @@ void ThreadedDevice::PreExecute() {
 void ThreadedDevice::Execute(uint64_t nid, int thrid) {
   PreExecute();
   auto node = MinervaSystem::Instance().physical_dag().GetNode(nid);
-  if (node->Type() == DagNode::NodeType::kOpNode) {  // Op node
-    auto op_node = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node));
-    DataList input_shards;
-    for (auto i : op_node->inputs_) {
-      auto& input_data = i->data_;
-      if (input_data.device_id == device_id_) {  // Input is local
-        DLOG(INFO) << Name() << " input node #" << i->node_id() << " data #" << input_data.data_id << " is local";
-        CHECK_EQ(local_data_.Count(input_data.data_id), 1);
-      } else {
-        lock_guard<mutex> lck(copy_locks_[input_data.data_id]);
-        if (!remote_data_.Count(input_data.data_id)) {  // Input is remote and not copied
-          DLOG(INFO) << Name() << " input node #" << i->node_id() << " is remote and not copied";
-          size_t size = input_data.size.Prod() * sizeof(float);
-          auto ptr = data_store_->CreateData(input_data.data_id, size);
-          DoCopyRemoteData(ptr, MinervaSystem::Instance().GetPtr(input_data.device_id, input_data.data_id).second, size, thrid);
-          CHECK(remote_data_.Insert(input_data.data_id));
-        }
+  auto op_node = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node));
+  DataList input_shards;
+  for (auto i : op_node->inputs_) {
+    auto& input_data = i->data_;
+    if (input_data.device_id == device_id_) {  // Input is local
+      DLOG(INFO) << Name() << " input node #" << i->node_id() << " data #" << input_data.data_id << " is local";
+      CHECK_EQ(local_data_.Count(input_data.data_id), 1);
+    } else {
+      lock_guard<mutex> lck(copy_locks_[input_data.data_id]);
+      if (!remote_data_.Count(input_data.data_id)) {  // Input is remote and not copied
+        DLOG(INFO) << Name() << " input node #" << i->node_id() << " is remote and not copied";
+        size_t size = input_data.size.Prod() * sizeof(float);
+        auto ptr = data_store_->CreateData(input_data.data_id, size);
+        DoCopyRemoteData(ptr, MinervaSystem::Instance().GetPtr(input_data.device_id, input_data.data_id).second, size, thrid);
+        CHECK(remote_data_.Insert(input_data.data_id));
       }
-      input_shards.emplace_back(data_store_->GetData(i->data_.data_id), i->data_.size);
     }
-    DataList output_shards;
-    for (auto i : op_node->outputs_) {
-      size_t size = i->data_.size.Prod() * sizeof(float);
-      DLOG(INFO) << "create output data node #" << i->node_id();
-      auto ptr = data_store_->CreateData(i->data_.data_id, size);
-      CHECK(local_data_.Insert(i->data_.data_id));
-      output_shards.emplace_back(ptr, i->data_.size);
-    }
-    auto& op = op_node->op_;
-    CHECK_NOTNULL(op.compute_fn);
-    DLOG(INFO) << Name() << " execute node #" << nid << ": " << op.compute_fn->Name();
-    DoExecute(input_shards, output_shards, op, thrid);
+    input_shards.emplace_back(data_store_->GetData(i->data_.data_id), i->data_.size);
   }
+  DataList output_shards;
+  for (auto i : op_node->outputs_) {
+    size_t size = i->data_.size.Prod() * sizeof(float);
+    DLOG(INFO) << "create output data node #" << i->node_id();
+    auto ptr = data_store_->CreateData(i->data_.data_id, size);
+    CHECK(local_data_.Insert(i->data_.data_id));
+    output_shards.emplace_back(ptr, i->data_.size);
+  }
+  auto& op = op_node->op_;
+  CHECK_NOTNULL(op.compute_fn);
+  DLOG(INFO) << Name() << " execute node #" << nid << ": " << op.compute_fn->Name();
+  DoExecute(input_shards, output_shards, op, thrid);
   listener_->OnOperationComplete(nid);
 }
 
@@ -98,12 +102,14 @@ void ThreadedDevice::Execute(uint64_t nid, int thrid) {
 GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : ThreadedDevice(id, l, kParallelism), device_(gid) {
   CUDA_CALL(cudaSetDevice(device_));
   cudaFree(0);  // Initialize
-  auto allocator = [](size_t len) -> void* {
+  auto allocator = [this](size_t len) -> void* {
     void* ret;
+    CUDA_CALL(cudaSetDevice(device_));
     CUDA_CALL(cudaMalloc(&ret, len));
     return ret;
   };
-  auto deallocator = [](void* ptr) {
+  auto deallocator = [this](void* ptr) {
+    CUDA_CALL(cudaSetDevice(device_));
     CUDA_CALL(cudaFree(ptr));
   };
   data_store_ = new DataStore(allocator, deallocator);
@@ -117,6 +123,7 @@ GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : ThreadedDevice(i
 }
 
 GpuDevice::~GpuDevice() {
+  CUDA_CALL(cudaSetDevice(device_));
   pool_.WaitForAllFinished();
   for (size_t i = 0; i < kParallelism; ++i) {
     CUDNN_CALL(cudnnDestroy(cudnn_handle_[i]));
