@@ -240,8 +240,10 @@ class PoolingForwardOp : public PhyComputeFnWithClosure<PoolingForwardClosure> {
     switch (closure.algorithm) {
       case PoolingInfo::Algorithm::kMax:
         ss << "max pooling ff";
+        break;
       case PoolingInfo::Algorithm::kAverage:
         ss << "average pooling ff";
+        break;
     }
     ss << " " << closure.height << "*" << closure.width;
     ss << " stride:" << closure.stride_horizontal << "*" << closure.stride_vertical;
@@ -256,8 +258,10 @@ class PoolingBackwardOp : public PhyComputeFnWithClosure<PoolingBackwardClosure>
     switch (closure.algorithm) {
       case PoolingInfo::Algorithm::kMax:
         ss << "max pooling bp";
+        break;
       case PoolingInfo::Algorithm::kAverage:
         ss << "average pooling bp";
+        break;
     }
     ss << " " << closure.height << "*" << closure.width;
     ss << " stride:" << closure.stride_horizontal << "*" << closure.stride_vertical;

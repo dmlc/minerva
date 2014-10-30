@@ -21,18 +21,21 @@ int main(int argc, char** argv) {
   shared_ptr<float> weight_ptr(new float[weight_size.Prod()], [](float* ptr) { delete[] ptr; });
   memcpy(input_ptr.get(), input_raw, input_size.Prod() * sizeof(float));
   memcpy(weight_ptr.get(), weight_raw, weight_size.Prod() * sizeof(float));
-
-  ms.current_device_id_ = cpu_device;
-  ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
-  Filter weight = NArray::MakeNArray(weight_size, weight_ptr);
-  NArray bias = NArray::Zeros({5});
-  ConvInfo conv_info{0, 0, 1, 1};
-  ms.current_device_id_ = gpu_device;
-  ImageBatch output = Convolution::ConvForward(input, weight, bias, conv_info);
-  auto output_ptr = output.Get();
-  for (int i = 0; i < correct_size.Prod(); ++i) {
-    cout << i << ": " << output_ptr.get()[i] - correct_raw[i] << endl;
+  {
+    ms.current_device_id_ = cpu_device;
+    ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
+    Filter weight = NArray::MakeNArray(weight_size, weight_ptr);
+    NArray bias = NArray::Zeros({5});
+    ConvInfo conv_info{0, 0, 1, 1};
+    ms.current_device_id_ = gpu_device;
+    ImageBatch output = Convolution::ConvForward(input, weight, bias, conv_info);
+    auto output_ptr = output.Get();
+    for (int i = 0; i < correct_size.Prod(); ++i) {
+      cout << i << ": " << output_ptr.get()[i] - correct_raw[i] << endl;
+    }
   }
+  ms.dag_scheduler().GCNodes();
+  cout << ms.physical_dag().PrintDag<ExternRCPrinter>() << endl;
   ms.Finalize();
 }
 
