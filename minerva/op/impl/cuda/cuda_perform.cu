@@ -4,7 +4,6 @@
 #include <glog/logging.h>
 #include <cublas_v2.h>
 #include <limits>
-#include <iostream>
 
 namespace minerva {
 namespace cuda {
