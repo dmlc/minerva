@@ -34,6 +34,7 @@ class Device {
   virtual std::string Name() const = 0;
   virtual MemType GetMemType() const = 0;
   virtual void FreeDataIfExist(uint64_t);
+  virtual std::string GetMemUsage() const;
 
  protected:
   ConcurrentUnorderedSet<uint64_t> local_data_;
@@ -75,7 +76,7 @@ class GpuDevice : public ThreadedDevice {
   std::string Name() const;
 
  private:
-  static const size_t kParallelism = 16;
+  static const size_t kParallelism = 1;
   const int device_;
   cudaStream_t stream_[kParallelism];
   cublasHandle_t cublas_handle_[kParallelism];
