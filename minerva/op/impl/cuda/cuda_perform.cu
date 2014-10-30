@@ -30,15 +30,16 @@ void CudaPerformDotDiv(float* a, float* b, float* c, size_t size, cudaStream_t s
   CheckCudaError("CudaPerformDotDiv");
 }
 
-void CudaPerformAdd(float* a, float* b, float* c, int m, int n, cublasHandle_t handle) {
+void CudaPerformAdd(float* a, float* b, float* c, size_t size, cublasHandle_t handle) {
   float one = 1.0;
-  CUBLAS_CALL(cublasSgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, &one, a, m, &one, b, m, c, m));
+  CUBLAS_CALL(cublasScopy(handle, size, a, 1, c, 1));
+  CUBLAS_CALL(cublasSaxpy(handle, size, &one, b, 1, c, 1));
 }
 
-void CudaPerformSub(float* a, float* b, float* c, int m, int n, cublasHandle_t handle) {
+void CudaPerformSub(float* a, float* b, float* c, size_t size, cublasHandle_t handle) {
   float minus_one = -1.0;
-  float one = 1.0;
-  CUBLAS_CALL(cublasSgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, &one, a, m, &minus_one, b, m, c, m));
+  CUBLAS_CALL(cublasScopy(handle, size, a, 1, c, 1));
+  CUBLAS_CALL(cublasSaxpy(handle, size, &minus_one, b, 1, c, 1));
 }
 
 void CudaPerformMatMult(float* a, float* b, float* c, int m, int n, int k, cublasHandle_t handle) {
@@ -47,9 +48,9 @@ void CudaPerformMatMult(float* a, float* b, float* c, int m, int n, int k, cubla
   CUBLAS_CALL(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k, &one, a, m, b, k, &zero, c, m));
 }
 
-void CudaPerformScale(float* a, float* c, int m, int n, float val, cublasHandle_t handle) {
-  float zero = 0.0;
-  CUBLAS_CALL(cublasSgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, &val, a, m, &zero, c, m, c, m));
+void CudaPerformScale(float* in_data, float* res_data, size_t size, float val, cublasHandle_t handle) {
+  CUBLAS_CALL(cublasScopy(handle, size, in_data, 1, res_data, 1));
+  CUBLAS_CALL(cublasSscal(handle, size, &val, res_data, 1));
 }
 
 void CudaPerformTranspose(float* a, float* c, int m, int n, cublasHandle_t handle) {

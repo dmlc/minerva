@@ -102,12 +102,14 @@ void ThreadedDevice::Execute(uint64_t nid, int thrid) {
 GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : ThreadedDevice(id, l, kParallelism), device_(gid) {
   CUDA_CALL(cudaSetDevice(device_));
   cudaFree(0);  // Initialize
-  auto allocator = [](size_t len) -> void* {
+  auto allocator = [this](size_t len) -> void* {
     void* ret;
+    CUDA_CALL(cudaSetDevice(device_));
     CUDA_CALL(cudaMalloc(&ret, len));
     return ret;
   };
-  auto deallocator = [](void* ptr) {
+  auto deallocator = [this](void* ptr) {
+    CUDA_CALL(cudaSetDevice(device_));
     CUDA_CALL(cudaFree(ptr));
   };
   data_store_ = new DataStore(allocator, deallocator);
@@ -121,6 +123,7 @@ GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : ThreadedDevice(i
 }
 
 GpuDevice::~GpuDevice() {
+  CUDA_CALL(cudaSetDevice(device_));
   pool_.WaitForAllFinished();
   for (size_t i = 0; i < kParallelism; ++i) {
     CUDNN_CALL(cudnnDestroy(cudnn_handle_[i]));

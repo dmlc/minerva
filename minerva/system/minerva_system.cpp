@@ -1,7 +1,6 @@
 #include "system/minerva_system.h"
 #include <glog/logging.h>
 #include <cstdlib>
-#include <iostream>
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #endif
