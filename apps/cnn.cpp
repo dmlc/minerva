@@ -4,10 +4,10 @@
 using namespace std;
 using namespace minerva;
 
-float alpha = 0.1;
+float alpha = 0.01;
 const int numepochs = 10;
 const int mb_size = 256;
-const int num_mb_per_epoch = 234;
+const int num_mb_per_epoch = 60000 / mb_size;
 
 const string train_data_file = "/home/cs_user/data/mnist/traindata.dat";
 const string train_label_file = "/home/cs_user/data/mnist/trainlabel.dat";
@@ -36,12 +36,12 @@ int main(int argc, char** argv) {
   bias.resize(3);
   acts.resize(9);
   sens.resize(9);
-  weights[0] = Filter(NArray::Randn({5, 5, 1, 8}, 0.0, 10));
-  bias[0] = NArray::Randn({8}, 0.0, 10);
-  weights[1] = Filter(NArray::Randn({5, 5, 8, 16}, 0.0, 10));
-  bias[1] = NArray::Randn({16}, 0.0, 10);
-  weights[2] = NArray::Randn({10, 256}, 0.0, 10);
-  bias[2] = NArray::Randn({10, 1}, 0.0, 10);
+  weights[0] = Filter(NArray::Randn({5, 5, 1, 8}, 0.0, 0.1));
+  bias[0] = NArray::Randn({8}, 0.0, 0.1);
+  weights[1] = Filter(NArray::Randn({5, 5, 8, 16}, 0.0, 0.1));
+  bias[1] = NArray::Randn({16}, 0.0, 0.1);
+  weights[2] = NArray::Randn({10, 256}, 0.0, 0.1);
+  bias[2] = NArray::Randn({10, 1}, 0.0, 0.1);
   cout << "Training procedure:" << endl;
   for(int epoch = 0; epoch < numepochs; ++ epoch) {
     ifstream data_file_in(train_data_file.c_str(), ios::binary);

@@ -397,7 +397,7 @@ void PoolingBackward(const DataList& inputs, const DataList& outputs, PoolingBac
   CHECK_EQ(outputs.size(), 1) << "(pooling backward) #inputs wrong";
   auto& top_diff = inputs[0];
   auto& top = inputs[1];
-  auto& bottom = inputs[1];
+  auto& bottom = inputs[2];
   auto& bottom_diff = outputs[0];
   int num_images = top_diff.size()[3];
   int num_channels = top_diff.size()[2];
