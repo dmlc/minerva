@@ -2,6 +2,7 @@
 #include "op/closure.h"
 #include <cmath>
 #include <glog/logging.h>
+#include <chrono>
 #include <algorithm>
 
 using namespace std;
@@ -193,7 +194,7 @@ void Randn(const DataList& output, RandnClosure& closure) {
   CHECK_EQ(output.size(), 1) << "wrong number of randn output";
   int length = output[0].size().Prod();
   float* data = output[0].data();
-  default_random_engine generator;
+  default_random_engine generator(chrono::system_clock::now().time_since_epoch().count());
   normal_distribution<float> distribution(closure.mu, closure.var);
   for (int i = 0; i < length; ++i) {
     data[i] = distribution(generator);
