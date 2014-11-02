@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
       sens[1] = Convolution::ActivationBackward(sens[2], acts[2], acts[1], ActivationAlgorithm::kRelu);
 
       bias[2] -= alpha * sens[7].Sum(1);
-      weights[2] -= alpha * sens[7] * re_acts6;
+      weights[2] -= alpha * sens[7] * re_acts6.Trans();
       bias[1] -= alpha * Convolution::ConvBackwardBias(sens[4]);
       weights[1] -= alpha * Convolution::ConvBackwardFilter(sens[4], acts[3], conv_info);
       conv_info.pad_height = conv_info.pad_width = 0;
