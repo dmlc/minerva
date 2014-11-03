@@ -87,6 +87,9 @@ bp::list NArrayToList(m::NArray narr) {
     l.append(v.get()[i]);
   return l;
 }
+bp::list NArrayGetShapeWrapper(m::NArray narr) {
+  return ToPythonList(narr.Size());
+}
 
 void WaitForEvalFinish() {
   m::MinervaSystem::Instance().WaitForEvalFinish();
@@ -141,6 +144,7 @@ BOOST_PYTHON_MODULE(libowl) {
     // normalize
     .def("norm_arithmetic", &m::NArray::NormArithmetic)
     // misc
+    .def("shape", &owl::NArrayGetShapeWrapper)
     .def("trans", &m::NArray::Trans)
     .def("tofile", &m::NArray::ToFile)
     .def("tolist", &owl::NArrayToList)

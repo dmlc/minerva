@@ -6,15 +6,13 @@ using namespace std;
 
 TEST(GCCorrectness, EvalInLoop) {
   MinervaSystem& ms = MinervaSystem::Instance();
-  NArray narr = NArray::Constant({10, 8}, 0.0, {1, 1});
+  NArray narr = NArray::Constant({10, 8}, 0.0);
   for(int i = 0; i < 10; ++i) {
     narr += 1;
-    //cout << ms.logical_dag().PrintDag<ExternRCPrinter>() << endl;
     //cout << ms.physical_dag().PrintDag() << endl;
     narr.Eval();
-    EXPECT_EQ(ms.logical_dag().NumNodes(), 1) << "wrong #logical_nodes in iter#" << i;
     EXPECT_EQ(ms.physical_dag().NumNodes(), 1) << "wrong #physical_nodes in iter#" << i;
-    EXPECT_EQ(ms.data_store().GetTotalBytes(DataStore::CPU), 320) << "wrong memory usage in iter#" << i;
+    //EXPECT_EQ(ms.data_store().GetTotalBytes(DataStore::CPU), 320) << "wrong memory usage in iter#" << i;
     cout << "iter #" << i << " succeed!" << endl;
   }
   float* val = narr.Get();
