@@ -70,10 +70,10 @@ m::NArray RandnWrapper(const bp::list& s, float mean, float var) {
   return m::NArray::Randn(ToScale(s), mean, var);
 }
 
-m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
+m::NArray MakeNArrayWrapper(const bp::list& s, const bp::list& val) {
   std::vector<float> v = std::vector<float>(bp::stl_input_iterator<float>(val), bp::stl_input_iterator<float>());
   size_t length = bp::len(val);
-  shared_ptr<float> data( new float[length] );
+  shared_ptr<float> data( new float[length], [] (float* p) { delete [] p; } );
   memcpy(data.get(), v.data(), sizeof(float) * length);
 //  for(size_t i = 0; i < length; ++i) {
 //    valptr.get()[i] = bp::extract<float>(val[i] * 1.0);
@@ -162,7 +162,6 @@ BOOST_PYTHON_MODULE(libowl) {
   def("randn", &owl::RandnWrapper);
 
   // system
-  //def("to_list", &owl::NArrayToList);
   def("initialize", &owl::Initialize);
   def("create_cpu_device", &owl::CreateCpuDevice);
   def("create_gpu_device", &owl::CreateGpuDevice);
