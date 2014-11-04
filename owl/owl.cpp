@@ -101,8 +101,36 @@ void WaitForEvalFinish() {
   m::MinervaSystem::Instance().WaitForEvalFinish();
 }
 
-m::ImageBatch ConvForward(m::NArray src, m::NArray filter, m::NArray bias, m::ConvInfo info) {
-  return m::Convolution::ConvForward(m::ImageBatch(src), m::ImageBatch(filter), bias, info);
+m::NArray ConvForward(m::NArray src, m::NArray filter, m::NArray bias, m::ConvInfo info) {
+  return m::Convolution::ConvForward(m::ImageBatch(src), m::Filter(filter), bias, info);
+}
+
+m::NArray ActivationForward(m::NArray src, m::ActivationAlgorithm algo) {
+  return m::Convolution::ActivationForward(m::ImageBatch(src), algo);
+}
+
+m::NArray PoolingForward(m::NArray src, m::PoolingInfo info) {
+  return m::Convolution::PoolingForward(m::ImageBatch(src), info);
+}
+
+m::NArray PoolingBackward(m::NArray diff, m::NArray top, m::NArray bottom, m::PoolingInfo info) {
+  return m::Convolution::PoolingBackward(m::ImageBatch(diff), m::ImageBatch(top), m::ImageBatch(bottom), info);
+}
+
+m::NArray ConvBackwardData(m::NArray diff, m::NArray filter, m::ConvInfo info) {
+  return m::Convolution::ConvBackwardData(m::ImageBatch(diff), m::Filter(filter), info);
+}
+
+m::NArray ConvBackwardFilter(m::NArray diff, m::NArray bottom, m::ConvInfo info) {
+  return m::Convolution::ConvBackwardFilter(m::ImageBatch(diff), m::ImageBatch(bottom), info);
+}
+
+m::NArray ConvBackwardBias(m::NArray diff) {
+  return m::Convolution::ConvBackwardBias(m::ImageBatch(diff));
+}
+
+m::NArray ActivationBackward(m::NArray diff, m::NArray top, m::NArray bottom, m::ActivationAlgorithm algo) {
+  return m::Convolution::ActivationBackward(m::ImageBatch(diff), m::ImageBatch(top), m::ImageBatch(bottom), algo);
 }
 
 m::ConvInfo GetConvInfo(int pad_height, int pad_width, int stride_vertical, int stride_horizontal) {
@@ -114,20 +142,17 @@ m::ConvInfo GetConvInfo(int pad_height, int pad_width, int stride_vertical, int 
   return result;
 }
 
-} // end of namespace owl
-
-BOOST_PYTHON_MODULE(libconv) {
-  using namespace boost::python;
-
-  def("conv_info", &owl::GetConvInfo);
-  def("conv_forward", &owl::ConvForward);
-  //def("act_forward", &owl::ActivationForward);
-  //def("pool_forward", &owl::PoolingForward);
-  //def("conv_backward_data", &owl::ConvBackwardData);
-  //def("conv_backward_filter", &owl::ConvBackwardFilter);
-  //def("conv_backward_bias", &owl::ConvBackwardBias);
-  //def("act_backward", &owl::ActivationBackward);
+m::PoolingInfo GetPoolingInfo(int height, int width, int stride_vertical, int stride_horizontal, m::PoolingInfo::Algorithm algo) {
+  m::PoolingInfo result;
+  result.height = height;
+  result.width = width;
+  result.stride_vertical = stride_vertical;
+  result.stride_horizontal = stride_horizontal;
+  result.algorithm = algo;
+  return result;
 }
+
+} // end of namespace owl
 
 // python module
 BOOST_PYTHON_MODULE(libowl) {
@@ -148,7 +173,12 @@ BOOST_PYTHON_MODULE(libowl) {
   m::NArray (m::NArray::*max1)(int) const = &m::NArray::Max;
   m::NArray (m::NArray::*max2)(const m::Scale&) const = &m::NArray::Max;
 
-  //class_<m::Scale>("Scale");
+  class_<m::Scale>("Scale");
+  //m::Scale (m::NArray::*size0)() const = &m::NArray::Size;
+  int (m::NArray::*size1)(int) const = &m::NArray::Size;
+
+  m::NArray (m::NArray::*reshape)(const m::Scale&) const = &m::NArray::Reshape;
+
   class_<m::NArray>("NArray")
     // element-wise
     .def(self + self)
@@ -179,6 +209,8 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("trans", &m::NArray::Trans)
     .def("tofile", &m::NArray::ToFile)
     .def("tolist", &owl::NArrayToList)
+    .def("reshape", reshape)
+    .def("size", size1)
     .def("eval", &m::NArray::Eval)
     .def("eval_async", &m::NArray::EvalAsync)
   ;
@@ -195,6 +227,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("ones", &owl::OnesWrapper);
   def("make_narray", &owl::MakeNArrayWrapper);
   def("randn", &owl::RandnWrapper);
+  def("toscale", &owl::ToScale);
 
   // system
   //def("to_list", &owl::NArrayToList);
@@ -212,5 +245,29 @@ BOOST_PYTHON_MODULE(libowl) {
   
   // utils
   def("softmax", &owl::Softmax);
+
+  // convolution
+  class_<m::ConvInfo>("ConvInfo");
+  class_<m::PoolingInfo>("PoolingInfo");
+  enum_<m::ActivationAlgorithm>("activation")
+    .value("relu", m::ActivationAlgorithm::kRelu)
+    .value("sigm", m::ActivationAlgorithm::kSigmoid)
+    .value("tanh", m::ActivationAlgorithm::kTanh)
+  ;
+  enum_<m::PoolingInfo::Algorithm>("pooling")
+    .value("max", m::PoolingInfo::Algorithm::kMax)
+    .value("avg", m::PoolingInfo::Algorithm::kAverage)
+  ;
+
+  def("conv_info", &owl::GetConvInfo);
+  def("pooling_info", &owl::GetPoolingInfo);
+  def("conv_forward", &owl::ConvForward);
+  def("activation_forward", &owl::ActivationForward);
+  def("pooling_forward", &owl::PoolingForward);
+  def("pooling_backward", &owl::PoolingBackward);
+  def("conv_backward_data", &owl::ConvBackwardData);
+  def("conv_backward_filter", &owl::ConvBackwardFilter);
+  def("conv_backward_bias", &owl::ConvBackwardBias);
+  def("activation_backward", &owl::ActivationBackward);
 }
 
