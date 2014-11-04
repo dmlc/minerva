@@ -95,6 +95,13 @@ void WaitForEvalFinish() {
   m::MinervaSystem::Instance().WaitForEvalFinish();
 }
 
+void PrintSystemInfo() {
+  m::MinervaSystem& ms = m::MinervaSystem::Instance();
+  cout << "CPU mem:" << ms.device_manager().GetDevice(0)->GetMemUsage() << endl;
+  cout << "GPU mem:" << ms.device_manager().GetDevice(1)->GetMemUsage() << endl;
+  cout << "Dag:\n" << ms.physical_dag().PrintDag<m::ExternRCPrinter>() << endl;
+}
+
 } // end of namespace owl
 
 // python module
@@ -171,6 +178,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("create_gpu_device", &owl::CreateGpuDevice);
   def("set_device", &owl::SetDevice);
   def("wait_eval", &owl::WaitForEvalFinish);
+  def("print_sys_info", &owl::PrintSystemInfo);
 
   // elewise
   def("mult", &m::Elewise::Mult);
