@@ -117,7 +117,7 @@ inline const char* CurandGetErrorString(curandStatus_t status) {
 
 #define CURAND_CALL(func) { \
   curandStatus_t e = (func); \
-  CHECK_EQ(e, CURAND_STATUS_SUCCESS) << "cuRAND: " << CudnnGetErrorString(e); \
+  CHECK_EQ(e, CURAND_STATUS_SUCCESS) << "cuRAND: " << CurandGetErrorString(e); \
 }
 
 #endif

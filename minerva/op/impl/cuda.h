@@ -27,6 +27,9 @@ void ActivationBackward(const DataList&, const DataList&, ActivationBackwardClos
 void PoolingForward(const DataList&, const DataList&, PoolingForwardClosure&, const CudaRuntimeContext&);
 void PoolingBackward(const DataList&, const DataList&, PoolingBackwardClosure&, const CudaRuntimeContext&);
 
+void Randn(const DataList&, RandnClosure&, const CudaRuntimeContext&);
+void Fill(const DataList&, FillClosure&, const CudaRuntimeContext&);
+
 }
 #endif
 }

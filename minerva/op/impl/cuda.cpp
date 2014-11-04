@@ -3,9 +3,12 @@
 #include "op/context.h"
 #include "op/closure.h"
 #include <glog/logging.h>
+#include <chrono>
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #endif
+
+using namespace std;
 
 namespace minerva {
 #ifdef HAS_CUDA
@@ -413,6 +416,16 @@ void PoolingBackward(const DataList& inputs, const DataList& outputs, PoolingBac
     default:
       CHECK(false) << "pooling algorithm not supported";
   }
+}
+
+void Randn(const DataList& outputs, RandnClosure& closure, const CudaRuntimeContext&) {
+  CHECK_EQ(outputs.size(), 1) << "(randn) #outputs wrong";
+  CudaPerformRandn(outputs[0].data(), outputs[0].size().Prod(), chrono::system_clock::now().time_since_epoch().count(), closure.mu, closure.var);
+}
+
+void Fill(const DataList& outputs, FillClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(outputs.size(), 1) << "(fill) #outputs wrong";
+  CudaPerformFill(outputs[0].data(), outputs[0].size().Prod(), closure.val, context.stream);
 }
 
 }
