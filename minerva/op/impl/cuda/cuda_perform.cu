@@ -3,6 +3,7 @@
 #include "common/cuda_utils.h"
 #include <glog/logging.h>
 #include <cublas_v2.h>
+#include <curand.h>
 #include <limits>
 
 namespace minerva {
@@ -520,6 +521,21 @@ void CudaPerformAveragePoolingBackward(float* bottom, float* top, float* top_dif
   CUDNN_CALL(cudnnDestroyTensor4dDescriptor(top_desc));
   CUDNN_CALL(cudnnDestroyPoolingDescriptor(pool_desc));
   CUDNN_CALL(cudnnDestroyTensor4dDescriptor(bottom_desc));
+}
+
+void CudaPerformRandn(float* dst, size_t size, unsigned int seed, float mean, float var) {
+  curandGenerator_t gen;
+  CURAND_CALL(curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT));
+  CURAND_CALL(curandSetPseudoRandomGeneratorSeed(gen, seed));
+  CURAND_CALL(curandGenerateNormal(gen, dst, size, mean, var));
+  CURAND_CALL(curandDestroyGenerator(gen));
+}
+
+void CudaPerformFill(float* dst, size_t size, float val, cudaStream_t stream) {
+  int block, thread;
+  FindConfiguration(size, block, thread);
+  CudaPerformFillKernel<<<block, thread, 0, stream>>>(dst, size, val);
+  CheckCudaError("CudaPerformFill");
 }
 
 }  // namespace cuda
