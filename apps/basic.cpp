@@ -1,3 +1,4 @@
+#include <memory>
 #include <iostream>
 #include <minerva.h>
 #include <cublas_v2.h>

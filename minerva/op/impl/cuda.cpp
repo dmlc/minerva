@@ -2,6 +2,7 @@
 #include "op/impl/cuda/cuda_perform.h"
 #include "op/context.h"
 #include "op/closure.h"
+#include "common/cuda_utils.h"
 #include <glog/logging.h>
 #include <chrono>
 #ifdef HAS_CUDA
@@ -416,6 +417,13 @@ void PoolingBackward(const DataList& inputs, const DataList& outputs, PoolingBac
     default:
       CHECK(false) << "pooling algorithm not supported";
   }
+}
+
+void ArrayLoader(const DataList& outputs, ArrayLoaderClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(outputs.size(), 1) << "(array loader) #outputs wrong";
+  CHECK(closure.data) << "probably already executed";
+  CUDA_CALL(cudaMemcpyAsync(outputs[0].data(), closure.data.get(), outputs[0].size().Prod() * sizeof(float), cudaMemcpyDefault));
+  closure.data.reset();
 }
 
 void Randn(const DataList& outputs, RandnClosure& closure, const CudaRuntimeContext&) {

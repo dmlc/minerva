@@ -190,6 +190,13 @@ void Reduction(const DataList& inputs, const DataList& outputs, ReductionClosure
   } while (accumulator.IncrWithDimensionsFixed(res_max, closure.dims_to_reduce));
 }
 
+void ArrayLoader(const DataList& outputs, ArrayLoaderClosure& closure) {
+  CHECK_EQ(outputs.size(), 1) << "(array loader) #outputs wrong";
+  CHECK(closure.data) << "probably already executed";
+  memcpy(outputs[0].data(), closure.data.get(), outputs[0].size().Prod() * sizeof(float));
+  closure.data.reset();
+}
+
 void Randn(const DataList& output, RandnClosure& closure) {
   CHECK_EQ(output.size(), 1) << "wrong number of randn output";
   int length = output[0].size().Prod();

@@ -15,6 +15,7 @@ void NormArithmetic(const DataList&, const DataList&, NormArithmeticClosure&);
 void MaxIndex(const DataList&, const DataList&, MaxIndexClosure&);
 void Reshape(const DataList&, const DataList&, ReshapeClosure&);
 
+void ArrayLoader(const DataList&, ArrayLoaderClosure&);
 void Randn(const DataList&, RandnClosure&);
 void Fill(const DataList&, FillClosure&);
 

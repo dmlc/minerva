@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   memcpy(input_ptr.get(), input_raw, input_size.Prod() * sizeof(float));
   memcpy(weight_ptr.get(), weight_raw, weight_size.Prod() * sizeof(float));
   {
-    ms.current_device_id_ = cpu_device;
+    ms.current_device_id_ = gpu_device;
     ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
     Filter weight = NArray::MakeNArray(weight_size, weight_ptr);
     NArray bias = NArray::Zeros({5});

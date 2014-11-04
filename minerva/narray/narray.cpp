@@ -3,7 +3,6 @@
 #include "common/common.h"
 #include "system/minerva_system.h"
 #include "io/file_loader.h"
-#include "io/array_loader.h"
 #include <fstream>
 #include <glog/logging.h>
 #include <iomanip>
@@ -41,7 +40,7 @@ NArray NArray::Ones(const Scale& size) {
 
 NArray NArray::MakeNArray(const Scale& size, shared_ptr<float> array) {
   ArrayLoaderOp* loader_op = new ArrayLoaderOp();
-  loader_op->closure = {array, size};
+  loader_op->closure = {array};
   return NArray::GenerateOne(size, loader_op);
 }
 
