@@ -77,7 +77,7 @@ ImageBatch Convolution::SoftmaxForward(ImageBatch src, SoftmaxAlgorithm algorith
 
 ImageBatch Convolution::SoftmaxBackward(ImageBatch diff, ImageBatch top, SoftmaxAlgorithm algorithm) {
   CHECK_EQ(diff.Size(), top.Size()) << "inputs sizes mismatch";
-  SoftmaxForwardOp* op = new SoftmaxForwardOp();
+  SoftmaxBackwardOp* op = new SoftmaxBackwardOp();
   op->closure.algorithm = algorithm;
   return NArray::ComputeOne({diff, top}, diff.Size(), op);
 }

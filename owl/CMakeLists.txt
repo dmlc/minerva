@@ -14,4 +14,3 @@ add_dependencies(owl minerva)
 if (CUDA_FOUND)
   CUDA_ADD_CUBLAS_TO_TARGET(owl)
 endif (CUDA_FOUND)
-
