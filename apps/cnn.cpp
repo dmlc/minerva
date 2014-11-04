@@ -4,10 +4,10 @@
 using namespace std;
 using namespace minerva;
 
-float alpha = 0.01;
 const int numepochs = 10;
 const int mb_size = 256;
 const int num_mb_per_epoch = 60000 / mb_size;
+float alpha = 0.01 / mb_size;
 
 const string train_data_file = "/home/cs_user/data/mnist/traindata.dat";
 const string train_label_file = "/home/cs_user/data/mnist/trainlabel.dat";
@@ -90,7 +90,8 @@ int main(int argc, char** argv) {
 
       sens[8] = acts[8] - label;
 
-      sens[7] = Convolution::SoftmaxBackward(sens[8], acts[8], SoftmaxAlgorithm::kInstance).Reshape({10, mb_size});
+      // sens[7] = Convolution::SoftmaxBackward(sens[8], acts[8], SoftmaxAlgorithm::kInstance).Reshape({10, mb_size});
+      sens[7] = sens[8].Reshape({10, mb_size});
       sens[6] = (weights[2].Trans() * sens[7]).Reshape(acts[6].Size());
       sens[5] = Convolution::PoolingBackward(sens[6], acts[6], acts[5], pool_info);
       sens[4] = Convolution::ActivationBackward(sens[5], acts[5], acts[4], ActivationAlgorithm::kRelu);
