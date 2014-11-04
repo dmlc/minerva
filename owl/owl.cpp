@@ -122,6 +122,14 @@ m::NArray ActivationBackward(m::NArray diff, m::NArray top, m::NArray bottom, m:
   return m::Convolution::ActivationBackward(m::ImageBatch(diff), m::ImageBatch(top), m::ImageBatch(bottom), algo);
 }
 
+m::NArray SoftmaxForward(m::NArray src, m::SoftmaxAlgorithm algo) {
+  return m::Convolution::SoftmaxForward(m::ImageBatch(src), algo);
+}
+
+m::NArray SoftmaxBackward(m::NArray diff, m::NArray top, m::SoftmaxAlgorithm algo) {
+  return m::Convolution::SoftmaxBackward(m::ImageBatch(diff), m::ImageBatch(top), algo);
+}
+
 m::ConvInfo GetConvInfo(int pad_height, int pad_width, int stride_vertical, int stride_horizontal) {
   m::ConvInfo result;
   result.pad_height = pad_height;
@@ -238,12 +246,16 @@ BOOST_PYTHON_MODULE(libowl) {
   // convolution
   class_<m::ConvInfo>("ConvInfo");
   class_<m::PoolingInfo>("PoolingInfo");
-  enum_<m::ActivationAlgorithm>("activation")
+  enum_<m::ActivationAlgorithm>("activation_algo")
     .value("relu", m::ActivationAlgorithm::kRelu)
     .value("sigm", m::ActivationAlgorithm::kSigmoid)
     .value("tanh", m::ActivationAlgorithm::kTanh)
   ;
-  enum_<m::PoolingInfo::Algorithm>("pooling")
+  enum_<m::SoftmaxAlgorithm>("softmax_algo")
+    .value("instance", m::SoftmaxAlgorithm::kInstance)
+    .value("channel", m::SoftmaxAlgorithm::kChannel)
+  ;
+  enum_<m::PoolingInfo::Algorithm>("pooling_algo")
     .value("max", m::PoolingInfo::Algorithm::kMax)
     .value("avg", m::PoolingInfo::Algorithm::kAverage)
   ;
@@ -252,11 +264,13 @@ BOOST_PYTHON_MODULE(libowl) {
   def("pooling_info", &owl::GetPoolingInfo);
   def("conv_forward", &owl::ConvForward);
   def("activation_forward", &owl::ActivationForward);
+  def("softmax_forward", &owl::SoftmaxForward);
   def("pooling_forward", &owl::PoolingForward);
   def("pooling_backward", &owl::PoolingBackward);
   def("conv_backward_data", &owl::ConvBackwardData);
   def("conv_backward_filter", &owl::ConvBackwardFilter);
   def("conv_backward_bias", &owl::ConvBackwardBias);
   def("activation_backward", &owl::ActivationBackward);
+  def("softmax_backward", &owl::SoftmaxBackward);
 }
 

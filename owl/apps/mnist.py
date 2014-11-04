@@ -88,15 +88,15 @@ def train_network(layers, weights, data, label,
             acts = [None] * num_layers
             sens = [None] * num_layers
             #acts[0] = libowl.zeros([layers[0].length, len(data[j]) / layers[0].length])
-            acts[0] = make_narray([layers[0].length, len(data[j]) / layers[0].length], data[j])
             #target = libowl.zeros([10, len(label[j]) / 10])
+            acts[0] = make_narray([layers[0].length, len(data[j]) / layers[0].length], data[j])
             target = make_narray([10, len(label[j]) / 10], label[j])
 
             set_device(gpuDevice0)
             # FF
             for k in xrange(1, num_layers):
                 acts[k] = weights[k - 1] * acts[k - 1]
-                acts[k].norm_arithmetic(layers[k].bias, libowl.arithmetic.add)
+                acts[k] = acts[k].norm_arithmetic(layers[k].bias, libowl.arithmetic.add)
                 if k < (num_layers - 1):
                     acts[k] = sigmoid(acts[k])
             # Error
