@@ -1,5 +1,8 @@
 #include <minerva.h>
 #include <fstream>
+#include <gflags/gflags.h>
+
+DEFINE_bool(init, false, "Initialize weights");
 
 using namespace std;
 using namespace minerva;
@@ -26,6 +29,7 @@ void PrintTrainingAccuracy(NArray o, NArray t) {
 }
 
 int main(int argc, char** argv) {
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
   MinervaSystem& ms = MinervaSystem::Instance();
   ms.Initialize(&argc, &argv);
   uint64_t cpuDevice = ms.CreateCpuDevice();
@@ -36,6 +40,7 @@ int main(int argc, char** argv) {
   bias.resize(3);
   acts.resize(9);
   sens.resize(9);
+  if (FLAGS_init) 
   weights[0] = Filter(NArray::Randn({5, 5, 1, 8}, 0.0, 0.1));
   bias[0] = NArray::Randn({8}, 0.0, 0.1);
   weights[1] = Filter(NArray::Randn({5, 5, 8, 16}, 0.0, 0.1));
