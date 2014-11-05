@@ -106,7 +106,7 @@ class MnistTrainer:
                     a2 = sigmoid(np.dot(self.w1, a1) + self.b1)
                     a3 = sigmoid(np.dot(self.w2, a2) + self.b2)
                     correct = np.argmax(a3, axis=0) - np.argmax(test_labels.T, axis=0)
-                    print correct
+                    #print correct
                     print 'Testing error:', float(np.count_nonzero(correct)) / num_test_samples
                 count = count + 1
 
