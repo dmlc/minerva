@@ -40,13 +40,41 @@ int main(int argc, char** argv) {
   bias.resize(3);
   acts.resize(9);
   sens.resize(9);
-  if (FLAGS_init) 
-  weights[0] = Filter(NArray::Randn({5, 5, 1, 8}, 0.0, 0.1));
-  bias[0] = NArray::Randn({8}, 0.0, 0.1);
-  weights[1] = Filter(NArray::Randn({5, 5, 8, 16}, 0.0, 0.1));
-  bias[1] = NArray::Randn({16}, 0.0, 0.1);
-  weights[2] = NArray::Randn({10, 256}, 0.0, 0.1);
-  bias[2] = NArray::Randn({10, 1}, 0.0, 0.1);
+  if (FLAGS_init) {
+    weights[0] = Filter(NArray::Randn({5, 5, 1, 8}, 0.0, 0.1));
+    bias[0] = NArray::Randn({8}, 0.0, 0.1);
+    weights[1] = Filter(NArray::Randn({5, 5, 8, 16}, 0.0, 0.1));
+    bias[1] = NArray::Randn({16}, 0.0, 0.1);
+    weights[2] = NArray::Randn({10, 256}, 0.0, 0.1);
+    bias[2] = NArray::Randn({10, 1}, 0.0, 0.1);
+    ofstream cnn_init("cnn_init", ios::binary);
+    auto ptr = weights[0].Get();
+    cnn_init.write(reinterpret_cast<char*>(ptr.get()), weights[0].Size().Prod() * sizeof(float));
+    ptr = bias[0].Get();
+    cnn_init.write(reinterpret_cast<char*>(ptr.get()), bias[0].Size().Prod() * sizeof(float));
+    ptr = weights[1].Get();
+    cnn_init.write(reinterpret_cast<char*>(ptr.get()), weights[1].Size().Prod() * sizeof(float));
+    ptr = bias[1].Get();
+    cnn_init.write(reinterpret_cast<char*>(ptr.get()), bias[1].Size().Prod() * sizeof(float));
+    ptr = weights[2].Get();
+    cnn_init.write(reinterpret_cast<char*>(ptr.get()), weights[2].Size().Prod() * sizeof(float));
+    ptr = bias[2].Get();
+    cnn_init.write(reinterpret_cast<char*>(ptr.get()), bias[2].Size().Prod() * sizeof(float));
+    cnn_init.close();
+  } else {
+    ifstream cnn_init("cnn_init", ios::binary);
+    Scale weights_size[] = {{5, 5, 1, 8}, {5, 5, 8, 16}, {10, 256}};
+    Scale bias_size[] = {{8}, {16}, {10, 1}};
+    for (int i = 0; i < 3; ++i) {
+      shared_ptr<float> weight_ptr(new float[weights_size[i].Prod()], [](float* ptr) { delete[] ptr; });
+      cnn_init.read(reinterpret_cast<char*>(weight_ptr.get()), weights_size[i].Prod() * sizeof(float));
+      weights[i] = NArray::MakeNArray(weights_size[i], weight_ptr);
+      shared_ptr<float> bias_ptr(new float[bias_size[i].Prod()], [](float* ptr) { delete[] ptr; });
+      cnn_init.read(reinterpret_cast<char*>(bias_ptr.get()), bias_size[i].Prod() * sizeof(float));
+      bias[i] = NArray::MakeNArray(bias_size[i], bias_ptr);
+    }
+    cnn_init.close();
+  }
   cout << "Training procedure:" << endl;
   for(int epoch = 0; epoch < numepochs; ++ epoch) {
     ifstream data_file_in(train_data_file.c_str(), ios::binary);
