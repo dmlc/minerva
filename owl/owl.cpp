@@ -70,10 +70,10 @@ m::NArray RandnWrapper(const bp::list& s, float mean, float var) {
   return m::NArray::Randn(ToScale(s), mean, var);
 }
 
-m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
+m::NArray MakeNArrayWrapper(const bp::list& s, const bp::list& val) {
   std::vector<float> v = std::vector<float>(bp::stl_input_iterator<float>(val), bp::stl_input_iterator<float>());
   size_t length = bp::len(val);
-  shared_ptr<float> data( new float[length] );
+  shared_ptr<float> data( new float[length], [] (float* p) { delete [] p; } );
   memcpy(data.get(), v.data(), sizeof(float) * length);
 //  for(size_t i = 0; i < length; ++i) {
 //    valptr.get()[i] = bp::extract<float>(val[i] * 1.0);
@@ -87,9 +87,19 @@ bp::list NArrayToList(m::NArray narr) {
     l.append(v.get()[i]);
   return l;
 }
+bp::list NArrayGetShapeWrapper(m::NArray narr) {
+  return ToPythonList(narr.Size());
+}
 
 void WaitForEvalFinish() {
   m::MinervaSystem::Instance().WaitForEvalFinish();
+}
+
+void PrintSystemInfo() {
+  m::MinervaSystem& ms = m::MinervaSystem::Instance();
+  cout << "CPU mem:" << ms.device_manager().GetDevice(0)->GetMemUsage() << endl;
+  cout << "GPU mem:" << ms.device_manager().GetDevice(1)->GetMemUsage() << endl;
+  cout << "Dag:\n" << ms.physical_dag().PrintDag<m::ExternRCPrinter>() << endl;
 }
 
 } // end of namespace owl
@@ -141,6 +151,7 @@ BOOST_PYTHON_MODULE(libowl) {
     // normalize
     .def("norm_arithmetic", &m::NArray::NormArithmetic)
     // misc
+    .def("shape", &owl::NArrayGetShapeWrapper)
     .def("trans", &m::NArray::Trans)
     .def("tofile", &m::NArray::ToFile)
     .def("tolist", &owl::NArrayToList)
@@ -162,12 +173,12 @@ BOOST_PYTHON_MODULE(libowl) {
   def("randn", &owl::RandnWrapper);
 
   // system
-  //def("to_list", &owl::NArrayToList);
   def("initialize", &owl::Initialize);
   def("create_cpu_device", &owl::CreateCpuDevice);
   def("create_gpu_device", &owl::CreateGpuDevice);
   def("set_device", &owl::SetDevice);
   def("wait_eval", &owl::WaitForEvalFinish);
+  def("print_sys_info", &owl::PrintSystemInfo);
 
   // elewise
   def("mult", &m::Elewise::Mult);
