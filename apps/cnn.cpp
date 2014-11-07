@@ -12,8 +12,8 @@ const int mb_size = 256;
 const int num_mb_per_epoch = 60000 / mb_size;
 float alpha = 0.01 / mb_size;
 
-const string train_data_file = "/home/cs_user/data/mnist/traindata.dat";
-const string train_label_file = "/home/cs_user/data/mnist/trainlabel.dat";
+const string train_data_file = "/home/jermaine/data/traindata.dat";
+const string train_label_file = "/home/jermaine/data/trainlabel.dat";
 
 vector<NArray> weights;
 vector<NArray> bias;
@@ -41,11 +41,11 @@ int main(int argc, char** argv) {
   acts.resize(9);
   sens.resize(9);
   if (FLAGS_init) {
-    weights[0] = Filter(NArray::Randn({5, 5, 1, 8}, 0.0, 0.1));
-    bias[0] = NArray::Randn({8}, 0.0, 0.1);
-    weights[1] = Filter(NArray::Randn({5, 5, 8, 16}, 0.0, 0.1));
-    bias[1] = NArray::Randn({16}, 0.0, 0.1);
-    weights[2] = NArray::Randn({10, 256}, 0.0, 0.1);
+    weights[0] = Filter(NArray::Randn({5, 5, 1, 16}, 0.0, 0.1));
+    bias[0] = NArray::Randn({16}, 0.0, 0.1);
+    weights[1] = Filter(NArray::Randn({5, 5, 16, 32}, 0.0, 0.1));
+    bias[1] = NArray::Randn({32}, 0.0, 0.1);
+    weights[2] = NArray::Randn({10, 512}, 0.0, 0.1);
     bias[2] = NArray::Randn({10, 1}, 0.0, 0.1);
     ofstream cnn_init("cnn_init", ios::binary);
     auto ptr = weights[0].Get();
@@ -63,8 +63,8 @@ int main(int argc, char** argv) {
     cnn_init.close();
   } else {
     ifstream cnn_init("cnn_init", ios::binary);
-    Scale weights_size[] = {{5, 5, 1, 8}, {5, 5, 8, 16}, {10, 256}};
-    Scale bias_size[] = {{8}, {16}, {10, 1}};
+    Scale weights_size[] = {{5, 5, 1, 16}, {5, 5, 16, 32}, {10, 512}};
+    Scale bias_size[] = {{16}, {32}, {10, 1}};
     for (int i = 0; i < 3; ++i) {
       shared_ptr<float> weight_ptr(new float[weights_size[i].Prod()], [](float* ptr) { delete[] ptr; });
       cnn_init.read(reinterpret_cast<char*>(weight_ptr.get()), weights_size[i].Prod() * sizeof(float));
