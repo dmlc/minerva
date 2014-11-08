@@ -115,12 +115,12 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
   }
 
   vector<NArray> ret;
-  ret.push_back(alpha / mb_size * Convolution::ConvBackwardFilter(sens[1], acts[0], conv_info[0]));
-  ret.push_back(alpha / mb_size * Convolution::ConvBackwardBias(sens[1]));
-  ret.push_back(alpha / mb_size * Convolution::ConvBackwardFilter(sens[4], acts[3], conv_info[1]));
-  ret.push_back(alpha / mb_size * Convolution::ConvBackwardBias(sens[4]));
-  ret.push_back(alpha / mb_size * sens[7] * re_acts6.Trans());
-  ret.push_back(alpha / mb_size * sens[7].Sum(1));
+  ret.push_back(Convolution::ConvBackwardFilter(sens[1], acts[0], conv_info[0]));
+  ret.push_back(Convolution::ConvBackwardBias(sens[1]));
+  ret.push_back(Convolution::ConvBackwardFilter(sens[4], acts[3], conv_info[1]));
+  ret.push_back(Convolution::ConvBackwardBias(sens[4]));
+  ret.push_back(sens[7] * re_acts6.Trans());
+  ret.push_back(sens[7].Sum(1));
   return ret;
 }
 
@@ -128,9 +128,9 @@ int main(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   MinervaSystem& ms = MinervaSystem::Instance();
   ms.Initialize(&argc, &argv);
-  uint64_t cpuDevice = ms.CreateCpuDevice();
-  uint64_t gpuDevice = ms.CreateGpuDevice(0);
-  ms.current_device_id_ = gpuDevice;
+  uint64_t cpu_device = ms.CreateCpuDevice();
+  uint64_t gpu_device[2] = {ms.CreateGpuDevice(0), ms.CreateGpuDevice(1)};
+  ms.current_device_id_ = gpu_device[0];
   if (0 < FLAGS_mb && FLAGS_mb <= 512) {
     mb_size = FLAGS_mb;
   }
@@ -148,13 +148,14 @@ int main(int argc, char** argv) {
     label_file_in.ignore(2 * sizeof(float));
     cout << "Epoch #" << epoch << endl;
     for (int mb = 0; mb < 60000 / mb_size; ++mb) {
+      ms.current_device_id_ = gpu_device[0];
       auto res = TrainMB(data_file_in, label_file_in, mb % 20 == 19);
-      weights[0] -= res[0];
-      bias[0] -= res[1];
-      weights[1] -= res[2];
-      bias[1] -= res[3];
-      weights[2] -= res[4];
-      bias[2] -= res[5];
+      weights[0] -= alpha / mb_size * res[0];
+      bias[0] -= alpha / mb_size * res[1];
+      weights[1] -= alpha / mb_size * res[2];
+      bias[1] -= alpha / mb_size * res[3];
+      weights[2] -= alpha / mb_size * res[4];
+      bias[2] -= alpha / mb_size * res[5];
     }
     data_file_in.close();
     label_file_in.close();
@@ -162,9 +163,10 @@ int main(int argc, char** argv) {
   weights.clear();
   bias.clear();
   ms.dag_scheduler().GCNodes();
-  cout << ms.device_manager().GetDevice(gpuDevice)->GetMemUsage() << endl;
-  cout << ms.device_manager().GetDevice(cpuDevice)->GetMemUsage() << endl;
-  cout << ms.physical_dag().PrintDag<ExternRCPrinter>() << endl;
-  cout << "Training finished." << endl;
+  cout << ms.device_manager().GetDevice(gpu_device[0])->GetMemUsage() << endl;
+  cout << ms.device_manager().GetDevice(gpu_device[1])->GetMemUsage() << endl;
+  cout << ms.device_manager().GetDevice(cpu_device)->GetMemUsage() << endl;
+  cout << ms.physical_dag().NumNodes() << endl;
+  cout << "Training finished" << endl;
   return 0;
 }
