@@ -10,10 +10,16 @@ uint64_t cpu_device, gpu_device;
 
 void Train() {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
-  auto a = NArray::Randn({10, 1}, 0, 1);
+  ms.current_device_id_ = gpu_device;
+  auto a = NArray::Randn({3, 2}, 0, 1);
+  auto b = a.MaxIndex(0);
   auto top_diff_ptr = a.Get();
   for (int i = 0; i < a.Size().Prod(); ++i) {
+    cout << top_diff_ptr.get()[i] << ' ';
+  }
+  cout << endl;
+  top_diff_ptr = b.Get();
+  for (int i = 0; i < b.Size().Prod(); ++i) {
     cout << top_diff_ptr.get()[i] << ' ';
   }
   cout << endl;
