@@ -273,4 +273,3 @@ BOOST_PYTHON_MODULE(libowl) {
   def("activation_backward", &owl::ActivationBackward);
   def("softmax_backward", &owl::SoftmaxBackward);
 }
-

@@ -5,18 +5,19 @@
 namespace minerva {
 namespace basic {
 
-extern void Arithmetic(const DataList&, const DataList&, ArithmeticClosure&);
-extern void ArithmeticConst(const DataList&, const DataList&, ArithmeticConstClosure&);
-extern void Elewise(const DataList&, const DataList&, ElewiseClosure&);
-extern void MatMult(const DataList&, const DataList&, MatMultClosure&);
-extern void Transpose(const DataList&, const DataList&, TransposeClosure&);
-extern void Reduction(const DataList&, const DataList&, ReductionClosure&);
-extern void NormArithmetic(const DataList&, const DataList&, NormArithmeticClosure&);
-extern void MaxIndex(const DataList&, const DataList&, MaxIndexClosure&);
-extern void Reshape(const DataList&, const DataList&, ReshapeClosure&);
+void Arithmetic(const DataList&, const DataList&, ArithmeticClosure&);
+void ArithmeticConst(const DataList&, const DataList&, ArithmeticConstClosure&);
+void Elewise(const DataList&, const DataList&, ElewiseClosure&);
+void MatMult(const DataList&, const DataList&, MatMultClosure&);
+void Transpose(const DataList&, const DataList&, TransposeClosure&);
+void Reduction(const DataList&, const DataList&, ReductionClosure&);
+void NormArithmetic(const DataList&, const DataList&, NormArithmeticClosure&);
+void MaxIndex(const DataList&, const DataList&, MaxIndexClosure&);
+void Reshape(const DataList&, const DataList&, ReshapeClosure&);
 
-extern void Randn(const DataList&, RandnClosure& );
-extern void Fill(const DataList&, FillClosure& );
+void ArrayLoader(const DataList&, ArrayLoaderClosure&);
+void Randn(const DataList&, RandnClosure&);
+void Fill(const DataList&, FillClosure&);
 
 }  // end of namespace basic
 }  // end of namespace minerva

@@ -203,3 +203,11 @@ __global__ static void CudaPerformMaxIndexOnRowKernel(float* matrix, float* col,
   }
 }
 
+__global__ static void CudaPerformFillKernel(float* dst, size_t size, float val) {
+  int cur = threadIdx.x + blockIdx.x * blockDim.x;
+  while (cur < size) {
+    dst[cur] = val;
+    cur += gridDim.x * blockDim.x;
+  }
+}
+

@@ -1,36 +1,20 @@
 #!/usr/bin/env python
-
+import numpy as np
 import libowl as _owl
 
-SimpleFileLoader = _owl.SimpleFileLoader
-FileFormat = _owl.FileFormat
-MBLoader = _owl.MBLoader
-
-logical_dag = _owl.logical_dag
 initialize = _owl.initialize
+create_cpu_device = _owl.create_cpu_device
+create_gpu_device = _owl.create_gpu_device
+set_device = _owl.set_device
 wait_eval = _owl.wait_eval
 
-load_from_file = _owl.load_from_file
 zeros = _owl.zeros
 ones = _owl.ones
+randn = _owl.randn
 make_narray = _owl.make_narray
+def from_nparray(nparr):
+    return _owl.make_narray([i for i in nparr.shape], nparr.T.flatten().tolist())
 
 op = _owl.arithmetic
-
-def zeros(shape):
-    num_parts = [1 for i in shape]
-    return _owl.zeros(shape, num_parts)
-
-def ones(shape):
-    num_parts = [1 for i in shape]
-    return _owl.ones(shape, num_parts)
-
-def load_from_file(shape, fname, loader):
-    num_parts = [1 for i in shape]
-    return _owl.load_from_file(shape, fname, loader, num_parts)
-
-def make_narray(shape, val):
-    num_parts = [1 for i in shape]
-    return _owl.make_narray(shape, val, num_parts)
 
 softmax = _owl.softmax

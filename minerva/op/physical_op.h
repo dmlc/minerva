@@ -10,6 +10,14 @@
 namespace minerva {
 
 // Data generate functions
+
+class ArrayLoaderOp : public PhyDataGenFnWithClosure<ArrayLoaderClosure> {
+ public:
+  std::string Name() const {
+    return ":array loader";
+  }
+};
+
 class RandnOp : public PhyDataGenFnWithClosure<RandnClosure> {
  public:
   std::string Name() const {

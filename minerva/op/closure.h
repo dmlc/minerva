@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include "common/scale.h"
 #include "narray/convolution_info.h"
 
@@ -21,6 +22,10 @@ enum class ElewiseType {
 enum class ReductionType {
   kSum = 0,
   kMax,
+};
+
+struct ArrayLoaderClosure {
+  std::shared_ptr<float> data;
 };
 
 struct RandnClosure {
