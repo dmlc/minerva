@@ -143,7 +143,7 @@ __global__ static void CudaPerformReductionOnColKernel(float* matrix, float* row
   int step = gridDim.x * blockDim.x;
   while (col_id < n) {
     float r = matrix[col_id * m];
-    for (int i = 0; i < m; ++i) {
+    for (int i = 1; i < m; ++i) {
       r = func(r, matrix[col_id * m + i]);
     }
     row[col_id] = r;
@@ -158,7 +158,7 @@ __global__ static void CudaPerformReductionOnRowKernel(float* matrix, float* col
   int step = gridDim.x * blockDim.x;
   while (row_id < m) {
     float r = matrix[row_id];
-    for (int i = 0; i < n; ++i) {
+    for (int i = 1; i < n; ++i) {
       r = func(r, matrix[i * m + row_id]);
     }
     col[row_id] = r;
@@ -174,7 +174,7 @@ __global__ static void CudaPerformMaxIndexOnColKernel(float* matrix, float* row,
   while (col_id < n) {
     float maxv = matrix[col_id * m];
     int maxid = 0;
-    for (int i = 0; i < m; ++i) {
+    for (int i = 1; i < m; ++i) {
       if (matrix[col_id * m + i] > maxv) {
         maxv = matrix[col_id * m + i];
         maxid = i;
@@ -192,7 +192,7 @@ __global__ static void CudaPerformMaxIndexOnRowKernel(float* matrix, float* col,
   while (row_id < m) {
     float maxv = matrix[row_id];
     int maxid = 0;
-    for (int i = 0; i < n; ++i) {
+    for (int i = 1; i < n; ++i) {
       if (matrix[i * m + row_id] > maxv) {
         maxv = matrix[i * m + row_id];
         maxid = i;
