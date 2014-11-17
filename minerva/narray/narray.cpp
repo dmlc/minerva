@@ -55,10 +55,10 @@ vector<NArray> NArray::Compute(
     return NArray(physical_dag.NewDataNode(PhysicalData(size, current_device_id, MinervaSystem::Instance().GenerateDataId())));
   });
   auto rst_data_nodes = Map<PhysicalDataNode*>(rst, [](const NArray& i) {
-    return i.data_node_;
+    return CHECK_NOTNULL(i.data_node_);
   });
   auto param_data_nodes = Map<PhysicalDataNode*>(params, [](const NArray& i) {
-    return i.data_node_;
+    return CHECK_NOTNULL(i.data_node_);
   });
   fn->device_id = current_device_id;
   MinervaSystem::Instance().physical_dag().NewOpNode(param_data_nodes, rst_data_nodes, {fn});
@@ -70,10 +70,10 @@ NArray NArray::ComputeOne(const vector<NArray>& params, const Scale& size, Physi
   auto current_device_id = MinervaSystem::Instance().current_device_id_;
   auto rst = NArray(physical_dag.NewDataNode(PhysicalData(size, current_device_id, MinervaSystem::Instance().GenerateDataId())));
   auto param_data_nodes = Map<PhysicalDataNode*>(params, [](const NArray& i) {
-    return i.data_node_;
+    return CHECK_NOTNULL(i.data_node_);
   });
   fn->device_id = current_device_id;
-  MinervaSystem::Instance().physical_dag().NewOpNode(param_data_nodes, {rst.data_node_}, {fn});
+  MinervaSystem::Instance().physical_dag().NewOpNode(param_data_nodes, {CHECK_NOTNULL(rst.data_node_)}, {fn});
   return rst;
 }
 
