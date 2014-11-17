@@ -26,12 +26,12 @@ def make_vector(x, y):
     return result
 
 def init_network(bias, weights, data, label, minibatch_size = 256, num_minibatches = 235):
-    weights.append(randn([5, 5, 1, 8], 0.0, 0.1));
-    weights.append(randn([5, 5, 8, 16], 0.0, 0.1));
-    weights.append(randn([10, 256], 0.0, 0.1));
+    weights.append(randn([5, 5, 1, 16], 0.0, 0.1));
+    weights.append(randn([5, 5, 16, 32], 0.0, 0.1));
+    weights.append(randn([10, 512], 0.0, 0.1));
 
-    bias.append(randn([8], 0.0, 0.1));
     bias.append(randn([16], 0.0, 0.1));
+    bias.append(randn([32], 0.0, 0.1));
     bias.append(randn([10, 1], 0.0, 0.1));
 
     print 'init network'
@@ -78,14 +78,13 @@ def train_network(bias, weights, data, label,
     for i in xrange(num_epochs):
         print "Epoch #", i
         for j in xrange(num_minibatches):
-            set_device(cpuDevice)
+            set_device(gpuDevice)
             acts = [None] * num_layers
             sens = [None] * num_layers
 
             acts[0] = make_narray([28, 28, 1, minibatch_size], data[j])
             target = make_narray([10, 1, 1, minibatch_size], label[j])
 
-            set_device(gpuDevice)
             acts[1] = conv_forward(acts[0], weights[0], bias[0], conv_info(0, 0, 1, 1))
             acts[2] = activation_forward(acts[1], activation_algo.relu)
             
@@ -109,8 +108,8 @@ def train_network(bias, weights, data, label,
             sens[2] = pooling_backward(sens[3], acts[3], acts[2], pooling_info(2, 2, 2, 2, pooling_algo.max))
             sens[1] = activation_backward(sens[2], acts[2], acts[1], activation_algo.relu)
 
-            weights[2] -= eps_w * sens[7] * re_acts6.trans();
-            bias[2] -= eps_b * sens[7].sum(1);
+            weights[2] -= eps_w * sens[7] * re_acts6.trans()
+            bias[2] -= eps_b * sens[7].sum(1)
 
             weights[1] -= eps_w * conv_backward_filter(sens[4], acts[3], conv_info(2, 2, 1, 1))
             bias[1] -= eps_b * conv_backward_bias(sens[4])
