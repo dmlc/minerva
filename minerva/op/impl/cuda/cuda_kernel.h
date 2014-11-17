@@ -175,7 +175,7 @@ __global__ static void CudaPerformMaxIndexOnColKernel(float* matrix, float* row,
     float maxv = matrix[col_id * m];
     int maxid = 0;
     for (int i = 1; i < m; ++i) {
-      if (matrix[col_id * m + i] > maxv) {
+      if (maxv < matrix[col_id * m + i]) {
         maxv = matrix[col_id * m + i];
         maxid = i;
       }
@@ -193,7 +193,7 @@ __global__ static void CudaPerformMaxIndexOnRowKernel(float* matrix, float* col,
     float maxv = matrix[row_id];
     int maxid = 0;
     for (int i = 1; i < n; ++i) {
-      if (matrix[i * m + row_id] > maxv) {
+      if (maxv < matrix[i * m + row_id]) {
         maxv = matrix[i * m + row_id];
         maxid = i;
       }
