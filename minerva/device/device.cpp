@@ -45,7 +45,6 @@ ThreadedDevice::ThreadedDevice(uint64_t device_id, DeviceListener* l, size_t par
 }
 
 ThreadedDevice::~ThreadedDevice() {
-  pool_.WaitForAllFinished();
 }
 
 void ThreadedDevice::PushTask(PhysicalOpNode* node) {
@@ -173,6 +172,7 @@ CpuDevice::CpuDevice(uint64_t device_id, DeviceListener* l) : ThreadedDevice(dev
 }
 
 CpuDevice::~CpuDevice() {
+  pool_.WaitForAllFinished();
   delete data_store_;
 }
 
