@@ -25,6 +25,15 @@ void DagScheduler::WaitForFinish() {
   }
 }
 
+void DagScheduler::WaitForFinish(uint64_t node_id) {
+  unique_lock<mutex> lck(finish_mutex_);
+  target_ = node_id;
+  while (rt_info_.GetState(node_id) != NodeState::kCompleted) {
+    finish_cond_.wait(lck);
+  }
+  target_ = -1;
+}
+
 void DagScheduler::GCNodes() {
   lock_guard<recursive_mutex> lck(dag_->m_);
   auto dead_set = rt_info_.dead_nodes();
@@ -227,7 +236,6 @@ void DagScheduler::DispatcherRoutine() {
           CHECK_EQ(pred_ri.num_triggers_needed, 0) << "#triggers incorrect for a completed data node";
           if (--pred_ri.reference_count == 0 && pred_node->data_.extern_rc == 0) {
             FreeDataNodeRes(pred_node);
-            // No locks needed, since `reference_count` cannot be decreased to 0 multiple times
             pred_ri.state = NodeState::kDead;
             rt_info_.KillNode(pred->node_id());
           }
@@ -264,11 +272,11 @@ void DagScheduler::DispatcherRoutine() {
         }
       }
       --num_nodes_yet_to_finish_;
-    }
-    {
-      lock_guard<mutex> lck(finish_mutex_);
-      if (num_nodes_yet_to_finish_ == 0) {
-        finish_cond_.notify_all();
+      {
+        unique_lock<mutex> lck(finish_mutex_);
+        if (num_nodes_yet_to_finish_ == 0 || node_id == target_) {
+          finish_cond_.notify_all();
+        }
       }
     }
   }
