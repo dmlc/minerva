@@ -32,6 +32,10 @@ struct RandnClosure {
   float mu, var;
 };
 
+struct RandBernoulliClosure {
+  float p;
+};
+
 struct FillClosure {
   float val;
 };

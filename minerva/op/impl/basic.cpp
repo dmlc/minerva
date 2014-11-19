@@ -208,6 +208,17 @@ void Randn(const DataList& output, RandnClosure& closure) {
   }
 }
 
+void RandBernoulli(const DataList& outputs, RandBernoulliClosure& closure) {
+  CHECK_EQ(outputs.size(), 1) << "(bernoulli) #outputs wrong";
+  int length = outputs[0].size().Prod();
+  float* data = outputs[0].data();
+  default_random_engine generator(chrono::system_clock::now().time_since_epoch().count());
+  bernoulli_distribution distribution(closure.p);
+  for (int i = 0; i < length; ++i) {
+    data[i] = distribution(generator);
+  }
+}
+
 void Fill(const DataList& output, FillClosure& closure) {
   CHECK_EQ(output.size(), 1) << "wrong number of fill constant output";
   int length = output[0].size().Prod();

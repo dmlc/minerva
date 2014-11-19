@@ -427,8 +427,13 @@ void ArrayLoader(const DataList& outputs, ArrayLoaderClosure& closure, const Cud
 }
 
 void Randn(const DataList& outputs, RandnClosure& closure, const CudaRuntimeContext&) {
-  CHECK_EQ(outputs.size(), 1) << "(randn) #outputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(normal) #outputs wrong";
   CudaPerformRandn(outputs[0].data(), outputs[0].size().Prod(), chrono::system_clock::now().time_since_epoch().count(), closure.mu, closure.var);
+}
+
+void RandBernoulli(const DataList& outputs, RandBernoulliClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(outputs.size(), 1) << "(bernoulli) #outputs wrong";
+  CudaPerformRandBernoulli(outputs[0].data(), outputs[0].size().Prod(), chrono::system_clock::now().time_since_epoch().count(), closure.p, context.stream);
 }
 
 void Fill(const DataList& outputs, FillClosure& closure, const CudaRuntimeContext& context) {

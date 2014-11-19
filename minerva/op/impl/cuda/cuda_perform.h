@@ -66,6 +66,7 @@ void CudaPerformMaxPoolingBackward(float* bottom, float* top, float* top_diff, f
 void CudaPerformAveragePoolingBackward(float* bottom, float* top, float* top_diff, float* bottom_diff, int num_images, int num_channels, int bottom_height, int bottom_width, int stride_vertical, int stride_horizontal, int window_height, int window_width, cudaStream_t stream, cudnnHandle_t handle);
 
 void CudaPerformRandn(float* dst, size_t size, unsigned int seed, float mean, float var);
+void CudaPerformRandBernoulli(float* dst, size_t size, unsigned int seed, float p, cudaStream_t stream);
 void CudaPerformFill(float* dst, size_t size, float val, cudaStream_t stream);
 
 }
