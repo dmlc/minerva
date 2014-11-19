@@ -45,7 +45,7 @@ TEST(EvalTest, AsyncEval) {
   delete [] x;
   delete [] y;
   delete [] z;
-  MinervaSystem::Instance().WaitForEvalFinish();
+  MinervaSystem::Instance().dag_scheduler().WaitForFinish();
 }
 
 TEST(EvalTest, AsyncEvalWithChangedDag) {
@@ -55,7 +55,7 @@ TEST(EvalTest, AsyncEvalWithChangedDag) {
   c.EvalAsync();
   NArray d = c + 1;
   NArray e = b * d.Trans(); // 500x250
-  MinervaSystem::Instance().WaitForEvalFinish();
+  MinervaSystem::Instance().dag_scheduler().WaitForFinish();
   shared_ptr<float> eptr = e.Get();
   for (int i = 0; i < 500 * 250; ++i) {
     ASSERT_EQ(eptr.get()[i], 0.0);
@@ -63,6 +63,6 @@ TEST(EvalTest, AsyncEvalWithChangedDag) {
 }
 
 TEST(WaitFinishTest, OnlyWait) {
-  MinervaSystem::Instance().WaitForEvalFinish();
+  MinervaSystem::Instance().dag_scheduler().WaitForFinish();
 }
 

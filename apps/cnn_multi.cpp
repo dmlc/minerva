@@ -111,7 +111,8 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
   sens[1] = Convolution::ActivationBackward(sens[2], acts[2], acts[1], ActivationAlgorithm::kRelu);
 
   if (print) {
-    PrintTrainingAccuracy(acts[8], label);
+    acts[8].EvalAsync();
+    // PrintTrainingAccuracy(acts[8], label);
   }
 
   vector<NArray> ret;
@@ -126,6 +127,7 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
 
 int main(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
+  FLAGS_alsologtostderr = 1;
   MinervaSystem& ms = MinervaSystem::Instance();
   ms.Initialize(&argc, &argv);
   uint64_t cpu_device = ms.CreateCpuDevice();
@@ -146,15 +148,15 @@ int main(int argc, char** argv) {
     ifstream label_file_in(train_label_file.c_str(), ios::binary);
     data_file_in.ignore(2 * sizeof(float));
     label_file_in.ignore(2 * sizeof(float));
-    cout << "Epoch #" << epoch << endl;
+    LOG(INFO) << "Epoch #" << epoch;
     for (int mb = 0; mb < 60000 / mb_size; ++mb) {
       vector<NArray> res1, res2;
       bool second = false;
       ms.current_device_id_ = gpu_device[0];
-      res1 = TrainMB(data_file_in, label_file_in, mb % 20 == 19);
+      res1 = TrainMB(data_file_in, label_file_in, mb % 40 == 0);
       if (++mb < 60000 / mb_size) {
         ms.current_device_id_ = gpu_device[1];
-        res2 = TrainMB(data_file_in, label_file_in, mb % 20 == 19);
+        res2 = TrainMB(data_file_in, label_file_in, mb % 40 == 0);
         second = true;
       }
       weights[0] -= alpha / mb_size / 2 * res1[0];
@@ -172,6 +174,7 @@ int main(int argc, char** argv) {
         bias[2] -= alpha / mb_size / 2 * res2[5];
       }
     }
+    weights[0].Eval();
     data_file_in.close();
     label_file_in.close();
   }

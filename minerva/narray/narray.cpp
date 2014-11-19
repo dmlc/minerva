@@ -159,7 +159,7 @@ NArray NArray::NormArithmetic(const NArray& rhs, ArithmeticType type) const {
     if (lhs.Size()[i] == rhs.Size()[i]) {
       continue;
     } else if (rhs.Size()[i] != 1) {
-      CHECK(false) << "NormArithmetic cannot replicate a dimension that is not 1";
+      LOG(FATAL) << "NormArithmetic cannot replicate a dimension that is not 1";
     } else {
       dims_to_replicate.push_back(i);
     }

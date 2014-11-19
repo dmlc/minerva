@@ -9,7 +9,7 @@ namespace minerva {
 
 template<typename... Args>
 void NO_IMPL(Args&&...) {
-  CHECK(false) << "no implementation";
+  LOG(FATAL) << "no implementation";
 }
 
 INSTALL_COMPUTE_FN(ArithmeticClosure, basic::Arithmetic, NO_IMPL, cuda::Arithmetic);
