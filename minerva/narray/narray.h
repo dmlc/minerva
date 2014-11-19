@@ -17,6 +17,7 @@ class NArray {
   // Static constructors
   static NArray Constant(const Scale& size, float val);
   static NArray Randn(const Scale& size, float mu, float var);
+  static NArray RandBernoulli(const Scale& size, float p);
   static NArray LoadFromFile(const Scale& size, const std::string& fname, std::shared_ptr<IFileLoader> loader);
   static NArray Zeros(const Scale& size);
   static NArray Ones(const Scale& size);

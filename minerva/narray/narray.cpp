@@ -24,6 +24,14 @@ NArray NArray::Randn(const Scale& size, float mu, float var) {
   return NArray::GenerateOne(size, randn_op);
 }
 
+NArray NArray::RandBernoulli(const Scale& size, float p) {
+  CHECK_LE(p, 1);
+  CHECK_LE(0, p);
+  RandBernoulliOp* op = new RandBernoulliOp();
+  op->closure = {p};
+  return NArray::GenerateOne(size, op);
+}
+
 NArray NArray::LoadFromFile(const Scale& size, const string& fname, shared_ptr<IFileLoader> loader) {
   FileLoaderOp* loader_op = new FileLoaderOp();
   loader_op->closure = {fname, size, loader};

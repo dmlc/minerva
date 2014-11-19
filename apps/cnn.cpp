@@ -111,7 +111,7 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
   sens[1] = Convolution::ActivationBackward(sens[2], acts[2], acts[1], ActivationAlgorithm::kRelu);
 
   if (print) {
-    acts[8].EvalAsync();
+    acts[8].Eval();
     // PrintTrainingAccuracy(acts[8], label);
   }
 
@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
       weights[2] -= alpha / mb_size * res[4];
       bias[2] -= alpha / mb_size * res[5];
     }
-    weights[0].Eval();
+    // weights[0].Eval();
     data_file_in.close();
     label_file_in.close();
   }

@@ -1,4 +1,5 @@
 #pragma once
+#include <curand_kernel.h>
 
 // Unary functions
 class ExpOp {
@@ -200,6 +201,21 @@ __global__ static void CudaPerformMaxIndexOnRowKernel(float* matrix, float* col,
     }
     col[row_id] = maxid;
     row_id += step;
+  }
+}
+
+__global__ static void CudaPerformRandBernoulliKernel(float* dst, size_t size, unsigned int seed, float p) {
+  int step = gridDim.x * blockDim.x;
+  int cur = threadIdx.x + blockIdx.x * blockDim.x;
+  curandState_t state;
+  curand_init(seed, cur, 0, &state);
+  while (cur < size) {
+    if (curand_uniform(&state) < p) {
+      dst[cur] = 1;
+    } else {
+      dst[cur] = 0;
+    }
+    cur += step;
   }
 }
 
