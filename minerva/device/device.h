@@ -6,6 +6,7 @@
 #include <mutex>
 #include "device/data_store.h"
 #include "op/physical.h"
+#include "dag/physical_dag.h"
 #include "op/physical_fn.h"
 #include "procedures/device_listener.h"
 #include "common/common.h"
@@ -27,13 +28,13 @@ class Device {
     kCpu,
     kGpu
   };
-  Device(uint64_t, DeviceListener*);
+  Device(uint64_t device_id, DeviceListener*);
   virtual ~Device();
-  virtual void PushTask(uint64_t) = 0;
-  virtual std::pair<MemType, float*> GetPtr(uint64_t);
+  virtual void PushTask(PhysicalOpNode*) = 0;
+  virtual std::pair<MemType, float*> GetPtr(uint64_t data_id);
   virtual std::string Name() const = 0;
   virtual MemType GetMemType() const = 0;
-  virtual void FreeDataIfExist(uint64_t);
+  virtual void FreeDataIfExist(uint64_t data_id);
   virtual std::string GetMemUsage() const;
 
  protected:
@@ -50,13 +51,13 @@ class Device {
 
 class ThreadedDevice : public Device {
  public:
-  ThreadedDevice(uint64_t, DeviceListener*, size_t);
+  ThreadedDevice(uint64_t device_id, DeviceListener*, size_t parallelism);
   ~ThreadedDevice();
-  void PushTask(uint64_t);
-  void FreeDataIfExist(uint64_t);
+  void PushTask(PhysicalOpNode*);
+  void FreeDataIfExist(uint64_t data_id);
 
  protected:
-  virtual void Execute(uint64_t, int);
+  virtual void Execute(PhysicalOpNode*, int thrid);
   virtual void PreExecute();
   virtual void DoCopyRemoteData(float*, float*, size_t, int) = 0;
   virtual void DoExecute(const DataList&, const DataList&, PhysicalOp&, int) = 0;
@@ -70,7 +71,7 @@ class ThreadedDevice : public Device {
 #ifdef HAS_CUDA
 class GpuDevice : public ThreadedDevice {
  public:
-  GpuDevice(uint64_t, DeviceListener*, int);
+  GpuDevice(uint64_t device_id, DeviceListener*, int gpu_id);
   ~GpuDevice();
   MemType GetMemType() const;
   std::string Name() const;
@@ -90,7 +91,7 @@ class GpuDevice : public ThreadedDevice {
 
 class CpuDevice : public ThreadedDevice {
  public:
-  CpuDevice(uint64_t, DeviceListener*);
+  CpuDevice(uint64_t device_id, DeviceListener*);
   ~CpuDevice();
   MemType GetMemType() const;
   std::string Name() const;

@@ -39,7 +39,7 @@ class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<Physica
   void OnBeginModify();
   void OnFinishModify();
   // Device listener
-  void OnOperationComplete(uint64_t);
+  void OnOperationComplete(PhysicalOpNode*);
   // DAG procedure
   void Process(const std::vector<uint64_t>&);
 

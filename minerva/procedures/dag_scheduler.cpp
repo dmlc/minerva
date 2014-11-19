@@ -145,8 +145,8 @@ void DagScheduler::OnFinishModify() {
 }
 
 // Device listener
-void DagScheduler::OnOperationComplete(uint64_t id) {
-  dispatcher_queue_.Push({TaskType::kToComplete, id});
+void DagScheduler::OnOperationComplete(PhysicalOpNode* op_node) {
+  dispatcher_queue_.Push({TaskType::kToComplete, op_node->node_id()});
 }
 
 void DagScheduler::Process(const vector<uint64_t>& targets) {
@@ -219,7 +219,7 @@ void DagScheduler::DispatcherRoutine() {
       if (node->Type() == DagNode::NodeType::kOpNode) {
         device_id = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node))->op_.compute_fn->device_id;
         DLOG(INFO) << "dispatching node #" << node_id << " to device " << device_id;
-        MinervaSystem::Instance().device_manager().GetDevice(device_id)->PushTask(node_id);
+        MinervaSystem::Instance().device_manager().GetDevice(device_id)->PushTask(CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node)));
       } else {
         finish_directly = true;
       }
