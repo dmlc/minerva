@@ -17,6 +17,7 @@ class ThreadPool {
     }
   }
   ~ThreadPool() {
+    WaitForAllFinished();
     task_queue_.SignalForKill();
     for (auto& w : workers_) {
       w.join();
