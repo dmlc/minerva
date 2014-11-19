@@ -6,6 +6,7 @@ namespace minerva {
 
 template<typename D, typename O>
 Dag<D, O>::~Dag() {
+  std::lock_guard<std::recursive_mutex> lck(m_);
   auto index_to_node = index_to_node_;
   for (auto i : index_to_node) {
     DeleteNode(i.first);
@@ -14,16 +15,11 @@ Dag<D, O>::~Dag() {
 
 template<typename D, typename O>
 typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
-  for (auto mon : monitors_) {
-    mon->OnBeginModify();
-  }
+  std::lock_guard<std::recursive_mutex> lck(m_);
   DNode* ret = new DNode(NewIndex(), data);
   CHECK(index_to_node_.insert(std::make_pair(ret->node_id(), ret)).second);
   for (auto mon : monitors_) {
     mon->OnCreateNode(ret);
-  }
-  for (auto mon : monitors_) {
-    mon->OnFinishModify();
   }
   return ret;
 }
@@ -33,9 +29,7 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
     const std::vector<DataNode<D, O>*>& inputs,
     const std::vector<DataNode<D, O>*>& outputs,
     const O& op) {
-  for (auto mon : monitors_) {
-    mon->OnBeginModify();
-  }
+  std::lock_guard<std::recursive_mutex> lck(m_);
   ONode* ret = new ONode(NewIndex());
   ret->op_ = op;
   CHECK(index_to_node_.insert(std::make_pair(ret->node_id(), ret)).second);
@@ -58,18 +52,13 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
   }
   ret->inputs_ = inputs;
   ret->outputs_ = outputs;
-  for (auto mon : monitors_) {
-    mon->OnFinishModify();
-  }
   return ret;
 }
 
 template<typename D, typename O>
 void Dag<D, O>::DeleteNode(uint64_t id) {
+  std::lock_guard<std::recursive_mutex> lck(m_);
   DLOG(INFO) << "delete node #" << id;
-  for (auto mon : monitors_) {
-    mon->OnBeginModify();
-  }
   auto node = GetNode(id);
   for (auto succ : node->successors_) {
     CHECK_EQ(succ->predecessors_.erase(node), 1);
@@ -82,13 +71,11 @@ void Dag<D, O>::DeleteNode(uint64_t id) {
   }
   CHECK_EQ(index_to_node_.erase(id), 1);
   delete node;
-  for (auto mon : monitors_) {
-    mon->OnFinishModify();
-  }
 }
 
 template<typename D, typename O>
 DagNode* Dag<D, O>::GetNode(uint64_t nid) const {
+  std::lock_guard<std::recursive_mutex> lck(m_);
   return index_to_node_.at(nid);
 }
 
@@ -104,22 +91,26 @@ typename Dag<D, O>::DNode* Dag<D, O>::GetDataNode(uint64_t nid) const {
 
 template<typename D, typename O>
 size_t Dag<D, O>::NumNodes() const {
+  std::lock_guard<std::recursive_mutex> lck(m_);
   return index_to_node_.size();
 }
 
 template<typename D, typename O>
 void Dag<D, O>::RegisterMonitor(DagMonitor<Dag<D, O>>* m) {
+  std::lock_guard<std::recursive_mutex> lck(m_);
   monitors_.push_back(m);
 }
 
 template<typename D, typename O>
 void Dag<D, O>::ClearMonitor() {
+  std::lock_guard<std::recursive_mutex> lck(m_);
   monitors_.clear();
 }
 
 template<typename D, typename O>
 template<typename NodePrinter>
 std::string Dag<D, O>::PrintDag() const {
+  std::lock_guard<std::recursive_mutex> lck(m_);
   std::ostringstream out;
   out << "digraph G {" << std::endl;
   for (auto i : index_to_node_) {

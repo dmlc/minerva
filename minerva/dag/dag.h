@@ -28,15 +28,10 @@ class Dag {
   ONode* GetOpNode(uint64_t) const;
   DNode* GetDataNode(uint64_t) const;
   size_t NumNodes() const;
-  ContainerType::iterator begin() {
-    return index_to_node_.begin();
-  }
-  ContainerType::iterator end() {
-    return index_to_node_.end();
-  }
   void RegisterMonitor(DagMonitor<Dag<Data, Op>>*);
   void ClearMonitor();
   template<typename NodePrinter=DagHelper<Data, Op>> std::string PrintDag() const;
+  mutable std::recursive_mutex m_;
 
  private:
   uint64_t NewIndex();

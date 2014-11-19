@@ -13,6 +13,7 @@ DagScheduler::DagScheduler(PhysicalDag* d) : dispatcher_(&DagScheduler::Dispatch
 }
 
 DagScheduler::~DagScheduler() {
+  WaitForFinish();
   dispatcher_queue_.SignalForKill();
   dispatcher_.join();
 }
@@ -25,7 +26,7 @@ void DagScheduler::WaitForFinish() {
 }
 
 void DagScheduler::GCNodes() {
-  lock_guard<recursive_mutex> lck(m_);
+  lock_guard<recursive_mutex> lck(dag_->m_);
   auto dead_set = rt_info_.dead_nodes();
   DLOG(INFO) << dead_set.size() << " nodes to be GCed";
   for (auto id :dead_set) {
@@ -34,7 +35,7 @@ void DagScheduler::GCNodes() {
 }
 
 void DagScheduler::OnExternRCUpdate(PhysicalDataNode* node) {
-  lock_guard<recursive_mutex> lck(m_);
+  lock_guard<recursive_mutex> lck(dag_->m_);
   switch (rt_info_.GetState(node->node_id())) {
     case NodeState::kCompleted: {
       auto& ri = rt_info_.At(node->node_id());
@@ -108,18 +109,16 @@ void DagScheduler::OnExternRCUpdate(PhysicalDataNode* node) {
     case NodeState::kReady:
       break;
     default:
-      CHECK(false) << "incorrect state for node #" << node->node_id();
+      LOG(FATAL) << "incorrect state for node #" << node->node_id();
   }
 }
 
 void DagScheduler::OnCreateNode(DagNode* node) {
-  lock_guard<recursive_mutex> lck(m_);
   rt_info_.AddNode(node->node_id());
 }
 
 void DagScheduler::OnDeleteNode(DagNode* node) {
   // Forced deletion of nodes will not handle runtime information
-  lock_guard<recursive_mutex> lck(m_);
   if (node->Type() == DagNode::NodeType::kDataNode) {
     FreeDataNodeRes(CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(node)));
   }
@@ -127,21 +126,12 @@ void DagScheduler::OnDeleteNode(DagNode* node) {
 }
 
 void DagScheduler::OnCreateEdge(DagNode* from, DagNode* to) {
-  lock_guard<recursive_mutex> lck(m_);
   CHECK_NE(rt_info_.GetState(from->node_id()), NodeState::kDead) << "invalid state of node #" << from->node_id();
   CHECK_EQ(rt_info_.GetState(to->node_id()), NodeState::kBirth) << "invalid state of node #" << to->node_id();
   ++(rt_info_.At(from->node_id()).reference_count);
   if (rt_info_.GetState(from->node_id()) != NodeState::kCompleted) {
     ++(rt_info_.At(to->node_id()).num_triggers_needed);
   }
-}
-
-void DagScheduler::OnBeginModify() {
-  m_.lock();
-}
-
-void DagScheduler::OnFinishModify() {
-  m_.unlock();
 }
 
 // Device listener
@@ -151,7 +141,7 @@ void DagScheduler::OnOperationComplete(PhysicalOpNode* op_node) {
 
 void DagScheduler::Process(const vector<uint64_t>& targets) {
   // Nodes in `queue` should all have state `kBirth`
-  lock_guard<recursive_mutex> lck(m_);
+  lock_guard<recursive_mutex> lck(dag_->m_);
   queue<uint64_t> queue;
   for (auto id : targets) {
     // `targets` should consist of only data nodes
@@ -162,7 +152,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
         rt_info_.At(id).state = NodeState::kReady;
         break;
       case NodeState::kDead:
-        CHECK(false) << "invalid node state of id " << id;
+        LOG(FATAL) << "invalid node state of id " << id;
         break;
       default:
         break;
@@ -184,7 +174,7 @@ void DagScheduler::Process(const vector<uint64_t>& targets) {
         case NodeState::kCompleted:
           break;
         default:
-          CHECK(false) << "invalid state of node #" << pred->node_id() << " on dependency path";
+          LOG(FATAL) << "invalid state of node #" << pred->node_id() << " on dependency path";
       }
     }
     if (node->Type() == DagNode::NodeType::kOpNode) {
@@ -209,7 +199,7 @@ void DagScheduler::DispatcherRoutine() {
   pair<TaskType, uint64_t> task;
   // Pop queue while not exiting
   while (!dispatcher_queue_.Pop(task)) {
-    lock_guard<recursive_mutex> lck(m_);
+    lock_guard<recursive_mutex> lck(dag_->m_);
     auto node_id = task.second;
     auto node = dag_->GetNode(node_id);
     auto& ri = rt_info_.At(node_id);

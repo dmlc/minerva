@@ -37,6 +37,7 @@ void MinervaSystem::Initialize(int* argc, char*** argv) {
 }
 
 void MinervaSystem::Finalize() {
+  dag_scheduler_->WaitForFinish();
   physical_dag_->ClearMonitor();
   delete device_manager_;
   delete dag_scheduler_;

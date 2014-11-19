@@ -36,8 +36,6 @@ class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<Physica
   void OnCreateNode(DagNode*);
   void OnDeleteNode(DagNode*);
   void OnCreateEdge(DagNode*, DagNode*);
-  void OnBeginModify();
-  void OnFinishModify();
   // Device listener
   void OnOperationComplete(PhysicalOpNode*);
   // DAG procedure
@@ -45,7 +43,6 @@ class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<Physica
 
  private:
   void FreeDataNodeRes(PhysicalDataNode*);
-  std::recursive_mutex m_;
   // Runtime information
   RuntimeInfoMap rt_info_;
   // Scheduler dispatcher
