@@ -86,10 +86,6 @@ bp::list NArrayToList(m::NArray narr) {
   return l;
 }
 
-void WaitForEvalFinish() {
-  m::MinervaSystem::Instance().WaitForEvalFinish();
-}
-
 m::NArray ConvForward(m::NArray src, m::NArray filter, m::NArray bias, m::ConvInfo info) {
   return m::Convolution::ConvForward(m::ImageBatch(src), m::Filter(filter), bias, info);
 }
@@ -232,7 +228,6 @@ BOOST_PYTHON_MODULE(libowl) {
   def("create_cpu_device", &owl::CreateCpuDevice);
   def("create_gpu_device", &owl::CreateGpuDevice);
   def("set_device", &owl::SetDevice);
-  def("wait_eval", &owl::WaitForEvalFinish);
 
   // elewise
   def("mult", &m::Elewise::Mult);
