@@ -17,6 +17,7 @@ class NArray {
   // Static constructors
   static NArray Constant(const Scale& size, float val);
   static NArray Randn(const Scale& size, float mu, float var);
+  static NArray RandBernoulli(const Scale& size, float p);
   static NArray LoadFromFile(const Scale& size, const std::string& fname, std::shared_ptr<IFileLoader> loader);
   static NArray Zeros(const Scale& size);
   static NArray Ones(const Scale& size);
@@ -64,8 +65,8 @@ class NArray {
   // Matmult
   friend NArray operator*(const NArray&, const NArray&);
   // Shape
-  const Scale& Size() const { return data_node_->data_.size; }
-  int Size(int dim) const { return data_node_->data_.size[dim]; }
+  const Scale& Size() const { return CHECK_NOTNULL(data_node_)->data_.size; }
+  int Size(int dim) const { return CHECK_NOTNULL(data_node_)->data_.size[dim]; }
   NArray Reshape(const Scale& dims) const;
   NArray Trans() const;
   // Lazy reductions

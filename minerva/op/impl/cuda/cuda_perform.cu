@@ -531,6 +531,13 @@ void CudaPerformRandn(float* dst, size_t size, unsigned int seed, float mean, fl
   CURAND_CALL(curandDestroyGenerator(gen));
 }
 
+void CudaPerformRandBernoulli(float* dst, size_t size, unsigned int seed, float p, cudaStream_t stream) {
+  int block, thread;
+  FindConfiguration(size, block, thread);
+  CudaPerformRandBernoulliKernel<<<block, thread, 0, stream>>>(dst, size, seed, p);
+  CheckCudaError(__func__);
+}
+
 void CudaPerformFill(float* dst, size_t size, float val, cudaStream_t stream) {
   int block, thread;
   FindConfiguration(size, block, thread);

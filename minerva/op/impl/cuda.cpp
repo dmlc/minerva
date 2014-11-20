@@ -299,7 +299,7 @@ void SoftmaxForward(const DataList& inputs, const DataList& outputs, SoftmaxForw
       CudaPerformChannelSoftmaxForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
       break;
     default:
-      CHECK(false) << "softmax algorithm not supported";
+      LOG(FATAL) << "softmax algorithm not supported";
   }
 }
 
@@ -321,7 +321,7 @@ void SoftmaxBackward(const DataList& inputs, const DataList& outputs, SoftmaxBac
       CudaPerformChannelSoftmaxBackward(top_diff.data(), top.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
       break;
     default:
-      CHECK(false) << "softmax algorithm not supported";
+      LOG(FATAL) << "softmax algorithm not supported";
   }
 }
 
@@ -345,7 +345,7 @@ void ActivationForward(const DataList& inputs, const DataList& outputs, Activati
       CudaPerformTanhForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
       break;
     default:
-      CHECK(false) << "activation algorithm not supported";
+      LOG(FATAL) << "activation algorithm not supported";
   }
 }
 
@@ -371,7 +371,7 @@ void ActivationBackward(const DataList& inputs, const DataList& outputs, Activat
       CudaPerformTanhBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
       break;
     default:
-      CHECK(false) << "activation algorithm not supported";
+      LOG(FATAL) << "activation algorithm not supported";
   }
 }
 
@@ -392,7 +392,7 @@ void PoolingForward(const DataList& inputs, const DataList& outputs, PoolingForw
       CudaPerformAveragePoolingForward(bottom.data(), top.data(), num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, context.stream, context.cudnn_handle);
       break;
     default:
-      CHECK(false) << "pooling algorithm not supported";
+      LOG(FATAL) << "pooling algorithm not supported";
   }
 }
 
@@ -415,7 +415,7 @@ void PoolingBackward(const DataList& inputs, const DataList& outputs, PoolingBac
       CudaPerformAveragePoolingBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, context.stream, context.cudnn_handle);
       break;
     default:
-      CHECK(false) << "pooling algorithm not supported";
+      LOG(FATAL) << "pooling algorithm not supported";
   }
 }
 
@@ -427,8 +427,13 @@ void ArrayLoader(const DataList& outputs, ArrayLoaderClosure& closure, const Cud
 }
 
 void Randn(const DataList& outputs, RandnClosure& closure, const CudaRuntimeContext&) {
-  CHECK_EQ(outputs.size(), 1) << "(randn) #outputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(normal) #outputs wrong";
   CudaPerformRandn(outputs[0].data(), outputs[0].size().Prod(), chrono::system_clock::now().time_since_epoch().count(), closure.mu, closure.var);
+}
+
+void RandBernoulli(const DataList& outputs, RandBernoulliClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(outputs.size(), 1) << "(bernoulli) #outputs wrong";
+  CudaPerformRandBernoulli(outputs[0].data(), outputs[0].size().Prod(), chrono::system_clock::now().time_since_epoch().count(), closure.p, context.stream);
 }
 
 void Fill(const DataList& outputs, FillClosure& closure, const CudaRuntimeContext& context) {

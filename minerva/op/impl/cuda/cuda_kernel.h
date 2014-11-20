@@ -1,4 +1,5 @@
 #pragma once
+#include <curand_kernel.h>
 
 // Unary functions
 class ExpOp {
@@ -143,7 +144,7 @@ __global__ static void CudaPerformReductionOnColKernel(float* matrix, float* row
   int step = gridDim.x * blockDim.x;
   while (col_id < n) {
     float r = matrix[col_id * m];
-    for (int i = 0; i < m; ++i) {
+    for (int i = 1; i < m; ++i) {
       r = func(r, matrix[col_id * m + i]);
     }
     row[col_id] = r;
@@ -158,7 +159,7 @@ __global__ static void CudaPerformReductionOnRowKernel(float* matrix, float* col
   int step = gridDim.x * blockDim.x;
   while (row_id < m) {
     float r = matrix[row_id];
-    for (int i = 0; i < n; ++i) {
+    for (int i = 1; i < n; ++i) {
       r = func(r, matrix[i * m + row_id]);
     }
     col[row_id] = r;
@@ -174,8 +175,8 @@ __global__ static void CudaPerformMaxIndexOnColKernel(float* matrix, float* row,
   while (col_id < n) {
     float maxv = matrix[col_id * m];
     int maxid = 0;
-    for (int i = 0; i < m; ++i) {
-      if (matrix[col_id * m + i] > maxv) {
+    for (int i = 1; i < m; ++i) {
+      if (maxv < matrix[col_id * m + i]) {
         maxv = matrix[col_id * m + i];
         maxid = i;
       }
@@ -192,14 +193,29 @@ __global__ static void CudaPerformMaxIndexOnRowKernel(float* matrix, float* col,
   while (row_id < m) {
     float maxv = matrix[row_id];
     int maxid = 0;
-    for (int i = 0; i < n; ++i) {
-      if (matrix[i * m + row_id] > maxv) {
+    for (int i = 1; i < n; ++i) {
+      if (maxv < matrix[i * m + row_id]) {
         maxv = matrix[i * m + row_id];
         maxid = i;
       }
     }
     col[row_id] = maxid;
     row_id += step;
+  }
+}
+
+__global__ static void CudaPerformRandBernoulliKernel(float* dst, size_t size, unsigned int seed, float p) {
+  int step = gridDim.x * blockDim.x;
+  int cur = threadIdx.x + blockIdx.x * blockDim.x;
+  curandState_t state;
+  curand_init(seed, cur, 0, &state);
+  while (cur < size) {
+    if (curand_uniform(&state) < p) {
+      dst[cur] = 1;
+    } else {
+      dst[cur] = 0;
+    }
+    cur += step;
   }
 }
 

@@ -24,6 +24,14 @@ NArray NArray::Randn(const Scale& size, float mu, float var) {
   return NArray::GenerateOne(size, randn_op);
 }
 
+NArray NArray::RandBernoulli(const Scale& size, float p) {
+  CHECK_LE(p, 1);
+  CHECK_LE(0, p);
+  RandBernoulliOp* op = new RandBernoulliOp();
+  op->closure = {p};
+  return NArray::GenerateOne(size, op);
+}
+
 NArray NArray::LoadFromFile(const Scale& size, const string& fname, shared_ptr<IFileLoader> loader) {
   FileLoaderOp* loader_op = new FileLoaderOp();
   loader_op->closure = {fname, size, loader};
@@ -55,10 +63,10 @@ vector<NArray> NArray::Compute(
     return NArray(physical_dag.NewDataNode(PhysicalData(size, current_device_id, MinervaSystem::Instance().GenerateDataId())));
   });
   auto rst_data_nodes = Map<PhysicalDataNode*>(rst, [](const NArray& i) {
-    return i.data_node_;
+    return CHECK_NOTNULL(i.data_node_);
   });
   auto param_data_nodes = Map<PhysicalDataNode*>(params, [](const NArray& i) {
-    return i.data_node_;
+    return CHECK_NOTNULL(i.data_node_);
   });
   fn->device_id = current_device_id;
   MinervaSystem::Instance().physical_dag().NewOpNode(param_data_nodes, rst_data_nodes, {fn});
@@ -70,10 +78,10 @@ NArray NArray::ComputeOne(const vector<NArray>& params, const Scale& size, Physi
   auto current_device_id = MinervaSystem::Instance().current_device_id_;
   auto rst = NArray(physical_dag.NewDataNode(PhysicalData(size, current_device_id, MinervaSystem::Instance().GenerateDataId())));
   auto param_data_nodes = Map<PhysicalDataNode*>(params, [](const NArray& i) {
-    return i.data_node_;
+    return CHECK_NOTNULL(i.data_node_);
   });
   fn->device_id = current_device_id;
-  MinervaSystem::Instance().physical_dag().NewOpNode(param_data_nodes, {rst.data_node_}, {fn});
+  MinervaSystem::Instance().physical_dag().NewOpNode(param_data_nodes, {CHECK_NOTNULL(rst.data_node_)}, {fn});
   return rst;
 }
 
@@ -159,7 +167,7 @@ NArray NArray::NormArithmetic(const NArray& rhs, ArithmeticType type) const {
     if (lhs.Size()[i] == rhs.Size()[i]) {
       continue;
     } else if (rhs.Size()[i] != 1) {
-      CHECK(false) << "NormArithmetic cannot replicate a dimension that is not 1";
+      LOG(FATAL) << "NormArithmetic cannot replicate a dimension that is not 1";
     } else {
       dims_to_replicate.push_back(i);
     }

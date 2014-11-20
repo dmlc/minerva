@@ -41,7 +41,6 @@ class MinervaSystem :
   void DecrExternRC(PhysicalDataNode*);
   void Eval(const std::vector<NArray>& narrs);
   void EvalAsync(const std::vector<NArray>& narrs);
-  void WaitForEvalFinish();
   uint64_t GenerateDataId();
   uint64_t current_device_id_;
 

@@ -1,11 +1,10 @@
-#include <iostream>
-#include <minerva.h>
-#include <gtest/gtest.h>
+#include "unittest_main.h"
 
 using namespace minerva;
 using namespace std;
 
-TEST(Reduction, MaxOnFirstDimension) {
+TEST(Reduction, CpuMaxOnFirstDimension) {
+  MinervaSystem::Instance().current_device_id_ = cpu_device;
   Scale size{5, 3};
   shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
     delete[] ptr;
@@ -22,7 +21,8 @@ TEST(Reduction, MaxOnFirstDimension) {
   }
 }
 
-TEST(Reduction, MaxOnSecondDimension) {
+TEST(Reduction, CpuMaxOnSecondDimension) {
+  MinervaSystem::Instance().current_device_id_ = cpu_device;
   Scale size{5, 3};
   shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
     delete[] ptr;
@@ -39,7 +39,8 @@ TEST(Reduction, MaxOnSecondDimension) {
   }
 }
 
-TEST(Reduction, SumOnFirstDimension) {
+TEST(Reduction, CpuSumOnFirstDimension) {
+  MinervaSystem::Instance().current_device_id_ = cpu_device;
   Scale size{5, 3};
   shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
     delete[] ptr;
@@ -56,7 +57,80 @@ TEST(Reduction, SumOnFirstDimension) {
   }
 }
 
-TEST(Reduction, SumOnSecondDimension) {
+TEST(Reduction, CpuSumOnSecondDimension) {
+  MinervaSystem::Instance().current_device_id_ = cpu_device;
+  Scale size{5, 3};
+  shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
+    delete[] ptr;
+  });
+  for (int i = 0; i < size.Prod(); ++i) {
+    data.get()[i] = i;
+  }
+  NArray na = NArray::MakeNArray(size, data);
+  NArray na2 = na.Sum(1);
+  auto res = na2.Get();
+  auto res_ptr = res.get();
+  for (int i = 0; i < na2.Size().Prod(); ++i) {
+    EXPECT_FLOAT_EQ(res_ptr[i], 3 * i + 15);
+  }
+}
+
+TEST(Reduction, GpuMaxOnFirstDimension) {
+  MinervaSystem::Instance().current_device_id_ = gpu_device;
+  Scale size{5, 3};
+  shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
+    delete[] ptr;
+  });
+  for (int i = 0; i < size.Prod(); ++i) {
+    data.get()[i] = i;
+  }
+  NArray na = NArray::MakeNArray(size, data);
+  NArray na2 = na.Max(0);
+  auto res = na2.Get();
+  auto res_ptr = res.get();
+  for (int i = 0; i < na2.Size().Prod(); ++i) {
+    EXPECT_FLOAT_EQ(res_ptr[i], 5 * i + 4);
+  }
+}
+
+TEST(Reduction, GpuMaxOnSecondDimension) {
+  MinervaSystem::Instance().current_device_id_ = gpu_device;
+  Scale size{5, 3};
+  shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
+    delete[] ptr;
+  });
+  for (int i = 0; i < size.Prod(); ++i) {
+    data.get()[i] = i;
+  }
+  NArray na = NArray::MakeNArray(size, data);
+  NArray na2 = na.Max(1);
+  auto res = na2.Get();
+  auto res_ptr = res.get();
+  for (int i = 0; i < na2.Size().Prod(); ++i) {
+    EXPECT_FLOAT_EQ(res_ptr[i], 10 + i);
+  }
+}
+
+TEST(Reduction, GpuSumOnFirstDimension) {
+  MinervaSystem::Instance().current_device_id_ = gpu_device;
+  Scale size{5, 3};
+  shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
+    delete[] ptr;
+  });
+  for (int i = 0; i < size.Prod(); ++i) {
+    data.get()[i] = i;
+  }
+  NArray na = NArray::MakeNArray(size, data);
+  NArray na2 = na.Sum(0);
+  auto res = na2.Get();
+  auto res_ptr = res.get();
+  for (int i = 0; i < na2.Size().Prod(); ++i) {
+    EXPECT_FLOAT_EQ(res_ptr[i], 25 * i + 10);
+  }
+}
+
+TEST(Reduction, GpuSumOnSecondDimension) {
+  MinervaSystem::Instance().current_device_id_ = gpu_device;
   Scale size{5, 3};
   shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
     delete[] ptr;

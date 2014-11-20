@@ -16,22 +16,22 @@ using namespace std;
 
 namespace minerva {
 
-Device::Device(uint64_t d, DeviceListener* l) : device_id_(d), data_store_(0), listener_(l) {
+Device::Device(uint64_t device_id, DeviceListener* l) : device_id_(device_id), data_store_(0), listener_(l) {
 }
 
 Device::~Device() {
 }
 
-pair<Device::MemType, float*> Device::GetPtr(uint64_t id) {
-  return make_pair(GetMemType(), data_store_->GetData(id));
+pair<Device::MemType, float*> Device::GetPtr(uint64_t data_id) {
+  return make_pair(GetMemType(), data_store_->GetData(data_id));
 }
 
-void Device::FreeDataIfExist(uint64_t id) {
-  auto d = local_data_.Erase(id) + remote_data_.Erase(id);
+void Device::FreeDataIfExist(uint64_t data_id) {
+  auto d = local_data_.Erase(data_id) + remote_data_.Erase(data_id);
   if (d == 1) {
-    data_store_->FreeData(id);
+    data_store_->FreeData(data_id);
   } else if (d != 0) {
-    CHECK(false) << "duplicate data";
+    LOG(FATAL) << "duplicate data";
   }
 }
 
@@ -41,29 +41,23 @@ string Device::GetMemUsage() const {
   return ss.str();
 }
 
-ThreadedDevice::ThreadedDevice(uint64_t id, DeviceListener* l, size_t p) : Device(id, l), pool_(p) {
+ThreadedDevice::ThreadedDevice(uint64_t device_id, DeviceListener* l, size_t parallelism) : Device(device_id, l), pool_(parallelism) {
 }
 
 ThreadedDevice::~ThreadedDevice() {
-  pool_.WaitForAllFinished();
 }
 
-void ThreadedDevice::PushTask(uint64_t id) {
-  pool_.Push(bind(&ThreadedDevice::Execute, this, id, placeholders::_1));
+void ThreadedDevice::PushTask(PhysicalOpNode* node) {
+  pool_.Push(bind(&ThreadedDevice::Execute, this, node, placeholders::_1));
 }
 
-void ThreadedDevice::FreeDataIfExist(uint64_t id) {
-  copy_locks_.Erase(id);
-  Device::FreeDataIfExist(id);
+void ThreadedDevice::FreeDataIfExist(uint64_t data_id) {
+  copy_locks_.Erase(data_id);
+  Device::FreeDataIfExist(data_id);
 }
 
-void ThreadedDevice::PreExecute() {
-}
-
-void ThreadedDevice::Execute(uint64_t nid, int thrid) {
+void ThreadedDevice::Execute(PhysicalOpNode* op_node, int thrid) {
   PreExecute();
-  auto node = MinervaSystem::Instance().physical_dag().GetNode(nid);
-  auto op_node = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node));
   DataList input_shards;
   for (auto i : op_node->inputs_) {
     auto& input_data = i->data_;
@@ -92,14 +86,16 @@ void ThreadedDevice::Execute(uint64_t nid, int thrid) {
   }
   auto& op = op_node->op_;
   CHECK_NOTNULL(op.compute_fn);
-  DLOG(INFO) << Name() << " execute node #" << nid << ": " << op.compute_fn->Name();
+  DLOG(INFO) << Name() << " execute node #" << op_node->node_id() << ": " << op.compute_fn->Name();
   DoExecute(input_shards, output_shards, op, thrid);
-  listener_->OnOperationComplete(nid);
+  listener_->OnOperationComplete(op_node);
+}
+
+void ThreadedDevice::PreExecute() {
 }
 
 #ifdef HAS_CUDA
-
-GpuDevice::GpuDevice(uint64_t id, DeviceListener* l, int gid) : ThreadedDevice(id, l, kParallelism), device_(gid) {
+GpuDevice::GpuDevice(uint64_t device_id, DeviceListener* l, int gpu_id) : ThreadedDevice(device_id, l, kParallelism), device_(gpu_id) {
   CUDA_CALL(cudaSetDevice(device_));
   cudaFree(0);  // Initialize
   auto allocator = [this](size_t len) -> void* {
@@ -164,7 +160,7 @@ void GpuDevice::DoExecute(const DataList& in, const DataList& out, PhysicalOp& o
 
 #endif
 
-CpuDevice::CpuDevice(uint64_t id, DeviceListener* l) : ThreadedDevice(id, l, kDefaultThreadNum) {
+CpuDevice::CpuDevice(uint64_t device_id, DeviceListener* l) : ThreadedDevice(device_id, l, kDefaultThreadNum) {
   auto allocator = [](size_t len) -> void* {
     void* ret = malloc(len);
     return ret;
@@ -176,6 +172,7 @@ CpuDevice::CpuDevice(uint64_t id, DeviceListener* l) : ThreadedDevice(id, l, kDe
 }
 
 CpuDevice::~CpuDevice() {
+  pool_.WaitForAllFinished();
   delete data_store_;
 }
 

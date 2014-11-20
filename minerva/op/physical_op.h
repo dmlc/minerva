@@ -21,7 +21,14 @@ class ArrayLoaderOp : public PhyDataGenFnWithClosure<ArrayLoaderClosure> {
 class RandnOp : public PhyDataGenFnWithClosure<RandnClosure> {
  public:
   std::string Name() const {
-    return ":randn";
+    return ":normal";
+  }
+};
+
+class RandBernoulliOp : public PhyDataGenFnWithClosure<RandBernoulliClosure> {
+ public:
+  std::string Name() const {
+    return ":bernoulli";
   }
 };
 

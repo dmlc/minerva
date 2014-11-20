@@ -16,7 +16,7 @@ ostream& operator<<(ostream& os, NodeState s) {
     case NodeState::kDead:
       return os << "Dead";
     default:
-      CHECK(false) << "unknown state";
+      LOG(FATAL) << "unknown state";
       return os;
   }
 }
@@ -29,7 +29,7 @@ RuntimeInfoMap::RuntimeInfoMap() {
 
 void RuntimeInfoMap::AddNode(uint64_t id) {
   if (info_.find(id) != info_.end()) {
-    CHECK(false);
+    LOG(FATAL) << "node #" << id << " already existed in runtime info map";
   }
   info_[id];
 }

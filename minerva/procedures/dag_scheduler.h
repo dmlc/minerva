@@ -29,6 +29,7 @@ class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<Physica
   virtual ~DagScheduler();
   // Wait for evaluation to finish
   void WaitForFinish();
+  void WaitForFinish(uint64_t);
   void GCNodes();
   // Monitor external reference changes
   void OnExternRCUpdate(PhysicalDataNode*);
@@ -36,16 +37,13 @@ class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<Physica
   void OnCreateNode(DagNode*);
   void OnDeleteNode(DagNode*);
   void OnCreateEdge(DagNode*, DagNode*);
-  void OnBeginModify();
-  void OnFinishModify();
   // Device listener
-  void OnOperationComplete(uint64_t);
+  void OnOperationComplete(PhysicalOpNode*);
   // DAG procedure
   void Process(const std::vector<uint64_t>&);
 
  private:
   void FreeDataNodeRes(PhysicalDataNode*);
-  std::recursive_mutex m_;
   // Runtime information
   RuntimeInfoMap rt_info_;
   // Scheduler dispatcher
@@ -54,6 +52,7 @@ class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<Physica
   std::thread dispatcher_;
   // Evaluation finishing signal
   std::atomic<int> num_nodes_yet_to_finish_;
+  uint64_t target_ = -1;
   std::mutex finish_mutex_;
   std::condition_variable finish_cond_;
   DISALLOW_COPY_AND_ASSIGN(DagScheduler);

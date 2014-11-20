@@ -29,6 +29,7 @@ void PoolingBackward(const DataList&, const DataList&, PoolingBackwardClosure&, 
 
 void ArrayLoader(const DataList&, ArrayLoaderClosure& closure, const CudaRuntimeContext&);
 void Randn(const DataList&, RandnClosure&, const CudaRuntimeContext&);
+void RandBernoulli(const DataList&, RandBernoulliClosure&, const CudaRuntimeContext&);
 void Fill(const DataList&, FillClosure&, const CudaRuntimeContext&);
 
 }
