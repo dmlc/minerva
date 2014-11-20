@@ -21,7 +21,7 @@ class ImageBatch : public NArray {
   int GetHeight() const;
   int GetWidth() const;
 
- private:
+ //private:
   ImageBatch();  // Forbidden
 };
 
@@ -41,7 +41,7 @@ class Filter : public NArray {
   int GetHeight() const;
   int GetWidth() const;
 
- private:
+ //private:
   Filter();  // Forbidden
 };
 

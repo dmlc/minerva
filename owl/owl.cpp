@@ -1,5 +1,3 @@
-// Copyright 2014 Project Athena
-
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
 #include <boost/python/implicit.hpp>
@@ -70,10 +68,10 @@ m::NArray RandnWrapper(const bp::list& s, float mean, float var) {
   return m::NArray::Randn(ToScale(s), mean, var);
 }
 
-m::NArray MakeNArrayWrapper(const bp::list& s, const bp::list& val) {
+m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
   std::vector<float> v = std::vector<float>(bp::stl_input_iterator<float>(val), bp::stl_input_iterator<float>());
   size_t length = bp::len(val);
-  shared_ptr<float> data( new float[length], [] (float* p) { delete [] p; } );
+  shared_ptr<float> data( new float[length] );
   memcpy(data.get(), v.data(), sizeof(float) * length);
 //  for(size_t i = 0; i < length; ++i) {
 //    valptr.get()[i] = bp::extract<float>(val[i] * 1.0);
@@ -87,19 +85,68 @@ bp::list NArrayToList(m::NArray narr) {
     l.append(v.get()[i]);
   return l;
 }
-bp::list NArrayGetShapeWrapper(m::NArray narr) {
-  return ToPythonList(narr.Size());
-}
 
 void WaitForEvalFinish() {
   m::MinervaSystem::Instance().WaitForEvalFinish();
 }
 
-void PrintSystemInfo() {
-  m::MinervaSystem& ms = m::MinervaSystem::Instance();
-  cout << "CPU mem:" << ms.device_manager().GetDevice(0)->GetMemUsage() << endl;
-  cout << "GPU mem:" << ms.device_manager().GetDevice(1)->GetMemUsage() << endl;
-  cout << "Dag:\n" << ms.physical_dag().PrintDag<m::ExternRCPrinter>() << endl;
+m::NArray ConvForward(m::NArray src, m::NArray filter, m::NArray bias, m::ConvInfo info) {
+  return m::Convolution::ConvForward(m::ImageBatch(src), m::Filter(filter), bias, info);
+}
+
+m::NArray ActivationForward(m::NArray src, m::ActivationAlgorithm algo) {
+  return m::Convolution::ActivationForward(m::ImageBatch(src), algo);
+}
+
+m::NArray PoolingForward(m::NArray src, m::PoolingInfo info) {
+  return m::Convolution::PoolingForward(m::ImageBatch(src), info);
+}
+
+m::NArray PoolingBackward(m::NArray diff, m::NArray top, m::NArray bottom, m::PoolingInfo info) {
+  return m::Convolution::PoolingBackward(m::ImageBatch(diff), m::ImageBatch(top), m::ImageBatch(bottom), info);
+}
+
+m::NArray ConvBackwardData(m::NArray diff, m::NArray filter, m::ConvInfo info) {
+  return m::Convolution::ConvBackwardData(m::ImageBatch(diff), m::Filter(filter), info);
+}
+
+m::NArray ConvBackwardFilter(m::NArray diff, m::NArray bottom, m::ConvInfo info) {
+  return m::Convolution::ConvBackwardFilter(m::ImageBatch(diff), m::ImageBatch(bottom), info);
+}
+
+m::NArray ConvBackwardBias(m::NArray diff) {
+  return m::Convolution::ConvBackwardBias(m::ImageBatch(diff));
+}
+
+m::NArray ActivationBackward(m::NArray diff, m::NArray top, m::NArray bottom, m::ActivationAlgorithm algo) {
+  return m::Convolution::ActivationBackward(m::ImageBatch(diff), m::ImageBatch(top), m::ImageBatch(bottom), algo);
+}
+
+m::NArray SoftmaxForward(m::NArray src, m::SoftmaxAlgorithm algo) {
+  return m::Convolution::SoftmaxForward(m::ImageBatch(src), algo);
+}
+
+m::NArray SoftmaxBackward(m::NArray diff, m::NArray top, m::SoftmaxAlgorithm algo) {
+  return m::Convolution::SoftmaxBackward(m::ImageBatch(diff), m::ImageBatch(top), algo);
+}
+
+m::ConvInfo GetConvInfo(int pad_height, int pad_width, int stride_vertical, int stride_horizontal) {
+  m::ConvInfo result;
+  result.pad_height = pad_height;
+  result.pad_width = pad_width;
+  result.stride_vertical = stride_vertical;
+  result.stride_horizontal = stride_horizontal;
+  return result;
+}
+
+m::PoolingInfo GetPoolingInfo(int height, int width, int stride_vertical, int stride_horizontal, m::PoolingInfo::Algorithm algo) {
+  m::PoolingInfo result;
+  result.height = height;
+  result.width = width;
+  result.stride_vertical = stride_vertical;
+  result.stride_horizontal = stride_horizontal;
+  result.algorithm = algo;
+  return result;
 }
 
 } // end of namespace owl
@@ -123,7 +170,12 @@ BOOST_PYTHON_MODULE(libowl) {
   m::NArray (m::NArray::*max1)(int) const = &m::NArray::Max;
   m::NArray (m::NArray::*max2)(const m::Scale&) const = &m::NArray::Max;
 
-  //class_<m::Scale>("Scale");
+  class_<m::Scale>("Scale");
+  //m::Scale (m::NArray::*size0)() const = &m::NArray::Size;
+  int (m::NArray::*size1)(int) const = &m::NArray::Size;
+
+  m::NArray (m::NArray::*reshape)(const m::Scale&) const = &m::NArray::Reshape;
+
   class_<m::NArray>("NArray")
     // element-wise
     .def(self + self)
@@ -151,10 +203,11 @@ BOOST_PYTHON_MODULE(libowl) {
     // normalize
     .def("norm_arithmetic", &m::NArray::NormArithmetic)
     // misc
-    .def("shape", &owl::NArrayGetShapeWrapper)
     .def("trans", &m::NArray::Trans)
     .def("tofile", &m::NArray::ToFile)
     .def("tolist", &owl::NArrayToList)
+    .def("reshape", reshape)
+    .def("size", size1)
     .def("eval", &m::NArray::Eval)
     .def("eval_async", &m::NArray::EvalAsync)
   ;
@@ -171,14 +224,15 @@ BOOST_PYTHON_MODULE(libowl) {
   def("ones", &owl::OnesWrapper);
   def("make_narray", &owl::MakeNArrayWrapper);
   def("randn", &owl::RandnWrapper);
+  def("toscale", &owl::ToScale);
 
   // system
+  //def("to_list", &owl::NArrayToList);
   def("initialize", &owl::Initialize);
   def("create_cpu_device", &owl::CreateCpuDevice);
   def("create_gpu_device", &owl::CreateGpuDevice);
   def("set_device", &owl::SetDevice);
   def("wait_eval", &owl::WaitForEvalFinish);
-  def("print_sys_info", &owl::PrintSystemInfo);
 
   // elewise
   def("mult", &m::Elewise::Mult);
@@ -188,4 +242,34 @@ BOOST_PYTHON_MODULE(libowl) {
   
   // utils
   def("softmax", &owl::Softmax);
+
+  // convolution
+  class_<m::ConvInfo>("ConvInfo");
+  class_<m::PoolingInfo>("PoolingInfo");
+  enum_<m::ActivationAlgorithm>("activation_algo")
+    .value("relu", m::ActivationAlgorithm::kRelu)
+    .value("sigm", m::ActivationAlgorithm::kSigmoid)
+    .value("tanh", m::ActivationAlgorithm::kTanh)
+  ;
+  enum_<m::SoftmaxAlgorithm>("softmax_algo")
+    .value("instance", m::SoftmaxAlgorithm::kInstance)
+    .value("channel", m::SoftmaxAlgorithm::kChannel)
+  ;
+  enum_<m::PoolingInfo::Algorithm>("pooling_algo")
+    .value("max", m::PoolingInfo::Algorithm::kMax)
+    .value("avg", m::PoolingInfo::Algorithm::kAverage)
+  ;
+
+  def("conv_info", &owl::GetConvInfo);
+  def("pooling_info", &owl::GetPoolingInfo);
+  def("conv_forward", &owl::ConvForward);
+  def("activation_forward", &owl::ActivationForward);
+  def("softmax_forward", &owl::SoftmaxForward);
+  def("pooling_forward", &owl::PoolingForward);
+  def("pooling_backward", &owl::PoolingBackward);
+  def("conv_backward_data", &owl::ConvBackwardData);
+  def("conv_backward_filter", &owl::ConvBackwardFilter);
+  def("conv_backward_bias", &owl::ConvBackwardBias);
+  def("activation_backward", &owl::ActivationBackward);
+  def("softmax_backward", &owl::SoftmaxBackward);
 }
