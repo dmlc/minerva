@@ -162,6 +162,9 @@ def train_network(bias, weights, data, label,
             weights[0] -= eps_w * conv_backward_filter(sens[1], acts[0], conv_info(0, 0, 4, 4))
             bias[0] -= eps_b * conv_backward_bias(sens[1])
 
+#            if ((j % 20) == 0):
+#                print_training_accuracy(acts[-1], target, minibatch_size)
+
 if __name__ == '__main__':
     initialize(sys.argv)
     device = create_cpu_device()
