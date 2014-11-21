@@ -1,6 +1,7 @@
 #include "system/minerva_system.h"
 #include <glog/logging.h>
 #include <cstdlib>
+#include <mutex>
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #endif
@@ -72,11 +73,13 @@ pair<Device::MemType, float*> MinervaSystem::GetPtr(uint64_t device_id, uint64_t
 }
 
 void MinervaSystem::IncrExternRC(PhysicalDataNode* node) {
+  lock_guard<recursive_mutex> lck(physical_dag_->m_);
   ++(node->data_.extern_rc);
   dag_scheduler_->OnExternRCUpdate(node);
 }
 
 void MinervaSystem::DecrExternRC(PhysicalDataNode* node) {
+  lock_guard<recursive_mutex> lck(physical_dag_->m_);
   --(node->data_.extern_rc);
   dag_scheduler_->OnExternRCUpdate(node);
 }
