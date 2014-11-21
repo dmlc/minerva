@@ -70,6 +70,7 @@ m::NArray RandnWrapper(const bp::list& s, float mean, float var) {
 
 m::NArray RandBernoulliWrapper(const bp::list& s, float p) {
   return m::NArray::RandBernoulli(ToScale(s), p);
+}
 
 m::NArray ReshapeWrapper(m::NArray narr, const bp::list& s) {
   return narr.Reshape(ToScale(s));
@@ -85,6 +86,7 @@ m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
 //  }
   return m::NArray::MakeNArray(ToScale(s), data);
 }
+
 bp::list NArrayToList(m::NArray narr) {
   bp::list l;
   std::shared_ptr<float> v = narr.Get();
@@ -225,11 +227,8 @@ BOOST_PYTHON_MODULE(libowl) {
   def("ones", &owl::OnesWrapper);
   def("make_narray", &owl::MakeNArrayWrapper);
   def("randn", &owl::RandnWrapper);
-<<<<<<< HEAD
   def("randb", &owl::RandBernoulliWrapper);
   def("toscale", &owl::ToScale);
-=======
->>>>>>> 8c4900a742715d7d477309b64827482e88214bed
 
   // system
   //def("to_list", &owl::NArrayToList);
