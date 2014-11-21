@@ -53,8 +53,8 @@ class AlexModel:
 
 
 def print_training_accuracy(o, t, minibatch_size):
-    predict = o.reshape([10, minibatch_size]).max_index(0)
-    ground_truth = t.reshape([10, minibatch_size]).max_index(0)
+    predict = o.max_index(0)
+    ground_truth = t.max_index(0)
     correct = (predict - ground_truth).count_zero()
     print 'Training error: {}'.format((minibatch_size - correct) * 1.0 / minibatch_size)
 
@@ -71,6 +71,7 @@ def train_network(model, data, label,
     gpu = owl.create_gpu_device(0)
     owl.set_device(gpu)
     num_layers = 20
+    count = 0
     for i in xrange(num_epochs):
         print "Epoch #", i
         for j in xrange(num_minibatches):
@@ -79,7 +80,7 @@ def train_network(model, data, label,
 
             # FF
             acts[0] = owl.randn([227, 227, 3, minibatch_size], 0.0, 0.1) # data
-            target = owl.randn([1000, minibatch_size], 0.0, 0.1)
+            target = owl.randn([1000, minibatch_size], 0.0, 0.1) # label
 
             acts[1] = conv_forward(acts[0], model.weights[0], model.bias[0], model.conv_infos[0]) # conv1
             acts[2] = activation_forward(acts[1], act_op.relu) # relu1
@@ -167,6 +168,11 @@ def train_network(model, data, label,
 
             model.weights[0] -= eps_w * conv_backward_filter(sens[1], acts[0], model.conv_infos[0])
             model.bias[0] -= eps_b * conv_backward_bias(sens[1])
+
+            ++count
+
+            if count % 20 == 0:
+                print_training_accuracy(acts[16], target, minibatch_size)
 
 if __name__ == '__main__':
     owl.initialize(sys.argv)
