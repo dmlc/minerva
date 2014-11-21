@@ -68,6 +68,10 @@ m::NArray RandnWrapper(const bp::list& s, float mean, float var) {
   return m::NArray::Randn(ToScale(s), mean, var);
 }
 
+m::NArray RandBernoulliWrapper(const bp::list& s, float p) {
+  return m::NArray::RandBernoulli(ToScale(s), p);
+}
+
 m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
   std::vector<float> v = std::vector<float>(bp::stl_input_iterator<float>(val), bp::stl_input_iterator<float>());
   size_t length = bp::len(val);
@@ -84,10 +88,6 @@ bp::list NArrayToList(m::NArray narr) {
   for(int i = 0; i < narr.Size().Prod(); ++i)
     l.append(v.get()[i]);
   return l;
-}
-
-void WaitForEvalFinish() {
-  m::MinervaSystem::Instance().WaitForEvalFinish();
 }
 
 m::NArray ConvForward(m::NArray src, m::NArray filter, m::NArray bias, m::ConvInfo info) {
@@ -224,6 +224,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("ones", &owl::OnesWrapper);
   def("make_narray", &owl::MakeNArrayWrapper);
   def("randn", &owl::RandnWrapper);
+  def("randb", &owl::RandBernoulliWrapper);
   def("toscale", &owl::ToScale);
 
   // system
@@ -232,7 +233,6 @@ BOOST_PYTHON_MODULE(libowl) {
   def("create_cpu_device", &owl::CreateCpuDevice);
   def("create_gpu_device", &owl::CreateGpuDevice);
   def("set_device", &owl::SetDevice);
-  def("wait_eval", &owl::WaitForEvalFinish);
 
   // elewise
   def("mult", &m::Elewise::Mult);
