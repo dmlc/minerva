@@ -35,6 +35,13 @@ bool DataStore::ExistData(uint64_t id) const {
   return data_states_.find(id) != data_states_.end();
 }
 
+void DataStore::FreeData(uint64_t id) {
+  lock_guard<mutex> lck(access_mutex_);
+  auto& ds = data_states_.at(id);
+  deallocator_(ds.ptr);
+  CHECK_EQ(data_states_.erase(id), 1);
+}
+
 size_t DataStore::GetTotalBytes() const {
   lock_guard<mutex> lck(access_mutex_);
   size_t total_bytes = 0;
@@ -42,13 +49,6 @@ size_t DataStore::GetTotalBytes() const {
     total_bytes += it.second.length;
   }
   return total_bytes;
-}
-
-void DataStore::FreeData(uint64_t id) {
-  lock_guard<mutex> lck(access_mutex_);
-  auto& ds = data_states_.at(id);
-  deallocator_(ds.ptr);
-  CHECK_EQ(data_states_.erase(id), 1);
 }
 
 }  // namespace minerva
