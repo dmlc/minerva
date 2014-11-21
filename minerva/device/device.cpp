@@ -7,10 +7,13 @@
 #include "system/minerva_system.h"
 #include "op/context.h"
 #include "common/cuda_utils.h"
+#include "device/pooled_data_store.h"
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #include <cudnn.h>
 #endif
+
+#define FIVE_G ((size_t) 5 * 1024 * 1024 * 1024)
 
 using namespace std;
 
@@ -108,7 +111,7 @@ GpuDevice::GpuDevice(uint64_t device_id, DeviceListener* l, int gpu_id) : Thread
     CUDA_CALL(cudaSetDevice(device_));
     CUDA_CALL(cudaFree(ptr));
   };
-  data_store_ = new DataStore(allocator, deallocator);
+  data_store_ = new PooledDataStore(FIVE_G, allocator, deallocator);
   for (size_t i = 0; i < kParallelism; ++i) {
     CUDA_CALL(cudaStreamCreate(&stream_[i]));
     CUBLAS_CALL(cublasCreate(&cublas_handle_[i]));

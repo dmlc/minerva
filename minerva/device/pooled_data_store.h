@@ -4,7 +4,7 @@
 
 namespace minerva {
 
-class PooledDataStore : DataStore {
+class PooledDataStore : public DataStore {
  public:
   PooledDataStore(size_t threshold, std::function<void*(size_t)> a, std::function<void(void*)> d);
   virtual ~PooledDataStore();
