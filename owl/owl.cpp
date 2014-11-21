@@ -70,6 +70,9 @@ m::NArray RandnWrapper(const bp::list& s, float mean, float var) {
 
 m::NArray RandBernoulliWrapper(const bp::list& s, float p) {
   return m::NArray::RandBernoulli(ToScale(s), p);
+
+m::NArray ReshapeWrapper(m::NArray narr, const bp::list& s) {
+  return narr.Reshape(ToScale(s));
 }
 
 m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
@@ -130,7 +133,7 @@ m::NArray SoftmaxBackward(m::NArray diff, m::NArray top, m::SoftmaxAlgorithm alg
   return m::Convolution::SoftmaxBackward(m::ImageBatch(diff), m::ImageBatch(top), algo);
 }
 
-m::ConvInfo GetConvInfo(int pad_height, int pad_width, int stride_vertical, int stride_horizontal) {
+/*m::ConvInfo GetConvInfo(int pad_height, int pad_width, int stride_vertical, int stride_horizontal) {
   m::ConvInfo result;
   result.pad_height = pad_height;
   result.pad_width = pad_width;
@@ -147,7 +150,7 @@ m::PoolingInfo GetPoolingInfo(int height, int width, int stride_vertical, int st
   result.stride_horizontal = stride_horizontal;
   result.algorithm = algo;
   return result;
-}
+}*/
 
 } // end of namespace owl
 
@@ -173,8 +176,6 @@ BOOST_PYTHON_MODULE(libowl) {
   class_<m::Scale>("Scale");
   //m::Scale (m::NArray::*size0)() const = &m::NArray::Size;
   int (m::NArray::*size1)(int) const = &m::NArray::Size;
-
-  m::NArray (m::NArray::*reshape)(const m::Scale&) const = &m::NArray::Reshape;
 
   class_<m::NArray>("NArray")
     // element-wise
@@ -206,7 +207,7 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("trans", &m::NArray::Trans)
     .def("tofile", &m::NArray::ToFile)
     .def("tolist", &owl::NArrayToList)
-    .def("reshape", reshape)
+    .def("reshape", &owl::ReshapeWrapper)
     .def("size", size1)
     .def("eval", &m::NArray::Eval)
     .def("eval_async", &m::NArray::EvalAsync)
@@ -224,8 +225,11 @@ BOOST_PYTHON_MODULE(libowl) {
   def("ones", &owl::OnesWrapper);
   def("make_narray", &owl::MakeNArrayWrapper);
   def("randn", &owl::RandnWrapper);
+<<<<<<< HEAD
   def("randb", &owl::RandBernoulliWrapper);
   def("toscale", &owl::ToScale);
+=======
+>>>>>>> 8c4900a742715d7d477309b64827482e88214bed
 
   // system
   //def("to_list", &owl::NArrayToList);
@@ -244,8 +248,19 @@ BOOST_PYTHON_MODULE(libowl) {
   def("softmax", &owl::Softmax);
 
   // convolution
-  class_<m::ConvInfo>("ConvInfo");
-  class_<m::PoolingInfo>("PoolingInfo");
+  class_<m::ConvInfo>("ConvInfo")
+    .def_readwrite("pad_height", &m::ConvInfo::pad_height)
+    .def_readwrite("pad_width", &m::ConvInfo::pad_width)
+    .def_readwrite("stride_vertical", &m::ConvInfo::stride_vertical)
+    .def_readwrite("stride_horizontal", &m::ConvInfo::stride_horizontal)
+    ;
+  class_<m::PoolingInfo>("PoolingInfo")
+    .def_readwrite("height", &m::PoolingInfo::height)
+    .def_readwrite("width", &m::PoolingInfo::width)
+    .def_readwrite("stride_vertical", &m::PoolingInfo::stride_vertical)
+    .def_readwrite("stride_horizontal", &m::PoolingInfo::stride_horizontal)
+    .def_readwrite("algorithm", &m::PoolingInfo::algorithm)
+    ;
   enum_<m::ActivationAlgorithm>("activation_algo")
     .value("relu", m::ActivationAlgorithm::kRelu)
     .value("sigm", m::ActivationAlgorithm::kSigmoid)
@@ -260,8 +275,8 @@ BOOST_PYTHON_MODULE(libowl) {
     .value("avg", m::PoolingInfo::Algorithm::kAverage)
   ;
 
-  def("conv_info", &owl::GetConvInfo);
-  def("pooling_info", &owl::GetPoolingInfo);
+  //def("conv_info", &owl::GetConvInfo);
+  //def("pooling_info", &owl::GetPoolingInfo);
   def("conv_forward", &owl::ConvForward);
   def("activation_forward", &owl::ActivationForward);
   def("softmax_forward", &owl::SoftmaxForward);
