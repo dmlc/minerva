@@ -82,6 +82,11 @@ m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
 //  }
   return m::NArray::MakeNArray(ToScale(s), data);
 }
+
+bp::list ShapeWrapper(m::NArray narr) {
+  return ToPythonList(narr.Size());
+}
+
 bp::list NArrayToList(m::NArray narr) {
   bp::list l;
   std::shared_ptr<float> v = narr.Get();
@@ -170,9 +175,7 @@ BOOST_PYTHON_MODULE(libowl) {
   m::NArray (m::NArray::*max1)(int) const = &m::NArray::Max;
   m::NArray (m::NArray::*max2)(const m::Scale&) const = &m::NArray::Max;
 
-  class_<m::Scale>("Scale");
-  //m::Scale (m::NArray::*size0)() const = &m::NArray::Size;
-  int (m::NArray::*size1)(int) const = &m::NArray::Size;
+  class_<m::Scale>("_Scale");
 
   class_<m::NArray>("NArray")
     // element-wise
@@ -205,9 +208,9 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("tofile", &m::NArray::ToFile)
     .def("tolist", &owl::NArrayToList)
     .def("reshape", &owl::ReshapeWrapper)
-    .def("size", size1)
     .def("eval", &m::NArray::Eval)
     .def("eval_async", &m::NArray::EvalAsync)
+    .add_property("shape", &owl::ShapeWrapper)
   ;
 /*
   // file loader
@@ -220,8 +223,8 @@ BOOST_PYTHON_MODULE(libowl) {
   // creators
   def("zeros", &owl::ZerosWrapper);
   def("ones", &owl::OnesWrapper);
-  def("make_narray", &owl::MakeNArrayWrapper);
   def("randn", &owl::RandnWrapper);
+  def("make_narray", &owl::MakeNArrayWrapper);
 
   // system
   //def("to_list", &owl::NArrayToList);
