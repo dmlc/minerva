@@ -10,6 +10,7 @@ set_device = _owl.set_device
 zeros = _owl.zeros
 ones = _owl.ones
 randn = _owl.randn
+randb = _owl.randb
 make_narray = _owl.make_narray
 def from_nparray(nparr):
     return _owl.make_narray([i for i in nparr.shape], nparr.T.flatten().tolist())
@@ -17,3 +18,4 @@ def from_nparray(nparr):
 op = _owl.arithmetic
 
 softmax = _owl.softmax
+
