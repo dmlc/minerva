@@ -6,7 +6,6 @@ namespace minerva {
 
 template<typename D, typename O>
 Dag<D, O>::~Dag() {
-  std::lock_guard<std::recursive_mutex> lck(m_);
   auto index_to_node = index_to_node_;
   for (auto i : index_to_node) {
     DeleteNode(i.first);
@@ -75,7 +74,6 @@ void Dag<D, O>::DeleteNode(uint64_t id) {
 
 template<typename D, typename O>
 DagNode* Dag<D, O>::GetNode(uint64_t nid) const {
-  std::lock_guard<std::recursive_mutex> lck(m_);
   return index_to_node_.at(nid);
 }
 
@@ -91,26 +89,22 @@ typename Dag<D, O>::DNode* Dag<D, O>::GetDataNode(uint64_t nid) const {
 
 template<typename D, typename O>
 size_t Dag<D, O>::NumNodes() const {
-  std::lock_guard<std::recursive_mutex> lck(m_);
   return index_to_node_.size();
 }
 
 template<typename D, typename O>
 void Dag<D, O>::RegisterMonitor(DagMonitor<Dag<D, O>>* m) {
-  std::lock_guard<std::recursive_mutex> lck(m_);
   monitors_.push_back(m);
 }
 
 template<typename D, typename O>
 void Dag<D, O>::ClearMonitor() {
-  std::lock_guard<std::recursive_mutex> lck(m_);
   monitors_.clear();
 }
 
 template<typename D, typename O>
 template<typename NodePrinter>
 std::string Dag<D, O>::PrintDag() const {
-  std::lock_guard<std::recursive_mutex> lck(m_);
   std::ostringstream out;
   out << "digraph G {" << std::endl;
   for (auto i : index_to_node_) {
