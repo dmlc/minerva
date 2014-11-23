@@ -81,7 +81,7 @@ def train_network(model, num_epochs = 100, num_train_samples = 60000, minibatch_
     # load data
     (train_data, test_data) = load_mb_from_mat("mnist_all.mat", minibatch_size)
     num_test_samples = test_data[0].shape[0]
-    (test_samples, test_labels) = map(lambda npdata : owl.from_nparray(npdata.T), test_data)
+    (test_samples, test_labels) = map(lambda npdata : owl.from_nparray(npdata), test_data)
     for i in xrange(num_epochs):
         print "---Epoch #", i
         for (mb_samples, mb_labels) in train_data:
@@ -96,8 +96,8 @@ def train_network(model, num_epochs = 100, num_train_samples = 60000, minibatch_
             #print np.array(owl.from_nparray(mb_samples).tolist()).reshape([784, 256])[:,0].reshape([28,28])
             acts[0] = owl.from_nparray(mb_samples).reshape([28, 28, 1, num_samples])
             target = owl.from_nparray(mb_labels).reshape([10, 1, 1, num_samples])
-            #print np.array(acts[0].tolist()).reshape([28, 28, num_samples])[:,:,-1]
-            #print np.array(target.tolist()).reshape([10, num_samples])[:,-1]
+            #print np.array(acts[0].tolist())[0:784].reshape([28,28]) * 256
+            #print np.array(target.tolist())[0:10]
             #sys.exit()
 
             acts[1] = conv_forward(acts[0], model.weights[0], model.bias[0], model.conv_infos[0])
@@ -136,8 +136,8 @@ def train_network(model, num_epochs = 100, num_train_samples = 60000, minibatch_
 
             count = count + 1
             if (count % 40) == 0:
-                print np.array(model.weights[0].tolist())[0:15]
-                print np.array(model.bias[0].tolist())
+                #print np.array(model.weights[0].tolist())[0:15]
+                #print np.array(model.bias[0].tolist())
                 print_training_accuracy(acts[-1], target, num_samples)
 
 if __name__ == '__main__':

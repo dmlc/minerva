@@ -13,7 +13,7 @@ randn = _owl.randn
 randb = _owl.randb
 make_narray = _owl.make_narray
 def from_nparray(nparr):
-    return _owl.make_narray([i for i in nparr.shape], nparr.T.flatten().tolist())
+    return _owl.make_narray(list(nparr.shape[::-1]), nparr.flatten().tolist())
 
 op = _owl.arithmetic
 

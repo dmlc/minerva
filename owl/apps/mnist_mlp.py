@@ -61,7 +61,7 @@ class MnistTrainer:
         (train_data, test_data) = load_mb_from_mat(self.data_file, self.mb_size)
         np.set_printoptions(linewidth=200)
         num_test_samples = test_data[0].shape[0]
-        (test_samples, test_labels) = map(lambda npdata : owl.from_nparray(npdata.T), test_data)
+        (test_samples, test_labels) = map(lambda npdata : owl.from_nparray(npdata), test_data)
         count = 1
         for epoch in range(self.num_epochs):
             print '---Start epoch #%d' % epoch
@@ -70,8 +70,8 @@ class MnistTrainer:
                 num_samples = mb_samples.shape[0]
 
                 owl.set_device(self.cpu)
-                a1 = owl.from_nparray(mb_samples.T)
-                target = owl.from_nparray(mb_labels.T)
+                a1 = owl.from_nparray(mb_samples)
+                target = owl.from_nparray(mb_labels)
                 owl.set_device(self.gpu)
 
                 # ff

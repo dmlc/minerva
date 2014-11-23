@@ -1,6 +1,7 @@
 #include <minerva.h>
 #include <fstream>
 #include <gflags/gflags.h>
+#include <iomanip>
 
 using namespace std;
 using namespace minerva;
@@ -85,10 +86,13 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
   shared_ptr<float> data_ptr(new float[data_size.Prod()], [](float* ptr) { delete[] ptr; });
   shared_ptr<float> label_ptr(new float[label_size.Prod()], [](float* ptr) { delete[] ptr; });
   data_file_in.read(reinterpret_cast<char*>(data_ptr.get()), data_size.Prod() * sizeof(float));
-  /*for(int i = 0; i < 784; ++i)
-    cout << data_ptr.get()[i] << " ";
-  cout << endl;*/
-  //exit(1);
+  for(int i = 0; i < 784; ++i) {
+    cout << setw(5) << (int)(data_ptr.get()[i] * 256);
+    if(i % 28 == 0)
+      cout << endl;
+  }
+  cout << endl;
+  exit(1);
   label_file_in.read(reinterpret_cast<char*>(label_ptr.get()), label_size.Prod() * sizeof(float));
   acts[0] = NArray::MakeNArray(data_size, data_ptr);
   label = NArray::MakeNArray(label_size, label_ptr);
