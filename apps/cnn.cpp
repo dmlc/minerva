@@ -12,8 +12,8 @@ const int numepochs = 3;
 int mb_size = 256;
 float alpha = 0.01;
 
-const string train_data_file = "/home/cs_user/data/mnist/traindata.dat";
-const string train_label_file = "/home/cs_user/data/mnist/trainlabel.dat";
+const string train_data_file = "/home/jermaine/data/traindata.dat";
+const string train_label_file = "/home/jermaine/data/trainlabel.dat";
 
 vector<NArray> weights;
 vector<NArray> bias;
@@ -85,6 +85,10 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
   shared_ptr<float> data_ptr(new float[data_size.Prod()], [](float* ptr) { delete[] ptr; });
   shared_ptr<float> label_ptr(new float[label_size.Prod()], [](float* ptr) { delete[] ptr; });
   data_file_in.read(reinterpret_cast<char*>(data_ptr.get()), data_size.Prod() * sizeof(float));
+  /*for(int i = 0; i < 784; ++i)
+    cout << data_ptr.get()[i] << " ";
+  cout << endl;*/
+  //exit(1);
   label_file_in.read(reinterpret_cast<char*>(label_ptr.get()), label_size.Prod() * sizeof(float));
   acts[0] = NArray::MakeNArray(data_size, data_ptr);
   label = NArray::MakeNArray(label_size, label_ptr);
@@ -111,8 +115,12 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
   sens[1] = Convolution::ActivationBackward(sens[2], acts[2], acts[1], ActivationAlgorithm::kRelu);
 
   if (print) {
-    acts[8].EvalAsync();
-    // PrintTrainingAccuracy(acts[8], label);
+    //acts[8].EvalAsync();
+    shared_ptr<float> x = bias[0].Get();
+    for(int i = 0; i < 16; ++i)
+      cout << x.get()[i] << " ";
+    cout << endl;
+    PrintTrainingAccuracy(acts[8], label);
   }
 
   vector<NArray> ret;
@@ -150,7 +158,7 @@ int main(int argc, char** argv) {
     label_file_in.ignore(2 * sizeof(float));
     LOG(INFO) << "Epoch #" << epoch;
     for (int mb = 0; mb < 60000 / mb_size; ++mb) {
-      ms.current_device_id_ = gpu_device[1];
+      ms.current_device_id_ = gpu_device[0];
       auto res = TrainMB(data_file_in, label_file_in, mb % 20 == 0);
       weights[0] -= alpha / mb_size * res[0];
       bias[0] -= alpha / mb_size * res[1];

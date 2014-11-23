@@ -8,8 +8,8 @@ def extract(prefix, md, max_dig):
     for dig in range(max_dig):
         samples = md[prefix + str(dig)]
         labels = np.empty([samples.shape[0], 1], dtype=np.float32)
-        labels.fill(dig)
-        yield np.hstack((samples, labels))
+        labels.fill(dig * 256)
+        yield np.hstack((samples, labels)) / 256
 
 def split_sample_and_label(merged_mb):
     [s, l] = np.hsplit(merged_mb, [merged_mb.shape[1]-1])

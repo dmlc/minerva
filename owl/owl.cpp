@@ -79,7 +79,7 @@ m::NArray ReshapeWrapper(m::NArray narr, const bp::list& s) {
 m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
   std::vector<float> v = std::vector<float>(bp::stl_input_iterator<float>(val), bp::stl_input_iterator<float>());
   size_t length = bp::len(val);
-  shared_ptr<float> data( new float[length] );
+  shared_ptr<float> data( new float[length], [] (float* ptr) { delete [] ptr; } );
   memcpy(data.get(), v.data(), sizeof(float) * length);
 //  for(size_t i = 0; i < length; ++i) {
 //    valptr.get()[i] = bp::extract<float>(val[i] * 1.0);
@@ -194,6 +194,14 @@ BOOST_PYTHON_MODULE(libowl) {
     .def(self - float())
     .def(self * float())
     .def(self / float())
+    .def(self += self)
+    .def(self -= self)
+    .def(self *= self)
+    .def(self /= self)
+    .def(self += float())
+    .def(self -= float())
+    .def(self *= float())
+    .def(self /= float())
     // matrix multiply
     .def(self * self)
     // reduction
