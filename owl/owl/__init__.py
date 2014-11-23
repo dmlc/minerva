@@ -12,8 +12,11 @@ ones = _owl.ones
 randn = _owl.randn
 randb = _owl.randb
 make_narray = _owl.make_narray
+
+# Convert numpy array into minerva array. ATTENTION: this will lead to
+# a transpose due to the different storage priority
 def from_nparray(nparr):
-    return _owl.make_narray([i for i in nparr.shape], nparr.T.flatten().tolist())
+    return _owl.make_narray(list(nparr.shape[::-1]), nparr.flatten().tolist())
 
 op = _owl.arithmetic
 
