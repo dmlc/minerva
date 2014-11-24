@@ -1,5 +1,6 @@
 import math
 import sys
+import time
 
 import owl
 from owl.conv import *
@@ -66,8 +67,9 @@ def train_network(model, data, label,
     owl.set_device(gpu)
     num_layers = 20
     count = 0
+    last = time.time()
     for i in xrange(num_epochs):
-        print "Epoch #", i
+        print "Epoch #", i, ", time: %s" % (time.time() - last)
         for j in xrange(num_minibatches):
             acts = [None] * num_layers
             sens = [None] * num_layers
@@ -169,7 +171,7 @@ def train_network(model, data, label,
 
             ++count
 
-            if count % 1 == 0:
+            if count % 20 == 0:
                 acts[16].eval_async()
 
 if __name__ == '__main__':

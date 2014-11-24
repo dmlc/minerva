@@ -66,8 +66,9 @@ def train_network(model, data, label,
     owl.set_device(gpu)
     num_layers = 20
     count = 0
+    last = time.time()
     for i in xrange(num_epochs):
-        print "Epoch #", i
+        print "Epoch #", i, ", time: %s" % (time.time() - last)
         for j in xrange(num_minibatches / 2):
           dW = [None] * 16
           dB = [None] * 16
