@@ -1,11 +1,10 @@
 import math
 import sys
 import random
-import numpy
 import scipy
 from scipy.io import *
 from random import shuffle
-from numpy import reshape
+import numpy as np
 
 import owl
 from owl.conv import *
@@ -59,9 +58,10 @@ def print_training_accuracy(o, t, minibatch_size):
     print 'Training error: {}'.format((minibatch_size - correct) * 1.0 / minibatch_size)
 
 def relu(act):
-    re_acts = act.reshape([act.size(0), act.size(1), 1, 1])
+    oldshape = act.shape
+    re_acts = act.reshape(act.shape + [1, 1])
     act = activation_forward(re_acts, act_op.relu)
-    return act.reshape([act.size(0), act.size(1)])
+    return act.reshape(oldshape)
 
 def train_network(model, data, label,
                   num_epochs = 100, num_train_samples = 60000, minibatch_size = 256,
@@ -99,7 +99,7 @@ def train_network(model, data, label,
             acts[12] = activation_forward(acts[11], act_op.relu) # relu5
             acts[13] = pooling_forward(acts[12], model.pooling_infos[2]) # pool5
 
-            re_acts13 = acts[13].reshape([acts[13].size(0) * acts[13].size(1) * acts[13].size(2), minibatch_size])
+            re_acts13 = acts[13].reshape([np.prod(acts[13].shape[0:3]), minibatch_size])
 
             acts[14] = (model.weights[5] * re_acts13).norm_arithmetic(model.bias[5], owl.op.add) # fc6
             acts[14] = relu(acts[14]) # relu6
@@ -126,7 +126,7 @@ def train_network(model, data, label,
             d_act13 = ele.mult(re_acts13, 1 - re_acts13)
             sens[13] = model.weights[5].trans() * sens[14]
             sens[13] = ele.mult(sens[13], d_act13)
-            sens[13] = sens[13].reshape([acts[13].size(0), acts[13].size(1), acts[13].size(2), acts[13].size(3)]) # fc6
+            sens[13] = sens[13].reshape(acts[13].shape) # fc6
 
             sens[12] = pooling_backward(sens[13], acts[13], acts[12], model.pooling_infos[2]) # pool5
             sens[11] = activation_backward(sens[12], acts[12], acts[11], act_op.relu) # relu5

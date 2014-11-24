@@ -79,12 +79,16 @@ m::NArray ReshapeWrapper(m::NArray narr, const bp::list& s) {
 m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
   std::vector<float> v = std::vector<float>(bp::stl_input_iterator<float>(val), bp::stl_input_iterator<float>());
   size_t length = bp::len(val);
-  shared_ptr<float> data( new float[length] );
+  shared_ptr<float> data( new float[length], [] (float* ptr) { delete [] ptr; } );
   memcpy(data.get(), v.data(), sizeof(float) * length);
 //  for(size_t i = 0; i < length; ++i) {
 //    valptr.get()[i] = bp::extract<float>(val[i] * 1.0);
 //  }
   return m::NArray::MakeNArray(ToScale(s), data);
+}
+
+bp::list ShapeWrapper(m::NArray narr) {
+  return ToPythonList(narr.Size());
 }
 
 bp::list NArrayToList(m::NArray narr) {
@@ -175,9 +179,7 @@ BOOST_PYTHON_MODULE(libowl) {
   m::NArray (m::NArray::*max1)(int) const = &m::NArray::Max;
   m::NArray (m::NArray::*max2)(const m::Scale&) const = &m::NArray::Max;
 
-  class_<m::Scale>("Scale");
-  //m::Scale (m::NArray::*size0)() const = &m::NArray::Size;
-  int (m::NArray::*size1)(int) const = &m::NArray::Size;
+  class_<m::Scale>("_Scale");
 
   class_<m::NArray>("NArray")
     // element-wise
@@ -192,6 +194,14 @@ BOOST_PYTHON_MODULE(libowl) {
     .def(self - float())
     .def(self * float())
     .def(self / float())
+    .def(self += self)
+    .def(self -= self)
+    .def(self *= self)
+    .def(self /= self)
+    .def(self += float())
+    .def(self -= float())
+    .def(self *= float())
+    .def(self /= float())
     // matrix multiply
     .def(self * self)
     // reduction
@@ -210,9 +220,9 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("tofile", &m::NArray::ToFile)
     .def("tolist", &owl::NArrayToList)
     .def("reshape", &owl::ReshapeWrapper)
-    .def("size", size1)
     .def("eval", &m::NArray::Eval)
     .def("eval_async", &m::NArray::EvalAsync)
+    .add_property("shape", &owl::ShapeWrapper)
   ;
 /*
   // file loader
@@ -225,10 +235,10 @@ BOOST_PYTHON_MODULE(libowl) {
   // creators
   def("zeros", &owl::ZerosWrapper);
   def("ones", &owl::OnesWrapper);
-  def("make_narray", &owl::MakeNArrayWrapper);
   def("randn", &owl::RandnWrapper);
+  def("make_narray", &owl::MakeNArrayWrapper);
   def("randb", &owl::RandBernoulliWrapper);
-  def("toscale", &owl::ToScale);
+  //def("toscale", &owl::ToScale);
 
   // system
   //def("to_list", &owl::NArrayToList);

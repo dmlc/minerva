@@ -44,7 +44,6 @@ void DagScheduler::GCNodes() {
 }
 
 void DagScheduler::OnExternRCUpdate(PhysicalDataNode* node) {
-  lock_guard<recursive_mutex> lck(dag_->m_);
   switch (rt_info_.GetState(node->node_id())) {
     case NodeState::kCompleted: {
       auto& ri = rt_info_.At(node->node_id());
