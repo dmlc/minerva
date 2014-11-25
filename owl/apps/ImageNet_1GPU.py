@@ -46,14 +46,6 @@ class AlexModel:
             owl.zeros([3, 3, 384, 256]),
             owl.zeros([4096, 9216]),
             owl.zeros([4096, 4096]),
-            owl.zeros([1000, 4096]),
-            owl.zeros([11, 11, 3, 96]),
-            owl.zeros([5, 5, 96, 256]),
-            owl.zeros([3, 3, 256, 384]),
-            owl.zeros([3, 3, 384, 384]),
-            owl.zeros([3, 3, 384, 256]),
-            owl.zeros([4096, 9216]),
-            owl.zeros([4096, 4096]),
             owl.zeros([1000, 4096])
         ];
 
@@ -70,14 +62,6 @@ class AlexModel:
         ];
 
         self.biasdelta = [
-            owl.zeros([96]),
-            owl.zeros([256]),
-            owl.zeros([384]),
-            owl.zeros([384]),
-            owl.zeros([256]),
-            owl.zeros([4096, 1]),
-            owl.zeros([4096, 1]),
-            owl.zeros([1000, 1]),
             owl.zeros([96]),
             owl.zeros([256]),
             owl.zeros([384]),
