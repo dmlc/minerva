@@ -1,12 +1,8 @@
 import math
 import sys
-import random
-import scipy
-from scipy.io import *
-from random import shuffle
-import numpy as np
-
+import time
 import owl
+import numpy as np
 from owl.conv import *
 import owl.elewise as ele
 
