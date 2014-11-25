@@ -49,7 +49,33 @@ NArray Elewise::Ln(const NArray& narr) {
 }
 
 NArray Elewise::SigmoidForward(const NArray& narr) {
-  return ElewiseHelper(narr, ElewiseType::kSigmoid);
+  return NArray::ComputeOne({narr}, narr.Size(), new SigmoidForwardOp());
+}
+
+NArray Elewise::SigmoidBackward(const NArray& diff, const NArray& top, const NArray& bottom) {
+  CHECK_EQ(diff.Size(), top.Size()) << "inputs size mismatch";
+  CHECK_EQ(diff.Size(), bottom.Size()) << "inputs size mismatch";
+  return NArray::ComputeOne({diff, top, bottom}, diff.Size(), new SigmoidBackwardOp());
+}
+
+NArray Elewise::ReluForward(const NArray& narr) {
+  return NArray::ComputeOne({narr}, narr.Size(), new ReluForwardOp());
+}
+
+NArray Elewise::ReluBackward(const NArray& diff, const NArray& top, const NArray& bottom) {
+  CHECK_EQ(diff.Size(), top.Size()) << "inputs size mismatch";
+  CHECK_EQ(diff.Size(), bottom.Size()) << "inputs size mismatch";
+  return NArray::ComputeOne({diff, top, bottom}, diff.Size(), new ReluBackwardOp());
+}
+
+NArray Elewise::TanhForward(const NArray& narr) {
+  return NArray::ComputeOne({narr}, narr.Size(), new TanhForwardOp());
+}
+
+NArray Elewise::TanhBackward(const NArray& diff, const NArray& top, const NArray& bottom) {
+  CHECK_EQ(diff.Size(), top.Size()) << "inputs size mismatch";
+  CHECK_EQ(diff.Size(), bottom.Size()) << "inputs size mismatch";
+  return NArray::ComputeOne({diff, top, bottom}, diff.Size(), new TanhBackwardOp());
 }
 
 NArray operator+(const NArray& lhs, const NArray& rhs) {
