@@ -151,6 +151,48 @@ class NormArithmeticOp : public PhyComputeFnWithClosure<NormArithmeticClosure> {
   }
 };
 
+class SigmoidForwardOp : public PhyComputeFnWithClosure<SigmoidForwardClosure> {
+ public:
+  std::string Name() const {
+    return "sigmoid forward";
+  }
+};
+
+class SigmoidBackwardOp : public PhyComputeFnWithClosure<SigmoidBackwardClosure> {
+ public:
+  std::string Name() const {
+    return "sigmoid backward";
+  }
+};
+
+class ReluForwardOp : public PhyComputeFnWithClosure<ReluForwardClosure> {
+ public:
+  std::string Name() const {
+    return "relu forward";
+  }
+};
+
+class ReluBackwardOp : public PhyComputeFnWithClosure<ReluBackwardClosure> {
+ public:
+  std::string Name() const {
+    return "relu backward";
+  }
+};
+
+class TanhForwardOp : public PhyComputeFnWithClosure<TanhForwardClosure> {
+ public:
+  std::string Name() const {
+    return "tanh forward";
+  }
+};
+
+class TanhBackwardOp : public PhyComputeFnWithClosure<TanhBackwardClosure> {
+ public:
+  std::string Name() const {
+    return "tanh backward";
+  }
+};
+
 class ConvForwardOp : public PhyComputeFnWithClosure<ConvForwardClosure> {
  public:
   std::string Name() const {
