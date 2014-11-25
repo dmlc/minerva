@@ -180,16 +180,16 @@ NArray NArray::NormArithmetic(const NArray& rhs, ArithmeticType type) const {
 }
 
 // System
-void NArray::Eval() const {
-  MinervaSystem::Instance().Eval({*this});
+void NArray::WaitForEval() const {
+  MinervaSystem::Instance().WaitForEval({*this});
 }
 
-void NArray::EvalAsync() const {
-  MinervaSystem::Instance().EvalAsync({*this});
+void NArray::StartEval() const {
+  MinervaSystem::Instance().StartEval({*this});
 }
 
 shared_ptr<float> NArray::Get() const {
-  Eval();
+  WaitForEval();
   return MinervaSystem::Instance().GetValue(*this);
 }
 

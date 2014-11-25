@@ -171,7 +171,7 @@ int main(int argc, char** argv) {
       weights[2] -= alpha / mb_size * res[4];
       bias[2] -= alpha / mb_size * res[5];
     }
-    weights[0].Eval();
+    weights[0].WaitForEval();
     data_file_in.close();
     label_file_in.close();
   }

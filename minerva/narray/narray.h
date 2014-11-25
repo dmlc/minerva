@@ -82,8 +82,8 @@ class NArray {
   float Max() const;  // TODO
   int CountZero() const;
   // System
-  void Eval() const;
-  void EvalAsync() const;
+  void WaitForEval() const;
+  void StartEval() const;
   std::shared_ptr<float> Get() const;
   void ToStream(std::ostream& out, const FileFormat& format) const;
   void ToFile(const std::string& filename, const FileFormat& format) const;

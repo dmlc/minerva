@@ -15,7 +15,6 @@ enum class ArithmeticType {
 enum class ElewiseType {
   kExp = 0,
   kLn,
-  kSigmoid,
   kNegative,
 };
 
@@ -60,6 +59,24 @@ struct MaxIndexClosure {
 
 struct ElewiseClosure {
   ElewiseType type;
+};
+
+struct SigmoidForwardClosure {
+};
+
+struct SigmoidBackwardClosure {
+};
+
+struct ReluForwardClosure {
+};
+
+struct ReluBackwardClosure {
+};
+
+struct TanhForwardClosure {
+};
+
+struct TanhBackwardClosure {
 };
 
 struct ArithmeticClosure {

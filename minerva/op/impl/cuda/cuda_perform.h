@@ -43,7 +43,6 @@ void CudaPerformReshape(float* in, float* out, size_t size, cudaStream_t);
 
 void CudaPerformElewiseExp(float* in, float* out, size_t size, cudaStream_t);
 void CudaPerformElewiseLn(float* in, float* out, size_t size, cudaStream_t);
-void CudaPerformElewiseSigmoid(float* in, float* out, size_t size, cudaStream_t);
 void CudaPerformElewiseNegative(float* in, float* out, size_t size, cudaStream_t);
 
 void CudaPerformConvForward(float* bottom, float* filter, float* bias, float* top, int num_images, int bottom_num_channels, int top_num_channels, int bottom_height, int bottom_width, int pad_height, int pad_width, int stride_vertical, int stride_horizontal, int filter_height, int filter_width, cudaStream_t stream, cudnnHandle_t handle);
