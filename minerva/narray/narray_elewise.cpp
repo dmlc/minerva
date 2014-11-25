@@ -48,7 +48,7 @@ NArray Elewise::Ln(const NArray& narr) {
   return ElewiseHelper(narr, ElewiseType::kLn);
 }
 
-NArray Elewise::Sigmoid(const NArray& narr) {
+NArray Elewise::SigmoidForward(const NArray& narr) {
   return ElewiseHelper(narr, ElewiseType::kSigmoid);
 }
 

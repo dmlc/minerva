@@ -89,7 +89,6 @@ class ElewiseOp : public PhyComputeFnWithClosure<ElewiseClosure> {
     switch(closure.type) {
       case ElewiseType::kExp:      return "exp";
       case ElewiseType::kLn:       return "ln";
-      case ElewiseType::kSigmoid:  return "sigmoid";
       case ElewiseType::kNegative: return "-";
     };
     return "NA";

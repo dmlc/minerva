@@ -212,9 +212,6 @@ void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& cl
     case ElewiseType::kLn:
       CudaPerformElewiseLn(in_data, res_data, length, context.stream);
       break;
-    case ElewiseType::kSigmoid:
-      CudaPerformElewiseSigmoid(in_data, res_data, length, context.stream);
-      break;
     case ElewiseType::kNegative:
       CudaPerformElewiseNegative(in_data, res_data, length, context.stream);
       break;

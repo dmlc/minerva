@@ -16,6 +16,7 @@ void Reduction(const DataList&, const DataList&, ReductionClosure&, const CudaRu
 void MaxIndex(const DataList&, const DataList&, MaxIndexClosure&, const CudaRuntimeContext&);
 void Reshape(const DataList&, const DataList&, ReshapeClosure&, const CudaRuntimeContext&);
 void Elewise(const DataList&, const DataList&, ElewiseClosure&, const CudaRuntimeContext&);
+void SigmoidForward(const DataList&, const DataList&, SigmoidForwardClosure&, const CudaRuntimeContext&);
 void ConvForward(const DataList&, const DataList&, ConvForwardClosure&, const CudaRuntimeContext&);
 void ConvBackwardData(const DataList&, const DataList&, ConvBackwardDataClosure&, const CudaRuntimeContext&);
 void ConvBackwardFilter(const DataList&, const DataList&, ConvBackwardFilterClosure&, const CudaRuntimeContext&);
