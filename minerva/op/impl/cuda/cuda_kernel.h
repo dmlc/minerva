@@ -23,13 +23,6 @@ class NegativeOp {
   }
 };
 
-class SigmoidOp {
- public:
-  __device__ inline float operator()(float a) const {
-    return 1 / (1 + exp(-a));
-  }
-};
-
 // Binary function
 class SubOp {
  public:
