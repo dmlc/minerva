@@ -215,7 +215,63 @@ void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& cl
     case ElewiseType::kNegative:
       CudaPerformElewiseNegative(in_data, res_data, length, context.stream);
       break;
+    default:
+      LOG(FATAL) << "elewise algorithm not supported";
   }
+}
+
+void SigmoidForward(const DataList& inputs, const DataList& outputs, SigmoidForwardClosure&, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 1) << "sigmoid forward #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "sigmoid forward #outputs wrong";
+  auto& bottom = inputs[0];
+  auto& top = outputs[0];
+  CudaPerformSigmoidForward(bottom.data(), top.data(), 1, 1, 1, bottom.size().Prod(), context.stream, context.cudnn_handle);
+}
+
+void SigmoidBackward(const DataList& inputs, const DataList& outputs, SigmoidBackwardClosure&, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 3) << "sigmoid backward #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "sigmoid backward #outputs wrong";
+  auto& top_diff = inputs[0];
+  auto& top = inputs[1];
+  auto& bottom = inputs[2];
+  auto& bottom_diff = outputs[0];
+  CudaPerformSigmoidBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), 1, 1, 1, top_diff.size().Prod(), context.stream, context.cudnn_handle);
+}
+
+void ReluForward(const DataList& inputs, const DataList& outputs, ReluForwardClosure&, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 1) << "relu forward #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "relu forward #outputs wrong";
+  auto& bottom = inputs[0];
+  auto& top = outputs[0];
+  CudaPerformReluForward(bottom.data(), top.data(), 1, 1, 1, bottom.size().Prod(), context.stream, context.cudnn_handle);
+}
+
+void ReluBackward(const DataList& inputs, const DataList& outputs, ReluBackwardClosure&, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 3) << "relu backward #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "relu backward #outputs wrong";
+  auto& top_diff = inputs[0];
+  auto& top = inputs[1];
+  auto& bottom = inputs[2];
+  auto& bottom_diff = outputs[0];
+  CudaPerformReluBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), 1, 1, 1, top_diff.size().Prod(), context.stream, context.cudnn_handle);
+}
+
+void TanhForward(const DataList& inputs, const DataList& outputs, TanhForwardClosure&, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 1) << "tanh forward #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "tanh forward #outputs wrong";
+  auto& bottom = inputs[0];
+  auto& top = outputs[0];
+  CudaPerformTanhForward(bottom.data(), top.data(), 1, 1, 1, bottom.size().Prod(), context.stream, context.cudnn_handle);
+}
+
+void TanhBackward(const DataList& inputs, const DataList& outputs, TanhBackwardClosure&, const CudaRuntimeContext& context) {
+  CHECK_EQ(inputs.size(), 3) << "tanh backward #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "tanh backward #outputs wrong";
+  auto& top_diff = inputs[0];
+  auto& top = inputs[1];
+  auto& bottom = inputs[2];
+  auto& bottom_diff = outputs[0];
+  CudaPerformTanhBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), 1, 1, 1, top_diff.size().Prod(), context.stream, context.cudnn_handle);
 }
 
 void ConvForward(const DataList& inputs, const DataList& outputs, ConvForwardClosure& closure, const CudaRuntimeContext& context) {
