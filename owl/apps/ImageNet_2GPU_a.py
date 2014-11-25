@@ -176,9 +176,7 @@ def train_network(model, data, label,
             sens[18] = acts[18] - target
 
             # BP
-            d_act17 = ele.mult(acts[17], 1 - acts[17])
             sens[17] = model.weights[7].trans() * sens[18]
-            sens[17] = ele.mult(sens[17], d_act17) # fc8
 
             sens[17] = ele.mult(sens[17], mask7) # drop7
             sens[16] = backrelu(sens[17], acts[17], acts[16]) # relu7
