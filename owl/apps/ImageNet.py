@@ -1,7 +1,9 @@
 import math
 import sys
-
+import time
+import numpy as np
 import owl
+import Queue
 from owl.conv import *
 import owl.elewise as ele
 
@@ -45,6 +47,15 @@ class AlexModel:
             owl.zeros([1000, 1])
         ];
 
+class MBQueue:
+    def __init__(self, size):
+        self.queue = Queue.Queue()
+        self.size = size
+    def enqueue(self, a):
+        a.eval_async()
+        self.queue.put(a)
+        if self.size <= self.queue.qsize():
+            self.queue.get().eval()
 
 def print_training_accuracy(o, t, minibatch_size):
     predict = o.max_index(0)
@@ -53,22 +64,30 @@ def print_training_accuracy(o, t, minibatch_size):
     print 'Training error: {}'.format((minibatch_size - correct) * 1.0 / minibatch_size)
 
 def relu(act):
-    re_acts = act.reshape([act.size(0), act.size(1), 1, 1])
+    oldshape = act.shape
+    re_acts = act.reshape(act.shape + [1, 1])
     act = activation_forward(re_acts, act_op.relu)
-    return act.reshape([act.size(0), act.size(1)])
+    return act.reshape(oldshape)
 
 def train_network(model, data, label,
-                  num_epochs = 100, num_train_samples = 60000, minibatch_size = 256,
-                  num_minibatches = 235, dropout_fraction = 0.5, eps_w = 1, eps_b = 1):
+                  num_epochs = 100, num_train_samples = 100000, minibatch_size = 256,
+                  num_minibatches = 390, dropout_rate = 0.5, eps_w = 1, eps_b = 1):
     eps_w = eps_w / minibatch_size
     eps_b = eps_b / minibatch_size
-    gpu = owl.create_gpu_device(0)
-    owl.set_device(gpu)
+    gpu = [None] * 2
+    gpu[0] = owl.create_gpu_device(0)
+    gpu[1] = owl.create_gpu_device(1)
     num_layers = 20
     count = 0
+    last = time.time()
+    mbq = MBQueue(2)
     for i in xrange(num_epochs):
-        print "Epoch #", i
-        for j in xrange(num_minibatches):
+        print "Epoch #", i, ", time: %s" % (time.time() - last)
+        for j in xrange(num_minibatches / 2):
+          dW = [None] * 16
+          dB = [None] * 16
+          for k in xrange(2):
+            owl.set_device(gpu[k])
             acts = [None] * num_layers
             sens = [None] * num_layers
 
@@ -93,16 +112,18 @@ def train_network(model, data, label,
             acts[12] = activation_forward(acts[11], act_op.relu) # relu5
             acts[13] = pooling_forward(acts[12], model.pooling_infos[2]) # pool5
 
-            re_acts13 = acts[13].reshape([acts[13].size(0) * acts[13].size(1) * acts[13].size(2), minibatch_size])
+            re_acts13 = acts[13].reshape([np.prod(acts[13].shape[0:3]), minibatch_size])
 
             acts[14] = (model.weights[5] * re_acts13).norm_arithmetic(model.bias[5], owl.op.add) # fc6
             acts[14] = relu(acts[14]) # relu6
-            # drop6
-            #mask6 = numpy.random.rand(4096 * 9216)
-            # print mask6.tolist()
+            mask6 = owl.randb([4096, minibatch_size], dropout_rate)
+            acts[14] = ele.mult(acts[14], mask6) # drop6
+
             acts[15] = (model.weights[6] * acts[14]).norm_arithmetic(model.bias[6], owl.op.add) # fc7
             acts[15] = relu(acts[15]) # relu7
-            # drop7
+            mask7 = owl.randb([4096, minibatch_size], dropout_rate)
+            acts[15] = ele.mult(acts[15], mask7) # drop7
+
             acts[16] = (model.weights[7] * acts[15]).norm_arithmetic(model.bias[7], owl.op.add) # fc8
             acts[16] = owl.softmax(acts[16]) # prob
 
@@ -112,15 +133,17 @@ def train_network(model, data, label,
             d_act15 = ele.mult(acts[15], 1 - acts[15])
             sens[15] = model.weights[7].trans() * sens[16]
             sens[15] = ele.mult(sens[15], d_act15) # fc8
+            sens[15] = ele.mult(sens[15], mask7) # drop7
 
             d_act14 = ele.mult(acts[14], 1 - acts[14])
             sens[14] = model.weights[6].trans() * sens[15]
             sens[14] = ele.mult(sens[14], d_act14) # fc7
+            sens[14] = ele.mult(sens[14], mask7) # drop6
 
             d_act13 = ele.mult(re_acts13, 1 - re_acts13)
             sens[13] = model.weights[5].trans() * sens[14]
             sens[13] = ele.mult(sens[13], d_act13)
-            sens[13] = sens[13].reshape([acts[13].size(0), acts[13].size(1), acts[13].size(2), acts[13].size(3)]) # fc6
+            sens[13] = sens[13].reshape(acts[13].shape) # fc6
 
             sens[12] = pooling_backward(sens[13], acts[13], acts[12], model.pooling_infos[2]) # pool5
             sens[11] = activation_backward(sens[12], acts[12], acts[11], act_op.relu) # relu5
@@ -139,34 +162,39 @@ def train_network(model, data, label,
             sens[1] = activation_backward(sens[2], acts[2], acts[1], act_op.relu) # relu1
             sens[0] = conv_backward_data(sens[1], model.weights[0], model.conv_infos[0]) # conv1
 
-            model.weights[7] -= eps_w * sens[16] * acts[15].trans()
-            model.bias[7] -= eps_b * sens[16].sum(1)
+            dW[k * 8 + 7] = eps_w * sens[16] * acts[15].trans()
+            dB[k * 8 + 7] = eps_b * sens[16].sum(1)
 
-            model.weights[6] -= eps_w * sens[15] * acts[14].trans()
-            model.bias[6] -= eps_b * sens[15].sum(1)
+            dW[k * 8 + 6] = eps_w * sens[15] * acts[14].trans()
+            dB[k * 8 + 6] = eps_b * sens[15].sum(1)
 
-            model.weights[5] -= eps_w * sens[14] * re_acts13.trans()
-            model.bias[5] -= eps_b * sens[14].sum(1)
+            dW[k * 8 + 5] = eps_w * sens[14] * re_acts13.trans()
+            dB[k * 8 + 5] = eps_b * sens[14].sum(1)
 
-            model.weights[4] -= eps_w * conv_backward_filter(sens[11], acts[10], model.conv_infos[4])
-            model.bias[4] -= eps_b * conv_backward_bias(sens[11])
+            dW[k * 8 + 4] = eps_w * conv_backward_filter(sens[11], acts[10], model.conv_infos[4])
+            dB[k * 8 + 4] = eps_b * conv_backward_bias(sens[11])
 
-            model.weights[3] -= eps_w * conv_backward_filter(sens[9], acts[8], model.conv_infos[3])
-            model.bias[3] -= eps_b * conv_backward_bias(sens[9])
+            dW[k * 8 + 3] = eps_w * conv_backward_filter(sens[9], acts[8], model.conv_infos[3])
+            dB[k * 8 + 3] = eps_b * conv_backward_bias(sens[9])
 
-            model.weights[2] -= eps_w * conv_backward_filter(sens[7], acts[6], model.conv_infos[2])
-            model.bias[2] -= eps_b * conv_backward_bias(sens[7])
+            dW[k * 8 + 2] = eps_w * conv_backward_filter(sens[7], acts[6], model.conv_infos[2])
+            dB[k * 8 + 2] = eps_b * conv_backward_bias(sens[7])
 
-            model.weights[1] -= eps_w * conv_backward_filter(sens[4], acts[3], model.conv_infos[1])
-            model.bias[1] -= eps_b * conv_backward_bias(sens[4])
+            dW[k * 8 + 1] = eps_w * conv_backward_filter(sens[4], acts[3], model.conv_infos[1])
+            dB[k * 8 + 1] = eps_b * conv_backward_bias(sens[4])
 
-            model.weights[0] -= eps_w * conv_backward_filter(sens[1], acts[0], model.conv_infos[0])
-            model.bias[0] -= eps_b * conv_backward_bias(sens[1])
+            dW[k * 8 + 0] = eps_w * conv_backward_filter(sens[1], acts[0], model.conv_infos[0])
+            dB[k * 8 + 0] = eps_b * conv_backward_bias(sens[1])
 
             ++count
 
-            if count % 20 == 0:
-                print_training_accuracy(acts[16], target, minibatch_size)
+            if count % 1 == 0:
+                mbq.enqueue(acts[16])
+          for k in xrange(8):
+            model.weights[k] -= dW[k]
+            model.weights[k] -= dW[k + 8]
+            model.bias[k] -= dB[k]
+            model.bias[k] -= dB[k + 8]
 
 if __name__ == '__main__':
     owl.initialize(sys.argv)
