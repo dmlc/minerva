@@ -32,7 +32,7 @@ if (CUDA_FOUND)
 endif (CUDA_FOUND)
 
 include_directories(
-  SYSTEM ${external_include_path_list}
+  ${external_include_path_list}
 )
 
 link_directories(
