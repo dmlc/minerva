@@ -8,31 +8,28 @@ using namespace std;
 namespace minerva {
 
 // Helper functions
-static NArray UnaryElewiseCompute(const NArray& narr, PhysicalComputeFn* op) {
-  return NArray::ComputeOne({narr}, narr.Size(), op);
-}
-
-static NArray BinaryElewiseCompute(const NArray& lhs, const NArray& rhs, PhysicalComputeFn* op) {
-  CHECK_EQ(lhs.Size(), rhs.Size()) << "size must match";
-  return NArray::ComputeOne({lhs, rhs}, lhs.Size(), op);
-}
-
 static NArray ElewiseHelper(const NArray& narr, ElewiseType type) {
   ElewiseOp* elewise_op = new ElewiseOp();
   elewise_op->closure = {type};
-  return UnaryElewiseCompute(narr, elewise_op);
+  return NArray::ComputeOne({narr}, narr.Size(), elewise_op);
 }
 
 static NArray ArithmeticHelper(const NArray& lhs, const NArray& rhs, ArithmeticType type) {
-  ArithmeticOp* arith_op = new ArithmeticOp();
-  arith_op->closure = {type};
-  return BinaryElewiseCompute(lhs, rhs, arith_op);
+  if (lhs.Size() == rhs.Size()) {
+    CHECK_EQ(lhs.Size(), rhs.Size()) << "size must match";
+    ArithmeticOp* arith_op = new ArithmeticOp();
+    arith_op->closure = {type};
+    return NArray::ComputeOne({lhs, rhs}, lhs.Size(), arith_op);
+  } else {
+    // Do NormArithmetic
+    return lhs.NormArithmetic(rhs, type);
+  }
 }
 
 static NArray ArithmeticConstHelper(const NArray& narr, float val, int side, ArithmeticType type) {
   ArithmeticConstOp* arith_const_op = new ArithmeticConstOp();
   arith_const_op->closure = {type, val, side};
-  return UnaryElewiseCompute(narr, arith_const_op);
+  return NArray::ComputeOne({narr}, narr.Size(), arith_const_op);
 }
 
 // Element-wise operations
