@@ -53,17 +53,17 @@ class NArray {
   friend NArray operator-(const NArray&, float);
   friend NArray operator*(const NArray&, float);
   friend NArray operator/(const NArray&, float);
-  void operator+=(const NArray&);
-  void operator-=(const NArray&);
-  void operator*=(const NArray&);
-  void operator/=(const NArray&);
-  void operator+=(float);
-  void operator-=(float);
-  void operator*=(float);
-  void operator/=(float);
+  NArray& operator+=(const NArray&);
+  NArray& operator-=(const NArray&);
+  NArray& operator/=(const NArray&);
+  NArray& operator+=(float);
+  NArray& operator-=(float);
+  NArray& operator*=(float);
+  NArray& operator/=(float);
   NArray operator-();
   // Matmult
   friend NArray operator*(const NArray&, const NArray&);
+  NArray& operator*=(const NArray&);
   // Shape
   const Scale& Size() const { return CHECK_NOTNULL(data_node_)->data_.size; }
   int Size(int dim) const { return CHECK_NOTNULL(data_node_)->data_.size[dim]; }

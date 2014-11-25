@@ -144,6 +144,10 @@ NArray operator*(const NArray& lhs, const NArray& rhs) {
   return NArray::ComputeOne({lhs, rhs}, newsize, matmult_op);
 }
 
+NArray& NArray::operator*=(const NArray& rhs) {
+  return *this = (*this * rhs);
+}
+
 // Shape
 NArray NArray::Reshape(const Scale& dims) const {
   CHECK_EQ(Size().Prod(), dims.Prod()) << "dimension mismatch";

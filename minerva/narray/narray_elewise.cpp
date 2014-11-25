@@ -119,36 +119,32 @@ NArray operator/(const NArray& lhs, float rhs) {
   return ArithmeticConstHelper(lhs, rhs, 1, ArithmeticType::kDiv);
 }
 
-void NArray::operator+=(const NArray& narr) {
-  *this = ArithmeticHelper(*this, narr, ArithmeticType::kAdd);
+NArray& NArray::operator+=(const NArray& narr) {
+  return *this = (*this + narr);
 }
 
-void NArray::operator-=(const NArray& narr) {
-  *this = ArithmeticHelper(*this, narr, ArithmeticType::kSub);
+NArray& NArray::operator-=(const NArray& narr) {
+  return *this = (*this - narr);
 }
 
-void NArray::operator*=(const NArray& narr) {
-  *this = ArithmeticHelper(*this, narr, ArithmeticType::kMult);
+NArray& NArray::operator/=(const NArray& narr) {
+  return *this = (*this / narr);
 }
 
-void NArray::operator/=(const NArray& narr) {
-  *this = ArithmeticHelper(*this, narr, ArithmeticType::kDiv);
+NArray& NArray::operator+=(float val) {
+  return *this = (*this + val);
 }
 
-void NArray::operator+=(float val) {
-  *this = ArithmeticConstHelper(*this, val, 1, ArithmeticType::kAdd);
+NArray& NArray::operator-=(float val) {
+  return *this = (*this - val);
 }
 
-void NArray::operator-=(float val) {
-  *this = ArithmeticConstHelper(*this, val, 1, ArithmeticType::kSub);
+NArray& NArray::operator*=(float val) {
+  return *this = (*this * val);
 }
 
-void NArray::operator*=(float val) {
-  *this = ArithmeticConstHelper(*this, val, 1, ArithmeticType::kMult);
-}
-
-void NArray::operator/=(float val) {
-  *this = ArithmeticConstHelper(*this, val, 1, ArithmeticType::kDiv);
+NArray& NArray::operator/=(float val) {
+  return *this = (*this / val);
 }
 
 NArray NArray::operator-() {
