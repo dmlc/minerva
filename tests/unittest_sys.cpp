@@ -9,7 +9,7 @@ TEST(EvalTest, SyncEval) {
   NArray a = NArray::Randn({250, 500}, 0.0, 1.0);
   NArray b = NArray::Randn({500, 400}, 0.0, 1.0);
   NArray c = a * b;
-  c.Eval();
+  c.WaitForEval();
   float* x = new float[250 * 500];
   float* y = new float[500 * 400];
   float* z = new float[250 * 400];
@@ -30,7 +30,7 @@ TEST(EvalTest, AsyncEval) {
   NArray a = NArray::Randn({250, 500}, 0.0, 1.0);
   NArray b = NArray::Randn({500, 400}, 0.0, 1.0);
   NArray c = a * b;
-  c.EvalAsync();
+  c.StartEval();
   float* x = new float[250 * 500];
   float* y = new float[500 * 400];
   float* z = new float[250 * 400];
@@ -52,7 +52,7 @@ TEST(EvalTest, AsyncEvalWithChangedDag) {
   NArray a = NArray::Zeros({250, 500});
   NArray b = NArray::Zeros({500, 400});
   NArray c = a * b;
-  c.EvalAsync();
+  c.StartEval();
   NArray d = c + 1;
   NArray e = b * d.Trans(); // 500x250
   MinervaSystem::Instance().dag_scheduler().WaitForFinish();

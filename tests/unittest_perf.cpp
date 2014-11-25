@@ -15,7 +15,7 @@ TEST(PerfTest, LotsOfUnusedNArray) {
     narrs[i] = narrs[i] * 100 + 1;
   }
   for (int i = 0; i < 1000; ++i) {
-    narrs[i].Eval();
+    narrs[i].WaitForEval();
   }
 }
 
@@ -24,7 +24,7 @@ TEST(PerfTest, LongChain) {
   for (int i = 0; i < 5000; ++i) {
     a += 1;
   }
-  a.Eval();
+  a.WaitForEval();
 }
 
 class AddOneManyTimesOp : public PhysicalComputeFn {
@@ -47,6 +47,6 @@ class AddOneManyTimesOp : public PhysicalComputeFn {
 TEST(PerfTest, LongChainInOne) {
   NArray a = NArray::Constant({10, 10}, 0.0);
   NArray b = NArray::ComputeOne({a}, {a.Size()}, new AddOneManyTimesOp());
-  b.Eval();
+  b.WaitForEval();
 }
 
