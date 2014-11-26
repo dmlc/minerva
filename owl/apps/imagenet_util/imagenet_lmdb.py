@@ -1,4 +1,4 @@
-import sys,os
+import sys,os,gc
 import lmdb
 import numpy as np
 import numpy.random
@@ -24,12 +24,13 @@ class ImageNetDataProvider:
     def get_train_mb(self, mb_size, cropped_size=224):
         env = lmdb.open(self.train_db, readonly=True)
         # print env.stat()
-        d = Datum()
-        samples = []
-        labels = []
+        samples = np.zeros([mb_size, cropped_size ** 2 * 3])
+        labels = np.zeros([mb_size, 1000])
+        count = 0
         with env.begin(write=False, buffers=False) as txn:
             cursor = txn.cursor()
             for key, value in cursor:
+                d = Datum()
                 d.ParseFromString(value)
                 #print '#channels=', d.channels, 'height=', d.height, 'width=', d.width, 'label=', d.label
                 im = np.fromstring(d.data, dtype=np.uint8).reshape([256, 256, 3]) - self.mean_data
@@ -37,16 +38,17 @@ class ImageNetDataProvider:
                 [crop_h, crop_w] = np.random.randint(256 - cropped_size, size=2)
                 im_cropped = im[crop_h:crop_h+cropped_size, crop_w:crop_w+cropped_size, :]
                 # make labels
-                im_label = np.zeros(1000, dtype=np.float32)
-                im_label[d.label] = 1
-                samples.append(im_cropped.flatten().tolist())
-                labels.append(im_label.tolist())
-                if len(samples) == mb_size:
+                samples[count, :] = im_cropped.reshape(cropped_size ** 2 * 3)
+                labels[count, d.label] = 1
+                count = count + 1
+                if count == mb_size:
                     yield (samples, labels)
-                    samples = []
-                    labels = []
-        if samples != None:
-            yield (samples, labels)
+                    #samples = np.zeros([mb_size, cropped_size ** 2 * 3])
+                    labels = np.zeros([mb_size, 1000])
+                    count = 0
+        if count != mb_size:
+            delete_idx = np.arange(count, mb_size)
+            yield (np.delete(samples, delete_idx, 0), np.delete(labels, delete_idx, 0))
 
     def get_test_mb(self):
         return None
@@ -57,7 +59,13 @@ if __name__ == '__main__':
             train_db='/home/minjie/data/imagenet/ilsvrc12_train_lmdb',
             val_db='/home/minjie/data/imagenet/ilsvrc12_val_lmdb',
             test_db='/home/minjie/data/imagenet/ilsvrc12_test_lmdb')
+    count = 0
     for (samples, labels) in dp.get_train_mb(256):
-        #print samples.shape
+        print count, ':', samples.shape
         #print labels.shape
-        break
+        #print samples[0,0:10]
+        #print np.argmax(labels, axis=1)
+        # training
+        count = count + 1
+        if count % 100 == 0:
+            print 'gc:', gc.collect()
