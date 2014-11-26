@@ -93,7 +93,7 @@ def backrelu(sen, top, bottom):
 
 def train_network(model, data, label,
                   num_epochs = 100, num_train_samples = 100000, minibatch_size = 256,
-                  num_minibatches = 390, dropout_rate = 0.5, eps_w = 1, eps_b = 1, momemtum = 0.9, wd = 0.005):
+                  num_minibatches = 390, dropout_rate = 0.5, eps_w = 1, eps_b = 1, mom = 0.9, wd = 0.005):
     eps_w = eps_w / minibatch_size
     eps_b = eps_b / minibatch_size
     gpu = owl.create_gpu_device(0)
@@ -112,7 +112,6 @@ def train_network(model, data, label,
             target = owl.randn([1000, minibatch_size], 0.0, 0.1) # label
 
             acts[1] = conv_forward(acts[0], model.weights[0], model.bias[0], model.conv_infos[0]) # conv1
-            print 1
             acts[2] = activation_forward(acts[1], act_op.relu) # relu1
             acts[3] = pooling_forward(acts[2], model.pooling_infos[0]) # pool1
 
@@ -176,29 +175,29 @@ def train_network(model, data, label,
             sens[1] = activation_backward(sens[2], acts[2], acts[1], act_op.relu) # relu1
             sens[0] = conv_backward_data(sens[1], model.weights[0], model.conv_infos[0]) # conv1
 
-	    model.weights[7] -= momemtum * model.weightsdelta[7] - eps_w * (sens[18] * acts[17].trans() + wd * model.weights[7] / minibatch_size)
-            model.bias[7] -= momemtum * model.biasdelta[7] - eps_b * (sens[18].sum(1) + wd * model.bias[7] / minibatch_size)
+	    model.weights[7] -= mom * model.weightsdelta[7] - eps_w * (sens[18] * acts[17].trans() + wd * model.weights[7] / minibatch_size)
+            model.bias[7] -= mom * model.biasdelta[7] - eps_b * (sens[18].sum(1) + wd * model.bias[7] / minibatch_size)
             
-	    model.weights[6] -= momemtum * model.weightsdelta[6] - eps_w * (sens[16] * acts[15].trans() + wd * model.weights[6] / minibatch_size)
-            model.bias[6] -= momemtum * model.biasdelta[6] - eps_b * (sens[16].sum(1) + wd * model.bias[6] / minibatch_size)
+	    model.weights[6] -= mom * model.weightsdelta[6] - eps_w * (sens[16] * acts[15].trans() + wd * model.weights[6] / minibatch_size)
+            model.bias[6] -= mom * model.biasdelta[6] - eps_b * (sens[16].sum(1) + wd * model.bias[6] / minibatch_size)
     	    
-	    model.weights[5] -= momemtum * model.weightsdelta[5] - eps_w * (sens[14] * re_acts13.trans() + wd * model.weights[5] / minibatch_size)
-            model.bias[5] -= momemtum * model.biasdelta[5] - eps_b * (sens[14].sum(1) + wd * model.bias[5] / minibatch_size)
+	    model.weights[5] -= mom * model.weightsdelta[5] - eps_w * (sens[14] * re_acts13.trans() + wd * model.weights[5] / minibatch_size)
+            model.bias[5] -= mom * model.biasdelta[5] - eps_b * (sens[14].sum(1) + wd * model.bias[5] / minibatch_size)
             	
-            model.weights[4] -= momemtum * model.weightsdelta[4] - eps_w * (conv_backward_filter(sens[11], acts[10], model.conv_infos[4]) + wd * model.weights[4] / minibatch_size)
-	    model.bias[4] -= momemtum * model.biasdelta[4] - eps_b * (conv_backward_bias(sens[11]) + wd * model.bias[4] / minibatch_size)
+            model.weights[4] -= mom * model.weightsdelta[4] - eps_w * (conv_backward_filter(sens[11], acts[10], model.conv_infos[4]) + wd * model.weights[4] / minibatch_size)
+	    model.bias[4] -= mom * model.biasdelta[4] - eps_b * (conv_backward_bias(sens[11]) + wd * model.bias[4] / minibatch_size)
 
-	    model.weights[3] -= momemtum * model.weightsdelta[3] - eps_w * (conv_backward_filter(sens[9], acts[8], model.conv_infos[3]) + wd * model.weights[3] / minibatch_size)
-	    model.bias[3] -= momemtum * model.biasdelta[3] - eps_b * (conv_backward_bias(sens[10]) + wd * model.bias[3] / minibatch_size)
+	    model.weights[3] -= mom * model.weightsdelta[3] - eps_w * (conv_backward_filter(sens[9], acts[8], model.conv_infos[3]) + wd * model.weights[3] / minibatch_size)
+	    model.bias[3] -= mom * model.biasdelta[3] - eps_b * (conv_backward_bias(sens[10]) + wd * model.bias[3] / minibatch_size)
 
- 	    model.weights[2] -= momemtum * model.weightsdelta[2] - eps_w * (conv_backward_filter(sens[7], acts[6], model.conv_infos[2]) + wd * model.weights[2] / minibatch_size)
-	    model.bias[2] -= momemtum * model.biasdelta[2] - eps_b * (conv_backward_bias(sens[7]) + wd * model.bias[2] / minibatch_size)
+ 	    model.weights[2] -= mom * model.weightsdelta[2] - eps_w * (conv_backward_filter(sens[7], acts[6], model.conv_infos[2]) + wd * model.weights[2] / minibatch_size)
+	    model.bias[2] -= mom * model.biasdelta[2] - eps_b * (conv_backward_bias(sens[7]) + wd * model.bias[2] / minibatch_size)
 
-  	    model.weights[1] -= momemtum * model.weightsdelta[1] - eps_w * (conv_backward_filter(sens[4], acts[3], model.conv_infos[1]) + wd * model.weights[1] / minibatch_size)
-	    model.bias[1] -= momemtum * model.biasdelta[1] - eps_b * (conv_backward_bias(sens[4]) + wd * model.bias[1] / minibatch_size)
+  	    model.weights[1] -= mom * model.weightsdelta[1] - eps_w * (conv_backward_filter(sens[4], acts[3], model.conv_infos[1]) + wd * model.weights[1] / minibatch_size)
+	    model.bias[1] -= mom * model.biasdelta[1] - eps_b * (conv_backward_bias(sens[4]) + wd * model.bias[1] / minibatch_size)
 
-            model.weights[0] -= momemtum * model.weightsdelta[0] - eps_w * (conv_backward_filter(sens[1], acts[0], model.conv_infos[0]) + wd * model.weights[0] / minibatch_size)
-	    model.bias[0] -= momemtum * model.biasdelta[0] - eps_b * (conv_backward_bias(sens[1]) + wd * model.bias[0] / minibatch_size)
+            model.weights[0] -= mom * model.weightsdelta[0] - eps_w * (conv_backward_filter(sens[1], acts[0], model.conv_infos[0]) + wd * model.weights[0] / minibatch_size)
+	    model.bias[0] -= mom * model.biasdelta[0] - eps_b * (conv_backward_bias(sens[1]) + wd * model.bias[0] / minibatch_size)
             ++count
 
             if count % 1 == 0:
