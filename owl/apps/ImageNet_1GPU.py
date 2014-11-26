@@ -78,19 +78,6 @@ def print_training_accuracy(o, t, minibatch_size):
     correct = (predict - ground_truth).count_zero()
     print 'Training error: {}'.format((minibatch_size - correct) * 1.0 / minibatch_size)
 
-def relu(act):
-    oldshape = act.shape
-    re_acts = act.reshape(act.shape + [1, 1])
-    act = activation_forward(re_acts, act_op.relu)
-    return act.reshape(oldshape)
-
-def backrelu(sen, top, bottom):
-    re_sen = sen.reshape(sen.shape + [1, 1])
-    re_top = top.reshape(top.shape + [1, 1])
-    re_bottom = bottom.reshape(bottom.shape + [1, 1])
-    act_back = activation_backward(re_sen, re_top, re_bottom, act_op.relu)
-    return act_back.reshape(act_back.shape[0:2])
-
 def train_network(model, data, label,
                   num_epochs = 100, num_train_samples = 100000, minibatch_size = 256,
                   num_minibatches = 390, dropout_rate = 0.5, eps_w = 1, eps_b = 1, momemtum = 0.9, wd = 0.005):
@@ -112,7 +99,6 @@ def train_network(model, data, label,
             target = owl.randn([1000, minibatch_size], 0.0, 0.1) # label
 
             acts[1] = conv_forward(acts[0], model.weights[0], model.bias[0], model.conv_infos[0]) # conv1
-            print 1
             acts[2] = activation_forward(acts[1], act_op.relu) # relu1
             acts[3] = pooling_forward(acts[2], model.pooling_infos[0]) # pool1
 
@@ -131,17 +117,17 @@ def train_network(model, data, label,
 
             re_acts13 = acts[13].reshape([np.prod(acts[13].shape[0:3]), minibatch_size])
 
-            acts[14] = (model.weights[5] * re_acts13).norm_arithmetic(model.bias[5], owl.op.add) # fc6
-            acts[15] = relu(acts[14]) # relu6
+            acts[14] = model.weights[5] * re_acts13 + model.bias[5] # fc6
+            acts[15] = ele.relu(acts[14]) # relu6
             mask6 = owl.randb(acts[15].shape, dropout_rate)
             acts[15] = ele.mult(acts[15], mask6) # drop6
 
-            acts[16] = (model.weights[6] * acts[15]).norm_arithmetic(model.bias[6], owl.op.add) # fc7
-            acts[17] = relu(acts[16]) # relu7
+            acts[16] = model.weights[6] * acts[15] + model.bias[6] # fc7
+            acts[17] = ele.relu(acts[16]) # relu7
             mask7 = owl.randb(acts[17].shape, dropout_rate)
             acts[17] = ele.mult(acts[17], mask7) # drop7
 
-            acts[18] = (model.weights[7] * acts[17]).norm_arithmetic(model.bias[7], owl.op.add) # fc8
+            acts[18] = model.weights[7] * acts[17] + model.bias[7] # fc8
             acts[18] = owl.softmax(acts[18]) # prob
 
             sens[18] = acts[18] - target
@@ -151,11 +137,11 @@ def train_network(model, data, label,
             sens[17] = model.weights[7].trans() * sens[18] # fc8
 
             sens[17] = ele.mult(sens[17], mask7) # drop7
-            sens[16] = backrelu(sens[17], acts[17], acts[16]) # relu7
+            sens[16] = ele.relu_back(sens[17], acts[17], acts[16]) # relu7
             sens[15] = model.weights[6].trans() * sens[16]
 
             sens[15] = ele.mult(sens[15], mask6) # drop6
-            sens[14] = backrelu(sens[15], acts[15], acts[14]) # relu6
+            sens[14] = ele.relu_back(sens[15], acts[15], acts[14]) # relu6
             sens[13] = model.weights[5].trans() * sens[14]
             sens[13] = sens[13].reshape(acts[13].shape) # fc6
 
