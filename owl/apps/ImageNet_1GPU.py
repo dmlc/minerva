@@ -112,6 +112,7 @@ def train_network(model, data, label,
             target = owl.randn([1000, minibatch_size], 0.0, 0.1) # label
 
             acts[1] = conv_forward(acts[0], model.weights[0], model.bias[0], model.conv_infos[0]) # conv1
+            print 1
             acts[2] = activation_forward(acts[1], act_op.relu) # relu1
             acts[3] = pooling_forward(acts[2], model.pooling_infos[0]) # pool1
 
@@ -147,8 +148,7 @@ def train_network(model, data, label,
 
             # BP
             d_act17 = ele.mult(acts[17], 1 - acts[17])
-            sens[17] = model.weights[7].trans() * sens[18]
-            sens[17] = ele.mult(sens[17], d_act17) # fc8
+            sens[17] = model.weights[7].trans() * sens[18] # fc8
 
             sens[17] = ele.mult(sens[17], mask7) # drop7
             sens[16] = backrelu(sens[17], acts[17], acts[16]) # relu7
@@ -202,7 +202,8 @@ def train_network(model, data, label,
             ++count
 
             if count % 1 == 0:
-                acts[18].eval()
+                acts[18].start_eval()
+                acts[18].wait_for_eval()
 
 if __name__ == '__main__':
     owl.initialize(sys.argv)

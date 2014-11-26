@@ -93,10 +93,10 @@ class MBQueue:
         self.queue = Queue.Queue()
         self.size = size
     def enqueue(self, a):
-        a.eval_async()
+        a.start_eval()
         self.queue.put(a)
         if self.size <= self.queue.qsize():
-            self.queue.get().eval()
+            self.queue.get().wait_for_eval()
 
 def print_training_accuracy(o, t, minibatch_size):
     predict = o.max_index(0)
@@ -177,8 +177,7 @@ def train_network(model, data, label,
 
             # BP
             d_act17 = ele.mult(acts[17], 1 - acts[17])
-            sens[17] = model.weights[7].trans() * sens[18]
-            sens[17] = ele.mult(sens[17], d_act17) # fc8
+            sens[17] = model.weights[7].trans() * sens[18] # fc8
 
             sens[17] = ele.mult(sens[17], mask7) # drop7
             sens[16] = backrelu(sens[17], acts[17], acts[16]) # relu7
