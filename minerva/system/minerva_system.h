@@ -39,8 +39,8 @@ class MinervaSystem :
   std::pair<Device::MemType, float*> GetPtr(uint64_t, uint64_t);
   void IncrExternRC(PhysicalDataNode*);
   void DecrExternRC(PhysicalDataNode*);
-  void Eval(const std::vector<NArray>& narrs);
-  void EvalAsync(const std::vector<NArray>& narrs);
+  void WaitForEval(const std::vector<NArray>& narrs);
+  void StartEval(const std::vector<NArray>& narrs);
   uint64_t GenerateDataId();
   uint64_t current_device_id_;
 

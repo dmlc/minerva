@@ -10,7 +10,7 @@ TEST(GCCorrectness, EvalInLoop) {
   for(int i = 0; i < 10; ++i) {
     narr += 1;
     //cout << ms.physical_dag().PrintDag() << endl;
-    narr.Eval();
+    narr.WaitForEval();
     EXPECT_EQ(ms.physical_dag().NumNodes(), 1) << "wrong #physical_nodes in iter#" << i;
     //EXPECT_EQ(ms.data_store().GetTotalBytes(DataStore::CPU), 320) << "wrong memory usage in iter#" << i;
     cout << "iter #" << i << " succeed!" << endl;
@@ -27,7 +27,7 @@ TEST(GCCorrectness, EvalPartial) {
   for(int i = 0; i < 10; ++i)
     arr.push_back(a + 1);
   for(size_t i = 0; i < arr.size(); ++i) {
-    arr[i].Eval();
+    arr[i].WaitForEval();
     ASSERT_EQ(ms.physical_dag().NumNodes(), 20 - i);
     cout << "Eval #" << i << " succeed!" << endl;
   }
@@ -37,14 +37,14 @@ TEST(GCCorrectness, EvalPartial) {
 TEST(GCCorrectness, ChangeInternRCAfterEval) {
   MinervaSystem& ms = MinervaSystem::Instance();
   NArray a = NArray::Constant({10, 8}, 0.0);
-  a.Eval();
+  a.WaitForEval();
   EXPECT_EQ(ms.physical_dag().NumNodes(), 1);
   //EXPECT_EQ(ms.data_store().GetTotalBytes(DataStore::CPU), 320);
   NArray b = a + 1;
   NArray c = a + 1;
-  b.Eval();
+  b.WaitForEval();
   EXPECT_EQ(ms.physical_dag().NumNodes(), 4);
-  c.Eval();
+  c.WaitForEval();
   EXPECT_EQ(ms.physical_dag().NumNodes(), 3);
 }
 
@@ -53,10 +53,10 @@ TEST(GCCorrectness, ChangeExternRCAfterEval) {
   NArray a = NArray::Constant({10, 8}, 0.0);
   {
     NArray b = NArray::Constant({10, 8}, 0.0);
-    b.Eval();
+    b.WaitForEval();
     EXPECT_EQ(ms.physical_dag().NumNodes(), 3);
   }
-  a.Eval();
+  a.WaitForEval();
   EXPECT_EQ(ms.physical_dag().NumNodes(), 1);
 }
 
@@ -65,14 +65,14 @@ TEST(GCCorrectness, ChangeBothRCAfterEval) {
   NArray a, b;
   {
     NArray c = NArray::Constant({10, 8}, 0.0);
-    c.Eval();
+    c.WaitForEval();
     a = c + 1;
     b = c + 2;
   }
-  a.Eval();
+  a.WaitForEval();
   //cout << ms.logical_dag().PrintDag() << endl;
   EXPECT_EQ(ms.physical_dag().NumNodes(), 4);
-  b.Eval();
+  b.WaitForEval();
   EXPECT_EQ(ms.physical_dag().NumNodes(), 2);
   // check correctness
   shared_ptr<float> aptr = a.Get();

@@ -8,31 +8,28 @@ using namespace std;
 namespace minerva {
 
 // Helper functions
-static NArray UnaryElewiseCompute(const NArray& narr, PhysicalComputeFn* op) {
-  return NArray::ComputeOne({narr}, narr.Size(), op);
-}
-
-static NArray BinaryElewiseCompute(const NArray& lhs, const NArray& rhs, PhysicalComputeFn* op) {
-  CHECK_EQ(lhs.Size(), rhs.Size()) << "size must match";
-  return NArray::ComputeOne({lhs, rhs}, lhs.Size(), op);
-}
-
 static NArray ElewiseHelper(const NArray& narr, ElewiseType type) {
   ElewiseOp* elewise_op = new ElewiseOp();
   elewise_op->closure = {type};
-  return UnaryElewiseCompute(narr, elewise_op);
+  return NArray::ComputeOne({narr}, narr.Size(), elewise_op);
 }
 
 static NArray ArithmeticHelper(const NArray& lhs, const NArray& rhs, ArithmeticType type) {
-  ArithmeticOp* arith_op = new ArithmeticOp();
-  arith_op->closure = {type};
-  return BinaryElewiseCompute(lhs, rhs, arith_op);
+  if (lhs.Size() == rhs.Size()) {
+    CHECK_EQ(lhs.Size(), rhs.Size()) << "size must match";
+    ArithmeticOp* arith_op = new ArithmeticOp();
+    arith_op->closure = {type};
+    return NArray::ComputeOne({lhs, rhs}, lhs.Size(), arith_op);
+  } else {
+    // Do NormArithmetic
+    return lhs.NormArithmetic(rhs, type);
+  }
 }
 
 static NArray ArithmeticConstHelper(const NArray& narr, float val, int side, ArithmeticType type) {
   ArithmeticConstOp* arith_const_op = new ArithmeticConstOp();
   arith_const_op->closure = {type, val, side};
-  return UnaryElewiseCompute(narr, arith_const_op);
+  return NArray::ComputeOne({narr}, narr.Size(), arith_const_op);
 }
 
 // Element-wise operations
@@ -48,8 +45,34 @@ NArray Elewise::Ln(const NArray& narr) {
   return ElewiseHelper(narr, ElewiseType::kLn);
 }
 
-NArray Elewise::Sigmoid(const NArray& narr) {
-  return ElewiseHelper(narr, ElewiseType::kSigmoid);
+NArray Elewise::SigmoidForward(const NArray& narr) {
+  return NArray::ComputeOne({narr}, narr.Size(), new SigmoidForwardOp());
+}
+
+NArray Elewise::SigmoidBackward(const NArray& diff, const NArray& top, const NArray& bottom) {
+  CHECK_EQ(diff.Size(), top.Size()) << "inputs size mismatch";
+  CHECK_EQ(diff.Size(), bottom.Size()) << "inputs size mismatch";
+  return NArray::ComputeOne({diff, top, bottom}, diff.Size(), new SigmoidBackwardOp());
+}
+
+NArray Elewise::ReluForward(const NArray& narr) {
+  return NArray::ComputeOne({narr}, narr.Size(), new ReluForwardOp());
+}
+
+NArray Elewise::ReluBackward(const NArray& diff, const NArray& top, const NArray& bottom) {
+  CHECK_EQ(diff.Size(), top.Size()) << "inputs size mismatch";
+  CHECK_EQ(diff.Size(), bottom.Size()) << "inputs size mismatch";
+  return NArray::ComputeOne({diff, top, bottom}, diff.Size(), new ReluBackwardOp());
+}
+
+NArray Elewise::TanhForward(const NArray& narr) {
+  return NArray::ComputeOne({narr}, narr.Size(), new TanhForwardOp());
+}
+
+NArray Elewise::TanhBackward(const NArray& diff, const NArray& top, const NArray& bottom) {
+  CHECK_EQ(diff.Size(), top.Size()) << "inputs size mismatch";
+  CHECK_EQ(diff.Size(), bottom.Size()) << "inputs size mismatch";
+  return NArray::ComputeOne({diff, top, bottom}, diff.Size(), new TanhBackwardOp());
 }
 
 NArray operator+(const NArray& lhs, const NArray& rhs) {
@@ -96,36 +119,32 @@ NArray operator/(const NArray& lhs, float rhs) {
   return ArithmeticConstHelper(lhs, rhs, 1, ArithmeticType::kDiv);
 }
 
-void NArray::operator+=(const NArray& narr) {
-  *this = ArithmeticHelper(*this, narr, ArithmeticType::kAdd);
+NArray& NArray::operator+=(const NArray& narr) {
+  return *this = (*this + narr);
 }
 
-void NArray::operator-=(const NArray& narr) {
-  *this = ArithmeticHelper(*this, narr, ArithmeticType::kSub);
+NArray& NArray::operator-=(const NArray& narr) {
+  return *this = (*this - narr);
 }
 
-void NArray::operator*=(const NArray& narr) {
-  *this = ArithmeticHelper(*this, narr, ArithmeticType::kMult);
+NArray& NArray::operator/=(const NArray& narr) {
+  return *this = (*this / narr);
 }
 
-void NArray::operator/=(const NArray& narr) {
-  *this = ArithmeticHelper(*this, narr, ArithmeticType::kDiv);
+NArray& NArray::operator+=(float val) {
+  return *this = (*this + val);
 }
 
-void NArray::operator+=(float val) {
-  *this = ArithmeticConstHelper(*this, val, 1, ArithmeticType::kAdd);
+NArray& NArray::operator-=(float val) {
+  return *this = (*this - val);
 }
 
-void NArray::operator-=(float val) {
-  *this = ArithmeticConstHelper(*this, val, 1, ArithmeticType::kSub);
+NArray& NArray::operator*=(float val) {
+  return *this = (*this * val);
 }
 
-void NArray::operator*=(float val) {
-  *this = ArithmeticConstHelper(*this, val, 1, ArithmeticType::kMult);
-}
-
-void NArray::operator/=(float val) {
-  *this = ArithmeticConstHelper(*this, val, 1, ArithmeticType::kDiv);
+NArray& NArray::operator/=(float val) {
+  return *this = (*this / val);
 }
 
 NArray NArray::operator-() {

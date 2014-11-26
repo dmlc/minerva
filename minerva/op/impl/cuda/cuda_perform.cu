@@ -197,13 +197,6 @@ void CudaPerformElewiseLn(float* in, float* out, size_t size, cudaStream_t strea
   CheckCudaError("CudaPerformEleWiseLn");
 }
 
-void CudaPerformElewiseSigmoid(float* in, float* out, size_t size, cudaStream_t stream) {
-  int block, thread;
-  FindConfiguration(size, block, thread);
-  CudaPerformDotKernel<<<block, thread, 0, stream>>>(in, out, size, SigmoidOp());
-  CheckCudaError("CudaPerformEleWiseSigmoid");
-}
-
 void CudaPerformElewiseNegative(float* in, float* out, size_t size, cudaStream_t stream) {
   int block, thread;
   FindConfiguration(size, block, thread);

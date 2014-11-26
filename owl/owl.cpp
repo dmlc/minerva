@@ -72,25 +72,16 @@ m::NArray RandBernoulliWrapper(const bp::list& s, float p) {
   return m::NArray::RandBernoulli(ToScale(s), p);
 }
 
-m::NArray ReshapeWrapper(m::NArray narr, const bp::list& s) {
-  return narr.Reshape(ToScale(s));
-}
-
 m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
   std::vector<float> v = std::vector<float>(bp::stl_input_iterator<float>(val), bp::stl_input_iterator<float>());
   size_t length = bp::len(val);
-  shared_ptr<float> data( new float[length], [] (float* ptr) { delete [] ptr; } );
+  shared_ptr<float> data( new float[length] );
   memcpy(data.get(), v.data(), sizeof(float) * length);
 //  for(size_t i = 0; i < length; ++i) {
 //    valptr.get()[i] = bp::extract<float>(val[i] * 1.0);
 //  }
   return m::NArray::MakeNArray(ToScale(s), data);
 }
-
-bp::list ShapeWrapper(m::NArray narr) {
-  return ToPythonList(narr.Size());
-}
-
 bp::list NArrayToList(m::NArray narr) {
   bp::list l;
   std::shared_ptr<float> v = narr.Get();
@@ -139,7 +130,7 @@ m::NArray SoftmaxBackward(m::NArray diff, m::NArray top, m::SoftmaxAlgorithm alg
   return m::Convolution::SoftmaxBackward(m::ImageBatch(diff), m::ImageBatch(top), algo);
 }
 
-/*m::ConvInfo GetConvInfo(int pad_height, int pad_width, int stride_vertical, int stride_horizontal) {
+m::ConvInfo GetConvInfo(int pad_height, int pad_width, int stride_vertical, int stride_horizontal) {
   m::ConvInfo result;
   result.pad_height = pad_height;
   result.pad_width = pad_width;
@@ -156,7 +147,7 @@ m::PoolingInfo GetPoolingInfo(int height, int width, int stride_vertical, int st
   result.stride_horizontal = stride_horizontal;
   result.algorithm = algo;
   return result;
-}*/
+}
 
 } // end of namespace owl
 
@@ -179,7 +170,11 @@ BOOST_PYTHON_MODULE(libowl) {
   m::NArray (m::NArray::*max1)(int) const = &m::NArray::Max;
   m::NArray (m::NArray::*max2)(const m::Scale&) const = &m::NArray::Max;
 
-  class_<m::Scale>("_Scale");
+  class_<m::Scale>("Scale");
+  //m::Scale (m::NArray::*size0)() const = &m::NArray::Size;
+  int (m::NArray::*size1)(int) const = &m::NArray::Size;
+
+  m::NArray (m::NArray::*reshape)(const m::Scale&) const = &m::NArray::Reshape;
 
   class_<m::NArray>("NArray")
     // element-wise
@@ -194,14 +189,6 @@ BOOST_PYTHON_MODULE(libowl) {
     .def(self - float())
     .def(self * float())
     .def(self / float())
-    .def(self += self)
-    .def(self -= self)
-    .def(self *= self)
-    .def(self /= self)
-    .def(self += float())
-    .def(self -= float())
-    .def(self *= float())
-    .def(self /= float())
     // matrix multiply
     .def(self * self)
     // reduction
@@ -219,10 +206,10 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("trans", &m::NArray::Trans)
     .def("tofile", &m::NArray::ToFile)
     .def("tolist", &owl::NArrayToList)
-    .def("reshape", &owl::ReshapeWrapper)
-    .def("eval", &m::NArray::Eval)
-    .def("eval_async", &m::NArray::EvalAsync)
-    .add_property("shape", &owl::ShapeWrapper)
+    .def("reshape", reshape)
+    .def("size", size1)
+    .def("wait_for_eval", &m::NArray::WaitForEval)
+    .def("start_eval", &m::NArray::StartEval)
   ;
 /*
   // file loader
@@ -235,10 +222,10 @@ BOOST_PYTHON_MODULE(libowl) {
   // creators
   def("zeros", &owl::ZerosWrapper);
   def("ones", &owl::OnesWrapper);
-  def("randn", &owl::RandnWrapper);
   def("make_narray", &owl::MakeNArrayWrapper);
+  def("randn", &owl::RandnWrapper);
   def("randb", &owl::RandBernoulliWrapper);
-  //def("toscale", &owl::ToScale);
+  def("toscale", &owl::ToScale);
 
   // system
   //def("to_list", &owl::NArrayToList);
@@ -249,27 +236,16 @@ BOOST_PYTHON_MODULE(libowl) {
 
   // elewise
   def("mult", &m::Elewise::Mult);
-  def("sigmoid", &m::Elewise::Sigmoid);
   def("exp", &m::Elewise::Exp);
   def("ln", &m::Elewise::Ln);
+  def("sigmoid", &m::Elewise::SigmoidForward);
   
   // utils
   def("softmax", &owl::Softmax);
 
   // convolution
-  class_<m::ConvInfo>("ConvInfo")
-    .def_readwrite("pad_height", &m::ConvInfo::pad_height)
-    .def_readwrite("pad_width", &m::ConvInfo::pad_width)
-    .def_readwrite("stride_vertical", &m::ConvInfo::stride_vertical)
-    .def_readwrite("stride_horizontal", &m::ConvInfo::stride_horizontal)
-    ;
-  class_<m::PoolingInfo>("PoolingInfo")
-    .def_readwrite("height", &m::PoolingInfo::height)
-    .def_readwrite("width", &m::PoolingInfo::width)
-    .def_readwrite("stride_vertical", &m::PoolingInfo::stride_vertical)
-    .def_readwrite("stride_horizontal", &m::PoolingInfo::stride_horizontal)
-    .def_readwrite("algorithm", &m::PoolingInfo::algorithm)
-    ;
+  class_<m::ConvInfo>("ConvInfo");
+  class_<m::PoolingInfo>("PoolingInfo");
   enum_<m::ActivationAlgorithm>("activation_algo")
     .value("relu", m::ActivationAlgorithm::kRelu)
     .value("sigm", m::ActivationAlgorithm::kSigmoid)
@@ -284,8 +260,8 @@ BOOST_PYTHON_MODULE(libowl) {
     .value("avg", m::PoolingInfo::Algorithm::kAverage)
   ;
 
-  //def("conv_info", &owl::GetConvInfo);
-  //def("pooling_info", &owl::GetPoolingInfo);
+  def("conv_info", &owl::GetConvInfo);
+  def("pooling_info", &owl::GetPoolingInfo);
   def("conv_forward", &owl::ConvForward);
   def("activation_forward", &owl::ActivationForward);
   def("softmax_forward", &owl::SoftmaxForward);
