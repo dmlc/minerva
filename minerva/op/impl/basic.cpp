@@ -113,11 +113,6 @@ void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& cl
         res_data[i] = log(in_data[i]);
       }
       break;
-    case ElewiseType::kSigmoid:
-      for (int i = 0; i < length; ++i) {
-        res_data[i] = 1 / (1 + exp(-in_data[i]));
-      }
-      break;
     case ElewiseType::kNegative:
       for (int i = 0; i < length; ++i) {
         res_data[i] = -in_data[i];

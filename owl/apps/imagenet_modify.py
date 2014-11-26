@@ -1,9 +1,12 @@
 import math
 import sys
-import time
+import random
+import scipy
+from scipy.io import *
+from random import shuffle
 import numpy as np
+
 import owl
-import Queue
 from owl.conv import *
 import owl.elewise as ele
 
@@ -72,6 +75,7 @@ class AlexModel:
             owl.zeros([1000, 1])
         ];
 
+
 def print_training_accuracy(o, t, minibatch_size):
     predict = o.max_index(0)
     ground_truth = t.max_index(0)
@@ -84,25 +88,17 @@ def relu(act):
     act = activation_forward(re_acts, act_op.relu)
     return act.reshape(oldshape)
 
-def backrelu(sen, top, bottom):
-    re_sen = sen.reshape(sen.shape + [1, 1])
-    re_top = top.reshape(top.shape + [1, 1])
-    re_bottom = bottom.reshape(bottom.shape + [1, 1])
-    act_back = activation_backward(re_sen, re_top, re_bottom, act_op.relu)
-    return act_back.reshape(act_back.shape[0:2])
-
 def train_network(model, data, label,
-                  num_epochs = 100, num_train_samples = 100000, minibatch_size = 256,
-                  num_minibatches = 390, dropout_rate = 0.5, eps_w = 1, eps_b = 1, momemtum = 0.9, wd = 0.005):
+                  num_epochs = 100, num_train_samples = 60000, minibatch_size = 256,
+                  num_minibatches = 235, dropout_fraction = 0.5, eps_w = 1, eps_b = 1, momemtum = 0.9, wd = 0.05, droprate = 0.5):
     eps_w = eps_w / minibatch_size
     eps_b = eps_b / minibatch_size
     gpu = owl.create_gpu_device(0)
     owl.set_device(gpu)
     num_layers = 20
     count = 0
-    last = time.time()
     for i in xrange(num_epochs):
-        print "Epoch #", i, ", time: %s" % (time.time() - last)
+        print "Epoch #", i
         for j in xrange(num_minibatches):
             acts = [None] * num_layers
             sens = [None] * num_layers
@@ -127,36 +123,40 @@ def train_network(model, data, label,
             acts[11] = conv_forward(acts[10], model.weights[4], model.bias[4], model.conv_infos[4]) # conv5
             acts[12] = activation_forward(acts[11], act_op.relu) # relu5
             acts[13] = pooling_forward(acts[12], model.pooling_infos[2]) # pool5
-
-            re_acts13 = acts[13].reshape([np.prod(acts[13].shape[0:3]), minibatch_size])
+	    
+	    re_acts13 = acts[13].reshape([int(np.prod(acts[13].shape[0:3])), minibatch_size])
 
             acts[14] = (model.weights[5] * re_acts13).norm_arithmetic(model.bias[5], owl.op.add) # fc6
-            acts[15] = relu(acts[14]) # relu6
-            mask6 = owl.randb(acts[15].shape, dropout_rate)
-            acts[15] = ele.mult(acts[15], mask6) # drop6
+            acts[14] = relu(acts[14]) # relu6
+            # drop6
+	    mask6 = dropout(np.shape(acts[14]), droprate)
+            acts[14] = acts[14].elewise(mask6, owl.op.mult)
 
-            acts[16] = (model.weights[6] * acts[15]).norm_arithmetic(model.bias[6], owl.op.add) # fc7
-            acts[17] = relu(acts[16]) # relu7
-            mask7 = owl.randb(acts[17].shape, dropout_rate)
-            acts[17] = ele.mult(acts[17], mask7) # drop7
+	    acts[15] = (model.weights[6] * acts[14]).norm_arithmetic(model.bias[6], owl.op.add) # fc7
+            acts[15] = relu(acts[15]) # relu7
+            # drop7
+	    mask7 = dropout(np.shape(acts[15]), droprate)
+            acts[15] = acts[15].elewise(mask7, owl.op.mult)
+            
+            acts[16] = (model.weights[7] * acts[15]).norm_arithmetic(model.bias[7], owl.op.add) # fc8
+            acts[16] = owl.softmax(acts[16]) # prob
 
-            acts[18] = (model.weights[7] * acts[17]).norm_arithmetic(model.bias[7], owl.op.add) # fc8
-            acts[18] = owl.softmax(acts[18]) # prob
-
-            sens[18] = acts[18] - target
+            sens[16] = acts[16] - target
 
             # BP
-            d_act17 = ele.mult(acts[17], 1 - acts[17])
-            sens[17] = model.weights[7].trans() * sens[18]
-            sens[17] = ele.mult(sens[17], d_act17) # fc8
+	    sens[15] = ele.mult(sens[15], mask7)
+	    d_act15 = backrelu[acts[15]]
+	    sens[15] = model.weights[7].trans() * sens[16]
+            sens[15] = ele.mult(sens[15], d_act15) # fc8
 
-            sens[17] = ele.mult(sens[17], mask7) # drop7
-            sens[16] = backrelu(sens[17], acts[17], acts[16]) # relu7
-            sens[15] = model.weights[6].trans() * sens[16]
+            sens[14] = ele.mult(sens[14], mask6)
+	    d_act14 = backrelu[acts[14]]
+            sens[14] = model.weights[6].trans() * sens[15]
+            sens[14] = ele.mult(sens[14], d_act14) # fc7
 
-            sens[15] = ele.mult(sens[15], mask6) # drop6
-            sens[14] = backrelu(sens[15], acts[15], acts[14]) # relu6
+            d_act13 = backrelu(re_acts13)
             sens[13] = model.weights[5].trans() * sens[14]
+            sens[13] = ele.mult(sens[13], d_act13)
             sens[13] = sens[13].reshape(acts[13].shape) # fc6
 
             sens[12] = pooling_backward(sens[13], acts[13], acts[12], model.pooling_infos[2]) # pool5
@@ -176,33 +176,50 @@ def train_network(model, data, label,
             sens[1] = activation_backward(sens[2], acts[2], acts[1], act_op.relu) # relu1
             sens[0] = conv_backward_data(sens[1], model.weights[0], model.conv_infos[0]) # conv1
 
-	    model.weights[7] -= momemtum * model.weightsdelta[7] - eps_w * (sens[18] * acts[17].trans() + wd * model.weights[7] / minibatch_size)
-            model.bias[7] -= momemtum * model.biasdelta[7] - eps_b * (sens[18].sum(1) + wd * model.bias[7] / minibatch_size)
+	    model.weightsdelta[7] = momemtum * model.weightsdelta[7] - eps_w * (sens[16] * acts[15].trans() + wd * model.weights[7] / minibatch_size)
+	    model.weights[7] += model.weightsdelta[7]
+            model.biasdelta[7] = momemtum * model.biasdelta[7] - eps_b * (sens[16].sum(1) + wd * model.bias[7] / minibatch_size)
+	    model.bias[7] += model.biasdelta[7]
             
-	    model.weights[6] -= momemtum * model.weightsdelta[6] - eps_w * (sens[16] * acts[15].trans() + wd * model.weights[6] / minibatch_size)
-            model.bias[6] -= momemtum * model.biasdelta[6] - eps_b * (sens[16].sum(1) + wd * model.bias[6] / minibatch_size)
+	    model.weightsdelta[6] = momemtum * model.weightsdelta[6] - eps_w * (sens[15] * acts[14].trans() + wd * model.weights[6] / minibatch_size)
+	    model.weights[6] += model.weightsdelta[6]
+            model.biasdelta[6] = momemtum * model.biasdelta[6] - eps_b * (sens[15].sum(1) + wd * model.bias[6] / minibatch_size)
+	    model.bias[6] += model.biasdelta[6]
     	    
-	    model.weights[5] -= momemtum * model.weightsdelta[5] - eps_w * (sens[14] * re_acts13.trans() + wd * model.weights[5] / minibatch_size)
-            model.bias[5] -= momemtum * model.biasdelta[5] - eps_b * (sens[14].sum(1) + wd * model.bias[5] / minibatch_size)
+	    model.weightsdelta[5] = momemtum * model.weightsdelta[5] - eps_w * (sens[14] * re_acts13.trans() + wd * model.weights[5] / minibatch_size)
+	    model.weights[5] += model.weightsdelta[5]
+            model.biasdelta[5] = momemtum * model.biasdelta[5] - eps_b * (sens[14].sum(1) + wd * model.bias[5] / minibatch_size)
+	    model.bias[5] += model.biasdelta[5]
             	
-            model.weights[4] -= momemtum * model.weightsdelta[4] - eps_w * (conv_backward_filter(sens[11], acts[10], model.conv_infos[4]) + wd * model.weights[4] / minibatch_size)
-	    model.bias[4] -= momemtum * model.biasdelta[4] - eps_b * (conv_backward_bias(sens[11]) + wd * model.bias[4] / minibatch_size)
+            model.weightsdelta[4] = momemtum * model.weightsdelta[4] - eps_w * (conv_backward_filer(sens[11], acts[10], model.conv_infos[4]) + wd * model.weights[4] / minibatch_size)
+	    model.weights[4] += model.weightsdelta[4]
+	    model.biasdelta[4] = momemtum * model.biasdelta[4] - eps_b * (conv_backward_bias(sens[11]) + wd * model.bias[4] / minibatch_size) 
+	    model.bias[4] += model.biasdelta[4]          
 
-	    model.weights[3] -= momemtum * model.weightsdelta[3] - eps_w * (conv_backward_filter(sens[9], acts[8], model.conv_infos[3]) + wd * model.weights[3] / minibatch_size)
-	    model.bias[3] -= momemtum * model.biasdelta[3] - eps_b * (conv_backward_bias(sens[10]) + wd * model.bias[3] / minibatch_size)
+	    model.weightsdelta[3] = momemtum * model.weightsdelta[3] - eps_w * (conv_backward_filer(sens[9], acts[8], model.conv_infos[3]) + wd * model.weights[3] / minibatch_size)
+	    model.weights[3] += model.weightsdelta[3]
+	    model.biasdelta[3] = momemtum * model.biasdelta[3] - eps_b * (conv_backward_bias(sens[10]) + wd * model.bias[3] / minibatch_size) 
+	    model.bias[3] += model.biasdelta[3]
 
- 	    model.weights[2] -= momemtum * model.weightsdelta[2] - eps_w * (conv_backward_filter(sens[7], acts[6], model.conv_infos[2]) + wd * model.weights[2] / minibatch_size)
-	    model.bias[2] -= momemtum * model.biasdelta[2] - eps_b * (conv_backward_bias(sens[7]) + wd * model.bias[2] / minibatch_size)
+ 	    model.weightsdelta[2] = momemtum * model.weightsdelta[2] - eps_w * (conv_backward_filer(sens[7], acts[6], model.conv_infos[2]) + wd * model.weights[2] / minibatch_size)
+	    model.weights[2] += model.weightsdelta[2]
+	    model.biasdelta[2] = momemtum * model.biasdelta[2] - eps_b * (conv_backward_bias(sens[7]) + wd * model.bias[2] / minibatch_size) 
+	    model.bias[2] += model.biasdelta[2]
 
-  	    model.weights[1] -= momemtum * model.weightsdelta[1] - eps_w * (conv_backward_filter(sens[4], acts[3], model.conv_infos[1]) + wd * model.weights[1] / minibatch_size)
-	    model.bias[1] -= momemtum * model.biasdelta[1] - eps_b * (conv_backward_bias(sens[4]) + wd * model.bias[1] / minibatch_size)
+  	    model.weightsdelta[1] = momemtum * model.weightsdelta[1] - eps_w * (conv_backward_filer(sens[4], acts[3], model.conv_infos[1]) + wd * model.weights[1] / minibatch_size)
+	    model.weights[1] += model.weightsdelta[1]
+	    model.biasdelta[1] = momemtum * model.biasdelta[1] - eps_b * (conv_backward_bias(sens[4]) + wd * model.bias[1] / minibatch_size) 
+	    model.bias[1] += model.biasdelta[1]          
 
-            model.weights[0] -= momemtum * model.weightsdelta[0] - eps_w * (conv_backward_filter(sens[1], acts[0], model.conv_infos[0]) + wd * model.weights[0] / minibatch_size)
-	    model.bias[0] -= momemtum * model.biasdelta[0] - eps_b * (conv_backward_bias(sens[1]) + wd * model.bias[0] / minibatch_size)
+            model.weightsdelta[0] = momemtum * model.weightsdelta[0] - eps_w * (conv_backward_filer(sens[1], acts[0], model.conv_infos[0]) + wd * model.weights[0] / minibatch_size)
+	    model.weights[0] += model.weightsdelta[0]
+	    model.biasdelta[0] = momemtum * model.biasdelta[0] - eps_b * (conv_backward_bias(sens[1]) + wd * model.bias[0] / minibatch_size) 
+	    model.bias[0] += model.biasdelta[0]          
+
             ++count
 
-            if count % 1 == 0:
-                acts[18].eval()
+            if count % 20 == 0:
+                print_training_accuracy(acts[16], target, minibatch_size)
 
 if __name__ == '__main__':
     owl.initialize(sys.argv)
@@ -213,4 +230,3 @@ if __name__ == '__main__':
     model = AlexModel()
     model.init_random()
     train_network(model, data, label)
-

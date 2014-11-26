@@ -61,7 +61,7 @@ def relu(act):
 
 def train_network(model, data, label,
                   num_epochs = 100, num_train_samples = 60000, minibatch_size = 256,
-                  num_minibatches = 235, dropout_fraction = 0.5, eps_w = 1, eps_b = 1):
+                  num_minibatches = 235, dropout_fraction = 0.5, eps_w = 1, eps_b = 1, wd = 0.05, momemtum = 0.9):
     eps_w = eps_w / minibatch_size
     eps_b = eps_b / minibatch_size
     gpu = owl.create_gpu_device(0)
@@ -94,8 +94,8 @@ def train_network(model, data, label,
             acts[11] = conv_forward(acts[10], model.weights[4], model.bias[4], model.conv_infos[4]) # conv5
             acts[12] = activation_forward(acts[11], act_op.relu) # relu5
             acts[13] = pooling_forward(acts[12], model.pooling_infos[2]) # pool5
-
-            re_acts13 = acts[13].reshape([np.prod(acts[13].shape[0:3]), minibatch_size])
+	    
+	    re_acts13 = acts[13].reshape([int(np.prod(acts[13].shape[0:3])), minibatch_size])
 
             acts[14] = (model.weights[5] * re_acts13).norm_arithmetic(model.bias[5], owl.op.add) # fc6
             acts[14] = relu(acts[14]) # relu6
@@ -141,7 +141,8 @@ def train_network(model, data, label,
             sens[1] = activation_backward(sens[2], acts[2], acts[1], act_op.relu) # relu1
             sens[0] = conv_backward_data(sens[1], model.weights[0], model.conv_infos[0]) # conv1
 
-            model.weights[7] -= eps_w * sens[16] * acts[15].trans()
+            '''
+			model.weights[7] -= eps_w * sens[16] * acts[15].trans()
             model.bias[7] -= eps_b * sens[16].sum(1)
 
             model.weights[6] -= eps_w * sens[15] * acts[14].trans()
@@ -164,7 +165,7 @@ def train_network(model, data, label,
 
             model.weights[0] -= eps_w * conv_backward_filter(sens[1], acts[0], model.conv_infos[0])
             model.bias[0] -= eps_b * conv_backward_bias(sens[1])
-
+			'''
             ++count
 
             if count % 20 == 0:

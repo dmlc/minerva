@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
       for (int k = 1; k < num_layers - 1; ++ k) {
         NArray wacts = weights[k - 1] * acts[k - 1];
         NArray wactsnorm = wacts.NormArithmetic(bias[k - 1], ArithmeticType::kAdd);
-        acts[k] = Elewise::Sigmoid(wactsnorm);
+        acts[k] = Elewise::SigmoidForward(wactsnorm);
       }
       // softmax
       acts[num_layers - 1] = Softmax((weights[num_layers - 2] * acts[num_layers - 2]).NormArithmetic(bias[num_layers - 2], ArithmeticType::kAdd));
