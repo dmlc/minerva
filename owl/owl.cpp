@@ -201,8 +201,8 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("tofile", &m::NArray::ToFile)
     .def("tolist", &owl::NArrayToList)
     .def("reshape", &owl::ReshapeWrapper)
-    .def("start_eval", &m::NArray::StartEval)
     .def("wait_for_eval", &m::NArray::WaitForEval)
+    .def("start_eval", &m::NArray::StartEval)
     .add_property("shape", &owl::ShapeWrapper)
   ;
 /*
@@ -233,6 +233,12 @@ BOOST_PYTHON_MODULE(libowl) {
   def("sigmoid", &m::Elewise::SigmoidForward);
   def("exp", &m::Elewise::Exp);
   def("ln", &m::Elewise::Ln);
+  def("sigm", &m::Elewise::SigmoidForward);
+  def("sigm_back", &m::Elewise::SigmoidBackward);
+  def("relu", &m::Elewise::ReluForward);
+  def("relu_back", &m::Elewise::ReluBackward);
+  def("tahn", &m::Elewise::TanhForward);
+  def("tahn_back", &m::Elewise::TanhBackward);
   
   // utils
   def("softmax", &owl::Softmax);
@@ -276,3 +282,4 @@ BOOST_PYTHON_MODULE(libowl) {
   def("activation_backward", &owl::ActivationBackward);
   def("softmax_backward", &owl::SoftmaxBackward);
 }
+
