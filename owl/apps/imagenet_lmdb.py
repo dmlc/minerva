@@ -21,7 +21,7 @@ class ImageNetDataProvider:
         self.val_db = val_db
         self.test_db = test_db
 
-    def get_train_mb(self, mb_size, cropped_size=224):
+    def get_train_mb(self, mb_size, cropped_size=227):
         env = lmdb.open(self.train_db, readonly=True)
         # print env.stat()
         samples = np.zeros([mb_size, cropped_size ** 2 * 3])
