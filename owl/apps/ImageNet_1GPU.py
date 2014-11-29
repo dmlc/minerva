@@ -29,14 +29,14 @@ class AlexModel:
 
     def init_random(self):
         self.weights = [
-            owl.randn([11, 11, 3, 96], 0.0, 0.02),
-            owl.randn([5, 5, 96, 256], 0.0, 0.02),
-            owl.randn([3, 3, 256, 384], 0.0, 0.02),
-            owl.randn([3, 3, 384, 384], 0.0, 0.02),
-            owl.randn([3, 3, 384, 256], 0.0, 0.02),
-            owl.randn([4096, 9216], 0.0, 0.02),
-            owl.randn([4096, 4096], 0.0, 0.02),
-            owl.randn([1000, 4096], 0.0, 0.02)
+            owl.randn([11, 11, 3, 96], 0.0, 0.01),
+            owl.randn([5, 5, 96, 256], 0.0, 0.01),
+            owl.randn([3, 3, 256, 384], 0.0, 0.01),
+            owl.randn([3, 3, 384, 384], 0.0, 0.01),
+            owl.randn([3, 3, 384, 256], 0.0, 0.01),
+            owl.randn([4096, 9216], 0.0, 0.01),
+            owl.randn([4096, 4096], 0.0, 0.01),
+            owl.randn([1000, 4096], 0.0, 0.01)
         ];
 
 	self.weightsdelta = [
@@ -200,7 +200,7 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
                 model.weights[k] += model.weightsdelta[k]
                 model.bias[k] += model.biasdelta[k]
 
-            ++count
+            count = count + 1
             if count % 10 == 0:
                 print model.bias[0].tolist()
                 print_training_accuracy(acts[18], target, num_samples)
