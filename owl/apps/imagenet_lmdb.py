@@ -24,8 +24,8 @@ class ImageNetDataProvider:
     def get_train_mb(self, mb_size, cropped_size=227):
         env = lmdb.open(self.train_db, readonly=True)
         # print env.stat()
-        samples = np.zeros([mb_size, cropped_size ** 2 * 3])
-        labels = np.zeros([mb_size, 1000])
+        samples = np.zeros([mb_size, cropped_size ** 2 * 3], dtype=np.float32)
+        labels = np.zeros([mb_size, 1000], dtype=np.float32)
         count = 0
         with env.begin(write=False, buffers=False) as txn:
             cursor = txn.cursor()
@@ -44,7 +44,7 @@ class ImageNetDataProvider:
                 if count == mb_size:
                     yield (samples, labels)
                     #samples = np.zeros([mb_size, cropped_size ** 2 * 3])
-                    labels = np.zeros([mb_size, 1000])
+                    labels = np.zeros([mb_size, 1000], dtype=np.float32)
                     count = 0
         if count != mb_size:
             delete_idx = np.arange(count, mb_size)
@@ -67,5 +67,5 @@ if __name__ == '__main__':
         #print np.argmax(labels, axis=1)
         # training
         count = count + 1
-        if count % 100 == 0:
-            print 'gc:', gc.collect()
+        if count % 10 == 0:
+            break

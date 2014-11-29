@@ -93,9 +93,10 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             test_db='/home/minjie/data/imagenet/ilsvrc12_test_lmdb')
 
     for i in xrange(num_epochs):
-        print "Epoch #", i, ", time: %s" % (time.time() - last)
+        #for j in xrange(100):
         for (samples, labels) in dp.get_train_mb(minibatch_size):
             num_samples = samples.shape[0]
+            #num_samples = 256
 
             acts = [None] * num_layers
             sens = [None] * num_layers
@@ -103,9 +104,15 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             # FF
             acts[0] = owl.from_nparray(samples).reshape([227, 227, 3, num_samples])
             target = owl.from_nparray(labels)
+            #acts[0] = owl.randn([227,227,3,num_samples], 0.0, 0.1)
+            #target = owl.randn([1000,num_samples], 0.0,0.1)
 
+            #np.set_printoptions(linewidth=200)
             #print acts[0].shape, model.weights[0].shape, model.bias[0].shape
-            #print np.array(acts[0].tolist()).reshape([num_samples, 227, 227, 3])[:,:,0,0]
+            #im = np.array(acts[0].tolist()).reshape([num_samples, 227, 227, 3])
+            #print im[0,:,:,0]
+            #print im[0,:,:,1]
+            #print im[0,:,:,2]
             #sys.exit()
 
             acts[1] = conv_forward(acts[0], model.weights[0], model.bias[0], model.conv_infos[0]) # conv1
@@ -201,9 +208,13 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
                 model.bias[k] += model.biasdelta[k]
 
             count = count + 1
+            if count % 2 == 0:
+                acts[18].start_eval()
             if count % 10 == 0:
-                print model.bias[0].tolist()
+                #print model.bias[0].tolist()
                 print_training_accuracy(acts[18], target, num_samples)
+                print "time: %s" % (time.time() - last)
+                last = time.time()
 
 if __name__ == '__main__':
     owl.initialize(sys.argv)

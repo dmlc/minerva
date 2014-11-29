@@ -15,11 +15,8 @@ make_narray = _owl.make_narray
 
 # Convert numpy array into minerva array. ATTENTION: this will lead to
 # a transpose due to the different storage priority
-#def from_nparray(nparr):
-    #return _owl.make_narray(list(nparr.shape[::-1]), nparr.flatten().tolist())
 from_nparray = _owl.from_nparray
 
 op = _owl.arithmetic
 
 softmax = _owl.softmax
-
