@@ -72,6 +72,8 @@ flags = [
 './minerva',
 '-isystem',
 '/usr/local/cuda/include',
+'-isystem',
+'/usr/include/python2.7/',
 '-DHAS_CUDA'
 ]
 

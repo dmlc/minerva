@@ -2,14 +2,19 @@
 #include <boost/python/stl_iterator.hpp>
 #include <boost/python/implicit.hpp>
 #include <boost/python/args.hpp>
+#include <boost/numpy.hpp>
+#include <boost/numpy/ndarray.hpp>
+
+#include <glog/logging.h>
 
 #include <iostream>
 using namespace std;
 
 #include "minerva.h"
 
-namespace bp = boost::python;
 namespace m = minerva;
+namespace bp = boost::python;
+namespace np = boost::numpy;
 
 namespace owl {
 
@@ -87,6 +92,20 @@ m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
   return m::NArray::MakeNArray(ToScale(s), data);
 }
 
+m::NArray FromNPArrayWrapper(np::ndarray nparr) {
+  CHECK(nparr.get_flags() & np::ndarray::C_CONTIGUOUS) << "MakeNArray needs c-contiguous numpy array";
+  CHECK(np::equivalent(nparr.get_dtype(), np::dtype::get_builtin<float>())) << "MakeNArray needs float32 numpy array";
+  int nd = nparr.get_nd();
+  m::Scale shape = m::Scale::Origin(nd);
+  for(int i = 0; i < nd; ++i) {
+    shape[i] = nparr.shape(nd - 1 - i);
+  }
+  size_t length = shape.Prod();
+  shared_ptr<float> data( new float[length], [] (float* ptr) { delete [] ptr; } );
+  memcpy(data.get(), reinterpret_cast<float*>(nparr.get_data()), sizeof(float) * length);
+  return m::NArray::MakeNArray(shape, data);
+}
+
 bp::list ShapeWrapper(m::NArray narr) {
   return ToPythonList(narr.Size());
 }
@@ -144,6 +163,7 @@ m::NArray SoftmaxBackward(m::NArray diff, m::NArray top, m::SoftmaxAlgorithm alg
 // python module
 BOOST_PYTHON_MODULE(libowl) {
   using namespace boost::python;
+  np::initialize();
 
   enum_<m::ArithmeticType>("arithmetic")
     .value("add", m::ArithmeticType::kAdd)
@@ -219,6 +239,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("randn", &owl::RandnWrapper);
   def("make_narray", &owl::MakeNArrayWrapper);
   def("randb", &owl::RandBernoulliWrapper);
+  def("from_nparray", &owl::FromNPArrayWrapper);
   //def("toscale", &owl::ToScale);
 
   // system
