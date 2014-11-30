@@ -18,5 +18,3 @@ make_narray = _owl.make_narray
 from_nparray = _owl.from_nparray
 
 op = _owl.arithmetic
-
-softmax = _owl.softmax

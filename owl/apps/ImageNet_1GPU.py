@@ -74,13 +74,15 @@ class AlexModel:
         ];
 
 def print_training_accuracy(o, t, minibatch_size):
+    print np.array(o.tolist()).reshape([minibatch_size, 1000])
     predict = o.max_index(0)
+    print np.array(predict.tolist())
     ground_truth = t.max_index(0)
     correct = (predict - ground_truth).count_zero()
     print 'Training error: {}'.format((minibatch_size - correct) * 1.0 / minibatch_size)
 
 def train_network(model, num_epochs = 100, minibatch_size=256,
-        dropout_rate = 0.5, eps_w = 0.01, eps_b = 0.01, mom = 0.9, wd = 0.005):
+        dropout_rate = 0.5, eps_w = 0.1, eps_b = 0.1, mom = 0.0, wd = 0.000):
     gpu = owl.create_gpu_device(0)
     owl.set_device(gpu)
     num_layers = 20
@@ -92,20 +94,25 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             val_db='/home/minjie/data/imagenet/ilsvrc12_val_lmdb',
             test_db='/home/minjie/data/imagenet/ilsvrc12_test_lmdb')
 
-    for i in xrange(num_epochs):
-        #for j in xrange(100):
-        for (samples, labels) in dp.get_train_mb(minibatch_size):
-            num_samples = samples.shape[0]
-            #num_samples = 256
+    acts = [None] * num_layers
+    sens = [None] * num_layers
 
-            acts = [None] * num_layers
-            sens = [None] * num_layers
+    for i in xrange(num_epochs):
+        print '--------------Epoch', i
+        #num_samples = 256
+        #acts[0] = owl.randn([227,227,3,num_samples], 0.0, 1) * 128
+        #target = owl.randn([1000,num_samples], 0.0, 1)
+        for (s, l) in dp.get_train_mb(minibatch_size):
+            samples = s
+            labels = l
+            break
+        for j in xrange(100):
+        #for (samples, labels) in dp.get_train_mb(minibatch_size):
+            num_samples = samples.shape[0]
 
             # FF
             acts[0] = owl.from_nparray(samples).reshape([227, 227, 3, num_samples])
             target = owl.from_nparray(labels)
-            #acts[0] = owl.randn([227,227,3,num_samples], 0.0, 0.1)
-            #target = owl.randn([1000,num_samples], 0.0,0.1)
 
             #np.set_printoptions(linewidth=200)
             #print acts[0].shape, model.weights[0].shape, model.bias[0].shape
@@ -113,39 +120,39 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             #print im[0,:,:,0]
             #print im[0,:,:,1]
             #print im[0,:,:,2]
+            #print target.max_index(0).tolist()[0:20]
             #sys.exit()
 
             acts[1] = conv_forward(acts[0], model.weights[0], model.bias[0], model.conv_infos[0]) # conv1
-            acts[2] = activation_forward(acts[1], act_op.relu) # relu1
+            acts[2] = ele.relu(acts[1]) # relu1
             acts[3] = pooling_forward(acts[2], model.pooling_infos[0]) # pool1
 
             acts[4] = conv_forward(acts[3], model.weights[1], model.bias[1], model.conv_infos[1]) # conv2
-            acts[5] = activation_forward(acts[4], act_op.relu) # relu2
+            acts[5] = ele.relu(acts[4]) # relu2
             acts[6] = pooling_forward(acts[5], model.pooling_infos[1]) # pool2
 
             acts[7] = conv_forward(acts[6], model.weights[2], model.bias[2], model.conv_infos[2]) # conv3
-            acts[8] = activation_forward(acts[7], act_op.relu) # relu3
+            acts[8] = ele.relu(acts[7]) # relu3
             acts[9] = conv_forward(acts[8], model.weights[3], model.bias[3], model.conv_infos[3]) # conv4
-            acts[10] = activation_forward(acts[9], act_op.relu) # relu4
-
+            acts[10] = ele.relu(acts[9]) # relu4
             acts[11] = conv_forward(acts[10], model.weights[4], model.bias[4], model.conv_infos[4]) # conv5
-            acts[12] = activation_forward(acts[11], act_op.relu) # relu5
+            acts[12] = ele.relu(acts[11]) # relu5
             acts[13] = pooling_forward(acts[12], model.pooling_infos[2]) # pool5
 
             re_acts13 = acts[13].reshape([np.prod(acts[13].shape[0:3]), num_samples])
 
             acts[14] = model.weights[5] * re_acts13 + model.bias[5] # fc6
             acts[15] = ele.relu(acts[14]) # relu6
-            mask6 = owl.randb(acts[15].shape, dropout_rate)
-            acts[15] = ele.mult(acts[15], mask6) # drop6
+            #mask6 = owl.randb(acts[15].shape, dropout_rate)
+            #acts[15] = ele.mult(acts[15], mask6) # drop6
 
             acts[16] = model.weights[6] * acts[15] + model.bias[6] # fc7
             acts[17] = ele.relu(acts[16]) # relu7
-            mask7 = owl.randb(acts[17].shape, dropout_rate)
-            acts[17] = ele.mult(acts[17], mask7) # drop7
+            #mask7 = owl.randb(acts[17].shape, dropout_rate)
+            #acts[17] = ele.mult(acts[17], mask7) # drop7
 
             acts[18] = model.weights[7] * acts[17] + model.bias[7] # fc8
-            acts[18] = owl.softmax(acts[18]) # prob
+            acts[18] = softmax_forward(acts[18].reshape([1000, 1, 1, num_samples]), soft_op.instance).reshape([1000, num_samples]) # prob
 
             sens[18] = acts[18] - target
 
@@ -153,11 +160,11 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             d_act17 = ele.mult(acts[17], 1 - acts[17])
             sens[17] = model.weights[7].trans() * sens[18] # fc8
 
-            sens[17] = ele.mult(sens[17], mask7) # drop7
+            #sens[17] = ele.mult(sens[17], mask7) # drop7
             sens[16] = ele.relu_back(sens[17], acts[17], acts[16]) # relu7
             sens[15] = model.weights[6].trans() * sens[16]
 
-            sens[15] = ele.mult(sens[15], mask6) # drop6
+            #sens[15] = ele.mult(sens[15], mask6) # drop6
             sens[14] = ele.relu_back(sens[15], acts[15], acts[14]) # relu6
             sens[13] = model.weights[5].trans() * sens[14]
             sens[13] = sens[13].reshape(acts[13].shape) # fc6
@@ -208,10 +215,9 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
                 model.bias[k] += model.biasdelta[k]
 
             count = count + 1
-            if count % 2 == 0:
-                acts[18].start_eval()
-            if count % 10 == 0:
-                #print model.bias[0].tolist()
+            #if count % 2 == 0:
+                #acts[18].start_eval()
+            if count % 1 == 0:
                 print_training_accuracy(acts[18], target, num_samples)
                 print "time: %s" % (time.time() - last)
                 last = time.time()
