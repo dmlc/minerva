@@ -4,6 +4,7 @@ import numpy as np
 import numpy.random
 from caffe_pb2 import Datum
 from caffe_pb2 import BlobProto
+from PIL import Image
 
 class ImageNetDataProvider:
     def __init__(self, mean_file, train_db, val_db, test_db):
@@ -16,7 +17,8 @@ class ImageNetDataProvider:
         #print mean_data[:,:,1]
         #print mean_data[:,:,2]
         #print 'diff=', bp.diff
-        self.mean_data = np.array(bp.data, dtype=np.float32).reshape([256, 256, 3])
+        self.mean_data = np.array(bp.data, dtype=np.float32).reshape([3, 256, 256])
+        
         self.train_db = train_db
         self.val_db = val_db
         self.test_db = test_db
@@ -33,12 +35,20 @@ class ImageNetDataProvider:
                 d = Datum()
                 d.ParseFromString(value)
                 #print '#channels=', d.channels, 'height=', d.height, 'width=', d.width, 'label=', d.label
-                im = np.fromstring(d.data, dtype=np.uint8).reshape([256, 256, 3]) - self.mean_data
-                # random crop
+                im = np.fromstring(d.data, dtype=np.uint8).reshape([3, 256, 256]) - self.mean_data
+                
                 [crop_h, crop_w] = np.random.randint(256 - cropped_size, size=2)
-                im_cropped = im[crop_h:crop_h+cropped_size, crop_w:crop_w+cropped_size, :]
-                # make labels
-                samples[count, :] = im_cropped.reshape(cropped_size ** 2 * 3)
+                
+                im_cropped = im[:, crop_h:crop_h+cropped_size, crop_w:crop_w+cropped_size]
+
+                '''
+                iim = np.transpose(im_cropped.reshape(cropped_size*cropped_size*3).reshape([3, cropped_size*cropped_size])).reshape([cropped_size, cropped_size, 3])
+                img = Image.fromarray(iim)
+                img.save('cropimg.jpg', format='JPEG')
+                exit(0)
+                '''
+                
+                samples[count, :] = im_cropped.reshape(cropped_size ** 2 * 3).astype(np.float32)
                 labels[count, d.label] = 1
                 count = count + 1
                 if count == mb_size:

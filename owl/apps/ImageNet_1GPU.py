@@ -7,6 +7,7 @@ import owl
 from owl.conv import *
 import owl.elewise as ele
 from imagenet_lmdb import ImageNetDataProvider
+from PIL import Image
 
 class AlexModel:
     def __init__(self):
@@ -78,9 +79,10 @@ def print_training_accuracy(o, t, minibatch_size):
     ground_truth = t.max_index(0)
     correct = (predict - ground_truth).count_zero()
     print 'Training error: {}'.format((minibatch_size - correct) * 1.0 / minibatch_size)
+    sys.stdout.flush()
 
 def train_network(model, num_epochs = 100, minibatch_size=256,
-        dropout_rate = 0.5, eps_w = 0.01, eps_b = 0.01, mom = 0.9, wd = 0.005):
+        dropout_rate = 0.5, eps_w = 0.01, eps_b = 0.01, mom = 0.9, wd = 0.0005):
     gpu = owl.create_gpu_device(0)
     owl.set_device(gpu)
     num_layers = 20
@@ -94,14 +96,27 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
 
     for i in xrange(num_epochs):
         print "Epoch #", i, ", time: %s" % (time.time() - last)
+        sys.stdout.flush()
         for (samples, labels) in dp.get_train_mb(minibatch_size):
             num_samples = samples.shape[0]
 
             acts = [None] * num_layers
             sens = [None] * num_layers
 
+            '''
+            thisimg = samples[0, :]
+            print thisimg
+            imgdata = np.transpose(thisimg.reshape([3, 227*227])).reshape([227, 227, 3])
+            print imgdata
+            img = Image.fromarray(imgdata.astype(np.uint8))
+            img.save('testimg.jpg', format='JPEG')
+            exit(0)
+            '''
+
             # FF
             acts[0] = owl.from_nparray(samples).reshape([227, 227, 3, num_samples])
+            #print np.array(acts[0].tolist())[0:227*227*3]
+
             target = owl.from_nparray(labels)
 
             #print acts[0].shape, model.weights[0].shape, model.bias[0].shape
@@ -203,6 +218,7 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             count = count + 1
             if count % 10 == 0:
                 print model.bias[0].tolist()
+                sys.stdout.flush()
                 print_training_accuracy(acts[18], target, num_samples)
 
 if __name__ == '__main__':
