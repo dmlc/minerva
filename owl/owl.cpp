@@ -2,14 +2,19 @@
 #include <boost/python/stl_iterator.hpp>
 #include <boost/python/implicit.hpp>
 #include <boost/python/args.hpp>
+#include <boost/numpy.hpp>
+#include <boost/numpy/ndarray.hpp>
+
+#include <glog/logging.h>
 
 #include <iostream>
 using namespace std;
 
 #include "minerva.h"
 
-namespace bp = boost::python;
 namespace m = minerva;
+namespace bp = boost::python;
+namespace np = boost::numpy;
 
 namespace owl {
 
@@ -87,6 +92,20 @@ m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
   return m::NArray::MakeNArray(ToScale(s), data);
 }
 
+m::NArray FromNPArrayWrapper(np::ndarray nparr) {
+  CHECK(nparr.get_flags() & np::ndarray::C_CONTIGUOUS) << "MakeNArray needs c-contiguous numpy array";
+  CHECK(np::equivalent(nparr.get_dtype(), np::dtype::get_builtin<float>())) << "MakeNArray needs float32 numpy array";
+  int nd = nparr.get_nd();
+  m::Scale shape = m::Scale::Origin(nd);
+  for(int i = 0; i < nd; ++i) {
+    shape[i] = nparr.shape(nd - 1 - i);
+  }
+  size_t length = shape.Prod();
+  shared_ptr<float> data( new float[length], [] (float* ptr) { delete [] ptr; } );
+  memcpy(data.get(), reinterpret_cast<float*>(nparr.get_data()), sizeof(float) * length);
+  return m::NArray::MakeNArray(shape, data);
+}
+
 bp::list ShapeWrapper(m::NArray narr) {
   return ToPythonList(narr.Size());
 }
@@ -139,30 +158,12 @@ m::NArray SoftmaxBackward(m::NArray diff, m::NArray top, m::SoftmaxAlgorithm alg
   return m::Convolution::SoftmaxBackward(m::ImageBatch(diff), m::ImageBatch(top), algo);
 }
 
-/*m::ConvInfo GetConvInfo(int pad_height, int pad_width, int stride_vertical, int stride_horizontal) {
-  m::ConvInfo result;
-  result.pad_height = pad_height;
-  result.pad_width = pad_width;
-  result.stride_vertical = stride_vertical;
-  result.stride_horizontal = stride_horizontal;
-  return result;
-}
-
-m::PoolingInfo GetPoolingInfo(int height, int width, int stride_vertical, int stride_horizontal, m::PoolingInfo::Algorithm algo) {
-  m::PoolingInfo result;
-  result.height = height;
-  result.width = width;
-  result.stride_vertical = stride_vertical;
-  result.stride_horizontal = stride_horizontal;
-  result.algorithm = algo;
-  return result;
-}*/
-
 } // end of namespace owl
 
 // python module
 BOOST_PYTHON_MODULE(libowl) {
   using namespace boost::python;
+  np::initialize();
 
   enum_<m::ArithmeticType>("arithmetic")
     .value("add", m::ArithmeticType::kAdd)
@@ -220,8 +221,8 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("tofile", &m::NArray::ToFile)
     .def("tolist", &owl::NArrayToList)
     .def("reshape", &owl::ReshapeWrapper)
-    .def("eval", &m::NArray::Eval)
-    .def("eval_async", &m::NArray::EvalAsync)
+    .def("wait_for_eval", &m::NArray::WaitForEval)
+    .def("start_eval", &m::NArray::StartEval)
     .add_property("shape", &owl::ShapeWrapper)
   ;
 /*
@@ -238,6 +239,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("randn", &owl::RandnWrapper);
   def("make_narray", &owl::MakeNArrayWrapper);
   def("randb", &owl::RandBernoulliWrapper);
+  def("from_nparray", &owl::FromNPArrayWrapper);
   //def("toscale", &owl::ToScale);
 
   // system
@@ -249,9 +251,15 @@ BOOST_PYTHON_MODULE(libowl) {
 
   // elewise
   def("mult", &m::Elewise::Mult);
-  def("sigmoid", &m::Elewise::Sigmoid);
+  def("sigmoid", &m::Elewise::SigmoidForward);
   def("exp", &m::Elewise::Exp);
   def("ln", &m::Elewise::Ln);
+  def("sigm", &m::Elewise::SigmoidForward);
+  def("sigm_back", &m::Elewise::SigmoidBackward);
+  def("relu", &m::Elewise::ReluForward);
+  def("relu_back", &m::Elewise::ReluBackward);
+  def("tahn", &m::Elewise::TanhForward);
+  def("tahn_back", &m::Elewise::TanhBackward);
   
   // utils
   def("softmax", &owl::Softmax);
@@ -284,8 +292,6 @@ BOOST_PYTHON_MODULE(libowl) {
     .value("avg", m::PoolingInfo::Algorithm::kAverage)
   ;
 
-  //def("conv_info", &owl::GetConvInfo);
-  //def("pooling_info", &owl::GetPoolingInfo);
   def("conv_forward", &owl::ConvForward);
   def("activation_forward", &owl::ActivationForward);
   def("softmax_forward", &owl::SoftmaxForward);
@@ -297,3 +303,4 @@ BOOST_PYTHON_MODULE(libowl) {
   def("activation_backward", &owl::ActivationBackward);
   def("softmax_backward", &owl::SoftmaxBackward);
 }
+
