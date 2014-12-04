@@ -13,7 +13,7 @@
 #include <cudnn.h>
 #endif
 
-#define FIVE_G ((size_t) 5 * 1024 * 1024 * 1024)
+#define DEFAULT_POOL_SIZE ((size_t) 5.8 * 1024 * 1024 * 1024)
 
 using namespace std;
 
@@ -111,7 +111,7 @@ GpuDevice::GpuDevice(uint64_t device_id, DeviceListener* l, int gpu_id) : Thread
     CUDA_CALL(cudaSetDevice(device_));
     CUDA_CALL(cudaFree(ptr));
   };
-  data_store_ = new PooledDataStore(FIVE_G, allocator, deallocator);
+  data_store_ = new PooledDataStore(DEFAULT_POOL_SIZE, allocator, deallocator);
   for (size_t i = 0; i < kParallelism; ++i) {
     CUDA_CALL(cudaStreamCreate(&stream_[i]));
     CUBLAS_CALL(cublasCreate(&cublas_handle_[i]));

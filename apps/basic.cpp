@@ -11,25 +11,15 @@ uint64_t cpu_device, gpu_device;
 void Train() {
   auto& ms = MinervaSystem::Instance();
   ms.current_device_id_ = gpu_device;
-  auto a = NArray::Randn({3, 2}, 0, 1);
-  auto b = a.MaxIndex(0);
-  auto top_diff_ptr = a.Get();
-  for (int i = 0; i < a.Size().Prod(); ++i) {
-    cout << top_diff_ptr.get()[i] << ' ';
-  }
-  cout << endl;
-  top_diff_ptr = b.Get();
-  for (int i = 0; i < b.Size().Prod(); ++i) {
-    cout << top_diff_ptr.get()[i] << ' ';
-  }
-  cout << endl;
+  auto a = NArray::Randn({1556925644}, 0, 1);
+  a.WaitForEval();
 }
 
 int main(int argc, char** argv) {
   auto& ms = MinervaSystem::Instance();
   ms.Initialize(&argc, &argv);
   cpu_device = ms.CreateCpuDevice();
-  gpu_device = ms.CreateGpuDevice(1);
+  gpu_device = ms.CreateGpuDevice(0);
   Train();
   ms.dag_scheduler().GCNodes();
   cout << ms.device_manager().GetDevice(cpu_device)->GetMemUsage() << endl;
