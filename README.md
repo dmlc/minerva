@@ -14,3 +14,12 @@ Under development
 ## MNIST data
 
 http://pan.baidu.com/s/1ntsQs0x
+
+## Dependencies
+
+* [Boost](http://www.boost.org/)
+* [Boost.NumPy](https://github.com/ndarray/Boost.NumPy)
+* [Google Test](https://code.google.com/p/googletest/)
+* [gflags](https://code.google.com/p/gflags/)
+* [glog](https://code.google.com/p/google-glog/)
+* NVIDIA cuDNN
