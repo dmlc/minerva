@@ -18,8 +18,11 @@ http://pan.baidu.com/s/1ntsQs0x
 ## Dependencies
 
 * [Boost](http://www.boost.org/)
+  Compile with libraries including python and thread.
 * [Boost.NumPy](https://github.com/ndarray/Boost.NumPy)
 * [Google Test](https://code.google.com/p/googletest/)
+  Compile to a shared library.
 * [gflags](https://code.google.com/p/gflags/)
+  Compile to a shared library.
 * [glog](https://code.google.com/p/google-glog/)
 * NVIDIA cuDNN
