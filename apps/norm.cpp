@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
     ms.current_device_id_ = cpuDevice;
     FileFormat format{false};
     a.ToFile("a.txt", format);
-    b.ToFile("b.txt", format); 
+    b.ToFile("b.txt", format);
     e.ToFile("e.txt", format);
 
     c.ToFile("c.txt", format);
