@@ -56,7 +56,7 @@ ExternalProject_Add(Boost
 ExternalProject_Add(BoostNumpy
   DEPENDS Boost
   GIT_REPOSITORY https://github.com/ndarray/Boost.NumPy.git
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR} -DBoost_LIBRARY_DIR=${DEPS_INSTALL_DIR}/lib
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR} -DBoost_LIBRARY_DIR=${DEPS_INSTALL_DIR}/lib -DBoost_INCLUDE_DIR=${DEPS_INSTALL_DIR}/include
 )
 
 ExternalProject_Add(GoogleTest
