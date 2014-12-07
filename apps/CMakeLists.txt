@@ -14,7 +14,6 @@ foreach(app_src ${app_file_list})
   if (CUDA_FOUND)
     CUDA_ADD_CUBLAS_TO_TARGET(${app_name})
   endif (CUDA_FOUND)
-  add_dependencies(${app_name} minerva)
   list(APPEND app_list ${app_name})
 endforeach()
 

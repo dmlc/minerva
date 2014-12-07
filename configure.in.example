@@ -8,26 +8,9 @@ RELEASE_DIR=release
 CXX_COMPILER=g++-4.8
 C_COMPILER=gcc-4.8
 
-# Additional flags passed to cxx compiler
+# Flags passed to C++ compiler
 CXXFLAGS=
 
-# glog
-GLOG_INCLUDE_PATH=/home/yutian/cpp/glog-0.3.3/build/include
-GLOG_LIB_PATH=/home/yutian/cpp/glog-0.3.3/build/lib
-
-# gflags
-GFLAGS_INCLUDE_PATH=/home/yutian/cpp/gflags-2.1.1/build/include
-GFLAGS_LIB_PATH=/home/yutian/cpp/gflags-2.1.1/build/lib
-
-# Google Test
-GTEST_INCLUDE_PATH=/home/yutian/cpp/gtest-1.7.0/include
-GTEST_LIB_PATH=/home/yutian/cpp/gtest-1.7.0/build
-
-# Boost
-BOOST_INCLUDE_PATH=/home/yutian/cpp/boost_1_57_0/build/include,/home/yutian/cpp/Boost.NumPy/build/include
-BOOST_LIB_PATH=/home/yutian/cpp/boost_1_57_0/build/lib,/home/yutian/cpp/Boost.NumPy/build/lib
-
-# cuDNN
-CUDNN_INCLUDE_PATH=/home/yutian/cpp/cudnn-6.5-linux-R1
-CUDNN_LIB_PATH=/home/yutian/cpp/cudnn-6.5-linux-R1
-
+# Comma seperated list of external dependencies, e.g. cuDNN
+EXTERN_INCLUDE_PATH=/home/cs_user/Libs/cudnn-6.5-linux-R1
+EXTERN_LIB_PATH=/home/cs_user/Libs/cudnn-6.5-linux-R1
