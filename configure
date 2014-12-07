@@ -3,86 +3,59 @@
 source configure.in
 
 function unknown_option {
-	echo "Unknown option: $1"
-	echo "Run ./configure --help to get help"
-	exit 1
+    echo "Unknown option: $1"
+    echo "Run ./configure --help to get help"
+    exit 1
 }
 
 function run_clean {
-	read -n 1 -s -p "Are you sure to delete release/debug builds? [y/n]
+    read -n 1 -s -p "Are you sure to delete release/debug builds? [y/n]
 " yesorno;
-	if [ "$yesorno" == "y" ]; then
-		echo "Removing release and debug builds"
-		rm -rf $RELEASE_DIR $DEBUG_DIR
-	fi
-	exit 0
+    if [ "$yesorno" == "y" ]; then
+        echo "Removing release and debug builds"
+        rm -rf $RELEASE_DIR $DEBUG_DIR
+    fi
+    exit 0
 }
 
-function run_cleanall {
-	read -n 1 -s -p "Are you sure to delete all builds (release, debug, deps)? [y/n]
-" yesorno;
-	if [ "$yesorno" == "y" ]; then
-		echo "Removing all builds"
-		rm -rf $RELEASE_DIR $DEBUG_DIR deps
-	fi
-	exit 0
-}
-
-EXTERNAL_LIB_PATH="$GLOG_LIB_PATH,$BOOST_LIB_PATH,$GFLAGS_LIB_PATH,$GTEST_LIB_PATH,$CUDNN_INCLUDE_PATH"
-EXTERNAL_INCLUDE_PATH="$GLOG_INCLUDE_PATH,$BOOST_INCLUDE_PATH,$GFLAGS_INCLUDE_PATH,$GTEST_INCLUDE_PATH,$CUDNN_LIB_PATH"
 CXXFLAGS="$CXXFLAGS \
-  -DEXTERNAL_LIB_PATH=$EXTERNAL_LIB_PATH\
-  -DEXTERNAL_INCLUDE_PATH=$EXTERNAL_INCLUDE_PATH"
+  -DEXTERN_LIB_PATH=$EXTERN_LIB_PATH \
+  -DEXTERN_INCLUDE_PATH=$EXTERN_INCLUDE_PATH"
 
 while [ $# -gt 0 ]
 do
-	case $1 in
-		-help | --help | -h | --h)
-			want_help=yes ;;
-		-c | --clean)
-			run_clean=yes ;;
-		-a | --cleanall)
-			run_cleanall=yes ;;
-		--mkl=*)
-			MKL_ROOT=`expr "x$1" : "x--mkl=\(.*\)"` ;;
-		-D)
-			CXXFLAGS="$CXXFLAGS -D $2"; shift ;;
-		-D*)
-			CXXFLAGS="$CXXFLAGS -D `expr "x$1" : "x-D\(.*\)"`" ;;
-		*)	unknown_option $1 ;;
-	esac
-	shift
+    case $1 in
+        --help | -h)
+            want_help=yes ;;
+        -c | --clean)
+            run_clean ;;
+        -D)
+            CXXFLAGS="$CXXFLAGS -D $2"; shift ;;
+        -D*)
+            CXXFLAGS="$CXXFLAGS -D `expr "x$1" : "x-D\(.*\)"`" ;;
+        *)
+            unknown_option $1 ;;
+    esac
+    shift
 done
 
 #================================ help description =============================
 if test "x$want_help" = xyes; then
-	cat <<EOF
+    cat <<EOF
 Usage: ./configure [OPTION]...
 Configurations:
-	-h, --help              Display this help and exit
-	-c, --clean                 Clean up debug and release build
-	-a, --cleanall              Clean all bulids including dependent libraries
-	--mkl=MKL_ROOT          Specify the root of MKL installation
-	--packages=DIR          Specify the location of dependent packages of Minerva
-	-Dvar=value             Specify definitions to be passed on to cmake
+    -h, --help              Display this help and exit
+    -c, --clean                 Clean up debug and release build
+    -Dvar=value             Specify definitions to be passed on to cmake
 EOF
 exit 0;
-fi
-#===============================================================================
-
-#================================ clean build =============================
-if test "x$run_clean" = xyes; then
-	run_clean;
-fi
-if test "x$run_cleanall" = xyes; then
-	run_cleanall;
 fi
 #===============================================================================
 
 #================================ main configuration =============================
 echo -e "\n\n\n========================== Release =========================="
 if [ ! -d $RELEASE_DIR ]; then
-	mkdir $RELEASE_DIR
+    mkdir $RELEASE_DIR
 fi
 cd $RELEASE_DIR
 CC=$C_COMPILER CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Release $CXXFLAGS ..
@@ -90,7 +63,7 @@ cd ..
 
 echo -e "\n\n\n========================== Debug =========================="
 if [ ! -d $DEBUG_DIR ]; then
-	mkdir $DEBUG_DIR
+    mkdir $DEBUG_DIR
 fi
 cd $DEBUG_DIR
 CC=$C_COMPILER CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Debug $CXXFLAGS ..
