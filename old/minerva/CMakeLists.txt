@@ -1,1 +1,0 @@
-project(minerva_lib)

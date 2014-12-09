@@ -1,48 +1,16 @@
-#debug build directory
+# Debug build directory
 DEBUG_DIR=debug
 
-# release build directory
+# Release build directory
 RELEASE_DIR=release
 
 # Compilers
 CXX_COMPILER=g++-4.8
 C_COMPILER=gcc-4.8
 
-# flags passed to cxx compiler
+# Flags passed to C++ compiler
 CXXFLAGS=
 
-# path to search for mkl headers
-MKL_INCLUDE_PATH=
-# path to link to mkl libraries
-MKL_LIB_PATH=
-
-# path to search for google-logger headers
-GLOG_INCLUDE_PATH=/usr/local/include
-# path to link to google-logger libraries 
-GLOG_LIB_PATH=/usr/local/lib
-
-# path to search for google flags headers
-GFLAGS_INCLUDE_PATH=/home/cs_user/Libs/gflags-2.1.1/build/include
-# path to link to google flags libraries 
-GFLAGS_LIB_PATH=/home/cs_user/Libs/gflags-2.1.1/build/lib
-
-# path to search for gtest headers
-GTEST_INCLUDE_PATH=/home/cs_user/Libs/gtest-1.7.0/include
-# path to link to gtest libraries 
-GTEST_LIB_PATH=/home/cs_user/Libs/gtest-1.7.0/build
-
-# path to search for boost headers
-BOOST_INCLUDE_PATH=/home/cs_user/Libs/boost_1_56_0/build/include
-# path to link to boost libraries
-BOOST_LIB_PATH=/home/cs_user/Libs/boost_1_56_0/build/lib
-
-# path to search for cuDNN headers
-CUDNN_INCLUDE_PATH=/home/cs_user/Libs/cudnn-6.5-linux-R1
-# path to link to cuDNN libraries
-CUDNN_LIB_PATH=/home/cs_user/Libs/cudnn-6.5-linux-R1
-
-# path to search for boost-numpy headers
-BOOST_INCLUDE_PATH=/home/cs_user/Libs/Boost.NumPy/boost
-# path to link to boost-numpy libraries
-BOOST_LIB_PATH=/home/cs_user/Libs/Boost.NumPy/build/lib
-
+# Comma seperated list of external dependencies, e.g. cuDNN
+EXTERN_INCLUDE_PATH=/home/cs_user/Libs/cudnn-6.5-linux-R1
+EXTERN_LIB_PATH=/home/cs_user/Libs/cudnn-6.5-linux-R1
