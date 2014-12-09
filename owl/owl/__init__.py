@@ -15,6 +15,7 @@ make_narray = _owl.make_narray
 
 # Convert numpy array into minerva array. ATTENTION: this will lead to
 # a transpose due to the different storage priority
-from_nparray = _owl.from_nparray
+def from_nparray(nparr):
+    return _owl.from_nparray(np.require(nparr, dtype=np.float32, requirements=['C']))
 
 op = _owl.arithmetic
