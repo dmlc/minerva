@@ -34,44 +34,44 @@
 <h2>
 <a id="goal" class="anchor" href="#goal" aria-hidden="true"><span class="octicon octicon-link"></span></a>Goal</h2>
 
-<p>Make deep learning a home dish</p>
+<p>Make deep learning a home dish.</p>
 
 <h2>
-<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
+<a id="requirements-and-dependencies" class="anchor" href="#requirements-and-dependencies" aria-hidden="true"><span class="octicon octicon-link"></span></a>Requirements and Dependencies</h2>
 
-<p>Under development</p>
+<p>Minerva depends on several packages. If they are not in the system path, please set variable <code>EXTERN_INCLUDE_PATH</code> and <code>EXTERN_LIB_PATH</code> in <code>configure.in</code> accordingly.</p>
+
+<ul>
+<li>CUDA 6.5</li>
+<li>cuDNN</li>
+<li>LMDB</li>
+<li>NumPy</li>
+</ul>
+
+<p>In addition, Minerva also depends on the following packages. A script <code>resolve_deps</code> is provided for automatic resolving of them.</p>
+
+<ul>
+<li>Boost</li>
+<li>Boost.NumPy</li>
+<li>glog</li>
+<li>gflags</li>
+<li>Google Test</li>
+</ul>
 
 <h2>
 <a id="how-to-build" class="anchor" href="#how-to-build" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to build</h2>
 
 <ol>
-<li>Put path and configures in "configure.in" (please refer to configure.in.example")</li>
-<li>"./configure"</li>
-<li>"cd debug"(or "cd release") and press "make"</li>
+<li>Set <code>CXX_COMPILER</code>, and <code>C_COMPILER</code> in <code>configure.in</code>. <code>g++-4.8</code> is recommended.</li>
+<li>Set <code>EXTERN_INCLUDE_PATH</code>, and <code>EXTERN_LIB_PATH</code> in <code>configure.in</code> to reflect any dependency not in the system path. If there are more than one, use a comma-separated list.</li>
+<li><code>./configure</code></li>
+<li>Change directory into <code>debug</code> or <code>release</code> and <code>make</code>.</li>
 </ol>
 
 <h2>
 <a id="mnist-data" class="anchor" href="#mnist-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>MNIST data</h2>
 
 <p><a href="http://pan.baidu.com/s/1ntsQs0x">http://pan.baidu.com/s/1ntsQs0x</a></p>
-
-<h2>
-<a id="dependencies" class="anchor" href="#dependencies" aria-hidden="true"><span class="octicon octicon-link"></span></a>Dependencies</h2>
-
-<ul>
-<li>
-<a href="http://www.boost.org/">Boost</a>
-Compile with libraries including python and thread.</li>
-<li><a href="https://github.com/ndarray/Boost.NumPy">Boost.NumPy</a></li>
-<li>
-<a href="https://code.google.com/p/googletest/">Google Test</a>
-Compile to a shared library.</li>
-<li>
-<a href="https://code.google.com/p/gflags/">gflags</a>
-Compile to a shared library.</li>
-<li><a href="https://code.google.com/p/google-glog/">glog</a></li>
-<li>NVIDIA cuDNN</li>
-</ul>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/minerva-developers">minerva-developers</a></p>
@@ -79,6 +79,16 @@ Compile to a shared library.</li>
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
-    
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-57231898-2");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
   </body>
 </html>
