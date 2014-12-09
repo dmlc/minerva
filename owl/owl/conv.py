@@ -33,7 +33,34 @@ activation_forward = _owl.activation_forward
 activation_backward = _owl.activation_backward
 
 softmax_forward = _owl.softmax_forward
-softmax_backward = _owl.softmax_backward
+#softmax_backward = _owl.softmax_backward
+def softmax(x, op):
+    if len(x.shape) == 4:
+        return _owl.softmax_forward(x, op)
+    else:
+        ori_shape = list(x.shape)
+        soft_shape = x.shape[0:-1] + [1 for i in range(4 - len(ori_shape))] + [x.shape[-1]]
+        return _owl.softmax_forward(x.reshape(soft_shape), op).reshape(ori_shape)
 
 pooling_forward = _owl.pooling_forward
 pooling_backward = _owl.pooling_backward
+
+class Convolution:
+    def __init__(self, param):
+        self.param = param
+    def ff(self, x, w, b):
+        return conv_forward(x, w, b, self.param)
+    def bp(self, y, w):
+        return conv_backward_data(y, w, self.param)
+    def weight_grad(self, y, x):
+        return conv_backward_filter(y, x, self.param)
+    def bias_grad(self, y):
+        return conv_backward_bias(y)
+
+class Pooling:
+    def __init__(self, param):
+        self.param = param
+    def ff(self, x):
+        return pooling_forward(x, self.param)
+    def bp(self, y, ff_y, ff_x):
+        return pooling_backward(y, ff_y, ff_x, self.param)

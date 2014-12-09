@@ -42,13 +42,13 @@ class MNISTCNNModel:
     def __init__(self):
         self.weights = []
         self.bias = []
-        self.conv_infos = [
-            conv_info(0, 0, 1, 1),
-            conv_info(2, 2, 1, 1),
+        self.convs = [
+            Convolution(conv_info(0, 0, 1, 1)),
+            Convolution(conv_info(2, 2, 1, 1)),
         ];
-        self.pooling_infos = [
-            pooling_info(2, 2, 2, 2, pool_op.max),
-            pooling_info(3, 3, 3, 3, pool_op.max)
+        self.poolings = [
+            Pooling(pooling_info(2, 2, 2, 2, pool_op.max)),
+            Pooling(pooling_info(3, 3, 3, 3, pool_op.max))
         ];
     def init_random(self):
         self.weights = [
@@ -86,37 +86,33 @@ def train_network(model, num_epochs = 100, num_train_samples = 60000, minibatch_
             sens = [None] * num_layers
 
             acts[0] = owl.from_nparray(mb_samples).reshape([28, 28, 1, num_samples])
-            target = owl.from_nparray(mb_labels).reshape([10, 1, 1, num_samples])
+            target = owl.from_nparray(mb_labels)
 
-            acts[1] = conv_forward(acts[0], model.weights[0], model.bias[0], model.conv_infos[0])
+            acts[1] = model.convs[0].ff(acts[0], model.weights[0], model.bias[0])
             acts[2] = ele.relu(acts[1])
-            acts[3] = pooling_forward(acts[2], model.pooling_infos[0])
-            acts[4] = conv_forward(acts[3], model.weights[1], model.bias[1], model.conv_infos[1])
+            acts[3] = model.poolings[0].ff(acts[2])
+            acts[4] = model.convs[1].ff(acts[3], model.weights[1], model.bias[1])
             acts[5] = ele.relu(acts[4])
-            acts[6] = pooling_forward(acts[5], model.pooling_infos[1])
+            acts[6] = model.poolings[1].ff(acts[5])
             re_acts6 = acts[6].reshape([np.prod(acts[6].shape[0:3]), num_samples])
             acts[7] = model.weights[2] * re_acts6 + model.bias[2]
-            acts[8] = softmax_forward(acts[7].reshape([10, 1, 1, num_samples]), soft_op.instance)
+            acts[8] = softmax(acts[7], soft_op.instance)
             
-            sens[8] = acts[8] - target
+            sens[7] = acts[8] - target
 
-            sens[7] = sens[8].reshape([10, num_samples])
             sens[6] = (model.weights[2].trans() * sens[7]).reshape(acts[6].shape)
-            sens[5] = pooling_backward(sens[6], acts[6], acts[5], model.pooling_infos[1])
+            sens[5] = model.poolings[1].bp(sens[6], acts[6], acts[5])
             sens[4] = ele.relu_back(sens[5], acts[5], acts[4])
-            sens[3] = conv_backward_data(sens[4], model.weights[1], model.conv_infos[1])
-
-            sens[2] = pooling_backward(sens[3], acts[3], acts[2], model.pooling_infos[0])
+            sens[3] = model.convs[1].bp(sens[4], model.weights[1])
+            sens[2] = model.poolings[0].bp(sens[3], acts[3], acts[2])
             sens[1] = ele.relu_back(sens[2], acts[2], acts[1])
 
             model.weights[2] -= eps_w / num_samples * sens[7] * re_acts6.trans()
             model.bias[2] -= eps_b / num_samples * sens[7].sum(1)
-
-            model.weights[1] -= eps_w / num_samples * conv_backward_filter(sens[4], acts[3], model.conv_infos[1])
-            model.bias[1] -= eps_b / num_samples * conv_backward_bias(sens[4])
-
-            model.weights[0] -= eps_w / num_samples * conv_backward_filter(sens[1], acts[0], model.conv_infos[0])
-            model.bias[0] -= eps_b / num_samples * conv_backward_bias(sens[1])
+            model.weights[1] -= eps_w / num_samples * model.convs[1].weight_grad(sens[4], acts[3])
+            model.bias[1] -= eps_b / num_samples * model.convs[1].bias_grad(sens[4])
+            model.weights[0] -= eps_w / num_samples * model.convs[0].weight_grad(sens[1], acts[0])
+            model.bias[0] -= eps_b / num_samples * model.convs[0].bias_grad(sens[1])
 
             count = count + 1
             if (count % 40) == 0:
