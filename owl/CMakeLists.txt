@@ -9,7 +9,6 @@ file(GLOB_RECURSE src_list "*.cpp")
 add_library(owl SHARED ${src_list})
 set(LIBRARY_OUTPUT_PATH ${Minerva_BINARY_DIR}/owl)
 target_link_libraries(owl boost_python boost_numpy python2.7 minerva)
-add_dependencies(owl Boost BoostNumpy)
 
 if (CUDA_FOUND)
   CUDA_ADD_CUBLAS_TO_TARGET(owl)
