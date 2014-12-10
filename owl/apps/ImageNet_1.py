@@ -181,31 +181,17 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
     #         val_db='/home/minjie/data/imagenet/ilsvrc12_val_lmdb',
     #         test_db='/home/minjie/data/imagenet/ilsvrc12_test_lmdb')
 
-    minibatch_size = minibatch_size / 2
-
     for i in xrange(num_epochs):
         print "---------------------Epoch #", i
         for j in xrange(300):
             count = count + 1
-            if count % 2 == 1:
-                # data1 = owl.from_nparray(samples).reshape([227, 227, 3, samples.shape[0]])
-                # label1 = owl.from_nparray(labels)
-                data1 = owl.randn([227, 227, 3, minibatch_size], 0, 1)
-                label1 = owl.randn([1, minibatch_size], 0, 1)
-                weightsgrad1 = [None] * num_weights
-                biasgrad1 = [None] * num_weights
-                owl.set_device(gpu0)
-                out1 = train_one_mb(model, data1, label1, weightsgrad1, biasgrad1, dropout_rate)
-                out1.start_eval()
-                continue
-            if count % 2 == 0:
-                data2 = owl.randn([227, 227, 3, minibatch_size], 0, 1)
-                label2 = owl.randn([1, minibatch_size], 0, 1)
+            data = owl.randn([227, 227, 3, minibatch_size], 0, 1)
+            label = owl.randn([1, minibatch_size], 0, 1)
 
-            weightsgrad2 = [None] * num_weights
-            biasgrad2 = [None] * num_weights
+            weightsgrad = [None] * num_weights
+            biasgrad = [None] * num_weights
 
-            num_samples = data1.shape[-1] + data2.shape[-1]
+            num_samples = minibatch_size
 
             '''
             thisimg = samples[0, :]
@@ -217,17 +203,18 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             exit(0)
             '''
 
-            owl.set_device(gpu1)
-            out2 = train_one_mb(model, data2, label2, weightsgrad2, biasgrad2, dropout_rate)
-            out2.start_eval()
+            owl.set_device(gpu0)
+            out = train_one_mb(model, data, label, weightsgrad, biasgrad, dropout_rate)
 
             for k in range(num_weights):
-                model.weightsdelta[k] = mom * model.weightsdelta[k] - eps_w / num_samples  * (weightsgrad1[k] + weightsgrad2[k] + wd * model.weights[k])
-                model.biasdelta[k] = mom * model.biasdelta[k] - eps_b / num_samples  * (biasgrad1[k] + biasgrad2[k] + wd * model.bias[k])
+                model.weightsdelta[k] = mom * model.weightsdelta[k] - eps_w / num_samples  * (weightsgrad[k] + wd * model.weights[k])
+                model.biasdelta[k] = mom * model.biasdelta[k] - eps_b / num_samples  * (biasgrad[k] + wd * model.bias[k])
                 model.weights[k] += model.weightsdelta[k]
+                model.weights[k].start_eval()
                 model.bias[k] += model.biasdelta[k]
-            if count % 8 == 0:
-                print_training_accuracy(out1, label1, data1.shape[-1])
+                model.bias[k].start_eval()
+            if count % 3 == 0:
+                print_training_accuracy(out, label, data.shape[-1])
                 print "time: %s" % (time.time() - last)
                 last = time.time()
 
