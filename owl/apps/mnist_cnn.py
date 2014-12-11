@@ -40,6 +40,7 @@ class MNISTCNNModel:
         ];
 
 def print_training_accuracy(o, t, mbsize, prefix):
+    print np.array(o.tolist())[0:10]
     predict = o.reshape([10, mbsize]).max_index(0)
     ground_truth = t.reshape([10, mbsize]).max_index(0)
     correct = (predict - ground_truth).count_zero()
@@ -119,7 +120,7 @@ def train(model, samples, label):
 
     return (out, weightgrad, biasgrad)
 
-def train_network(model, num_epochs = 100, minibatch_size = 256, lr = 0.01, mom = 0.9, wd = 0.0000):
+def train_network(model, num_epochs = 100, minibatch_size = 256, lr = 0.01, mom = 0.75, wd = 0.0000):
     np.set_printoptions(linewidth=200)
     owl.set_device(owl.create_gpu_device(0))
     count = 0

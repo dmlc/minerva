@@ -76,6 +76,7 @@ class MNISTCNNModel:
         ];
 
 def print_training_accuracy(o, t, mbsize):
+    print np.array(o.tolist())[0:10]
     predict = o.reshape([10, mbsize]).max_index(0)
     ground_truth = t.reshape([10, mbsize]).max_index(0)
     #print predict.tolist()
