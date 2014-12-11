@@ -75,16 +75,47 @@ class MNISTCNNModel:
             owl.zeros([10, 1])
         ];
 
+def loadmodel(i, model):
+    basedir = './mnistmodel/epoch%d/' % (i)
+    print 'load from %s' % (basedir)
+    for k in range(3):
+        weightshape = model.weights[k].shape
+        filename = '%sweights_%d.dat' % (basedir, k)
+        weightarray = np.fromfile(filename, dtype=np.float32)
+        model.weights[k] = owl.from_nparray(weightarray).reshape(weightshape)
+
+        weightshape = model.bias[k].shape
+        filename = '%sbias_%d.dat' % (basedir, k)
+        weightarray = np.fromfile(filename, dtype=np.float32)
+        model.bias[k] = owl.from_nparray(weightarray).reshape(weightshape)
+
+def savemodel(i, model):
+    basedir = './mnistmodel/epoch%d/' % (i)
+    print 'save to %s' % (basedir)
+    cmd = 'mkdir %s' % (basedir)
+    res = subprocess.call(cmd, shell=True)
+    
+    for k in range(3):
+        weightslist = model.weights[k].tolist()
+        weightarray = np.array(weightslist, dtype=np.float32)
+        filename = '%sweights_%d.dat' % (basedir, k)
+        weightarray.tofile(filename)
+ 
+        weightslist = model.bias[k].tolist()
+        weightarray = np.array(weightslist, dtype=np.float32)
+        filename = '%sbias_%d.dat' % (basedir, k)
+        weightarray.tofile(filename)
+
+
 def print_training_accuracy(o, t, mbsize):
-    print np.array(o.tolist())[0:10]
+    #print np.array(o.tolist())[0:10]
     predict = o.reshape([10, mbsize]).max_index(0)
     ground_truth = t.reshape([10, mbsize]).max_index(0)
-    #print predict.tolist()
-    #print ground_truth.tolist()
     correct = (predict - ground_truth).count_zero()
     print 'Training error: {}'.format((mbsize - correct) * 1.0 / mbsize)
 
 def train_network(model, num_epochs = 100, num_train_samples = 60000, minibatch_size = 256, eps_w = 0.01, eps_b = 0.01, mom = 0.9, wd = 5e-4):
+    loadmodel(0, model)
     np.set_printoptions(linewidth=200)
     owl.set_device(owl.create_gpu_device(0))
     num_layers = 9
@@ -102,12 +133,20 @@ def train_network(model, num_epochs = 100, num_train_samples = 60000, minibatch_
             num_samples = mb_samples.shape[0]
             mb_samples_c = mb_samples.reshape(mb_samples.shape[0] * mb_samples.shape[1])
             mb_labels_c = mb_labels.reshape(mb_labels.shape[0] * mb_labels.shape[1])
+            
+            #print mb_samples_c.tolist()[300:310]
 
             acts = [None] * num_layers
             sens = [None] * num_layers
 
             acts[0] = owl.from_nparray(mb_samples_c).reshape([28, 28, 1, num_samples])
             target = owl.from_nparray(mb_labels_c).reshape([10, 1, 1, num_samples])
+
+            '''
+            print acts[0].tolist()[300:500]
+            print target.tolist()[0:50]
+            exit(0)
+            '''
 
             acts[1] = conv_forward(acts[0], model.weights[0], model.bias[0], model.conv_infos[0])
             acts[2] = activation_forward(acts[1], act_op.relu)
@@ -130,27 +169,43 @@ def train_network(model, num_epochs = 100, num_train_samples = 60000, minibatch_
             sens[2] = pooling_backward(sens[3], acts[3], acts[2], model.pooling_infos[0])
             sens[1] = activation_backward(sens[2], acts[2], acts[1], act_op.relu)
 
-            model.weightsdelta[2] = mom * model.weightsdelta[2] - eps_w / num_samples * sens[7] * re_acts6.trans() - eps_w * wd * model.weights[2]
+            model.weightsdelta[2] = mom * model.weightsdelta[2] - eps_w / num_samples * sens[7] * re_acts6.trans()# - eps_w * wd * model.weights[2]
             model.biasdelta[2] = mom * model.biasdelta[2] - eps_b / num_samples * sens[7].sum(1)
-
+            biasgrad = [None] * 3
+            biasgrad[2] = sens[7].sum(1)
+    
             model.weightsdelta[1] = mom * model.weightsdelta[1] - eps_w / num_samples * conv_backward_filter(sens[4], acts[3], model.conv_infos[1]) - eps_w * wd * model.weights[1]
             model.biasdelta[1] = mom * model.biasdelta[1] - eps_b / num_samples * conv_backward_bias(sens[4])
+            biasgrad[1] = conv_backward_bias(sens[4])
 
             model.weightsdelta[0] = mom * model.weightsdelta[0] - eps_w / num_samples * conv_backward_filter(sens[1], acts[0], model.conv_infos[0]) - eps_w * wd * model.weights[0]
             model.biasdelta[0] = mom * model.biasdelta[0] - eps_b / num_samples * conv_backward_bias(sens[1])
+            biasgrad[0] = conv_backward_bias(sens[1])
+            
+            '''
+            print acts[8].tolist()[0:100]
+            print conv_backward_bias(sens[1])
+            exit(0)
+            '''
 
             for k in range(3):
                 model.weights[k] += model.weightsdelta[k]
+                print model.biasdelta[k].tolist()[0:10]
                 model.bias[k] += model.biasdelta[k]
+                print model.biasdelta[k].tolist()[0:10]
+                exit(0)
             
             count = count + 1
-            if (count % 40) == 0:
+            if (count % 2) == 0:
                 print_training_accuracy(acts[-1], target, num_samples)
+                print model.weights[0].tolist()[0:10]
+                exit(0)
         print "time: %s" % (time.time() - last)
         sys.stdout.flush()
         last = time.time()
         
 if __name__ == '__main__':
+    np.random.seed(0)
     owl.initialize(sys.argv)
     owl.create_cpu_device()
     model = MNISTCNNModel()
