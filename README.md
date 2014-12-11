@@ -56,7 +56,7 @@ The NArray interface provided by Minerva is very intuitive. If you are familiar 
 
 Minerva allows you to use multiple GPUs at the same time. By using the `set_device` function, you can specify which device you want the operation to run on. Once set, all the operations you specify will be performed on this device.
 
-*bold TIP:* Minerva uses `lazy evaluation`, meaning that the operations are carried out only when necessary. For example, when you write `c = a + b`, the matrix addition will not be performed immediately. Instead, a dependency graph is constructed to track the dependency relationship. Once you try to evaluate the matrix c, either by printing some of its elements, or calling `c.WaitForEval()`, Minerva will lookup the dependency graph and try to carry out the operation. In this way, you can "push" multiple operations to different devices, and then trigger the evaluation on both devices at the same time. This is how multi-GPU programming is done in Minerva. Please refer to the code to get more details.
+Minerva uses `lazy evaluation`, meaning that the operations are carried out only when necessary. For example, when you write `c = a + b`, the matrix addition will not be performed immediately. Instead, a dependency graph is constructed to track the dependency relationship. Once you try to evaluate the matrix c, either by printing some of its elements, or calling `c.WaitForEval()`, Minerva will lookup the dependency graph and try to carry out the operation. In this way, you can "push" multiple operations to different devices, and then trigger the evaluation on both devices at the same time. This is how multi-GPU programming is done in Minerva. Please refer to the code to get more details.
 
 ## License and support
 
