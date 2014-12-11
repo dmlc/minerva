@@ -6,7 +6,7 @@ import numpy as np
 import owl
 from owl.conv import *
 import owl.elewise as ele
-from imagenet_lmdb import ImageNetDataProvider
+from imageio import ImageNetDataProvider
 from PIL import Image
 
 class AlexModel:
