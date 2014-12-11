@@ -1,6 +1,7 @@
 import sys,os
 import math
 import numpy as np
+import subprocess
 
 import imageio
 import owl
@@ -39,8 +40,41 @@ class MNISTCNNModel:
             owl.zeros([10, 1])
         ];
 
+
+def loadmodel(i, model):
+    basedir = './mnistmodel/epoch%d/' % (i)
+    print 'load from %s' % (basedir)
+    for k in range(3):
+        weightshape = model.weights[k].shape
+        filename = '%sweights_%d.dat' % (basedir, k)
+        weightarray = np.fromfile(filename, dtype=np.float32)
+        model.weights[k] = owl.from_nparray(weightarray).reshape(weightshape)
+
+        weightshape = model.bias[k].shape
+        filename = '%sbias_%d.dat' % (basedir, k)
+        weightarray = np.fromfile(filename, dtype=np.float32)
+        model.bias[k] = owl.from_nparray(weightarray).reshape(weightshape)
+
+
+def savemodel(i, model):
+    basedir = './mnistmodel/epoch%d/' % (i)
+    print 'save to %s' % (basedir)
+    cmd = 'mkdir %s' % (basedir)
+    res = subprocess.call(cmd, shell=True)
+    
+    for k in range(3):
+        weightslist = model.weights[k].tolist()
+        weightarray = np.array(weightslist, dtype=np.float32)
+        filename = '%sweights_%d.dat' % (basedir, k)
+        weightarray.tofile(filename)
+ 
+        weightslist = model.bias[k].tolist()
+        weightarray = np.array(weightslist, dtype=np.float32)
+        filename = '%sbias_%d.dat' % (basedir, k)
+        weightarray.tofile(filename)
+
 def print_training_accuracy(o, t, mbsize, prefix):
-    print np.array(o.tolist())[0:10]
+    #print np.array(o.tolist())[0:10]
     predict = o.reshape([10, mbsize]).max_index(0)
     ground_truth = t.reshape([10, mbsize]).max_index(0)
     correct = (predict - ground_truth).count_zero()
@@ -85,10 +119,15 @@ def train(model, samples, label):
     weightgrad = [None] * len(model.weights)
     biasgrad = [None] * len(model.bias)
 
-    #acts[0] = owl.from_nparray(mb_samples_c).reshape([28, 28, 1, num_samples])
-    #target = owl.from_nparray(mb_labels_c).reshape([10, 1, 1, num_samples])
     acts[0] = samples
     target = label.reshape([10, 1, 1, num_samples])
+  
+    '''
+    print acts[0].tolist()[300:500]
+    print target.tolist()[0:50]
+    print model.weights[0].tolist()[0:100]
+    exit(0)
+    '''
 
     acts[1] = conv_forward(acts[0], model.weights[0], model.bias[0], model.convs[0].param)
     acts[2] = activation_forward(acts[1], act_op.relu)
@@ -117,10 +156,17 @@ def train(model, samples, label):
     biasgrad[1] = conv_backward_bias(sens[4])
     weightgrad[0] = conv_backward_filter(sens[1], acts[0], model.convs[0].param)
     biasgrad[0] = conv_backward_bias(sens[1])
-
+    
+    '''
+    print out.tolist()[0:100] 
+    print biasgrad[0].tolist()
+    exit(0)
+    '''
     return (out, weightgrad, biasgrad)
 
-def train_network(model, num_epochs = 100, minibatch_size = 256, lr = 0.01, mom = 0.75, wd = 0.0000):
+def train_network(model, num_epochs = 100, minibatch_size = 256, lr = 0.01, mom = 0.9, wd = 0.0000):
+    loadmodel(0, model)
+    
     np.set_printoptions(linewidth=200)
     owl.set_device(owl.create_gpu_device(0))
     count = 0
@@ -135,23 +181,33 @@ def train_network(model, num_epochs = 100, minibatch_size = 256, lr = 0.01, mom 
             num_samples = mb_samples.shape[0]
             data = owl.from_nparray(mb_samples).reshape([28, 28, 1, num_samples])
             label = owl.from_nparray(mb_labels)
+            
+            #print data.tolist()[300:310]
+
             out, weightgrad, biasgrad = train(model, data, label)
+            
             for k in range(3):
                 model.weightdelta[k] = mom * model.weightdelta[k] - lr / num_samples * weightgrad[k]# - lr * wd * model.weights[k]
                 model.biasdelta[k] = mom * model.biasdelta[k] - lr / num_samples * biasgrad[k]
                 model.weights[k] += model.weightdelta[k]
+                
+                print model.biasdelta[k].tolist()[0:10]
                 model.bias[k] += model.biasdelta[k]
-
+                print model.biasdelta[k].tolist()[0:10]
+                exit(0)
+            
+            
             count = count + 1
-            if (count % 40) == 0:
+            if (count % 2) == 0:
+            #if True == True:
                 print_training_accuracy(out, label, num_samples, 'Training')
-            #if count == 100:
-                #sys.exit()
+                exit(0)
         # do test
         out, _, _  = train(model, test_samples, test_labels)
         print_training_accuracy(out, test_labels, num_test_samples, 'Testing')
 
 if __name__ == '__main__':
+    np.random.seed(0)
     owl.initialize(sys.argv)
     owl.create_cpu_device()
     model = MNISTCNNModel()
