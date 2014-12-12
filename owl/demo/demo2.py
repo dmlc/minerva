@@ -9,11 +9,9 @@ b = owl.zeros([96])
 conv = co.Convolver(0, 0, 4, 4) #pad_h, pad_w, stride_h, stride_w
 
 y = conv.ff(x, w, b)
+print y.tonparray()
 print y.shape
-y.start_eval()
-y.wait_for_eval()
 
 ex = conv.bp(y, w)
+print ex.tonparray()
 print ex.shape
-ex.start_eval()
-ex.wait_for_eval()
