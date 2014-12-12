@@ -161,8 +161,8 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
     minibatch_size = minibatch_size / num_gpu
     for i in xrange(num_epochs):
         print "---------------------Epoch #", i
-        weightsgrad = [[None] * num_weights for i in range(num_gpu)]
-        biasgrad = [[None] * num_weights for i in range(num_gpu)]
+        weightsgrad = [[None] * num_weights for z in range(num_gpu)]
+        biasgrad = [[None] * num_weights for z in range(num_gpu)]
         for j in xrange(1, 1024):
             count = j % num_gpu
             data = owl.randn([227, 227, 3, minibatch_size], 0, 1)
