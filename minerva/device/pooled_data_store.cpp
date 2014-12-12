@@ -54,7 +54,6 @@ size_t PooledDataStore::GetTotalBytes() const {
 }
 
 void PooledDataStore::ReleaseFreeSpace() {
-  LOG(INFO) << "RELEASE";
   for (auto& i : free_space_) {
     while (i.second.size()) {
       deallocator_(i.second.front());

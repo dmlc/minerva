@@ -85,6 +85,7 @@ void MinervaSystem::DecrExternRC(PhysicalDataNode* node) {
 }
 
 void MinervaSystem::WaitForEval(const vector<NArray>& narrs) {
+  LOG(INFO) << "evaluation (synchronous) start...";
   vector<uint64_t> pid_to_eval = Map<uint64_t>(narrs, [](const NArray& n) {
     return n.data_node_->node_id();
   });
@@ -93,9 +94,11 @@ void MinervaSystem::WaitForEval(const vector<NArray>& narrs) {
     dag_scheduler_->WaitForFinish(i);
   }
   dag_scheduler_->GCNodes();
+  LOG(INFO) << "Evaluation completed!";
 }
 
 void MinervaSystem::StartEval(const vector<NArray>& narrs) {
+  LOG(INFO) << "evaluation (asynchronous) start...";
   vector<uint64_t> pid_to_eval = Map<uint64_t>(narrs, [](const NArray& n) {
     return n.data_node_->node_id();
   });
