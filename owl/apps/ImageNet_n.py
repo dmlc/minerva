@@ -170,7 +170,7 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             label = owl.randn([1, minibatch_size], 0, 1)
             out = train_one_mb(model, data, label, weightsgrad[count], biasgrad[count], dropout_rate)
             out.start_eval()
-            if j % num_gpu == 0:
+            if count == 0:
                 # Update
                 for k in range(num_weights):
                     for l in range(1, num_gpu):
