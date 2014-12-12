@@ -165,9 +165,9 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
         biasgrad = [[None] * num_weights for z in range(num_gpu)]
         for j in xrange(1, 1024):
             count = j % num_gpu
+            owl.set_device(gpu_array[count])
             data = owl.randn([227, 227, 3, minibatch_size], 0, 1)
             label = owl.randn([1, minibatch_size], 0, 1)
-            owl.set_device(gpu_array[count])
             out = train_one_mb(model, data, label, weightsgrad[count], biasgrad[count], dropout_rate)
             out.start_eval()
             if j % num_gpu == 0:
