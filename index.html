@@ -37,9 +37,22 @@
 <p>Make deep learning a home dish.</p>
 
 <h2>
-<a id="requirements-and-dependencies" class="anchor" href="#requirements-and-dependencies" aria-hidden="true"><span class="octicon octicon-link"></span></a>Requirements and Dependencies</h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
 
-<p>Minerva depends on several packages. If they are not in the system path, please set variable <code>EXTERN_INCLUDE_PATH</code> and <code>EXTERN_LIB_PATH</code> in <code>configure.in</code> accordingly.</p>
+<ul>
+<li>Matrix programming interface</li>
+<li>Easy interaction with NumPy</li>
+<li>Multi-GPU, multi-CPU support</li>
+<li>Good performance: ImageNet training achieves 213 images/s with one Titan GPU, 403Images/s with two GPUs</li>
+</ul>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<h3>
+<a id="requirements-and-dependencies" class="anchor" href="#requirements-and-dependencies" aria-hidden="true"><span class="octicon octicon-link"></span></a>Requirements and Dependencies</h3>
+
+<p>Minerva depends on several packages. If they are not in the system search path, please set variable <code>EXTERN_INCLUDE_PATH</code> and <code>EXTERN_LIB_PATH</code> in <code>configure.in</code> accordingly.</p>
 
 <ul>
 <li>CUDA 6.5</li>
@@ -48,7 +61,7 @@
 <li>NumPy</li>
 </ul>
 
-<p>In addition, Minerva also depends on the following packages. A script <code>resolve_deps</code> is provided for automatic resolving of them.</p>
+<p>In addition, Minerva also depends on the following packages. A script <code>resolve_deps</code> is provided for automatic resolving of them. Running this script will download and install them in the <code>deps</code> directory relative to the root of the repository. If you do so, please consult <code>configure.in.example</code> for a sample configuration of the paths.</p>
 
 <ul>
 <li>Boost</li>
@@ -58,20 +71,50 @@
 <li>Google Test</li>
 </ul>
 
-<h2>
-<a id="how-to-build" class="anchor" href="#how-to-build" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to build</h2>
+<h3>
+<a id="how-to-build" class="anchor" href="#how-to-build" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to build</h3>
 
 <ol>
-<li>Set <code>CXX_COMPILER</code>, and <code>C_COMPILER</code> in <code>configure.in</code>. <code>g++-4.8</code> is recommended.</li>
-<li>Set <code>EXTERN_INCLUDE_PATH</code>, and <code>EXTERN_LIB_PATH</code> in <code>configure.in</code> to reflect any dependency not in the system path. If there are more than one, use a comma-separated list.</li>
-<li><code>./configure</code></li>
-<li>Change directory into <code>debug</code> or <code>release</code> and <code>make</code>.</li>
+<li>Set <code>CXX_COMPILER</code>, and <code>C_COMPILER</code> in <code>configure.in</code>. <code>g++-4.8</code> is strongly recommended.</li>
+<li>Set <code>EXTERN_INCLUDE_PATH</code>, and <code>EXTERN_LIB_PATH</code> in <code>configure.in</code> to reflect any dependency not in the system search path. If there are more than one, use a comma-separated list.</li>
+<li>Run <code>./configure</code>.</li>
+<li>Change directory into <code>release</code> (or <code>debug</code> for more verbose logging) and run <code>make</code>.</li>
 </ol>
 
-<h2>
-<a id="mnist-data" class="anchor" href="#mnist-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>MNIST data</h2>
+<p>After these steps, Minerva should be successfully built and linked on your system. But to run the Python interpreter with Owl enabled, you have to <code>source ${MINERVA_ROOT}/owl_environ.sh</code>. This will set <code>PYTHONPATH</code> environment variable for importing modules in Python. You could also add this script to <code>~/.profile</code> or <code>~/.bashrc</code> to automate this process.</p>
 
-<p><a href="http://pan.baidu.com/s/1ntsQs0x">http://pan.baidu.com/s/1ntsQs0x</a></p>
+<p>Minerva is not unusual in this approach; <code>ssh-agent</code>, <code>pip</code>, <code>opam</code> and many others also work similarly. This allows a local version of the Minerva system and its dependencies, while still giving the ability to run from anywhere.</p>
+
+<h2>
+<a id="running-apps" class="anchor" href="#running-apps" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running apps</h2>
+
+<p>There are two ways to use Minerva: writing C++ code or Python code. Python binding is preferred since we provide easy interaction with NumPy.</p>
+
+<p>We have implemented several applications in Minerva including ImageNet training and MNIST training. After you have built Minerva, you can run both C++ and Python code.</p>
+
+<p>The Python applications are located in <code>minerva/owl/apps</code>. After you have built Minerva, you can run the applications with <code>python {app}.py</code>.</p>
+
+<p>The source code for C++ applicaionts are located in <code>minerva/apps</code> and there compiled executables are located in <code>minerva/release/apps</code>. You can run the executables directly.</p>
+
+<p>The MNIST training data can be downloaded in: <a href="http://pan.baidu.com/s/1ntsQs0x">http://pan.baidu.com/s/1ntsQs0x</a></p>
+
+<h2>
+<a id="writing-you-own-app" class="anchor" href="#writing-you-own-app" aria-hidden="true"><span class="octicon octicon-link"></span></a>Writing you own app</h2>
+
+<p>Minerva allows you to write you own code for machine learning, using a matrix interface just like Matlab or NumPy. You can use C++ or Python, whichever you prefer. The C++ and Python interface are quite similar. With Python, you can load data with NumPy and use it in Minerva, or you can convert Minerva NArrays into NumPy array and plot/print it with the tools provided in NumPy.</p>
+
+<p>The NArray interface provided by Minerva is very intuitive. If you are familiar with either one of the matrix programming tools such as Matlab or NumPy, it should be very easy to get started with Minerva.</p>
+
+<p>Minerva allows you to use multiple GPUs at the same time. By using the <code>set_device</code> function, you can specify which device you want the operation to run on. Once set, all the operations you specify will be performed on this device.</p>
+
+<p>Minerva uses <code>lazy evaluation</code>, meaning that the operations are carried out only when necessary. For example, when you write <code>c = a + b</code>, the matrix addition will not be performed immediately. Instead, a dependency graph is constructed to track the dependency relationship. Once you try to evaluate the matrix c, either by printing some of its elements, or calling <code>c.WaitForEval()</code>, Minerva will lookup the dependency graph and try to carry out the operation. In this way, you can "push" multiple operations to different devices, and then trigger the evaluation on both devices at the same time. This is how multi-GPU programming is done in Minerva. Please refer to the code to get more details.</p>
+
+<h2>
+<a id="license-and-support" class="anchor" href="#license-and-support" aria-hidden="true"><span class="octicon octicon-link"></span></a>License and support</h2>
+
+<p>Minerva is provided in the Apache V2 open source license.</p>
+
+<p>You can use the "issues" tab in github to report bugs. For non-bug issues, please send up an email at <a href="mailto:minerva-support@googlegroups.com">minerva-support@googlegroups.com</a>.</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/minerva-developers">minerva-developers</a></p>
