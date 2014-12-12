@@ -11,17 +11,18 @@ Make deep learning a home dish.
 * Multi-GPU, multi-CPU support
 * Good performance: ImageNet training achieves 213 images/s with one Titan GPU, 403Images/s with two GPUs
 
+## Installation
 
-## Requirements and Dependencies
+### Requirements and Dependencies
 
-Minerva depends on several packages. If they are not in the system path, please set variable `EXTERN_INCLUDE_PATH` and `EXTERN_LIB_PATH` in `configure.in` accordingly.
+Minerva depends on several packages. If they are not in the system search path, please set variable `EXTERN_INCLUDE_PATH` and `EXTERN_LIB_PATH` in `configure.in` accordingly.
 
 * CUDA 6.5
 * cuDNN
 * LMDB
 * NumPy
 
-In addition, Minerva also depends on the following packages. A script `resolve_deps` is provided for automatic resolving of them.
+In addition, Minerva also depends on the following packages. A script `resolve_deps` is provided for automatic resolving of them. Running this script will download and install them in the `deps` directory relative to the root of the repository. If you do so, please consult `configure.in.example` for a sample configuration of the paths.
 
 * Boost
 * Boost.NumPy
@@ -29,16 +30,20 @@ In addition, Minerva also depends on the following packages. A script `resolve_d
 * gflags
 * Google Test
 
-## How to build
+### How to build
 
-1. Set `CXX_COMPILER`, and `C_COMPILER` in `configure.in`. `g++-4.8` is recommended.
-1. Set `EXTERN_INCLUDE_PATH`, and `EXTERN_LIB_PATH` in `configure.in` to reflect any dependency not in the system path. If there are more than one, use a comma-separated list.
-1. `./configure`
-1. Change directory into `debug` or `release` and `make`.
+1. Set `CXX_COMPILER`, and `C_COMPILER` in `configure.in`. `g++-4.8` is strongly recommended.
+1. Set `EXTERN_INCLUDE_PATH`, and `EXTERN_LIB_PATH` in `configure.in` to reflect any dependency not in the system search path. If there are more than one, use a comma-separated list.
+1. Run `./configure`.
+1. Change directory into `release` (or `debug` for more verbose logging) and run `make`.
+
+After these steps, Minerva should be successfully built and linked on your system. But to run the Python interpreter with Owl enabled, you have to `source ${MINERVA_ROOT}/owl_environ.sh`. This will set `PYTHONPATH` environment variable for importing modules in Python. You could also add this script to `~/.profile` or `~/.bashrc` to automate this process.
+
+Minerva is not unusual in this approach; `ssh-agent`, `pip`, `opam` and many others also work similarly. This allows a local version of the Minerva system and its dependencies, while still giving the ability to run from anywhere.
 
 ## Running apps
 
-There are two ways to use Minerva: writing C++ code or Python code. Python binding is preferred since we provide easy interaction with NumPy. 
+There are two ways to use Minerva: writing C++ code or Python code. Python binding is preferred since we provide easy interaction with NumPy.
 
 We have implemented several applications in Minerva including ImageNet training and MNIST training. After you have built Minerva, you can run both C++ and Python code.
 
