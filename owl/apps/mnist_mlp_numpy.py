@@ -1,42 +1,8 @@
 import sys,os
 import math
-import scipy.io as si
 import numpy as np
 import numpy.random
-
-def extract(prefix, md, max_dig):
-    for dig in range(max_dig):
-        samples = md[prefix + str(dig)]
-        labels = np.empty([samples.shape[0], 1], dtype=np.float32)
-        labels.fill(dig * 256)
-        yield np.hstack((samples, labels)) / 256
-
-def split_sample_and_label(merged_mb):
-    [s, l] = np.hsplit(merged_mb, [merged_mb.shape[1]-1])
-    # change label to sparse representation
-    n = merged_mb.shape[0]
-    ll = np.zeros([n, 10], dtype=np.float32)
-    ll[np.arange(n), l.astype(int).flat] = 1
-    return (s, ll);
-
-def load_mb_from_mat(mat_file, mb_size):
-    # load from mat
-    md = si.loadmat(mat_file)
-    # merge all data
-    train_all = np.concatenate(tuple(extract('train', md, 10)))
-    test_all = np.concatenate(tuple(extract('test', md, 10)))
-    # shuffle
-    np.random.shuffle(train_all)
-    # make minibatch
-    train_mb = np.vsplit(train_all, range(mb_size, train_all.shape[0], mb_size))
-    train_data = map(split_sample_and_label, train_mb)
-    test_data = split_sample_and_label(test_all)
-    #print train_data[0]
-    #print train_data[0][0].dtype, train_data[0][1].dtype
-    #print test_data
-    print 'Training data: %d mini-batches' % len(train_mb)
-    print 'Test data: %d samples' % test_all.shape[0]
-    return (train_data, test_data)
+import imageio
 
 def sigmoid(m):
     return 1 / (1 + np.exp(-m))
@@ -63,7 +29,7 @@ class MnistTrainer:
         self.b2 = np.zeros([l3, 1])
 
     def run(self):
-        (train_data, test_data) = load_mb_from_mat(self.data_file, self.mb_size)
+        (train_data, test_data) = imageio.load_mb_from_mat(self.data_file, self.mb_size)
         np.set_printoptions(linewidth=200)
         num_test_samples = test_data[0].shape[0]
         (test_samples, test_labels) = test_data

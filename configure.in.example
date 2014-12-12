@@ -12,5 +12,5 @@ C_COMPILER=gcc-4.8
 CXXFLAGS=
 
 # Comma seperated list of external dependencies, e.g. cuDNN
-EXTERN_INCLUDE_PATH=/home/cs_user/Libs/cudnn-6.5-linux-R1
-EXTERN_LIB_PATH=/home/cs_user/Libs/cudnn-6.5-linux-R1
+EXTERN_INCLUDE_PATH=$(pwd)/deps/include,/home/cs_user/Libs/cudnn-6.5-linux-R1
+EXTERN_LIB_PATH=$(pwd)/deps/lib,/home/cs_user/Libs/cudnn-6.5-linux-R1

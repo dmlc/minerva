@@ -45,9 +45,14 @@ def softmax(x, op):
 pooling_forward = _owl.pooling_forward
 pooling_backward = _owl.pooling_backward
 
-class Convolution:
-    def __init__(self, param):
-        self.param = param
+class Convolver:
+    def __init__(self, pad_h, pad_w, stride_v, stride_h):
+        ci = ConvInfo()
+        ci.pad_height = pad_h
+        ci.pad_width = pad_w
+        ci.stride_vertical = stride_v
+        ci.stride_horizontal = stride_h
+        self.param = ci
     def ff(self, x, w, b):
         return conv_forward(x, w, b, self.param)
     def bp(self, y, w):
@@ -57,9 +62,15 @@ class Convolution:
     def bias_grad(self, y):
         return conv_backward_bias(y)
 
-class Pooling:
-    def __init__(self, param):
-        self.param = param
+class Pooler:
+    def __init__(self, h, w, stride_v, stride_h, op):
+        pi = PoolingInfo()
+        pi.height = h
+        pi.width = w
+        pi.stride_vertical = stride_v
+        pi.stride_horizontal = stride_h
+        pi.algorithm = op
+        self.param = pi
     def ff(self, x):
         return pooling_forward(x, self.param)
     def bp(self, y, ff_y, ff_x):
