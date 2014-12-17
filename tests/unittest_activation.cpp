@@ -10,7 +10,9 @@ TEST(Activation, SigmoidForward) {
 
   ms.current_device_id_ = cpu_device;
   ImageBatch input = NArray::Randn(input_size, 0, 1);
+#ifdef HAS_CUDA
   ms.current_device_id_ = gpu_device;
+#endif
   ImageBatch output = Convolution::ActivationForward(input, ActivationAlgorithm::kSigmoid);
   auto input_ptr = input.Get();
   auto output_ptr = output.Get();
@@ -25,7 +27,9 @@ TEST(Activation, ReluForward) {
 
   ms.current_device_id_ = cpu_device;
   ImageBatch input = NArray::Randn(input_size, 0, 1);
+#ifdef HAS_CUDA
   ms.current_device_id_ = gpu_device;
+#endif
   ImageBatch output = Convolution::ActivationForward(input, ActivationAlgorithm::kRelu);
   auto input_ptr = input.Get();
   auto output_ptr = output.Get();
@@ -40,7 +44,9 @@ TEST(Activation, TanhForward) {
 
   ms.current_device_id_ = cpu_device;
   ImageBatch input = NArray::Randn(input_size, 0, 1);
+#ifdef HAS_CUDA
   ms.current_device_id_ = gpu_device;
+#endif
   ImageBatch output = Convolution::ActivationForward(input, ActivationAlgorithm::kTanh);
   auto input_ptr = input.Get();
   auto output_ptr = output.Get();

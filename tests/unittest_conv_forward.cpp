@@ -24,7 +24,9 @@ TEST(ConvForward, WithoutPadding) {
   Filter weight = NArray::MakeNArray(weight_size, weight_ptr);
   NArray bias = NArray::Zeros({5});
   ConvInfo conv_info{0, 0, 1, 1};
+#ifdef HAS_CUDA
   ms.current_device_id_ = gpu_device;
+#endif
   ImageBatch output = Convolution::ConvForward(input, weight, bias, conv_info);
   auto output_ptr = output.Get();
   for (int i = 0; i < correct_size.Prod(); ++i) {
@@ -58,7 +60,9 @@ TEST(ConvForward, WithPadding) {
   Filter weight = NArray::MakeNArray(weight_size, weight_ptr);
   NArray bias = NArray::MakeNArray(bias_size, bias_ptr);
   ConvInfo conv_info{3, 2, 3, 2};
+#ifdef HAS_CUDA
   ms.current_device_id_ = gpu_device;
+#endif
   ImageBatch output = Convolution::ConvForward(input, weight, bias, conv_info);
   auto output_ptr = output.Get();
   for (int i = 0; i < correct_size.Prod(); ++i) {

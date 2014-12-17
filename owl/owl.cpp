@@ -30,11 +30,11 @@ void Initialize(bp::list args) {
 uint64_t CreateCpuDevice() {
   return m::MinervaSystem::Instance().device_manager().CreateCpuDevice();
 }
-
+#ifdef HAS_CUDA
 uint64_t CreateGpuDevice(int id) {
   return m::MinervaSystem::Instance().device_manager().CreateGpuDevice(id);
 }
-
+#endif
 void SetDevice(uint64_t id) {
   m::MinervaSystem::Instance().current_device_id_ = id;
 }
@@ -246,7 +246,9 @@ BOOST_PYTHON_MODULE(libowl) {
   //def("to_list", &owl::NArrayToList);
   def("initialize", &owl::Initialize);
   def("create_cpu_device", &owl::CreateCpuDevice);
+#ifdef HAS_CUDA
   def("create_gpu_device", &owl::CreateGpuDevice);
+#endif
   def("set_device", &owl::SetDevice);
 
   // elewise

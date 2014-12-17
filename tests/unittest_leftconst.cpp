@@ -9,7 +9,9 @@ TEST(LeftConst, LeftConst) {
   int m = 8;
   int k = 100;
   NArray a = NArray::Randn({m, k}, 0.0, 1.0);
+#ifdef HAS_CUDA
   ms.current_device_id_ = gpu_device;
+#endif
   NArray b = 1 - a;
   NArray b1 = 1 - b;
   NArray b2 = 2 - b1;
