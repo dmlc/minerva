@@ -8,6 +8,7 @@ import owl.elewise as ele
 from imageio import ImageNetDataProvider
 
 num_gpu = 2
+one_gpu_id = 0
 gpu_array = []
 
 class AlexModel:
@@ -183,8 +184,11 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
 if __name__ == '__main__':
     owl.initialize(sys.argv)
     owl.create_cpu_device()
-    for i in range(num_gpu):
-        gpu_array.append(owl.create_gpu_device(i))
+    if num_gpu == 1:
+        gpu_array.append(owl.create_gpu_device(one_gpu_id))
+    else:
+        for i in range(num_gpu):
+            gpu_array.append(owl.create_gpu_device(i))
     owl.set_device(gpu_array[0])
     model = AlexModel()
     model.init_random()
