@@ -35,8 +35,8 @@ class AlexModel:
             owl.randn([3, 3, 256, 384], 0.0, 0.01),
             owl.randn([3, 3, 384, 384], 0.0, 0.01),
             owl.randn([3, 3, 384, 256], 0.0, 0.01),
-            owl.randn([4096, 9216], 0.0, 0.01),
-            owl.randn([4096, 4096], 0.0, 0.01),
+            owl.randn([4096, 9216], 0.0, 0.005),
+            owl.randn([4096, 4096], 0.0, 0.005),
             owl.randn([1000, 4096], 0.0, 0.01)
         ];
 
@@ -54,12 +54,12 @@ class AlexModel:
 
         self.bias = [
             owl.zeros([96]),
-            owl.zeros([256]),
+            owl.zeros([256])+1,
             owl.zeros([384]),
-            owl.zeros([384]),
-            owl.zeros([256]),
-            owl.zeros([4096, 1]),
-            owl.zeros([4096, 1]),
+            owl.zeros([384])+1,
+            owl.zeros([256])+1,
+            owl.zeros([4096, 1])+1,
+            owl.zeros([4096, 1])+1,
             owl.zeros([1000, 1])
         ];
 
@@ -108,30 +108,9 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             acts = [None] * num_layers
             sens = [None] * num_layers
 
-            '''
-            thisimg = samples[0, :]
-            print thisimg
-            imgdata = np.transpose(thisimg.reshape([3, 227*227])).reshape([227, 227, 3])
-            print imgdata
-            img = Image.fromarray(imgdata.astype(np.uint8))
-            img.save('testimg.jpg', format='JPEG')
-            exit(0)
-            '''
-
             # FF
             acts[0] = owl.from_nparray(samples).reshape([227, 227, 3, num_samples])
-            #print np.array(acts[0].tolist())[0:227*227*3]
-
             target = owl.from_nparray(labels)
-
-            #np.set_printoptions(linewidth=200)
-            #print acts[0].shape, model.weights[0].shape, model.bias[0].shape
-            #im = np.array(acts[0].tolist()).reshape([num_samples, 227, 227, 3])
-            #print im[0,:,:,0]
-            #print im[0,:,:,1]
-            #print im[0,:,:,2]
-            #print target.max_index(0).tolist()[0:20]
-            #sys.exit()
 
             acts1 = conv_forward(acts[0], model.weights[0], model.bias[0], model.conv_infos[0])
             acts[1] = ele.relu(acts1)#(conv_forward(acts[0], model.weights[0], model.bias[0], model.conv_infos[0])) # conv1
@@ -183,36 +162,34 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             sens[1] = ele.relu_back(sens[1], acts[1], acts1) # relu1
 
 	    model.weightsdelta[7] = mom * model.weightsdelta[7] - eps_w / num_samples  * (sens[11] * acts[10].trans() + wd * model.weights[7])
-            model.biasdelta[7] = mom * model.biasdelta[7] - eps_b / num_samples  * (sens[11].sum(1) + wd * model.bias[7])
+            model.biasdelta[7] = mom * model.biasdelta[7] - eps_b / num_samples  * sens[11].sum(1)
             
 	    model.weightsdelta[6] = mom * model.weightsdelta[6] - eps_w / num_samples  * (sens[10] * acts[9].trans() + wd * model.weights[6])
-            model.biasdelta[6] = mom * model.biasdelta[6] - eps_b / num_samples  * (sens[10].sum(1) + wd * model.bias[6])
+            model.biasdelta[6] = mom * model.biasdelta[6] - eps_b / num_samples  * sens[10].sum(1)
     	    
 	    model.weightsdelta[5] = mom * model.weightsdelta[5] - eps_w / num_samples  * (sens[9] * re_acts8.trans() + wd * model.weights[5])
-            model.biasdelta[5] = mom * model.biasdelta[5] - eps_b / num_samples  * (sens[9].sum(1) + wd * model.bias[5])
+            model.biasdelta[5] = mom * model.biasdelta[5] - eps_b / num_samples  * sens[9].sum(1)
             	
             model.weightsdelta[4] = mom * model.weightsdelta[4] - eps_w / num_samples  * (conv_backward_filter(sens[7], acts[6], model.conv_infos[4]) + wd * model.weights[4])
-	    model.biasdelta[4] = mom * model.biasdelta[4] - eps_b / num_samples  * (conv_backward_bias(sens[7]) + wd * model.bias[4])
+	    model.biasdelta[4] = mom * model.biasdelta[4] - eps_b / num_samples  * conv_backward_bias(sens[7])
 
 	    model.weightsdelta[3] = mom * model.weightsdelta[3] - eps_w / num_samples  * (conv_backward_filter(sens[6], acts[5], model.conv_infos[3]) + wd * model.weights[3])
-	    model.biasdelta[3] = mom * model.biasdelta[3] - eps_b / num_samples  * (conv_backward_bias(sens[6]) + wd * model.bias[3])
+	    model.biasdelta[3] = mom * model.biasdelta[3] - eps_b / num_samples  * conv_backward_bias(sens[6])
 
  	    model.weightsdelta[2] = mom * model.weightsdelta[2] - eps_w / num_samples  * (conv_backward_filter(sens[5], acts[4], model.conv_infos[2]) + wd * model.weights[2])
-	    model.biasdelta[2] = mom * model.biasdelta[2] - eps_b / num_samples  * (conv_backward_bias(sens[5]) + wd * model.bias[2])
+	    model.biasdelta[2] = mom * model.biasdelta[2] - eps_b / num_samples  * conv_backward_bias(sens[5])
 
   	    model.weightsdelta[1] = mom * model.weightsdelta[1] - eps_w / num_samples  * (conv_backward_filter(sens[3], acts[2], model.conv_infos[1]) + wd * model.weights[1])
-	    model.biasdelta[1] = mom * model.biasdelta[1] - eps_b / num_samples  * (conv_backward_bias(sens[3]) + wd * model.bias[1])
+	    model.biasdelta[1] = mom * model.biasdelta[1] - eps_b / num_samples  * conv_backward_bias(sens[3])
 
             model.weightsdelta[0] = mom * model.weightsdelta[0] - eps_w / num_samples  * (conv_backward_filter(sens[1], acts[0], model.conv_infos[0]) + wd * model.weights[0])
-	    model.biasdelta[0] = mom * model.biasdelta[0] - eps_b / num_samples  * (conv_backward_bias(sens[1]) + wd * model.bias[0])
+	    model.biasdelta[0] = mom * model.biasdelta[0] - eps_b / num_samples  * conv_backward_bias(sens[1])
 
             for k in range(8):
                 model.weights[k] += model.weightsdelta[k]
                 model.bias[k] += model.biasdelta[k]
 
             count = count + 1
-            #if count % 2 == 0:
-                #acts[18].start_eval()
             if count % 10 == 0:
                 print_training_accuracy(acts[12], target, num_samples)
                 print "time: %s" % (time.time() - last)

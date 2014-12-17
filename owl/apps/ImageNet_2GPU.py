@@ -36,8 +36,8 @@ class AlexModel:
             owl.randn([3, 3, 256, 384], 0.0, 0.01),
             owl.randn([3, 3, 384, 384], 0.0, 0.01),
             owl.randn([3, 3, 384, 256], 0.0, 0.01),
-            owl.randn([4096, 9216], 0.0, 0.01),
-            owl.randn([4096, 4096], 0.0, 0.01),
+            owl.randn([4096, 9216], 0.0, 0.005),
+            owl.randn([4096, 4096], 0.0, 0.005),
             owl.randn([1000, 4096], 0.0, 0.01)
         ];
 
@@ -54,12 +54,12 @@ class AlexModel:
 
         self.bias = [
             owl.zeros([96]),
-            owl.zeros([256]),
+            owl.zeros([256])+1,
             owl.zeros([384]),
-            owl.zeros([384]),
-            owl.zeros([256]),
-            owl.zeros([4096, 1]),
-            owl.zeros([4096, 1]),
+            owl.zeros([384])+1,
+            owl.zeros([256])+1,
+            owl.zeros([4096, 1])+1,
+            owl.zeros([4096, 1])+1,
             owl.zeros([1000, 1])
         ];
 
@@ -176,10 +176,10 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
     count = 0
     last = time.time()
 
-    # dp = ImageNetDataProvider(mean_file='/home/minjie/data/imagenet/imagenet_mean.binaryproto',
-    #         train_db='/home/minjie/data/imagenet/ilsvrc12_train_lmdb',
-    #         val_db='/home/minjie/data/imagenet/ilsvrc12_val_lmdb',
-    #         test_db='/home/minjie/data/imagenet/ilsvrc12_test_lmdb')
+    dp = ImageNetDataProvider(mean_file='/home/minjie/data/imagenet/imagenet_mean.binaryproto',
+            train_db='/home/minjie/data/imagenet/ilsvrc12_train_lmdb',
+            val_db='/home/minjie/data/imagenet/ilsvrc12_val_lmdb',
+            test_db='/home/minjie/data/imagenet/ilsvrc12_test_lmdb')
 
     minibatch_size = minibatch_size / 2
 
@@ -188,10 +188,10 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
         for j in xrange(300):
             count = count + 1
             if count % 2 == 1:
-                # data1 = owl.from_nparray(samples).reshape([227, 227, 3, samples.shape[0]])
-                # label1 = owl.from_nparray(labels)
-                data1 = owl.randn([227, 227, 3, minibatch_size], 0, 1)
-                label1 = owl.randn([1, minibatch_size], 0, 1)
+                data1 = owl.from_nparray(samples).reshape([227, 227, 3, samples.shape[0]])
+                label1 = owl.from_nparray(labels)
+                #data1 = owl.randn([227, 227, 3, minibatch_size], 0, 1)
+                #label1 = owl.randn([1, minibatch_size], 0, 1)
                 weightsgrad1 = [None] * num_weights
                 biasgrad1 = [None] * num_weights
                 owl.set_device(gpu0)
@@ -199,23 +199,15 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
                 out1.start_eval()
                 continue
             if count % 2 == 0:
-                data2 = owl.randn([227, 227, 3, minibatch_size], 0, 1)
-                label2 = owl.randn([1, minibatch_size], 0, 1)
+                data2 = owl.from_nparray(samples).reshape([227, 227, 3, samples.shape[0]])
+                label2 = owl.from_nparray(labels)
+                #data2 = owl.randn([227, 227, 3, minibatch_size], 0, 1)
+                #label2 = owl.randn([1, minibatch_size], 0, 1)
 
             weightsgrad2 = [None] * num_weights
             biasgrad2 = [None] * num_weights
 
             num_samples = data1.shape[-1] + data2.shape[-1]
-
-            '''
-            thisimg = samples[0, :]
-            print thisimg
-            imgdata = np.transpose(thisimg.reshape([3, 227*227])).reshape([227, 227, 3])
-            print imgdata
-            img = Image.fromarray(imgdata.astype(np.uint8))
-            img.save('testimg.jpg', format='JPEG')
-            exit(0)
-            '''
 
             owl.set_device(gpu1)
             out2 = train_one_mb(model, data2, label2, weightsgrad2, biasgrad2, dropout_rate)
@@ -223,7 +215,7 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
 
             for k in range(num_weights):
                 model.weightsdelta[k] = mom * model.weightsdelta[k] - eps_w / num_samples  * (weightsgrad1[k] + weightsgrad2[k] + wd * model.weights[k])
-                model.biasdelta[k] = mom * model.biasdelta[k] - eps_b / num_samples  * (biasgrad1[k] + biasgrad2[k] + wd * model.bias[k])
+                model.biasdelta[k] = mom * model.biasdelta[k] - eps_b / num_samples  * (biasgrad1[k] + biasgrad2[k])
                 model.weights[k] += model.weightsdelta[k]
                 model.bias[k] += model.biasdelta[k]
             if count % 8 == 0:
