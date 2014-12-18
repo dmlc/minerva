@@ -5,6 +5,7 @@
 #include <chrono>
 #include <algorithm>
 #include <random>
+#include <cmath>
 
 using namespace std;
 
@@ -311,6 +312,33 @@ void Reshape(const DataList& inputs, const DataList& outputs, ReshapeClosure&) {
   memcpy(outputs[0].data(), inputs[0].data(), inputs[0].size().Prod() * sizeof(float));
 }
 
+void SigmoidForward(const DataList& inputs, const DataList& outputs, SigmoidForwardClosure&) {
+  CHECK_EQ(inputs.size(), 1) << "sigmoid forward #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "sigmoid forward #outputs wrong";
+  
+  float * input_data = inputs[0].data();
+  float * output_data = outputs[0].data();
+
+  size_t numbers = inputs[0].size().Prod();
+
+  for(size_t i=0; i<numbers; i++){
+    output_data[i] = 1.0 / (1.0 + expf(-input_data[i]));
+  }
+}
+
+void ActivationForward(const DataList& inputs, const DataList& outputs, ActivationForwardClosure& closure) {
+  CHECK_EQ(inputs.size(), 1) << "(activation forward) #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(activation forward) #outputs wrong";
+  switch (closure.algorithm) {
+    case ActivationAlgorithm::kSigmoid:
+      SigmoidForward(inputs,outputs,(SigmoidForwardClosure&)closure);
+      break;
+    case ActivationAlgorithm::kRelu:
+    case ActivationAlgorithm::kTanh:
+    default:
+      LOG(FATAL) << "activation algorithm not supported";
+  }
+}
 }  // end of namespace basic
 }  // end of namespace minerva
 

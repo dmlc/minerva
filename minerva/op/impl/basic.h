@@ -20,5 +20,11 @@ void Randn(const DataList&, RandnClosure&);
 void RandBernoulli(const DataList&, RandBernoulliClosure&);
 void Fill(const DataList&, FillClosure&);
 
+void SigmoidForward(const DataList&, const DataList&, SigmoidForwardClosure&);
+void SigmoidBackward(const DataList&, const DataList&, SigmoidBackwardClosure&);
+
+void ActivationForward(const DataList&, const DataList&, ActivationForwardClosure&);
+void ActivationBackward(const DataList&, const DataList&, ActivationBackwardClosure&);
+
 }  // end of namespace basic
 }  // end of namespace minerva
