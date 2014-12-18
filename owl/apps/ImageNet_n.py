@@ -83,36 +83,29 @@ def print_training_accuracy(o, t, minibatch_size):
 
 def train_one_mb(model, data, label, weightsgrad, biasgrad, dropout_rate):
     num_samples = data.shape[-1]
-    num_layers = 20
+    num_layers = 13
     acts = [None] * num_layers
     sens = [None] * num_layers
     # FF
     acts[0] = data
-    acts1 = conv_forward(acts[0], model.weights[0], model.bias[0], model.conv_infos[0])
-    acts[1] = ele.relu(acts1)#(conv_forward(acts[0], model.weights[0], model.bias[0], model.conv_infos[0])) # conv1
+    acts[1] = ele.relu(conv_forward(acts[0], model.weights[0], model.bias[0], model.conv_infos[0])) # conv1
     acts[2] = pooling_forward(acts[1], model.pooling_infos[0]) # pool1
-    acts3 = conv_forward(acts[2], model.weights[1], model.bias[1], model.conv_infos[1]) # conv2
-    acts[3] = ele.relu(acts3)#(conv_forward(acts[2], model.weights[1], model.bias[1], model.conv_infos[1])) # conv2
+    acts[3] = ele.relu(conv_forward(acts[2], model.weights[1], model.bias[1], model.conv_infos[1])) # conv2
     acts[4] = pooling_forward(acts[3], model.pooling_infos[1]) # pool2
-    acts5 = conv_forward(acts[4], model.weights[2], model.bias[2], model.conv_infos[2]) # conv3
-    acts[5] = ele.relu(acts5)#(conv_forward(acts[4], model.weights[2], model.bias[2], model.conv_infos[2])) # conv3
-    acts6 = conv_forward(acts[5], model.weights[3], model.bias[3], model.conv_infos[3]) # conv4
-    acts[6] = ele.relu(acts6)#(conv_forward(acts[5], model.weights[3], model.bias[3], model.conv_infos[3])) # conv4
-    acts7 = conv_forward(acts[6], model.weights[4], model.bias[4], model.conv_infos[4]) # conv5
-    acts[7] = ele.relu(acts7)#(conv_forward(acts[6], model.weights[4], model.bias[4], model.conv_infos[4])) # conv5
+    acts[5] = ele.relu(conv_forward(acts[4], model.weights[2], model.bias[2], model.conv_infos[2])) # conv3
+    acts[6] = ele.relu(conv_forward(acts[5], model.weights[3], model.bias[3], model.conv_infos[3])) # conv4
+    acts[7] = ele.relu(conv_forward(acts[6], model.weights[4], model.bias[4], model.conv_infos[4])) # conv5
     acts[8] = pooling_forward(acts[7], model.pooling_infos[2]) # pool5
     re_acts8 = acts[8].reshape([np.prod(acts[8].shape[0:3]), num_samples])
-    acts9 = model.weights[5] * re_acts8 + model.bias[5] # fc6
-    acts[9] = ele.relu(acts9)#(model.weights[5] * re_acts8 + model.bias[5]) # fc6
+    acts[9] = ele.relu(model.weights[5] * re_acts8 + model.bias[5]) # fc6
     mask6 = owl.randb(acts[9].shape, dropout_rate)
     acts[9] = ele.mult(acts[9], mask6) # drop6
-    acts10 = model.weights[6] * acts[9] + model.bias[6] # fc7
-    acts[10] = ele.relu(acts10)#(model.weights[6] * acts[9] + model.bias[6]) # fc7
+    acts[10] = ele.relu(model.weights[6] * acts[9] + model.bias[6]) # fc7
     mask7 = owl.randb(acts[10].shape, dropout_rate)
     acts[10] = ele.mult(acts[10], mask7) # drop7
     acts[11] = model.weights[7] * acts[10] + model.bias[7] # fc8
     acts[12] = softmax_forward(acts[11].reshape([1000, 1, 1, num_samples]), soft_op.instance).reshape([1000, num_samples]) # prob
-    # error
+    # Error
     sens[11] = acts[12] - label
     # BP
     sens[10] = model.weights[7].trans() * sens[11] # fc8
