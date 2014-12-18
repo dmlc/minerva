@@ -175,7 +175,7 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             data = owl.from_nparray(samples).reshape([227, 227, 3, minibatch_size])
             label = owl.from_nparray(labels)
             out = train_one_mb(model, data, label, weightsgrad[count], biasgrad[count], dropout_rate)
-            out.start_eval()
+            # out.start_eval()
             if count == 0:
                 # Update
                 for k in range(num_weights):
@@ -185,7 +185,9 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
                     model.weightsdelta[k] = mom * model.weightsdelta[k] - eps_w / num_samples  * (weightsgrad[0][k] + wd * model.weights[k])
                     model.biasdelta[k] = mom * model.biasdelta[k] - eps_b / num_samples  * (biasgrad[0][k] + wd * model.bias[k])
                     model.weights[k] += model.weightsdelta[k]
+                    model.weights[k].start_eval()
                     model.bias[k] += model.biasdelta[k]
+                    model.bias[k].start_eval()
                 if j % (lazy * num_gpu) == 0:
                     print_training_accuracy(out, label, minibatch_size)
                     print "time: %s" % (time.time() - last)
