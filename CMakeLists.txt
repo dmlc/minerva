@@ -42,6 +42,6 @@ link_directories(
 include(ExternalProject)
 
 add_subdirectory(minerva)
-#add_subdirectory(apps)
+add_subdirectory(apps)
 add_subdirectory(owl)
 add_subdirectory(tests)
