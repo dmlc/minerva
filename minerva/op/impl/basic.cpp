@@ -315,7 +315,7 @@ void Reshape(const DataList& inputs, const DataList& outputs, ReshapeClosure&) {
 void SigmoidForward(const DataList& inputs, const DataList& outputs, SigmoidForwardClosure&) {
   CHECK_EQ(inputs.size(), 1) << "sigmoid forward #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "sigmoid forward #outputs wrong";
-  
+
   float * input_data = inputs[0].data();
   float * output_data = outputs[0].data();
 
@@ -323,6 +323,20 @@ void SigmoidForward(const DataList& inputs, const DataList& outputs, SigmoidForw
 
   for(size_t i=0; i<numbers; i++){
     output_data[i] = 1.0 / (1.0 + expf(-input_data[i]));
+  }
+}
+
+void ReluForward(const DataList& inputs, const DataList& outputs, ReluForwardClosure&) {
+  CHECK_EQ(inputs.size(), 1) << "relu forward #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "relu forward #outputs wrong";
+
+  float * input_data = inputs[0].data();
+  float * output_data = outputs[0].data();
+
+  size_t numbers = inputs[0].size().Prod();
+
+  for(size_t i=0; i<numbers; i++){
+    output_data[i] = input_data[i] > 0 ? input_data[i] : 0;
   }
 }
 
@@ -334,6 +348,8 @@ void ActivationForward(const DataList& inputs, const DataList& outputs, Activati
       SigmoidForward(inputs,outputs,(SigmoidForwardClosure&)closure);
       break;
     case ActivationAlgorithm::kRelu:
+      ReluForward(inputs,outputs,(ReluForwardClosure&)closure);
+      break;
     case ActivationAlgorithm::kTanh:
     default:
       LOG(FATAL) << "activation algorithm not supported";

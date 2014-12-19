@@ -23,6 +23,9 @@ void Fill(const DataList&, FillClosure&);
 void SigmoidForward(const DataList&, const DataList&, SigmoidForwardClosure&);
 void SigmoidBackward(const DataList&, const DataList&, SigmoidBackwardClosure&);
 
+void ReluForward(const DataList&, const DataList&, ReluForwardClosure&);
+void ReluBackward(const DataList&, const DataList&, ReluBackwardClosure&);
+
 void ActivationForward(const DataList&, const DataList&, ActivationForwardClosure&);
 void ActivationBackward(const DataList&, const DataList&, ActivationBackwardClosure&);
 
