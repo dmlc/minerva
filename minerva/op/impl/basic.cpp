@@ -340,6 +340,20 @@ void ReluForward(const DataList& inputs, const DataList& outputs, ReluForwardClo
   }
 }
 
+void TanhForward(const DataList& inputs, const DataList& outputs, TanhForwardClosure&) {
+  CHECK_EQ(inputs.size(), 1) << "tanh forward #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "tanh forward #outputs wrong";
+
+  float * input_data = inputs[0].data();
+  float * output_data = outputs[0].data();
+
+  size_t numbers = inputs[0].size().Prod();
+
+  for(size_t i=0; i<numbers; i++){
+    output_data[i] = tanhf(input_data[i]);
+  }
+}
+
 void ActivationForward(const DataList& inputs, const DataList& outputs, ActivationForwardClosure& closure) {
   CHECK_EQ(inputs.size(), 1) << "(activation forward) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(activation forward) #outputs wrong";
@@ -351,6 +365,8 @@ void ActivationForward(const DataList& inputs, const DataList& outputs, Activati
       ReluForward(inputs,outputs,(ReluForwardClosure&)closure);
       break;
     case ActivationAlgorithm::kTanh:
+      TanhForward(inputs,outputs,(TanhForwardClosure&)closure);
+      break;
     default:
       LOG(FATAL) << "activation algorithm not supported";
   }
