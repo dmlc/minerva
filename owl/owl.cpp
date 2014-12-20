@@ -105,6 +105,23 @@ m::NArray FromNPArrayWrapper(np::ndarray nparr) {
   memcpy(data.get(), reinterpret_cast<float*>(nparr.get_data()), sizeof(float) * length);
   return m::NArray::MakeNArray(shape, data);
 }
+  
+np::ndarray NArrayToNPArray(m::NArray narr) {
+  std::shared_ptr<float> v = narr.Get();
+  m::Scale shape = narr.Size();
+  size_t nd = shape.NumDims();
+  std::vector<int> np_shape(nd, 0), np_stride(nd, 0);
+  int mult = 4;
+  for(size_t i = 0; i < nd; ++i) {
+    np_shape[nd - i - 1] = shape[i];
+    np_stride[nd - i - 1] = mult;
+    mult *= shape[i];
+  }
+  size_t length = shape.Prod();
+  float * np_ptr = new float[length];
+  memcpy(np_ptr, v.get(), sizeof(float) * length);
+  return np::from_data(np_ptr, np::dtype::get_builtin<float>(), np_shape, np_stride, bp::object());
+}
 
 bp::list ShapeWrapper(m::NArray narr) {
   return ToPythonList(narr.Size());
@@ -220,6 +237,7 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("trans", &m::NArray::Trans)
     .def("tofile", &m::NArray::ToFile)
     .def("tolist", &owl::NArrayToList)
+    .def("tonparray", &owl::NArrayToNPArray)
     .def("reshape", &owl::ReshapeWrapper)
     .def("wait_for_eval", &m::NArray::WaitForEval)
     .def("start_eval", &m::NArray::StartEval)

@@ -87,6 +87,7 @@ def load_mb_from_mat(mat_file, mb_size):
     test_all = np.concatenate(tuple(_extract('test', md, 10)))
     # shuffle
     np.random.shuffle(train_all)
+    
     # make minibatch
     train_mb = np.vsplit(train_all, range(mb_size, train_all.shape[0], mb_size))
     train_data = map(_split_sample_and_label, train_mb)
