@@ -4,7 +4,8 @@ import time
 import numpy as np
 
 import owl
-from owl.conv import *
+#from owl.conv import *
+import owl.conv as co
 import owl.elewise as ele
 from imageio import ImageNetDataProvider
 from PIL import Image
@@ -16,16 +17,16 @@ class AlexModel:
         self.bias = []
         self.biasdelta = []
 	self.conv_infos = [
-            conv_info(0, 0, 4, 4), # conv1
-            conv_info(2, 2, 1, 1), # conv2
-            conv_info(1, 1, 1, 1), # conv3
-            conv_info(1, 1, 1, 1), # conv4
-            conv_info(1, 1, 1, 1)  # conv5
+            co.Convolver(0, 0, 4, 4), # conv1
+            co.Convolver(2, 2, 1, 1), # conv2
+            co.Convolver(1, 1, 1, 1), # conv3
+            co.Convolver(1, 1, 1, 1), # conv4
+            co.Convolver(1, 1, 1, 1)  # conv5
         ];
         self.pooling_infos = [
-            pooling_info(3, 3, 2, 2, pool_op.max), # pool1
-            pooling_info(3, 3, 2, 2, pool_op.max), # pool2
-            pooling_info(3, 3, 2, 2, pool_op.max)  # pool5
+            co.Pooler(3, 3, 2, 2, co.pool_op.max), # pool1
+            co.Pooler(3, 3, 2, 2, co.pool_op.max), # pool2
+            co.Pooler(3, 3, 2, 2, co.pool_op.max)  # pool5
         ];
 
     def init_random(self):
@@ -85,7 +86,7 @@ def print_training_accuracy(o, t, minibatch_size):
 
 def train_network(model, num_epochs = 100, minibatch_size=256,
         dropout_rate = 0.5, eps_w = 0.01, eps_b = 0.01, mom = 0.9, wd = 0.0005):
-    gpu = owl.create_gpu_device(1)
+    gpu = owl.create_gpu_device(0)
     owl.set_device(gpu)
     num_layers = 20
     count = 0
