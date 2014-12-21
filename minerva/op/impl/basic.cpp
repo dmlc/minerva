@@ -5,7 +5,6 @@
 #include <chrono>
 #include <algorithm>
 #include <random>
-#include <cmath>
 
 using namespace std;
 
@@ -19,7 +18,7 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
   float* right_data = inputs[1].data();
   float* res_data = outputs[0].data();
   int length = outputs[0].size().Prod();
-  switch(closure.type) {
+  switch (closure.type) {
     case ArithmeticType::kAdd:
       for (int i = 0; i < length; ++i) {
         res_data[i] = left_data[i] + right_data[i];
@@ -50,9 +49,9 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs, Arithmetic
   float* in_data = inputs[0].data();
   float* res_data = outputs[0].data();
   int length = outputs[0].size().Prod();
-  switch(closure.type) {
+  switch (closure.type) {
     case ArithmeticType::kAdd:
-      if(closure.side == 0) {  // const on left
+      if (closure.side == 0) {  // const on left
         for (int i = 0; i < length; ++i) {
           res_data[i] = val + in_data[i];
         }
@@ -63,7 +62,7 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs, Arithmetic
       }
       break;
     case ArithmeticType::kSub:
-      if(closure.side == 0) {  // const on left
+      if (closure.side == 0) {  // const on left
         for (int i = 0; i < length; ++i) {
           res_data[i] = val - in_data[i];
         }
@@ -74,7 +73,7 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs, Arithmetic
       }
       break;
     case ArithmeticType::kMult:
-      if(closure.side == 0) {  // const on left
+      if (closure.side == 0) {  // const on left
         for (int i = 0; i < length; ++i) {
           res_data[i] = val * in_data[i];
         }
@@ -85,7 +84,7 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs, Arithmetic
       }
       break;
     case ArithmeticType::kDiv:
-      if(closure.side == 0) {  // const on left
+      if (closure.side == 0) {  // const on left
         for (int i = 0; i < length; ++i) {
           res_data[i] = val / in_data[i];
         }
@@ -104,7 +103,7 @@ void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& cl
   float* in_data = inputs[0].data();
   float* res_data = outputs[0].data();
   int length = outputs[0].size().Prod();
-  switch(closure.type) {
+  switch (closure.type) {
     case ElewiseType::kExp:
       for (int i = 0; i < length; ++i) {
         res_data[i] = exp(in_data[i]);
@@ -321,7 +320,7 @@ void SigmoidForward(const DataList& inputs, const DataList& outputs, SigmoidForw
 
   size_t numbers = inputs[0].size().Prod();
 
-  for(size_t i=0; i<numbers; i++){
+  for (size_t i = 0; i < numbers; i++) {
     output_data[i] = 1.0 / (1.0 + expf(-input_data[i]));
   }
 }
@@ -335,7 +334,7 @@ void ReluForward(const DataList& inputs, const DataList& outputs, ReluForwardClo
 
   size_t numbers = inputs[0].size().Prod();
 
-  for(size_t i=0; i<numbers; i++){
+  for (size_t i = 0; i < numbers; i++) {
     output_data[i] = input_data[i] > 0 ? input_data[i] : 0;
   }
 }
@@ -349,7 +348,7 @@ void TanhForward(const DataList& inputs, const DataList& outputs, TanhForwardClo
 
   size_t numbers = inputs[0].size().Prod();
 
-  for(size_t i=0; i<numbers; i++){
+  for (size_t i = 0; i < numbers; i++) {
     output_data[i] = tanhf(input_data[i]);
   }
 }
@@ -359,13 +358,13 @@ void ActivationForward(const DataList& inputs, const DataList& outputs, Activati
   CHECK_EQ(outputs.size(), 1) << "(activation forward) #outputs wrong";
   switch (closure.algorithm) {
     case ActivationAlgorithm::kSigmoid:
-      SigmoidForward(inputs,outputs,(SigmoidForwardClosure&)closure);
+      SigmoidForward(inputs, outputs, (SigmoidForwardClosure&)closure);
       break;
     case ActivationAlgorithm::kRelu:
-      ReluForward(inputs,outputs,(ReluForwardClosure&)closure);
+      ReluForward(inputs, outputs, (ReluForwardClosure&)closure);
       break;
     case ActivationAlgorithm::kTanh:
-      TanhForward(inputs,outputs,(TanhForwardClosure&)closure);
+      TanhForward(inputs, outputs, (TanhForwardClosure&)closure);
       break;
     default:
       LOG(FATAL) << "activation algorithm not supported";

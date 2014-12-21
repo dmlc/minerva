@@ -32,7 +32,7 @@ INSTALL_COMPUTE_FN(ConvBackwardFilterClosure, NO_IMPL, NO_IMPL, cuda::ConvBackwa
 INSTALL_COMPUTE_FN(ConvBackwardBiasClosure, NO_IMPL, NO_IMPL, cuda::ConvBackwardBias);
 INSTALL_COMPUTE_FN(SoftmaxForwardClosure, NO_IMPL, NO_IMPL, cuda::SoftmaxForward);
 INSTALL_COMPUTE_FN(SoftmaxBackwardClosure, NO_IMPL, NO_IMPL, cuda::SoftmaxBackward);
- INSTALL_COMPUTE_FN(ActivationForwardClosure, basic::ActivationForward, NO_IMPL, cuda::ActivationForward);
+INSTALL_COMPUTE_FN(ActivationForwardClosure, basic::ActivationForward, NO_IMPL, cuda::ActivationForward);
 INSTALL_COMPUTE_FN(ActivationBackwardClosure, NO_IMPL, NO_IMPL, cuda::ActivationBackward);
 INSTALL_COMPUTE_FN(PoolingForwardClosure, NO_IMPL, NO_IMPL, cuda::PoolingForward);
 INSTALL_COMPUTE_FN(PoolingBackwardClosure, NO_IMPL, NO_IMPL, cuda::PoolingBackward);
@@ -42,4 +42,4 @@ INSTALL_DATAGEN_FN(RandnClosure, basic::Randn, NO_IMPL, cuda::Randn);
 INSTALL_DATAGEN_FN(RandBernoulliClosure, basic::RandBernoulli, NO_IMPL, cuda::RandBernoulli);
 INSTALL_DATAGEN_FN(FillClosure, basic::Fill, NO_IMPL, cuda::Fill);
 
-}
+}  // namespace minerva
