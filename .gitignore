@@ -15,6 +15,9 @@
 
 # Python objects
 *.pyc
+dist
+*egg-info
+
 
 # Generated directories
 debug

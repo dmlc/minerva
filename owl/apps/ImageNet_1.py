@@ -170,8 +170,8 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             out, weightsgrad, biasgrad = train_one_mb(model, data, target, dropout_rate)
 
             for k in range(num_weights):
-                model.weightsdelta[k] = mom * model.weightsdelta[k] - eps_w / num_samples  * (weightsgrad[k] + wd * model.weights[k])
-                model.biasdelta[k] = mom * model.biasdelta[k] - eps_b / num_samples  * (biasgrad[k] + wd * model.bias[k])
+                model.weightsdelta[k] = mom * model.weightsdelta[k] - eps_w / num_samples  * weightsgrad[k] - eps_w * wd * model.weights[k]
+                model.biasdelta[k] = mom * model.biasdelta[k] - eps_b / num_samples  * biasgrad[k]
                 model.weights[k] += model.weightsdelta[k]
                 model.weights[k].start_eval()
                 model.bias[k] += model.biasdelta[k]
