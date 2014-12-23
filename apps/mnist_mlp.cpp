@@ -65,7 +65,9 @@ int main(int argc, char** argv) {
   MinervaSystem& ms = MinervaSystem::Instance();
   ms.Initialize(&argc, &argv);
   uint64_t cpuDevice = ms.CreateCpuDevice();
+#ifdef HAS_CUDA
   uint64_t gpuDevice = ms.CreateGpuDevice(0);
+#endif
   ms.current_device_id_ = cpuDevice;
 
   weights.resize(num_layers - 1);
@@ -101,7 +103,9 @@ int main(int argc, char** argv) {
       acts[0] = NArray::MakeNArray(data_size, data_ptr);
       NArray label = NArray::MakeNArray(label_size, label_ptr);
 
+#ifdef HAS_CUDA
       ms.current_device_id_ = gpuDevice;
+#endif
 
       // ff
       for (int k = 1; k < num_layers - 1; ++ k) {

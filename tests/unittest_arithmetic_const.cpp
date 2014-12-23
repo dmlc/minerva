@@ -18,6 +18,7 @@ TEST(ArithmeticConst, CpuAdd) {
   }
 }
 
+#ifdef HAS_CUDA
 TEST(ArithmeticConst, GpuAdd) {
   auto& ms = MinervaSystem::Instance();
   ms.current_device_id_ = cpu_device;
@@ -32,6 +33,7 @@ TEST(ArithmeticConst, GpuAdd) {
     EXPECT_FLOAT_EQ(b_ptr.get()[i], a_ptr.get()[i] + 32.9);
   }
 }
+#endif
 
 TEST(ArithmeticConst, CpuSub) {
   auto& ms = MinervaSystem::Instance();
@@ -47,6 +49,7 @@ TEST(ArithmeticConst, CpuSub) {
   }
 }
 
+#ifdef HAS_CUDA
 TEST(ArithmeticConst, GpuSub) {
   auto& ms = MinervaSystem::Instance();
   ms.current_device_id_ = cpu_device;
@@ -61,6 +64,7 @@ TEST(ArithmeticConst, GpuSub) {
     EXPECT_NEAR(b_ptr.get()[i], 3.99 - a_ptr.get()[i], 0.001);
   }
 }
+#endif
 
 TEST(ArithmeticConst, CpuMult) {
   auto& ms = MinervaSystem::Instance();
@@ -76,6 +80,7 @@ TEST(ArithmeticConst, CpuMult) {
   }
 }
 
+#ifdef HAS_CUDA
 TEST(ArithmeticConst, GpuMult) {
   auto& ms = MinervaSystem::Instance();
   ms.current_device_id_ = cpu_device;
@@ -90,6 +95,7 @@ TEST(ArithmeticConst, GpuMult) {
     EXPECT_FLOAT_EQ(b_ptr.get()[i], 3.199 * a_ptr.get()[i]);
   }
 }
+#endif
 
 TEST(ArithmeticConst, CpuDiv) {
   auto& ms = MinervaSystem::Instance();
@@ -105,6 +111,7 @@ TEST(ArithmeticConst, CpuDiv) {
   }
 }
 
+#ifdef HAS_CUDA
 TEST(ArithmeticConst, GpuDiv) {
   auto& ms = MinervaSystem::Instance();
   ms.current_device_id_ = cpu_device;
@@ -119,4 +126,4 @@ TEST(ArithmeticConst, GpuDiv) {
     EXPECT_FLOAT_EQ(b_ptr.get()[i], 3.331 / a_ptr.get()[i]);
   }
 }
-
+#endif

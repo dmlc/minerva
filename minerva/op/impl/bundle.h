@@ -20,11 +20,11 @@ INSTALL_COMPUTE_FN(NormArithmeticClosure, basic::NormArithmetic, NO_IMPL, cuda::
 INSTALL_COMPUTE_FN(MaxIndexClosure, basic::MaxIndex, NO_IMPL, cuda::MaxIndex);
 INSTALL_COMPUTE_FN(ReshapeClosure, basic::Reshape, NO_IMPL, cuda::Reshape);
 INSTALL_COMPUTE_FN(ElewiseClosure, basic::Elewise, NO_IMPL, cuda::Elewise);
-INSTALL_COMPUTE_FN(SigmoidForwardClosure, NO_IMPL, NO_IMPL, cuda::SigmoidForward);
+INSTALL_COMPUTE_FN(SigmoidForwardClosure, basic::SigmoidForward, NO_IMPL, cuda::SigmoidForward);
 INSTALL_COMPUTE_FN(SigmoidBackwardClosure, NO_IMPL, NO_IMPL, cuda::SigmoidBackward);
-INSTALL_COMPUTE_FN(ReluForwardClosure, NO_IMPL, NO_IMPL, cuda::ReluForward);
+INSTALL_COMPUTE_FN(ReluForwardClosure, basic::ReluForward, NO_IMPL, cuda::ReluForward);
 INSTALL_COMPUTE_FN(ReluBackwardClosure, NO_IMPL, NO_IMPL, cuda::ReluBackward);
-INSTALL_COMPUTE_FN(TanhForwardClosure, NO_IMPL, NO_IMPL, cuda::TanhForward);
+INSTALL_COMPUTE_FN(TanhForwardClosure, basic::TanhForward, NO_IMPL, cuda::TanhForward);
 INSTALL_COMPUTE_FN(TanhBackwardClosure, NO_IMPL, NO_IMPL, cuda::TanhBackward);
 INSTALL_COMPUTE_FN(ConvForwardClosure, NO_IMPL, NO_IMPL, cuda::ConvForward);
 INSTALL_COMPUTE_FN(ConvBackwardDataClosure, NO_IMPL, NO_IMPL, cuda::ConvBackwardData);
@@ -32,7 +32,7 @@ INSTALL_COMPUTE_FN(ConvBackwardFilterClosure, NO_IMPL, NO_IMPL, cuda::ConvBackwa
 INSTALL_COMPUTE_FN(ConvBackwardBiasClosure, NO_IMPL, NO_IMPL, cuda::ConvBackwardBias);
 INSTALL_COMPUTE_FN(SoftmaxForwardClosure, NO_IMPL, NO_IMPL, cuda::SoftmaxForward);
 INSTALL_COMPUTE_FN(SoftmaxBackwardClosure, NO_IMPL, NO_IMPL, cuda::SoftmaxBackward);
-INSTALL_COMPUTE_FN(ActivationForwardClosure, NO_IMPL, NO_IMPL, cuda::ActivationForward);
+INSTALL_COMPUTE_FN(ActivationForwardClosure, basic::ActivationForward, NO_IMPL, cuda::ActivationForward);
 INSTALL_COMPUTE_FN(ActivationBackwardClosure, NO_IMPL, NO_IMPL, cuda::ActivationBackward);
 INSTALL_COMPUTE_FN(PoolingForwardClosure, NO_IMPL, NO_IMPL, cuda::PoolingForward);
 INSTALL_COMPUTE_FN(PoolingBackwardClosure, NO_IMPL, NO_IMPL, cuda::PoolingBackward);
@@ -42,4 +42,4 @@ INSTALL_DATAGEN_FN(RandnClosure, basic::Randn, NO_IMPL, cuda::Randn);
 INSTALL_DATAGEN_FN(RandBernoulliClosure, basic::RandBernoulli, NO_IMPL, cuda::RandBernoulli);
 INSTALL_DATAGEN_FN(FillClosure, basic::Fill, NO_IMPL, cuda::Fill);
 
-}
+}  // namespace minerva
