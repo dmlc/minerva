@@ -315,8 +315,8 @@ void SigmoidForward(const DataList& inputs, const DataList& outputs, SigmoidForw
   CHECK_EQ(inputs.size(), 1) << "sigmoid forward #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "sigmoid forward #outputs wrong";
 
-  float * input_data = inputs[0].data();
-  float * output_data = outputs[0].data();
+  float* input_data = inputs[0].data();
+  float* output_data = outputs[0].data();
 
   size_t numbers = inputs[0].size().Prod();
 
@@ -329,8 +329,8 @@ void ReluForward(const DataList& inputs, const DataList& outputs, ReluForwardClo
   CHECK_EQ(inputs.size(), 1) << "relu forward #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "relu forward #outputs wrong";
 
-  float * input_data = inputs[0].data();
-  float * output_data = outputs[0].data();
+  float* input_data = inputs[0].data();
+  float* output_data = outputs[0].data();
 
   size_t numbers = inputs[0].size().Prod();
 
@@ -343,8 +343,8 @@ void TanhForward(const DataList& inputs, const DataList& outputs, TanhForwardClo
   CHECK_EQ(inputs.size(), 1) << "tanh forward #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "tanh forward #outputs wrong";
 
-  float * input_data = inputs[0].data();
-  float * output_data = outputs[0].data();
+  float* input_data = inputs[0].data();
+  float* output_data = outputs[0].data();
 
   size_t numbers = inputs[0].size().Prod();
 
@@ -357,15 +357,21 @@ void ActivationForward(const DataList& inputs, const DataList& outputs, Activati
   CHECK_EQ(inputs.size(), 1) << "(activation forward) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(activation forward) #outputs wrong";
   switch (closure.algorithm) {
-    case ActivationAlgorithm::kSigmoid:
-      SigmoidForward(inputs, outputs, (SigmoidForwardClosure&)closure);
+    case ActivationAlgorithm::kSigmoid: {
+      SigmoidForwardClosure c;
+      SigmoidForward(inputs, outputs, c);
       break;
-    case ActivationAlgorithm::kRelu:
-      ReluForward(inputs, outputs, (ReluForwardClosure&)closure);
+    }
+    case ActivationAlgorithm::kRelu: {
+      ReluForwardClosure c;
+      ReluForward(inputs, outputs, c);
       break;
-    case ActivationAlgorithm::kTanh:
-      TanhForward(inputs, outputs, (TanhForwardClosure&)closure);
+    }
+    case ActivationAlgorithm::kTanh: {
+      TanhForwardClosure c;
+      TanhForward(inputs, outputs, c);
       break;
+    }
     default:
       LOG(FATAL) << "activation algorithm not supported";
   }
