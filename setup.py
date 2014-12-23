@@ -17,12 +17,11 @@ with open(config_file_path) as config_file:
             in_l = line.split('=')[-1]
             ex_lib_dirs += [p.strip() for p in in_l.split(',')]
 
-print ex_include_dirs
-            
 setup(name='owl',
     version='1.0',
     maintainer='Minjie Wang',
     maintainer_email='minerva-support@googlegroups.com',
+    license='Apache 2.0',
     url='https://github.com/minerva-developers/minerva',
     package_dir={'':'owl'},
     packages=['owl'],
@@ -34,7 +33,6 @@ setup(name='owl',
             include_dirs=ex_include_dirs,
             libraries=['boost_python', 'boost_numpy', 'python2.7', 'minerva'],
             library_dirs=ex_lib_dirs,
-            runtime_library_dirs=[minerva_lib_path], # TODO: should copy the lib to install path instead
             extra_compile_args=['-O2', '-std=c++11'],
             extra_link_args=[])
         ]
