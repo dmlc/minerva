@@ -18,6 +18,7 @@ TEST(Elewise, CpuExp) {
   }
 }
 
+#ifdef HAS_CUDA
 TEST(Elewise, GpuExp) {
   auto& ms = MinervaSystem::Instance();
   ms.current_device_id_ = cpu_device;
@@ -32,6 +33,7 @@ TEST(Elewise, GpuExp) {
     EXPECT_FLOAT_EQ(b_ptr.get()[i], exp(a_ptr.get()[i]));
   }
 }
+#endif
 
 TEST(Elewise, CpuLn) {
   auto& ms = MinervaSystem::Instance();
@@ -47,6 +49,7 @@ TEST(Elewise, CpuLn) {
   }
 }
 
+#ifdef HAS_CUDA
 TEST(Elewise, GpuLn) {
   auto& ms = MinervaSystem::Instance();
   ms.current_device_id_ = cpu_device;
@@ -151,6 +154,7 @@ TEST(Elewise, GpuTanhBackward) {
     EXPECT_FLOAT_EQ(b_ptr.get()[i], a_ptr.get()[i]);
   }
 }
+#endif
 
 TEST(Elewise, CpuNegative) {
   auto& ms = MinervaSystem::Instance();
@@ -166,6 +170,7 @@ TEST(Elewise, CpuNegative) {
   }
 }
 
+#ifdef HAS_CUDA
 TEST(Elewise, GpuDiv) {
   auto& ms = MinervaSystem::Instance();
   ms.current_device_id_ = cpu_device;
@@ -180,4 +185,4 @@ TEST(Elewise, GpuDiv) {
     EXPECT_FLOAT_EQ(b_ptr.get()[i], -a_ptr.get()[i]);
   }
 }
-
+#endif
