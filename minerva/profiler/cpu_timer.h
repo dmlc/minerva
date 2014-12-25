@@ -12,7 +12,7 @@ class CpuTimer : public Timer {
   ~CpuTimer();
   void Start();
   void Stop();
-  double ReadMicrosecond();
+  double ReadMicrosecond() const;
 
  private:
   clock_t start_;

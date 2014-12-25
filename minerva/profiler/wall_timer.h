@@ -12,7 +12,7 @@ class WallTimer : public Timer {
   ~WallTimer();
   void Start();
   void Stop();
-  double ReadMicrosecond();
+  double ReadMicrosecond() const;
 
  private:
   timeval start_;

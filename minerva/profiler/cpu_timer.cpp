@@ -29,7 +29,7 @@ void CpuTimer::Stop() {
   end_ = clock();
 }
 
-double CpuTimer::ReadMicrosecond() {
+double CpuTimer::ReadMicrosecond() const {
   return ((double) end_ - start_) / CLOCKS_PER_SEC;
 }
 
