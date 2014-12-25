@@ -7,7 +7,7 @@ from owl.conv import *
 import owl.elewise as ele
 from imageio import ImageNetDataProvider
 
-num_gpu = 2
+num_gpu = 1
 one_gpu_id = 0
 gpu_array = []
 
@@ -101,7 +101,7 @@ def train_one_mb(model, data, label, weightsgrad, biasgrad, dropout_rate):
     acts7 = conv_forward(acts[6], model.weights[4], model.bias[4], model.conv_infos[4]) # conv5
     acts[7] = ele.relu(acts7)#(conv_forward(acts[6], model.weights[4], model.bias[4], model.conv_infos[4])) # conv5
     acts[8] = pooling_forward(acts[7], model.pooling_infos[2]) # pool5
-    re_acts8 = acts[8].reshape([np.prod(acts[8].shape[0:3]), num_samples])
+    re_acts8 = acts[8].reshape([int(np.prod(acts[8].shape[0:3])), num_samples])
     acts9 = model.weights[5] * re_acts8 + model.bias[5] # fc6
     acts[9] = ele.relu(acts9)#(model.weights[5] * re_acts8 + model.bias[5]) # fc6
     mask6 = owl.randb(acts[9].shape, dropout_rate)
