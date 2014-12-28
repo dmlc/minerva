@@ -158,6 +158,10 @@ m::NArray SoftmaxBackward(m::NArray diff, m::NArray top, m::SoftmaxAlgorithm alg
   return m::Convolution::SoftmaxBackward(m::ImageBatch(diff), m::ImageBatch(top), algo);
 }
 
+void PrintProfilerResult() {
+  m::MinervaSystem::Instance().profiler().PrintResult();
+}
+
 } // end of namespace owl
 
 // python module
@@ -250,6 +254,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("create_gpu_device", &owl::CreateGpuDevice);
 #endif
   def("set_device", &owl::SetDevice);
+  def("print_profiler_result", &owl::PrintProfilerResult);
 
   // elewise
   def("mult", &m::Elewise::Mult);
@@ -262,7 +267,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("relu_back", &m::Elewise::ReluBackward);
   def("tahn", &m::Elewise::TanhForward);
   def("tahn_back", &m::Elewise::TanhBackward);
-  
+
   // utils
   def("softmax", &owl::Softmax);
 

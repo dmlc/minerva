@@ -8,6 +8,7 @@
 #include "device/device_manager.h"
 #include "common/inspector.h"
 #include "device/device.h"
+#include "profiler/execution_profiler.h"
 
 namespace minerva {
 
@@ -31,6 +32,9 @@ class MinervaSystem :
   DagScheduler& dag_scheduler() {
     return *dag_scheduler_;
   }
+  ExecutionProfiler& profiler() {
+    return *profiler_;
+  }
   uint64_t CreateCpuDevice();
 #ifdef HAS_CUDA
   uint64_t CreateGpuDevice(int gid);
@@ -50,6 +54,7 @@ class MinervaSystem :
   void ExecutePhysicalDag(const std::vector<uint64_t>& pids);
   PhysicalDag* physical_dag_;
   DagScheduler* dag_scheduler_;
+  ExecutionProfiler* profiler_;
   DeviceManager* device_manager_;
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
 };

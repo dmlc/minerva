@@ -6,6 +6,7 @@ initialize = _owl.initialize
 create_cpu_device = _owl.create_cpu_device
 create_gpu_device = _owl.create_gpu_device
 set_device = _owl.set_device
+print_profiler_result = _owl.print_profiler_result
 
 zeros = _owl.zeros
 ones = _owl.ones

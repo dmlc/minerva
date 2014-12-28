@@ -8,6 +8,7 @@
 #include "op/context.h"
 #include "common/cuda_utils.h"
 #include "device/pooled_data_store.h"
+#include "profiler/wall_timer.h"
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #include <cudnn.h>
@@ -62,6 +63,8 @@ void ThreadedDevice::FreeDataIfExist(uint64_t data_id) {
 void ThreadedDevice::Execute(PhysicalOpNode* op_node, int thrid) {
   PreExecute();
   DataList input_shards;
+  WallTimer memory_timer;
+  memory_timer.Start();
   for (auto i : op_node->inputs_) {
     auto& input_data = i->data_;
     if (input_data.device_id == device_id_) {  // Input is local
@@ -87,10 +90,16 @@ void ThreadedDevice::Execute(PhysicalOpNode* op_node, int thrid) {
     CHECK(local_data_.Insert(i->data_.data_id));
     output_shards.emplace_back(ptr, i->data_.size);
   }
+  memory_timer.Stop();
+  MinervaSystem::Instance().profiler().RecordTime(TimerType::kMemory, op_node->op_.compute_fn->Name(), memory_timer);
   auto& op = op_node->op_;
   CHECK_NOTNULL(op.compute_fn);
   DLOG(INFO) << Name() << " execute node #" << op_node->node_id() << ": " << op.compute_fn->Name();
+  WallTimer calculate_timer;
+  calculate_timer.Start();
   DoExecute(input_shards, output_shards, op, thrid);
+  calculate_timer.Stop();
+  MinervaSystem::Instance().profiler().RecordTime(TimerType::kCalculation, op_node->op_.compute_fn->Name(), calculate_timer);
   listener_->OnOperationComplete(op_node);
 }
 

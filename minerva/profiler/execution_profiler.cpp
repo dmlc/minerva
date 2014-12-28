@@ -1,4 +1,5 @@
 #include "profiler/execution_profiler.h"
+#include <cstdio>
 
 using namespace std;
 
@@ -8,6 +9,9 @@ ExecutionProfiler::ExecutionProfiler() {
 }
 
 ExecutionProfiler::~ExecutionProfiler() {
+  for (auto it : time_) {
+    delete[] (it.second);
+  }
 }
 
 void ExecutionProfiler::RecordTime(TimerType type, const string& name, const Timer& timer) {
@@ -20,4 +24,20 @@ void ExecutionProfiler::RecordTime(TimerType type, const string& name, const Tim
   }
 }
 
+void ExecutionProfiler::PrintResult() {
+  printf("%33s|%6sMemory%8sCalculation\n", "", "", "");
+  for (int i = 0; i < 33; ++i) {
+    printf("-");
+  }
+  printf("|");
+  for (int i = 0; i < 34; ++i) {
+    printf("-");
+  }
+  printf("\n");
+  for (auto it : time_) {
+    printf("%32.32s | %16f %16f\n", it.first.c_str(), it.second[0], it.second[1]);
+  }
+}
+
 }  // namespace minerva
+
