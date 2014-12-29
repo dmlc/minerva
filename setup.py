@@ -24,7 +24,7 @@ setup(name='owl',
     license='Apache 2.0',
     url='https://github.com/minerva-developers/minerva',
     package_dir={'':'owl'},
-    packages=['owl'],
+    packages=['owl', 'owl.caffe'],
     ext_modules=[
         Extension('libowl',
             ['owl/owl.cpp'],
