@@ -3,13 +3,13 @@ import lmdb
 import numpy as np
 import numpy.random
 import subprocess
-from caffe_data_pb2 import Datum
-from caffe_data_pb2 import BlobProto
-from caffe_data_pb2 import NetParameter
-from caffe_data_pb2 import LayerParameter
+from caffe_pb2 import Datum
+from caffe_pb2 import BlobProto
+from caffe_pb2 import NetParameter
+from caffe_pb2 import LayerParameter
 from PIL import Image
 
-class CaffeModelLoader:
+class CaffeModelConverter:
     def __init__(self, model_file, weightdir):
         netparam = NetParameter()
         layerparam = LayerParameter()
@@ -52,5 +52,5 @@ class CaffeModelLoader:
                 curweights += 1
 
 if __name__ == '__main__':
-    dp = CaffeModelLoader(model_file='/home/minjie/caffe/caffe/models/VGG/VGG_ILSVRC_16_layers.caffemodel', weightdir = 'VGGmodel')
+    dp = CaffeModelConverter(model_file='/home/minjie/caffe/caffe/models/VGG/VGG_ILSVRC_16_layers.caffemodel', weightdir = 'VGGmodel')
     count = 0

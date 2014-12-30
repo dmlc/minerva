@@ -4,8 +4,8 @@ import numpy as np
 import numpy.random
 import subprocess
 import time
-from caffe_data_pb2 import NetParameter
-from caffe_data_pb2 import LayerParameter
+from caffe_pb2 import NetParameter
+from caffe_pb2 import LayerParameter
 from google.protobuf import text_format
 import owl
 from owl.conv import *
