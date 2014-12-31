@@ -48,18 +48,22 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
 
     wgrad = [None] * 2
     bgrad = [None] * 2
+    num_samples = 0
 
     for i in xrange(num_epochs):
         print "---------------------Epoch #", i
         for (samples, labels) in dp.get_train_mb(minibatch_size):
+        #for j in range(300):
             count = count + 1
             gpuid = count % 2
             owl.set_device(gpu[gpuid])
 
             data = owl.from_nparray(samples).reshape([227, 227, 3, samples.shape[0]])
             label = owl.from_nparray(labels)
+            #data = owl.randn([227, 227, 3, 128], 0.0, 0.01)
+            #label = owl.randn([1000, 128], 0.0, 0.01)
             num_samples += data.shape[-1]
-            (out[gpuid], wgrad[gpuid], bgrad[gpuid]) = model.train_one_mb(data, label, dropout_rate)
+            (out, wgrad[gpuid], bgrad[gpuid]) = model.train_one_mb(data, label, dropout_rate)
             out.start_eval()
 
             if count % 2 != 0:
@@ -72,7 +76,7 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             model.update(wgrad[0], bgrad[0], num_samples, mom, eps_w, wd)
 
             if count % 8 == 0:
-                print_training_accuracy(out[0], label, data.shape[-1])
+                print_training_accuracy(out, label, data.shape[-1])
                 print "time: %s" % (time.time() - last)
                 last = time.time()
 
