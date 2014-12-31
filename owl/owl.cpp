@@ -39,15 +39,6 @@ void SetDevice(uint64_t id) {
   m::MinervaSystem::Instance().current_device_id_ = id;
 }
 
-m::NArray Softmax(m::NArray m) {
-  m::NArray maxval = m.Max(0);
-  // NArray centered = m - maxval.Tile({m.Size(0), 1});
-  m::NArray centered = m.NormArithmetic(maxval, m::ArithmeticType::kSub);
-  m::NArray class_normalizer = m::Elewise::Ln(m::Elewise::Exp(centered).Sum(0)) + maxval;
-  // return Elewise::Exp(m - class_normalizer.Tile({m.Size(0), 1}));
-  return m::Elewise::Exp(m.NormArithmetic(class_normalizer, m::ArithmeticType::kSub));
-}
-
 m::Scale ToScale(const bp::list& l) {
   bp::stl_input_iterator<int> begin(l), end;
   return m::Scale(begin, end);
@@ -189,11 +180,11 @@ BOOST_PYTHON_MODULE(libowl) {
     .value("div", m::ArithmeticType::kDiv)
   ;
 
-  float (m::NArray::*sum0)() const = &m::NArray::Sum;
+  //float (m::NArray::*sum0)() const = &m::NArray::Sum;
   m::NArray (m::NArray::*sum1)(int) const = &m::NArray::Sum;
   m::NArray (m::NArray::*sum2)(const m::Scale&) const = &m::NArray::Sum;
 
-  float (m::NArray::*max0)() const = &m::NArray::Max;
+  //float (m::NArray::*max0)() const = &m::NArray::Max;
   m::NArray (m::NArray::*max1)(int) const = &m::NArray::Max;
   m::NArray (m::NArray::*max2)(const m::Scale&) const = &m::NArray::Max;
 
@@ -223,10 +214,10 @@ BOOST_PYTHON_MODULE(libowl) {
     // matrix multiply
     .def(self * self)
     // reduction
-    .def("sum", sum0)
+    //.def("sum", sum0) TODO not implemented yet
     .def("sum", sum1)
     .def("sum", sum2)
-    .def("max", max0)
+    //.def("max", max0) TODO not implemented yet
     .def("max", max1)
     .def("max", max2)
     .def("max_index", &m::NArray::MaxIndex)
@@ -235,33 +226,21 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("norm_arithmetic", &m::NArray::NormArithmetic)
     // misc
     .def("trans", &m::NArray::Trans)
-    .def("tofile", &m::NArray::ToFile)
-    .def("tolist", &owl::NArrayToList)
     .def("tonparray", &owl::NArrayToNPArray)
     .def("reshape", &owl::ReshapeWrapper)
     .def("wait_for_eval", &m::NArray::WaitForEval)
     .def("start_eval", &m::NArray::StartEval)
     .add_property("shape", &owl::ShapeWrapper)
   ;
-/*
-  // file loader
-  class_<m::IFileLoader>("IFileLoader");
-  class_<m::SimpleFileLoader, bases<m::IFileLoader>>("SimpleFileLoader");
-  class_<m::FileFormat>("FileFormat")
-    .def_readwrite("binary", &m::FileFormat::binary)
-  ;
-*/
   // creators
   def("zeros", &owl::ZerosWrapper);
   def("ones", &owl::OnesWrapper);
   def("randn", &owl::RandnWrapper);
-  def("make_narray", &owl::MakeNArrayWrapper);
+  //def("make_narray", &owl::MakeNArrayWrapper);
   def("randb", &owl::RandBernoulliWrapper);
   def("from_nparray", &owl::FromNPArrayWrapper);
-  //def("toscale", &owl::ToScale);
 
   // system
-  //def("to_list", &owl::NArrayToList);
   def("initialize", &owl::Initialize);
   def("create_cpu_device", &owl::CreateCpuDevice);
   def("create_gpu_device", &owl::CreateGpuDevice);
@@ -279,9 +258,6 @@ BOOST_PYTHON_MODULE(libowl) {
   def("tahn", &m::Elewise::TanhForward);
   def("tahn_back", &m::Elewise::TanhBackward);
   
-  // utils
-  def("softmax", &owl::Softmax);
-
   // convolution
   class_<m::ConvInfo>("ConvInfo")
     .def_readwrite("pad_height", &m::ConvInfo::pad_height)
