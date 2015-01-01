@@ -72,7 +72,7 @@ m::NArray ReshapeWrapper(m::NArray narr, const bp::list& s) {
   return narr.Reshape(ToScale(s));
 }
 
-m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
+/*m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
   std::vector<float> v = std::vector<float>(bp::stl_input_iterator<float>(val), bp::stl_input_iterator<float>());
   size_t length = bp::len(val);
   shared_ptr<float> data( new float[length], [] (float* ptr) { delete [] ptr; } );
@@ -81,7 +81,7 @@ m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
 //    valptr.get()[i] = bp::extract<float>(val[i] * 1.0);
 //  }
   return m::NArray::MakeNArray(ToScale(s), data);
-}
+}*/
 
 m::NArray FromNPArrayWrapper(np::ndarray nparr) {
   CHECK(nparr.get_flags() & np::ndarray::C_CONTIGUOUS) << "MakeNArray needs c-contiguous numpy array";
@@ -188,7 +188,7 @@ BOOST_PYTHON_MODULE(libowl) {
   m::NArray (m::NArray::*max1)(int) const = &m::NArray::Max;
   m::NArray (m::NArray::*max2)(const m::Scale&) const = &m::NArray::Max;
 
-  class_<m::Scale>("_Scale");
+  //class_<m::Scale>("_Scale");
 
   class_<m::NArray>("NArray")
     // element-wise
