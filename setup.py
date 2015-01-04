@@ -14,8 +14,11 @@ with open(config_file_path) as config_file:
             in_p = line.split('=')[-1]
             ex_include_dirs += [p.strip() for p in in_p.split(',')]
         elif line.find('LIB') >= 0:
-            in_l = line.split('=')[-1]
-            ex_lib_dirs += [p.strip() for p in in_l.split(',')]
+            lib_p = line.split('=')[-1]
+            ex_lib_dirs += [p.strip() for p in lib_p.split(',')]
+        elif line.find('CUDA_ROOT') >= 0:
+            cuda_in = line.split('=')[-1]
+            ex_include_dirs.append(cuda_in.strip() + '/include')
 
 setup(name='owl',
     version='1.0',
