@@ -18,7 +18,7 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
   float* right_data = inputs[1].data();
   float* res_data = outputs[0].data();
   int length = outputs[0].size().Prod();
-  switch(closure.type) {
+  switch (closure.type) {
     case ArithmeticType::kAdd:
       for (int i = 0; i < length; ++i) {
         res_data[i] = left_data[i] + right_data[i];
@@ -49,9 +49,9 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs, Arithmetic
   float* in_data = inputs[0].data();
   float* res_data = outputs[0].data();
   int length = outputs[0].size().Prod();
-  switch(closure.type) {
+  switch (closure.type) {
     case ArithmeticType::kAdd:
-      if(closure.side == 0) {  // const on left
+      if (closure.side == 0) {  // const on left
         for (int i = 0; i < length; ++i) {
           res_data[i] = val + in_data[i];
         }
@@ -62,7 +62,7 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs, Arithmetic
       }
       break;
     case ArithmeticType::kSub:
-      if(closure.side == 0) {  // const on left
+      if (closure.side == 0) {  // const on left
         for (int i = 0; i < length; ++i) {
           res_data[i] = val - in_data[i];
         }
@@ -73,7 +73,7 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs, Arithmetic
       }
       break;
     case ArithmeticType::kMult:
-      if(closure.side == 0) {  // const on left
+      if (closure.side == 0) {  // const on left
         for (int i = 0; i < length; ++i) {
           res_data[i] = val * in_data[i];
         }
@@ -84,7 +84,7 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs, Arithmetic
       }
       break;
     case ArithmeticType::kDiv:
-      if(closure.side == 0) {  // const on left
+      if (closure.side == 0) {  // const on left
         for (int i = 0; i < length; ++i) {
           res_data[i] = val / in_data[i];
         }
@@ -103,7 +103,7 @@ void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& cl
   float* in_data = inputs[0].data();
   float* res_data = outputs[0].data();
   int length = outputs[0].size().Prod();
-  switch(closure.type) {
+  switch (closure.type) {
     case ElewiseType::kExp:
       for (int i = 0; i < length; ++i) {
         res_data[i] = exp(in_data[i]);
@@ -311,6 +311,71 @@ void Reshape(const DataList& inputs, const DataList& outputs, ReshapeClosure&) {
   memcpy(outputs[0].data(), inputs[0].data(), inputs[0].size().Prod() * sizeof(float));
 }
 
+void SigmoidForward(const DataList& inputs, const DataList& outputs, SigmoidForwardClosure&) {
+  CHECK_EQ(inputs.size(), 1) << "sigmoid forward #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "sigmoid forward #outputs wrong";
+
+  float* input_data = inputs[0].data();
+  float* output_data = outputs[0].data();
+
+  size_t numbers = inputs[0].size().Prod();
+
+  for (size_t i = 0; i < numbers; i++) {
+    output_data[i] = 1.0 / (1.0 + expf(-input_data[i]));
+  }
+}
+
+void ReluForward(const DataList& inputs, const DataList& outputs, ReluForwardClosure&) {
+  CHECK_EQ(inputs.size(), 1) << "relu forward #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "relu forward #outputs wrong";
+
+  float* input_data = inputs[0].data();
+  float* output_data = outputs[0].data();
+
+  size_t numbers = inputs[0].size().Prod();
+
+  for (size_t i = 0; i < numbers; i++) {
+    output_data[i] = input_data[i] > 0 ? input_data[i] : 0;
+  }
+}
+
+void TanhForward(const DataList& inputs, const DataList& outputs, TanhForwardClosure&) {
+  CHECK_EQ(inputs.size(), 1) << "tanh forward #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "tanh forward #outputs wrong";
+
+  float* input_data = inputs[0].data();
+  float* output_data = outputs[0].data();
+
+  size_t numbers = inputs[0].size().Prod();
+
+  for (size_t i = 0; i < numbers; i++) {
+    output_data[i] = tanhf(input_data[i]);
+  }
+}
+
+void ActivationForward(const DataList& inputs, const DataList& outputs, ActivationForwardClosure& closure) {
+  CHECK_EQ(inputs.size(), 1) << "(activation forward) #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(activation forward) #outputs wrong";
+  switch (closure.algorithm) {
+    case ActivationAlgorithm::kSigmoid: {
+      SigmoidForwardClosure c;
+      SigmoidForward(inputs, outputs, c);
+      break;
+    }
+    case ActivationAlgorithm::kRelu: {
+      ReluForwardClosure c;
+      ReluForward(inputs, outputs, c);
+      break;
+    }
+    case ActivationAlgorithm::kTanh: {
+      TanhForwardClosure c;
+      TanhForward(inputs, outputs, c);
+      break;
+    }
+    default:
+      LOG(FATAL) << "activation algorithm not supported";
+  }
+}
 }  // end of namespace basic
 }  // end of namespace minerva
 
