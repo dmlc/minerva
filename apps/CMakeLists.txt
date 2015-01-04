@@ -6,7 +6,13 @@ include_directories(
 
 set(app_list "")
 
-file(GLOB_RECURSE app_file_list "*.cpp")
+if (CUDA_FOUND)
+  file(GLOB_RECURSE app_file_list "*.cpp")
+else (CUDA_FOUND)
+  #For CPU only.
+  file(GLOB_RECURSE app_file_list "mnist_mlp.cpp")
+endif (CUDA_FOUND)
+
 foreach(app_src ${app_file_list})
   get_filename_component(app_name ${app_src} NAME_WE)
   add_executable(${app_name} ${app_src})

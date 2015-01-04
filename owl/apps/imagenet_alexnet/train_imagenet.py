@@ -42,7 +42,7 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             out.start_eval()
             model.update(weightsgrad, biasgrad, num_samples, mom, eps_w, wd)
 
-            if count % 3 == 0:
+            if count % 4 == 0:
                 print_training_accuracy(out, target, data.shape[-1])
                 print "time: %s" % (time.time() - last)
                 last = time.time()

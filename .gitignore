@@ -38,6 +38,11 @@ CMakeFiles
 .*.swo
 .*.swp
 
+# Emacs temporary file
+*~
+\#*\#
+.\#*
+
 # Atom rule file
 .editorconfig
 

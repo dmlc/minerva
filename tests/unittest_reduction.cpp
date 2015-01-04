@@ -75,6 +75,7 @@ TEST(Reduction, CpuSumOnSecondDimension) {
   }
 }
 
+#ifdef HAS_CUDA
 TEST(Reduction, GpuMaxOnFirstDimension) {
   MinervaSystem::Instance().current_device_id_ = gpu_device;
   Scale size{5, 3};
@@ -146,4 +147,4 @@ TEST(Reduction, GpuSumOnSecondDimension) {
     EXPECT_FLOAT_EQ(res_ptr[i], 3 * i + 15);
   }
 }
-
+#endif

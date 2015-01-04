@@ -1,8 +1,6 @@
 # Minerva: a fast and flexible system for deep learning
 
-## Goal
-
-Make deep learning a home dish.
+Minerva is a fast and flexible tool for deep learning. It provides NDarray programming interface, just like Numpy. Python bindings and C++ bindings are both available. The resulting code can be run on CPU or GPU. Multi-GPU support is very easy. Please refer to the examples to see how multi-GPU setting is used.Minerva is a fast and flexible tool for deep learning. It provides NDarray programming interface, just like Numpy. Python bindings and C++ bindings are both available. The resulting code can be run on CPU or GPU. Multi-GPU support is very easy. Please refer to the examples to see how multi-GPU setting is used.
 
 ## Features
 
@@ -11,64 +9,13 @@ Make deep learning a home dish.
 * Multi-GPU, multi-CPU support
 * Good performance: ImageNet AlexNet training achieves 213 and 403 images/s with one and two Titan GPU, respectivly. Four GPU cards number will be coming soon.
 
-## Installation
-
-### Requirements and Dependencies
-
-Minerva depends on several packages. If they are not in the system search path, please set variable `EXTERN_INCLUDE_PATH` and `EXTERN_LIB_PATH` in `configure.in` accordingly.
-
-* CUDA 6.5
-* cuDNN
-* LMDB
-* NumPy
-
-In addition, Minerva also depends on the following packages. The script `resolve_deps` automatically resolves them. Running this script will download and install them in the `deps` directory relative to the root of the repository. If you do so, please consult `configure.in.example` for a sample configuration of the paths.
-
-* Boost
-* Boost.NumPy
-* glog
-* gflags
-* Google Test
-
-### How to build
-
-1. Set `CXX_COMPILER`, and `C_COMPILER` in `configure.in`. `g++-4.8` is strongly recommended.
-1. Set `EXTERN_INCLUDE_PATH`, and `EXTERN_LIB_PATH` in `configure.in` to reflect any dependency not in the system search path. If there are more than one, use a comma-separated list.
-1. Run `./configure`.
-1. Change directory into `release` (or `debug` for more verbose logging) and run `make`.
-
-After these steps, Minerva should be successfully built and linked on your system. But to run the Python interpreter with Owl enabled, you have to `source ${MINERVA_ROOT}/owl_environ.sh`. This will set `PYTHONPATH` environment variable for importing modules in Python. You could also add this script to `~/.profile` or `~/.bashrc` to automate this process.
-
-Minerva is not unusual in this approach; `ssh-agent`, `pip`, `opam` and many others also work similarly. This allows a local version of the Minerva system and its dependencies, while still giving the ability to run from anywhere.
-
-## Running apps
-
-There are two ways to use Minerva: writing C++ code or Python code. Python binding is preferred since we provide easy interaction with NumPy.
-
-We have implemented several applications in Minerva including ImageNet training and MNIST training. After you have built Minerva, you can run both C++ and Python codes.
-
-The Python applications are located in `minerva/owl/apps`. After you have built Minerva, you can run the applications with `python {app}.py`.
-
-The source code for C++ applicaionts are located in `minerva/apps` and the compiled executables are located in `minerva/release/apps`. You can run the executables directly.
-
-The MNIST training data can be downloaded in: http://pan.baidu.com/s/1ntsQs0x
-
-## Writing you own app
-
-Minerva allows you to write you own code for machine learning, using a matrix interface just like Matlab or NumPy. You can use C++ or Python, whichever you prefer. The C++ and Python interface are quite similar. With Python, you can load data with NumPy and use it in Minerva, or you can convert Minerva NArrays into NumPy array and plot/print it with the tools provided in NumPy.
-
-The NArray interface provided by Minerva is very intuitive. If you are familiar with either one of the matrix programming tools such as Matlab or NumPy, it should be very easy to get started with Minerva. More detailed documents will be available soon.
-
-Minerva allows you to use multiple GPUs at the same time. By using the `set_device` function, you can specify which device you want the operation to run on. Once set, all the operations/statements that follow will be performed on this device. This simple primitive will give you flexibility to parallelize on multiple devices (either CPU or GPU).
-
-Minerva uses `lazy evaluation`, meaning that the operations are carried out only when necessary. For example, when you write `c = a + b`, the matrix addition will not be performed immediately. Instead, a dependency graph is constructed internally to track the dependency relationship. Once you try to evaluate the matrix `c`, either by printing some of its elements, or calling `c.WaitForEval()`, Minerva will lookup the dependency graph and carry out all computations specified by the graph. In this way, you can "push" multiple operations to different devices, and then trigger the evaluation on both devices at the same time. This is how multi-GPU programming is done in Minerva. Please refer to the code to get more details.
-
 ## License and support
 
 Minerva is provided in the Apache V2 open source license.
 
 You can use the "issues" tab in github to report bugs. For non-bug issues, please send up an email at minerva-support@googlegroups.com.
 
-## History
+## Wiki
 
-Minerva evolves from an early prototype that follows the same principle. The system is described in the following paper, published in NIPS 2014 workshop (http://nips.cc/Conferences/2014/Program/event.php?ID=4272). The paper is at http://stanford.edu/~rezab/nips2014workshop/submits/minerva.pdf
+For more information on how to install, use or contribute to Minerva, plese visit our wiki page: https://github.com/minerva-developers/minerva/wiki
+
