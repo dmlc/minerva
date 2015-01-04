@@ -181,6 +181,7 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
                 print "time: %s" % (time.time() - last)
                 last = time.time()
                 owl.print_profiler_result()
+                owl.reset_profiler_result()
 
 if __name__ == '__main__':
     owl.initialize(sys.argv)

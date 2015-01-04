@@ -24,6 +24,14 @@ void ExecutionProfiler::RecordTime(TimerType type, const string& name, const Tim
   }
 }
 
+void ExecutionProfiler::Reset() {
+  lock_guard<mutex> lock_(m_);
+  for (auto it : time_) {
+    delete[] (it.second);
+  }
+  time_.clear();
+}
+
 void ExecutionProfiler::PrintResult() {
   printf("%33s|%6sMemory%8sCalculation\n", "", "", "");
   for (int i = 0; i < 33; ++i) {

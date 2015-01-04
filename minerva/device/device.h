@@ -59,6 +59,7 @@ class ThreadedDevice : public Device {
  protected:
   virtual void Execute(PhysicalOpNode*, int thrid);
   virtual void PreExecute();
+  virtual void Barrier(int);
   virtual void DoCopyRemoteData(float*, float*, size_t, int) = 0;
   virtual void DoExecute(const DataList&, const DataList&, PhysicalOp&, int) = 0;
   ConcurrentUnorderedMap<uint64_t, std::mutex> copy_locks_;
@@ -83,6 +84,7 @@ class GpuDevice : public ThreadedDevice {
   cublasHandle_t cublas_handle_[kParallelism];
   cudnnHandle_t cudnn_handle_[kParallelism];
   void PreExecute();
+  void Barrier(int);
   void DoCopyRemoteData(float*, float*, size_t, int);
   void DoExecute(const DataList&, const DataList&, PhysicalOp&, int);
   DISALLOW_COPY_AND_ASSIGN(GpuDevice);

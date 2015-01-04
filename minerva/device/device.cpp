@@ -90,6 +90,7 @@ void ThreadedDevice::Execute(PhysicalOpNode* op_node, int thrid) {
     CHECK(local_data_.Insert(i->data_.data_id));
     output_shards.emplace_back(ptr, i->data_.size);
   }
+  Barrier(thrid);
   memory_timer.Stop();
   MinervaSystem::Instance().profiler().RecordTime(TimerType::kMemory, op_node->op_.compute_fn->Name(), memory_timer);
   auto& op = op_node->op_;
@@ -104,6 +105,9 @@ void ThreadedDevice::Execute(PhysicalOpNode* op_node, int thrid) {
 }
 
 void ThreadedDevice::PreExecute() {
+}
+
+void ThreadedDevice::Barrier(int) {
 }
 
 #ifdef HAS_CUDA
@@ -153,6 +157,10 @@ string GpuDevice::Name() const {
 
 void GpuDevice::PreExecute() {
   CUDA_CALL(cudaSetDevice(device_));
+}
+
+void GpuDevice::Barrier(int thrid) {
+  CUDA_CALL(cudaStreamSynchronize(stream_[thrid]));
 }
 
 void GpuDevice::DoCopyRemoteData(float* dst, float* src, size_t size, int thrid) {

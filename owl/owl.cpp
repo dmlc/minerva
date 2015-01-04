@@ -162,6 +162,10 @@ void PrintProfilerResult() {
   m::MinervaSystem::Instance().profiler().PrintResult();
 }
 
+void ResetProfilerResult() {
+  m::MinervaSystem::Instance().profiler().Reset();
+}
+
 } // end of namespace owl
 
 // python module
@@ -255,6 +259,7 @@ BOOST_PYTHON_MODULE(libowl) {
 #endif
   def("set_device", &owl::SetDevice);
   def("print_profiler_result", &owl::PrintProfilerResult);
+  def("reset_profiler_result", &owl::ResetProfilerResult);
 
   // elewise
   def("mult", &m::Elewise::Mult);

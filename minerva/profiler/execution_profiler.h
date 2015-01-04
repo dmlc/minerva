@@ -18,6 +18,7 @@ class ExecutionProfiler {
   ExecutionProfiler();
   virtual ~ExecutionProfiler();
   void RecordTime(TimerType, const std::string&, const Timer&);
+  void Reset();
   void PrintResult();
 
  private:

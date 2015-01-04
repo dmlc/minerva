@@ -7,7 +7,7 @@ from owl.conv import *
 import owl.elewise as ele
 from imageio import ImageNetDataProvider
 
-num_gpu = 1
+num_gpu = 2
 lazy = 4
 gpu_array = []
 
