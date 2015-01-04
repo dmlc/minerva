@@ -1,7 +1,8 @@
 import sys,os
 import math
 import owl
-import owl.elewise
+import owl.elewise as ele
+import owl.conv as co
 import numpy as np
 import imageio
 
@@ -40,15 +41,15 @@ class MnistTrainer:
                 owl.set_device(self.gpu)
 
                 # ff
-                a2 = owl.elewise.sigmoid((self.w1 * a1).norm_arithmetic(self.b1, owl.op.add))
-                a3 = owl.elewise.sigmoid((self.w2 * a2).norm_arithmetic(self.b2, owl.op.add))
+                a2 = ele.sigm(self.w1 * a1 + self.b1)
+                a3 = ele.sigm(self.w2 * a2 + self.b2)
                 # softmax & error
-                out = owl.softmax(a3)
+                out = co.softmax(a3)
                 s3 = out - target
                 # bp
-                s3 = owl.elewise.mult(s3, 1 - s3)
+                s3 = ele.mult(s3, 1 - s3)
                 s2 = self.w2.trans() * s3
-                s2 = owl.elewise.mult(s2, 1 - s2)
+                s2 = ele.mult(s2, 1 - s2)
                 # grad
                 gw1 = s2 * a1.trans() / num_samples
                 gb1 = s2.sum(1) / num_samples
@@ -66,22 +67,14 @@ class MnistTrainer:
                     print 'Training error:', (float(num_samples) - val.count(0.0)) / num_samples
                     # test
                     a1 = test_samples
-                    a2 = owl.elewise.sigmoid((self.w1 * a1).norm_arithmetic(self.b1, owl.op.add))
-                    a3 = owl.elewise.sigmoid((self.w2 * a2).norm_arithmetic(self.b2, owl.op.add))
+                    a2 = ele.sigm(self.w1 * a1 + self.b1)
+                    a3 = ele.sigm(self.w2 * a2 + self.b2)
                     correct = a3.max_index(0) - test_labels.max_index(0)
                     val = correct.tolist()
                     #print val
                     print 'Testing error:', (float(num_test_samples) - val.count(0.0)) / num_test_samples
                 count = count + 1
 
-            # test
-            #a1 = test_samples
-            #a2 = owl.elewise.sigmoid((self.w1 * a1).norm_arithmetic(self.b1, owl.op.add))
-            #a3 = owl.elewise.sigmoid((self.w2 * a2).norm_arithmetic(self.b2, owl.op.add))
-            #out = owl.softmax(a3)
-            #correct = out.max_index(0) - test_labels.max_index(0)
-            #val = correct.tolist()
-            #print 'Testing error:', (float(num_test_samples) - val.count(0.0)) / num_test_samples
             print '---Finish epoch #%d' % epoch
 
 if __name__ == '__main__':

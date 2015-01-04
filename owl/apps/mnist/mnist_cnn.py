@@ -8,7 +8,6 @@ import imageio
 import owl
 import owl.elewise as ele
 import owl.conv as conv
-from owl.conv import *
 
 class MNISTCNNModel:
     def __init__(self):

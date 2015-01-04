@@ -29,6 +29,8 @@ do
             want_help=yes ;;
         -c | --clean)
             run_clean ;;
+        --prefix=*)
+            CXXFLAGS="$CXXFLAGS -DCMAKE_INSTALL_PREFIX=`expr "x$1" : "x--prefix=\(.*\)"`"; shift ;;
         -D)
             CXXFLAGS="$CXXFLAGS -D $2"; shift ;;
         -D*)
@@ -68,4 +70,3 @@ fi
 cd $DEBUG_DIR
 CC=$C_COMPILER CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Debug $CXXFLAGS ..
 cd ..
-

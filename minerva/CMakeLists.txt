@@ -17,3 +17,5 @@ if (CUDA_FOUND)
   target_link_libraries(minerva cudnn ${CUDA_curand_LIBRARY})
 endif (CUDA_FOUND)
 set(LIBRARY_OUTPUT_PATH ${Minerva_BINARY_DIR}/lib)
+
+install(TARGETS minerva DESTINATION lib)

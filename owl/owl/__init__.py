@@ -11,7 +11,6 @@ zeros = _owl.zeros
 ones = _owl.ones
 randn = _owl.randn
 randb = _owl.randb
-make_narray = _owl.make_narray
 
 # Convert numpy array into minerva array. ATTENTION: this will lead to
 # a transpose due to the different storage priority
