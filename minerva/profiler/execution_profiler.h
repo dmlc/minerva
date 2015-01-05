@@ -10,7 +10,8 @@ namespace minerva {
 enum class TimerType {
   kMemory,
   kCalculation,
-  kCount
+  kCount,
+  kEnd
 };
 
 class ExecutionProfiler {

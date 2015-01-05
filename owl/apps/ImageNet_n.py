@@ -7,7 +7,7 @@ from owl.conv import *
 import owl.elewise as ele
 from imageio import ImageNetDataProvider
 
-num_gpu = 2
+num_gpu = 4
 lazy = 4
 gpu_array = []
 
@@ -145,7 +145,7 @@ def train_one_mb(model, data, label, weightsgrad, biasgrad, dropout_rate):
     biasgrad[0] = conv_backward_bias(sens[1])
     return acts[12]
 
-def train_network(model, num_epochs = 100, minibatch_size=256,
+def train_network(model, num_epochs = 100, minibatch_size=512,
         dropout_rate = 0.5, eps_w = 0.01, eps_b = 0.01, mom = 0.9, wd = 0.0005):
     num_layers = model.num_layers
     num_weights = model.num_weights
@@ -166,9 +166,17 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             if count == 0:
                 # Update
                 for k in range(num_weights):
-                    for l in range(1, num_gpu):
-                        weightsgrad[0][k] = weightsgrad[0][k] + weightsgrad[l][k]
-                        biasgrad[0][k] = biasgrad[0][k] + biasgrad[l][k]
+                    if num_gpu != 4:
+                        for l in range(1, num_gpu):
+                            weightsgrad[0][k] = weightsgrad[0][k] + weightsgrad[l][k]
+                            biasgrad[0][k] = biasgrad[0][k] + biasgrad[l][k]
+                    else:
+                        owl.set_device(gpu_array[2])
+                        weightsgrad[2][k] += weightsgrad[3][k]
+                        biasgrad[2][k] += biasgrad[3][k]
+                        owl.set_device(gpu_array[0])
+                        weightsgrad[0][k] += weightsgrad[1][k] + weightsgrad[2][k]
+                        biasgrad[0][k] += biasgrad[1][k] + biasgrad[2][k]
                     model.weightsdelta[k] = mom * model.weightsdelta[k] - eps_w / num_samples  * (weightsgrad[0][k] + wd * model.weights[k])
                     model.biasdelta[k] = mom * model.biasdelta[k] - eps_b / num_samples  * (biasgrad[0][k] + wd * model.bias[k])
                     model.weights[k] += model.weightsdelta[k]
@@ -176,6 +184,8 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
                 if j % (lazy * num_gpu) == 0:
                     print_training_accuracy(out, label, minibatch_size)
                     print "time: %s" % (time.time() - last)
+                    owl.print_profiler_result()
+                    owl.reset_profiler_result()
                     last = time.time()
 
 if __name__ == '__main__':
