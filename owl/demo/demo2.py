@@ -9,9 +9,9 @@ b = owl.zeros([96])
 conv = co.Convolver(pad_h=0, pad_w=0, stride_v=4, stride_h=4)
 
 y = conv.ff(x, w, b)
-print y.tonparray()
+print y.to_numpy()
 print y.shape
 
 ex = conv.bp(y, w)
-print ex.tonparray()
+print ex.to_numpy()
 print ex.shape

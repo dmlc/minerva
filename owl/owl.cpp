@@ -83,7 +83,7 @@ m::NArray ReshapeWrapper(m::NArray narr, const bp::list& s) {
   return m::NArray::MakeNArray(ToScale(s), data);
 }*/
 
-m::NArray FromNPArrayWrapper(np::ndarray nparr) {
+m::NArray FromNumpyWrapper(np::ndarray nparr) {
   CHECK(nparr.get_flags() & np::ndarray::C_CONTIGUOUS) << "MakeNArray needs c-contiguous numpy array";
   CHECK(np::equivalent(nparr.get_dtype(), np::dtype::get_builtin<float>())) << "MakeNArray needs float32 numpy array";
   int nd = nparr.get_nd();
@@ -173,12 +173,12 @@ BOOST_PYTHON_MODULE(libowl) {
   using namespace boost::python;
   np::initialize();
 
-  enum_<m::ArithmeticType>("arithmetic")
+  /*enum_<m::ArithmeticType>("arithmetic")
     .value("add", m::ArithmeticType::kAdd)
     .value("sub", m::ArithmeticType::kSub)
     .value("mul", m::ArithmeticType::kMult)
     .value("div", m::ArithmeticType::kDiv)
-  ;
+  ;*/
 
   //float (m::NArray::*sum0)() const = &m::NArray::Sum;
   m::NArray (m::NArray::*sum1)(int) const = &m::NArray::Sum;
@@ -223,10 +223,10 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("max_index", &m::NArray::MaxIndex)
     .def("count_zero", &m::NArray::CountZero)
     // normalize
-    .def("norm_arithmetic", &m::NArray::NormArithmetic)
+    //.def("norm_arithmetic", &m::NArray::NormArithmetic)
     // misc
     .def("trans", &m::NArray::Trans)
-    .def("tonparray", &owl::NArrayToNPArray)
+    .def("to_numpy", &owl::NArrayToNPArray)
     .def("reshape", &owl::ReshapeWrapper)
     .def("wait_for_eval", &m::NArray::WaitForEval)
     .def("start_eval", &m::NArray::StartEval)
@@ -238,7 +238,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("randn", &owl::RandnWrapper);
   //def("make_narray", &owl::MakeNArrayWrapper);
   def("randb", &owl::RandBernoulliWrapper);
-  def("from_nparray", &owl::FromNPArrayWrapper);
+  def("from_numpy", &owl::FromNumpyWrapper);
 
   // system
   def("initialize", &owl::Initialize);
@@ -257,8 +257,8 @@ BOOST_PYTHON_MODULE(libowl) {
   def("sigm_back", &m::Elewise::SigmoidBackward);
   def("relu", &m::Elewise::ReluForward);
   def("relu_back", &m::Elewise::ReluBackward);
-  def("tahn", &m::Elewise::TanhForward);
-  def("tahn_back", &m::Elewise::TanhBackward);
+  def("tanh", &m::Elewise::TanhForward);
+  def("tanh_back", &m::Elewise::TanhBackward);
   
   // convolution
   class_<m::ConvInfo>("ConvInfo")

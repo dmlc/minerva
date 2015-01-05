@@ -91,15 +91,15 @@ def train_network(model, num_epochs = 100, minibatch_size = 256, lr = 0.01, mom 
     # load data
     (train_data, test_data) = imageio.load_mb_from_mat("mnist_all.mat", minibatch_size)
     num_test_samples = test_data[0].shape[0]
-    test_samples = owl.from_nparray(test_data[0]).reshape([28, 28, 1, num_test_samples])
-    test_labels = owl.from_nparray(test_data[1])
+    test_samples = owl.from_numpy(test_data[0]).reshape([28, 28, 1, num_test_samples])
+    test_labels = owl.from_numpy(test_data[1])
     for i in xrange(num_epochs):
         print "---Epoch #", i
         last = time.time()
         for (mb_samples, mb_labels) in train_data:
             num_samples = mb_samples.shape[0]
-            data = owl.from_nparray(mb_samples).reshape([28, 28, 1, num_samples])
-            label = owl.from_nparray(mb_labels)
+            data = owl.from_numpy(mb_samples).reshape([28, 28, 1, num_samples])
+            label = owl.from_numpy(mb_labels)
             out, weightgrad, biasgrad = bpprop(model, data, label)
             for k in range(3):
                 model.weightdelta[k] = mom * model.weightdelta[k] - lr / num_samples * weightgrad[k] - lr * wd * model.weights[k]

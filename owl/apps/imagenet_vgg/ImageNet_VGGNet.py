@@ -238,22 +238,22 @@ def loadmodel(i, model):
         weightshape = model.weights[k].shape
         filename = '%sweights_%d.dat' % (basedir, k)
         weightarray = np.fromfile(filename, dtype=np.float32)
-        model.weights[k] = owl.from_nparray(weightarray).reshape(weightshape)
+        model.weights[k] = owl.from_numpy(weightarray).reshape(weightshape)
 
         weightshape = model.weightsdelta[k].shape
         filename = '%sweightsdelta_%d.dat' % (basedir, k)
         weightarray = np.fromfile(filename, dtype=np.float32)
-        model.weightsdelta[k] = owl.from_nparray(weightarray).reshape(weightshape)
+        model.weightsdelta[k] = owl.from_numpy(weightarray).reshape(weightshape)
 
         weightshape = model.bias[k].shape
         filename = '%sbias_%d.dat' % (basedir, k)
         weightarray = np.fromfile(filename, dtype=np.float32)
-        model.bias[k] = owl.from_nparray(weightarray).reshape(weightshape)
+        model.bias[k] = owl.from_numpy(weightarray).reshape(weightshape)
 
         weightshape = model.biasdelta[k].shape
         filename = '%sbiasdelta_%d.dat' % (basedir, k)
         weightarray = np.fromfile(filename, dtype=np.float32)
-        model.biasdelta[k] = owl.from_nparray(weightarray).reshape(weightshape)
+        model.biasdelta[k] = owl.from_numpy(weightarray).reshape(weightshape)
 
 def savemodel(i, model):
     basedir = './VGGmodel/epoch%d/' % (i)
@@ -335,8 +335,8 @@ def train_network_n(n, model, num_epochs = 100, minibatch_size=40,
         loadmodel(i, model)
         for (samples, labels) in dp.get_train_mb(minibatch_size, 224):
             count = count + 1
-            data[count - 1] = owl.from_nparray(samples).reshape([224, 224, 3, samples.shape[0]])
-            label[count - 1] = owl.from_nparray(labels)
+            data[count - 1] = owl.from_numpy(samples).reshape([224, 224, 3, samples.shape[0]])
+            label[count - 1] = owl.from_numpy(labels)
             biasgrad[count - 1] = [None] * (model.num_layers - 1)
             weightsgrad[count - 1] = [None] * (model.num_layers - 1)
             owl.set_device(gpus[count - 1])
