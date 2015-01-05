@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 """ This module contains operations for convolution, pooling and softmax
 
-Attributes:
-  soft_op (enum): Same enum type as cudnn's cudnnSoftmaxMode_t. Either ``soft_op.instance``
+:ivar enum soft_op: Same enum type as cudnn's ``cudnnSoftmaxMode_t``. Either ``soft_op.instance``
     or ``soft_op.channel``.
-
-  pool_op (enum): Same enum type as cudnn's cudnnPoolingMode_t. Either ``pool_op.max`` 
+:ivar enum pool_op: Same enum type as cudnn's ``cudnnPoolingMode_t``. Either ``pool_op.max`` 
     or ``pool_op.avg``.
 """
 import libowl as _owl
 
-#act_op = _owl.activation_algo
 soft_op = _owl.softmax_algo
 pool_op = _owl.pooling_algo
 
@@ -21,12 +18,10 @@ def softmax(x, op = soft_op.instance):
     dimension of ``x`` should represent instances. If ``x`` is of four dimension, directly
     call the c++ routine. Otherwise, augment the number of dimension to four.
 
-    Args:
-      x (owl.NArray): the ndarray to be softmaxed
-      op (owl.conv.soft_op): what type of softmax to perform
-
-    Returns:
-      owl.NArray: the ndarray after being softmaxed and of the same shape
+    :param owl.NArray x: the ndarray to be softmaxed
+    :param owl.conv.soft_op op: what type of softmax to perform
+    :return: the ndarray after being softmaxed and of the same shape
+    :rtype: owl.NArray
     """
     if len(x.shape) == 4:
         return _owl.softmax_forward(x, op)
@@ -38,20 +33,16 @@ def softmax(x, op = soft_op.instance):
 
 class Convolver:
     """ Wrapper class for convolution.
-
-    Attributes:
-      param (libowl.ConvInfo): convolution parameters
-
+    
+    :ivar libowl.ConvInfo param: convolution parameters
     """
     def __init__(self, pad_h, pad_w, stride_v, stride_h):
         """ Constructor for Convolver class
         
-        Args:
-          pad_h (int): padding height
-          pad_w (int): padding width
-          stride_v (int): vertical stride length
-          stride_h (int): horizontal stride length
-
+        :param int pad_h: padding height
+        :param int pad_w: padding width
+        :param int stride_v: vertical stride length
+        :param int stride_h: horizontal stride length
         """
         ci = _owl.ConvInfo()
         ci.pad_height = pad_h
@@ -63,66 +54,56 @@ class Convolver:
     def ff(self, x, w, b):
         """ Feed-forward convolution
 
-        Args:
-          x (owl.NArray): input of the convolution
-          w (owl.NArray): filters
-          b (owl.NArray): bias of the convolution
-
-        Returns:
-          owl.NArray: result ndarray after forward convolution
+        :param owl.NArray x : input of the convolution
+        :param owl.NArray w: filters
+        :param owl.NArray b: bias of the convolution
+        :return: result ndarray after forward convolution
+        :rtype: owl.NArray
         """
         return _owl.conv_forward(x, w, b, self.param)
 
     def bp(self, y, w):
         """ Backward convolution
 
-        Args:
-          y (owl.NArray): error of the convolution usually passed by higher layers
-          w (owl.NArray): filters
-
-        Returns:
-          owl.NArray: result ndarray after backward convolution
+        :param owl.NArray y: error of the convolution usually passed by higher layers
+        :param owl.NArray w: filters
+        :return: result ndarray after backward convolution
+        :rtype: owl.NArray
         """
         return _owl.conv_backward_data(y, w, self.param)
 
     def weight_grad(self, y, x):
         """ Compute the gradient of filters
 
-        Args:
-          y (owl.NArray): error (sensitivity) passed by higher layer
-          x (owl.NArray): input (activation) of lower layer
-
-        Returns:
-          owl.NArray: the gradient of filters
+        :param owl.NArray y: error (sensitivity) passed by higher layer
+        :param owl.NArray x: input (activation) of lower layer
+        :return: the gradient of filters
+        :rtype: owl.NArray
         """
         return _owl.conv_backward_filter(y, x, self.param)
 
     def bias_grad(self, y):
         """ Compute the gradient of bias
 
-        Args:
-          y (owl.NArray): error (sensitivity) passed by higher layer
-
-        Returns:
-          owl.NArray: the gradient of bias
+        :param owl.NArray y: error (sensitivity) passed by higher layer
+        :return: the gradient of bias
+        :rtype: owl.NArray
         """
         return _owl.conv_backward_bias(y)
 
 class Pooler:
     """ Wrapper class for pooling operations
 
-    Attributes:
-      param (libowl.PoolingInfo): pooling parameters
+    :ivar libowl.PoolingInfo param: pooling parameters
     """
     def __init__(self, h, w, stride_v, stride_h, op):
         """ Constructor for Pooler class
 
-        Args:
-          h (int): pooling height
-          w (int): pooling width
-          stride_v (int): vertical stride length
-          stride_h (int): horizontal stride length
-          op (owl.conv.pool_op): pooling type
+        :param int h: pooling height
+        :param int w: pooling width
+        :param int stride_v: vertical stride length
+        :param int stride_h: horizontal stride length
+        :param owl.conv.pool_op op: pooling type
         """
         pi = _owl.PoolingInfo()
         pi.height = h
@@ -135,23 +116,19 @@ class Pooler:
     def ff(self, x):
         """ Forward propagation for pooling
 
-        Args:
-          x (owl.NArray): input ndarray of pooling
-
-        Returns:
-          owl.NArray: output ndarray after forward pooling
+        :param owl.NArray x: input ndarray of pooling
+        :return: output ndarray after forward pooling
+        :rtype: owl.NArray
         """
         return _owl.pooling_forward(x, self.param)
 
     def bp(self, y, ff_y, ff_x):
         """ Backward propagation for pooling
 
-        Args:
-          y (owl.NArray): error (sensitivity) from higher-layer
-          ff_y (owl.NArray): value after forward pooling
-          ff_x (owl.NArray): value before forward pooling
-
-        Returns:
-          owl.NArray: output after backward pooling
+        :param owl.NArray y: error (sensitivity) from higher-layer
+        :param owl.NArray ff_y: value after forward pooling
+        :param owl.NArray ff_x: value before forward pooling
+        :return: output after backward pooling
+        :rtype: owl.NArray
         """
         return _owl.pooling_backward(y, ff_y, ff_x, self.param)

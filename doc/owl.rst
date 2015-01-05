@@ -1,12 +1,20 @@
 owl package
 ===========
 
+Module contents
+---------------
+
+.. automodule:: owl
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
 .. toctree::
 
-    owl.caffe
+    owl.caffe: !!comment out
 
 Submodules
 ----------
@@ -35,11 +43,3 @@ owl.net module
     :undoc-members:
     :show-inheritance:
 
-
-Module contents
----------------
-
-.. automodule:: owl
-    :members:
-    :undoc-members:
-    :show-inheritance:
