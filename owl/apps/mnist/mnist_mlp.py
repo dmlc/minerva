@@ -63,16 +63,16 @@ class MnistTrainer:
 
                 if (count % 40 == 0):
                     correct = out.max_index(0) - target.max_index(0)
-                    val = correct.tolist()
-                    print 'Training error:', (float(num_samples) - val.count(0.0)) / num_samples
+                    val = correct.to_numpy()
+                    print 'Training error:', float(np.count_nonzero(val)) / num_samples
                     # test
                     a1 = test_samples
                     a2 = ele.sigm(self.w1 * a1 + self.b1)
                     a3 = ele.sigm(self.w2 * a2 + self.b2)
                     correct = a3.max_index(0) - test_labels.max_index(0)
-                    val = correct.tolist()
+                    val = correct.to_numpy()
                     #print val
-                    print 'Testing error:', (float(num_test_samples) - val.count(0.0)) / num_test_samples
+                    print 'Testing error:', float(np.count_nonzero(val)) / num_test_samples
                 count = count + 1
 
             print '---Finish epoch #%d' % epoch
