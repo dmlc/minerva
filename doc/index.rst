@@ -6,11 +6,16 @@
 Welcome to Minerva's documentation!
 ===================================
 
-Contents:
+Minerva is a fast and flexible tool for deep learning. It provides NDarray programming interface, just like Numpy. Python bindings and C++ bindings are both available. The resulting code can be run on CPU or GPU. Multi-GPU support is very easy. Please refer to the examples to see how multi-GPU setting is used.Minerva is a fast and flexible tool for deep learning. It provides NDarray programming interface, just like Numpy. Python bindings and C++ bindings are both available. The resulting code can be run on CPU or GPU.
+
+Contents
+=========
 
 .. toctree::
    :maxdepth: 4
 
+   install
+   tutorial
    owl
 
 

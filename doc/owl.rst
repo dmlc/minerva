@@ -1,23 +1,13 @@
-owl package
+Owl APIs
 ===========
 
-Module contents
+owl module
 ---------------
 
 .. automodule:: owl
     :members:
     :undoc-members:
     :show-inheritance:
-
-Subpackages
------------
-
-.. toctree::
-
-    owl.caffe: !!comment out
-
-Submodules
-----------
 
 owl.conv module
 ---------------
@@ -43,3 +33,7 @@ owl.net module
     :undoc-members:
     :show-inheritance:
 
+.. Subpackage
+ -----------
+ .. toctree::
+ owl.caffe: !!comment out
