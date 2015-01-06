@@ -7,8 +7,8 @@ For element-wise operations, please refer to elewise.py. For other APIs such as 
 functions of ``owl.NArray``, please refer to the API document.
 
 Note that Minerva is an dataflow system with lazy evaluation to construct dataflow graph
-to extract parallelism within codes. All the operations like +-*/ of ``owl.NArray`` are
-all `lazy` such that they are NOT evaluated immediatedly. Only when you try to pull the
+to extract parallelism within codes. All the operations like ``+-*/`` of ``owl.NArray`` are
+all *lazy* such that they are NOT evaluated immediatedly. Only when you try to pull the
 content of an NArray outside Minerva's control (e.g. call ``to_numpy()``) will those operations
 be executed concretely.
 
@@ -22,30 +22,27 @@ import libowl as _owl
 def initialize(argv):
     """ Initialize Minerva System.
 
-    Note:
-      Must be called before calling any owl's API
+    **Must be called before calling any owl's API**
 
-    Args:
-      argv (list str): commandline arguments
+    :param argv: commandline arguments
+    :type argv: list str
     """
     _owl.initialize(argv)
 
 def create_cpu_device():
     """ Create device for running on CPU cores
 
-    Returns:
-      int: A unique id for cpu device
+    :return: A unique id for cpu device
+    :rtype: int
     """
     return _owl.create_cpu_device()
 
 def create_gpu_device(which):
     """ Create device for running on GPU card
 
-    Args:
-      which (int): which GPU card the code would be run on
-
-    Returns:
-      int: A unique id for the device on that GPU card
+    :param int which: which GPU card the code would be run on
+    :return: A unique id for the device on that GPU card
+    :rtype: int
     """
     return _owl.create_gpu_device(which)
 
@@ -55,77 +52,69 @@ def set_device(dev):
     When ``set_device(dev)`` is called, all the subsequent codes will be run on ``dev``
     till another ``set_device`` is called.
 
-    Args:
-      dev (int): the id of the device (usually returned by create_xxx_device)
+    :param int dev: the id of the device (usually returned by create_xxx_device)
     """
     _owl.set_device(dev)
 
 def zeros(shape):
     """ Create ndarray of zero values
 
-    Args:
-      shape (list int): shape of the ndarray to create
-
-    Returns:
-      owl.NArray: result ndarray
+    :param shape: shape of the ndarray to create
+    :type shape: list int
+    :return: result ndarray
+    :rtype: owl.NArray
     """
     return _owl.zeros(shape)
 
 def ones(shape):
     """ Create ndarray of one values
 
-    Args:
-      shape (list int): shape of the ndarray to create
-
-    Returns:
-      owl.NArray: result ndarray
+    :param shape: shape of the ndarray to create
+    :type shape: list int
+    :return: result ndarray
+    :rtype: owl.NArray
     """
     return _owl.ones(shape)
 
 def randn(shape, mu, var):
     """ Create a random ndarray using normal distribution
 
-    Args:
-      shape (list int): shape of the ndarray to create
-      mu (float): mu
-      var (float): variance
-
-    Returns:
-      owl.NArray: result ndarray
+    :param shape: shape of the ndarray to create
+    :type shape: list int
+    :param float mu: mu
+    :param float var: variance
+    :return: result ndarray
+    :rtype: owl.NArray
     """
     return _owl.randn(shape, mu, var)
 
 def randb(shape, prob):
     """ Create a random ndarray using bernoulli distribution
 
-    Args:
-      shape (list int): shape of the ndarray to create
-      prob (float): probability for the value to be one
-
-    Returns:
-      owl.NArray: result ndarray
+    :param shape: shape of the ndarray to create
+    :type shape: list int
+    :param float prob: probability for the value to be one
+    :return: result ndarray
+    :rtype: owl.NArray
     """
     return _owl.randb(shape, prob)
 
 def from_numpy(nparr):
     """ Create an owl.NArray from numpy.ndarray
 
-    Note:
-      The content will be directly copied to Minerva's memory system. However, due to
-      the different priority when treating dimensions between numpy and Minerva. The 
-      result owl.NArray's dimension will be `reversed`.
+    The content will be directly copied to Minerva's memory system. However, due to
+    the different priority when treating dimensions between numpy and Minerva. The 
+    result ``owl.NArray``'s dimension will be *reversed*.
 
-        >>> import numpy as np
-        >>> import owl
-        >>> a = np.zeros([200, 300, 50])
-        >>> b = owl.from_numpy(a)
-        >>> print b.shape
-        [50, 300, 200]
+      >>> import numpy as np
+      >>> import owl
+      >>> a = np.zeros([200, 300, 50])
+      >>> b = owl.from_numpy(a)
+      >>> print b.shape
+      [50, 300, 200]
 
-    Args:
-      nparr (numpy.ndarray): numpy ndarray
-
-    Returns:
-      owl.NArray: Minerva's ndarray
+    :param numpy.ndarray nparr: numpy ndarray
+    :return: Minerva's ndarray
+    :rtype: owl.NArray
     """
     return _owl.from_numpy(np.require(nparr, dtype=np.float32, requirements=['C']))

@@ -30,6 +30,8 @@ do
             want_help=yes ;;
         -c | --clean)
             run_clean ;;
+        --disable-cuda)
+            CXXFLAGS="$CXXFLAGS -DDISABLE_CUDA"; shift ;;
         --prefix=*)
             CXXFLAGS="$CXXFLAGS -DCMAKE_INSTALL_PREFIX=`expr "x$1" : "x--prefix=\(.*\)"`"; shift ;;
         -D)
@@ -49,8 +51,9 @@ Usage: ./configure [OPTION]...
 Configurations:
     -h, --help              Display this help and exit
     -c, --clean             Clean up debug and release build
-    -Dvar=value             Specify definitions to be passed on to cmake
-	                    e.g: GPU=false
+    --disable-cuda          Disable building with CUDA
+    --prefix                Specify install path
+    -Dvar=value | -D value  Specify definitions to be passed on to cmake
 EOF
 exit 0;
 fi
