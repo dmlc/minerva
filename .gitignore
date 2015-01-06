@@ -55,3 +55,6 @@ configure.in
 
 # Data files
 mnist.zip
+
+# doc files
+doc/_build
