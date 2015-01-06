@@ -10,4 +10,4 @@ b = owl.zeros([512, 1])
 y1 = w * x1 + b
 y2 = w * x2 + b
 gw = y1 * x1.trans() + y2 * x2.trans()
-print gw.tonparray()
+print gw.to_numpy()
