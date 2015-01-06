@@ -8,7 +8,10 @@
 """
 import libowl as _owl
 
+""" Same enum type as cudnn's ``cudnnSoftmaxMode_t``. Either ``soft_op.instance`` or ``soft_op.channel``."""
 soft_op = _owl.softmax_algo
+""" Same enum type as cudnn's ``cudnnPoolingMode_t``. Either ``pool_op.max`` or ``pool_op.avg``.
+"""
 pool_op = _owl.pooling_algo
 
 def softmax(x, op = soft_op.instance):
