@@ -33,9 +33,9 @@ do
         --prefix=*)
             CXXFLAGS="$CXXFLAGS -DCMAKE_INSTALL_PREFIX=`expr "x$1" : "x--prefix=\(.*\)"`"; shift ;;
         -D)
-            CXXFLAGS="$CXXFLAGS -D $2"; shift ;;
+            CXXFLAGS="$CXXFLAGS -D$2"; shift ;;
         -D*)
-            CXXFLAGS="$CXXFLAGS -D `expr "x$1" : "x-D\(.*\)"`" ;;
+            CXXFLAGS="$CXXFLAGS -D`expr "x$1" : "x-D\(.*\)"`" ;;
         *)
             unknown_option $1 ;;
     esac
@@ -48,8 +48,9 @@ if test "x$want_help" = xyes; then
 Usage: ./configure [OPTION]...
 Configurations:
     -h, --help              Display this help and exit
-    -c, --clean                 Clean up debug and release build
+    -c, --clean             Clean up debug and release build
     -Dvar=value             Specify definitions to be passed on to cmake
+	                    e.g: GPU=false
 EOF
 exit 0;
 fi
