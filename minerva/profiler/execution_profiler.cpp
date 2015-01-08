@@ -21,7 +21,7 @@ void ExecutionProfiler::RecordTime(TimerType type, const string& name, const Tim
     it = time_.insert({name, new double[static_cast<size_t>(TimerType::kEnd)]()}).first;
   }
   (it->second)[static_cast<size_t>(type)] += timer.ReadMicrosecond();
-  (it->second)[static_cast<size_t>(TimerType::kCount)] += 1.;
+  (it->second)[static_cast<size_t>(TimerType::kCount)] += .5;
 }
 
 void ExecutionProfiler::Reset() {
