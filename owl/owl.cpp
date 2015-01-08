@@ -250,6 +250,7 @@ BOOST_PYTHON_MODULE(libowl) {
 
   // system
   def("initialize", &owl::Initialize);
+  def("finalize", &m::MinervaSystem::Finalize);
   def("create_cpu_device", &owl::CreateCpuDevice);
 #ifdef HAS_CUDA
   def("create_gpu_device", &owl::CreateGpuDevice);

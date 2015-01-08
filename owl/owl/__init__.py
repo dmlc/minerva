@@ -3,7 +3,7 @@
 
 The module encapsulates or directly maps some functions of Minerva's API to python.
 Only system APIs are defined here. For convolution APIs, please refer to conv.py.
-For element-wise operations, please refer to elewise.py. For other APIs such as member 
+For element-wise operations, please refer to elewise.py. For other APIs such as member
 functions of ``owl.NArray``, please refer to the API document.
 
 Note that Minerva is an dataflow system with lazy evaluation to construct dataflow graph
@@ -20,7 +20,7 @@ import numpy as np
 import libowl as _owl
 
 def initialize(argv):
-    """ Initialize Minerva System.
+    """ Initialize Minerva System
 
     **Must be called before calling any owl's API**
 
@@ -28,6 +28,13 @@ def initialize(argv):
     :type argv: list str
     """
     _owl.initialize(argv)
+
+def finalize():
+    """ Finalize Minerva System
+
+    :return: None
+    """
+    _owl.finalize()
 
 def create_cpu_device():
     """ Create device for running on CPU cores
@@ -48,7 +55,7 @@ def create_gpu_device(which):
 
 def set_device(dev):
     """ Switch to the given device for running computations
-    
+
     When ``set_device(dev)`` is called, all the subsequent codes will be run on ``dev``
     till another ``set_device`` is called.
 
@@ -103,7 +110,7 @@ def from_numpy(nparr):
     """ Create an owl.NArray from numpy.ndarray
 
     The content will be directly copied to Minerva's memory system. However, due to
-    the different priority when treating dimensions between numpy and Minerva. The 
+    the different priority when treating dimensions between numpy and Minerva. The
     result ``owl.NArray``'s dimension will be *reversed*.
 
       >>> import numpy as np
@@ -121,10 +128,14 @@ def from_numpy(nparr):
 
 def print_profiler_result():
     """ Print result from execution profiler
+
+    :return: None
     """
     _owl.print_profiler_result()
 
 def reset_profiler_result():
     """ Reset execution profiler
+
+    :return: None
     """
     _owl.reset_profiler_result()
