@@ -3,6 +3,7 @@
 #include "common/cuda_utils.h"
 #include <glog/logging.h>
 #include <cublas_v2.h>
+#include <cudnn.h>
 #include <curand.h>
 #include <limits>
 

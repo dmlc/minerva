@@ -19,6 +19,7 @@ function run_clean {
 }
 
 CXXFLAGS="$CXXFLAGS \
+  -DCUDA_ROOT=$CUDA_ROOT \
   -DEXTERN_LIB_PATH=$EXTERN_LIB_PATH \
   -DEXTERN_INCLUDE_PATH=$EXTERN_INCLUDE_PATH"
 
@@ -29,10 +30,14 @@ do
             want_help=yes ;;
         -c | --clean)
             run_clean ;;
+        --disable-cuda)
+            CXXFLAGS="$CXXFLAGS -DDISABLE_CUDA"; shift ;;
+        --prefix=*)
+            CXXFLAGS="$CXXFLAGS -DCMAKE_INSTALL_PREFIX=`expr "x$1" : "x--prefix=\(.*\)"`"; shift ;;
         -D)
-            CXXFLAGS="$CXXFLAGS -D $2"; shift ;;
+            CXXFLAGS="$CXXFLAGS -D$2"; shift ;;
         -D*)
-            CXXFLAGS="$CXXFLAGS -D `expr "x$1" : "x-D\(.*\)"`" ;;
+            CXXFLAGS="$CXXFLAGS -D`expr "x$1" : "x-D\(.*\)"`" ;;
         *)
             unknown_option $1 ;;
     esac
@@ -45,8 +50,10 @@ if test "x$want_help" = xyes; then
 Usage: ./configure [OPTION]...
 Configurations:
     -h, --help              Display this help and exit
-    -c, --clean                 Clean up debug and release build
-    -Dvar=value             Specify definitions to be passed on to cmake
+    -c, --clean             Clean up debug and release build
+    --disable-cuda          Disable building with CUDA
+    --prefix                Specify install path
+    -Dvar=value | -D value  Specify definitions to be passed on to cmake
 EOF
 exit 0;
 fi
@@ -68,4 +75,3 @@ fi
 cd $DEBUG_DIR
 CC=$C_COMPILER CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Debug $CXXFLAGS ..
 cd ..
-

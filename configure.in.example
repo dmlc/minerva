@@ -11,6 +11,9 @@ C_COMPILER=gcc-4.8
 # Flags passed to C++ compiler
 CXXFLAGS=
 
+# Root path to find cuda
+CUDA_ROOT=/opt/cuda
+
 # Comma seperated list of external dependencies, e.g. cuDNN
-EXTERN_INCLUDE_PATH=$(pwd)/deps/include,/home/cs_user/Libs/cudnn-6.5-linux-R1
-EXTERN_LIB_PATH=$(pwd)/deps/lib,/home/cs_user/Libs/cudnn-6.5-linux-R1
+EXTERN_INCLUDE_PATH=/home/cs_user/Libs/cudnn-6.5-linux-R1
+EXTERN_LIB_PATH=/home/cs_user/Libs/cudnn-6.5-linux-R1

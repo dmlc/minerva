@@ -39,15 +39,6 @@ void SetDevice(uint64_t id) {
   m::MinervaSystem::Instance().current_device_id_ = id;
 }
 
-m::NArray Softmax(m::NArray m) {
-  m::NArray maxval = m.Max(0);
-  // NArray centered = m - maxval.Tile({m.Size(0), 1});
-  m::NArray centered = m.NormArithmetic(maxval, m::ArithmeticType::kSub);
-  m::NArray class_normalizer = m::Elewise::Ln(m::Elewise::Exp(centered).Sum(0)) + maxval;
-  // return Elewise::Exp(m - class_normalizer.Tile({m.Size(0), 1}));
-  return m::Elewise::Exp(m.NormArithmetic(class_normalizer, m::ArithmeticType::kSub));
-}
-
 m::Scale ToScale(const bp::list& l) {
   bp::stl_input_iterator<int> begin(l), end;
   return m::Scale(begin, end);
@@ -81,7 +72,7 @@ m::NArray ReshapeWrapper(m::NArray narr, const bp::list& s) {
   return narr.Reshape(ToScale(s));
 }
 
-m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
+/*m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
   std::vector<float> v = std::vector<float>(bp::stl_input_iterator<float>(val), bp::stl_input_iterator<float>());
   size_t length = bp::len(val);
   shared_ptr<float> data( new float[length], [] (float* ptr) { delete [] ptr; } );
@@ -90,9 +81,9 @@ m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
 //    valptr.get()[i] = bp::extract<float>(val[i] * 1.0);
 //  }
   return m::NArray::MakeNArray(ToScale(s), data);
-}
+}*/
 
-m::NArray FromNPArrayWrapper(np::ndarray nparr) {
+m::NArray FromNumpyWrapper(np::ndarray nparr) {
   CHECK(nparr.get_flags() & np::ndarray::C_CONTIGUOUS) << "MakeNArray needs c-contiguous numpy array";
   CHECK(np::equivalent(nparr.get_dtype(), np::dtype::get_builtin<float>())) << "MakeNArray needs float32 numpy array";
   int nd = nparr.get_nd();
@@ -104,6 +95,23 @@ m::NArray FromNPArrayWrapper(np::ndarray nparr) {
   shared_ptr<float> data( new float[length], [] (float* ptr) { delete [] ptr; } );
   memcpy(data.get(), reinterpret_cast<float*>(nparr.get_data()), sizeof(float) * length);
   return m::NArray::MakeNArray(shape, data);
+}
+  
+np::ndarray NArrayToNPArray(m::NArray narr) {
+  std::shared_ptr<float> v = narr.Get();
+  m::Scale shape = narr.Size();
+  size_t nd = shape.NumDims();
+  std::vector<int> np_shape(nd, 0), np_stride(nd, 0);
+  int mult = 4;
+  for(size_t i = 0; i < nd; ++i) {
+    np_shape[nd - i - 1] = shape[i];
+    np_stride[nd - i - 1] = mult;
+    mult *= shape[i];
+  }
+  size_t length = shape.Prod();
+  float * np_ptr = new float[length];
+  memcpy(np_ptr, v.get(), sizeof(float) * length);
+  return np::from_data(np_ptr, np::dtype::get_builtin<float>(), np_shape, np_stride, bp::object());
 }
 
 bp::list ShapeWrapper(m::NArray narr) {
@@ -173,22 +181,22 @@ BOOST_PYTHON_MODULE(libowl) {
   using namespace boost::python;
   np::initialize();
 
-  enum_<m::ArithmeticType>("arithmetic")
+  /*enum_<m::ArithmeticType>("arithmetic")
     .value("add", m::ArithmeticType::kAdd)
     .value("sub", m::ArithmeticType::kSub)
     .value("mul", m::ArithmeticType::kMult)
     .value("div", m::ArithmeticType::kDiv)
-  ;
+  ;*/
 
-  float (m::NArray::*sum0)() const = &m::NArray::Sum;
+  //float (m::NArray::*sum0)() const = &m::NArray::Sum;
   m::NArray (m::NArray::*sum1)(int) const = &m::NArray::Sum;
   m::NArray (m::NArray::*sum2)(const m::Scale&) const = &m::NArray::Sum;
 
-  float (m::NArray::*max0)() const = &m::NArray::Max;
+  //float (m::NArray::*max0)() const = &m::NArray::Max;
   m::NArray (m::NArray::*max1)(int) const = &m::NArray::Max;
   m::NArray (m::NArray::*max2)(const m::Scale&) const = &m::NArray::Max;
 
-  class_<m::Scale>("_Scale");
+  //class_<m::Scale>("_Scale");
 
   class_<m::NArray>("NArray")
     // element-wise
@@ -214,44 +222,33 @@ BOOST_PYTHON_MODULE(libowl) {
     // matrix multiply
     .def(self * self)
     // reduction
-    .def("sum", sum0)
+    //.def("sum", sum0) TODO not implemented yet
     .def("sum", sum1)
     .def("sum", sum2)
-    .def("max", max0)
+    //.def("max", max0) TODO not implemented yet
     .def("max", max1)
     .def("max", max2)
     .def("max_index", &m::NArray::MaxIndex)
     .def("count_zero", &m::NArray::CountZero)
     // normalize
-    .def("norm_arithmetic", &m::NArray::NormArithmetic)
+    //.def("norm_arithmetic", &m::NArray::NormArithmetic)
     // misc
     .def("trans", &m::NArray::Trans)
-    .def("tofile", &m::NArray::ToFile)
-    .def("tolist", &owl::NArrayToList)
+    .def("to_numpy", &owl::NArrayToNPArray)
     .def("reshape", &owl::ReshapeWrapper)
     .def("wait_for_eval", &m::NArray::WaitForEval)
     .def("start_eval", &m::NArray::StartEval)
     .add_property("shape", &owl::ShapeWrapper)
   ;
-/*
-  // file loader
-  class_<m::IFileLoader>("IFileLoader");
-  class_<m::SimpleFileLoader, bases<m::IFileLoader>>("SimpleFileLoader");
-  class_<m::FileFormat>("FileFormat")
-    .def_readwrite("binary", &m::FileFormat::binary)
-  ;
-*/
   // creators
   def("zeros", &owl::ZerosWrapper);
   def("ones", &owl::OnesWrapper);
   def("randn", &owl::RandnWrapper);
-  def("make_narray", &owl::MakeNArrayWrapper);
+  //def("make_narray", &owl::MakeNArrayWrapper);
   def("randb", &owl::RandBernoulliWrapper);
-  def("from_nparray", &owl::FromNPArrayWrapper);
-  //def("toscale", &owl::ToScale);
+  def("from_numpy", &owl::FromNumpyWrapper);
 
   // system
-  //def("to_list", &owl::NArrayToList);
   def("initialize", &owl::Initialize);
   def("create_cpu_device", &owl::CreateCpuDevice);
 #ifdef HAS_CUDA
@@ -270,12 +267,9 @@ BOOST_PYTHON_MODULE(libowl) {
   def("sigm_back", &m::Elewise::SigmoidBackward);
   def("relu", &m::Elewise::ReluForward);
   def("relu_back", &m::Elewise::ReluBackward);
-  def("tahn", &m::Elewise::TanhForward);
-  def("tahn_back", &m::Elewise::TanhBackward);
-
-  // utils
-  def("softmax", &owl::Softmax);
-
+  def("tanh", &m::Elewise::TanhForward);
+  def("tanh_back", &m::Elewise::TanhBackward);
+  
   // convolution
   class_<m::ConvInfo>("ConvInfo")
     .def_readwrite("pad_height", &m::ConvInfo::pad_height)

@@ -76,15 +76,6 @@ class MnistTrainer:
                     print 'Testing error:', float(np.count_nonzero(correct)) / num_test_samples
                 count = count + 1
 
-            # test
-            #a1 = test_samples
-            #a2 = owl.elewise.sigmoid((self.w1 * a1).norm_arithmetic(self.b1, owl.op.add))
-            #a3 = owl.elewise.sigmoid((self.w2 * a2).norm_arithmetic(self.b2, owl.op.add))
-            #out = owl.softmax(a3)
-            #correct = out.max_index(0) - test_labels.max_index(0)
-            #val = correct.tolist()
-            #print 'Testing error:', (float(num_test_samples) - val.count(0.0)) / num_test_samples
-
             print '---Finish epoch #%d' % epoch
 
 if __name__ == '__main__':
