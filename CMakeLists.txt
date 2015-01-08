@@ -15,8 +15,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11")
 string(REPLACE "," ";" EXTERNAL_LIB_PATH "${EXTERN_LIB_PATH}")
 string(REPLACE "," ";" EXTERNAL_INCLUDE_PATH "${EXTERN_INCLUDE_PATH}")
 
+set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_ROOT})
 if (NOT DISABLE_CUDA)
-  set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_ROOT})
   find_package(CUDA)
   if (CUDA_FOUND)
     if (CUDA_VERSION_MAJOR LESS 6)
@@ -31,6 +31,8 @@ if (NOT DISABLE_CUDA)
     set(CUDA_NVCC_FLAGS_RELEASE "-Xcompiler \\\"${CUDA_CONCAT_RELEASE}\\\"")
     set(CUDA_NVCC_FLAGS "-arch sm_35")
   endif (CUDA_FOUND)
+else ()
+  message(STATUS "CUDA disabled by user")
 endif()
 
 include_directories(
