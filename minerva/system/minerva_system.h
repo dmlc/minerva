@@ -21,8 +21,6 @@ class MinervaSystem :
  public:
   static void UniversalMemcpy(std::pair<Device::MemType, float*>, std::pair<Device::MemType, float*>, size_t);
   ~MinervaSystem();
-  void Initialize(int* argc, char*** argv);
-  void Finalize();
   PhysicalDag& physical_dag() {
     return *physical_dag_;
   }
@@ -49,7 +47,7 @@ class MinervaSystem :
   uint64_t current_device_id_;
 
  private:
-  MinervaSystem();
+  MinervaSystem(int*, char***);
   void LoadBuiltinDagMonitors();
   void ExecutePhysicalDag(const std::vector<uint64_t>& pids);
   PhysicalDag* physical_dag_;

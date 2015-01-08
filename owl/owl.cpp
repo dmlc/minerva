@@ -24,7 +24,7 @@ void Initialize(bp::list args) {
   for (int i = 0; i < argc; i++) {
     argv[i] = bp::extract<char*>(args[i]);
   }
-  m::MinervaSystem::Instance().Initialize(&argc, &argv);
+  m::MinervaSystem::Initialize(&argc, &argv);
 }
 
 uint64_t CreateCpuDevice() {

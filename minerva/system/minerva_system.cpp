@@ -26,19 +26,6 @@ void MinervaSystem::UniversalMemcpy(pair<Device::MemType, float*> to, pair<Devic
 }
 
 MinervaSystem::~MinervaSystem() {
-}
-
-void MinervaSystem::Initialize(int* argc, char*** argv) {
-  google::InitGoogleLogging((*argv)[0]);
-  physical_dag_ = new PhysicalDag();
-  dag_scheduler_ = new DagScheduler(physical_dag_);
-  profiler_ = new ExecutionProfiler();
-  device_manager_ = new DeviceManager(dag_scheduler_);
-  current_device_id_ = 0;
-  LoadBuiltinDagMonitors();
-}
-
-void MinervaSystem::Finalize() {
   dag_scheduler_->WaitForFinish();
   physical_dag_->ClearMonitor();
   delete device_manager_;
@@ -46,7 +33,6 @@ void MinervaSystem::Finalize() {
   delete dag_scheduler_;
   delete physical_dag_;
   google::ShutdownGoogleLogging();
-  ShutDown();
 }
 
 uint64_t MinervaSystem::CreateCpuDevice() {
@@ -112,7 +98,14 @@ uint64_t MinervaSystem::GenerateDataId() {
   return data_id++;
 }
 
-MinervaSystem::MinervaSystem() {
+MinervaSystem::MinervaSystem(int* argc, char*** argv) {
+  google::InitGoogleLogging((*argv)[0]);
+  physical_dag_ = new PhysicalDag();
+  dag_scheduler_ = new DagScheduler(physical_dag_);
+  profiler_ = new ExecutionProfiler();
+  device_manager_ = new DeviceManager(dag_scheduler_);
+  current_device_id_ = 0;
+  LoadBuiltinDagMonitors();
 }
 
 void MinervaSystem::LoadBuiltinDagMonitors() {
