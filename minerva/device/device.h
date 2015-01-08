@@ -99,7 +99,7 @@ class CpuDevice : public ThreadedDevice {
   std::string Name() const;
 
  private:
-  static const size_t kDefaultThreadNum = 8;
+  static const size_t kDefaultThreadNum = 4;
   void DoCopyRemoteData(float*, float*, size_t, int);
   void DoExecute(const DataList&, const DataList&, PhysicalOp&, int);
   DISALLOW_COPY_AND_ASSIGN(CpuDevice);
