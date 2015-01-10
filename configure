@@ -48,8 +48,9 @@ if test "x$want_help" = xyes; then
 Usage: ./configure [OPTION]...
 Configurations:
     -h, --help              Display this help and exit
-    -c, --clean                 Clean up debug and release build
-    -Dvar=value             Specify definitions to be passed on to cmake
+    -c, --clean             Clean up debug and release build
+    --prefix                Specify install path
+    -Dvar=value | -D value  Specify definitions to be passed on to cmake
 EOF
 exit 0;
 fi

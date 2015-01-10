@@ -19,6 +19,8 @@ on numpy such as IO and visualization.
 import numpy as np
 import libowl as _owl
 
+NArray = _owl.NArray
+
 def initialize(argv):
     """ Initialize Minerva System.
 

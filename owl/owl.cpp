@@ -118,13 +118,13 @@ bp::list ShapeWrapper(m::NArray narr) {
   return ToPythonList(narr.Size());
 }
 
-bp::list NArrayToList(m::NArray narr) {
+/*bp::list NArrayToList(m::NArray narr) {
   bp::list l;
   std::shared_ptr<float> v = narr.Get();
   for(int i = 0; i < narr.Size().Prod(); ++i)
     l.append(v.get()[i]);
   return l;
-}
+}*/
 
 m::NArray ConvForward(m::NArray src, m::NArray filter, m::NArray bias, m::ConvInfo info) {
   return m::Convolution::ConvForward(m::ImageBatch(src), m::Filter(filter), bias, info);
@@ -220,7 +220,7 @@ BOOST_PYTHON_MODULE(libowl) {
     //.def("max", max0) TODO not implemented yet
     .def("max", max1)
     .def("max", max2)
-    .def("max_index", &m::NArray::MaxIndex)
+    .def("argmax", &m::NArray::MaxIndex)
     .def("count_zero", &m::NArray::CountZero)
     // normalize
     //.def("norm_arithmetic", &m::NArray::NormArithmetic)
@@ -299,4 +299,3 @@ BOOST_PYTHON_MODULE(libowl) {
   def("activation_backward", &owl::ActivationBackward);
   def("softmax_backward", &owl::SoftmaxBackward);
 }
-
