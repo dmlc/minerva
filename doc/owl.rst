@@ -18,7 +18,8 @@ owl module
 
     x.__mul__(y)<==>x*y
 
-    If any of x and y is ``float`` number, it is an element-wise multiplication. Otherwise, it is a matrix multiplcation which is only allowed for 2-dimensional NArray (matrix).
+    .. note::
+      If any of x and y is ``float`` number, it is an element-wise multiplication. Otherwise, it is a matrix multiplcation which is only allowed for 2-dimensional NArray (matrix).
 
   .. py:attribute:: __div__
 
@@ -71,7 +72,8 @@ owl module
   .. py:method:: count_zero()
 
     Return the number of zero elements in the NArray
-    Note::
+
+    .. note::
 
       This function is a non-lazy function.
 
@@ -81,7 +83,8 @@ owl module
   .. py:method:: trans()
     
     Return the transposed NArray
-    Note::
+
+    .. note::
 
       Only allow transpose on 2-dimension NArray (matrix)
 
@@ -91,7 +94,8 @@ owl module
   .. py:method:: reshape(shape)
 
     Return the NArray that is of different shape but same contents.
-    Note::
+
+    .. note::
     
       Only shape of the same volume is allowed.
 
@@ -111,9 +115,17 @@ owl module
   .. py:method:: to_numpy()
 
     Convert this NArray to numpy::ndarray
-    Note::
 
-      This function is a non-lazy function.
+    .. note::
+
+      This function is a non-lazy function. Due to the different priority when treating dimensions between numpy and Minerva. The result ``numpy::ndarray``'s dimension will be *reversed*
+
+        >>> a = owl.zeros([50, 300, 200])
+        >>> b = a.to_numpy()
+        >>> print b.shape
+        [200, 300, 50]
+
+    .. seealso:: owl.from_numpy
 
     :return: numpy's ndarray with the same contents
     :rtype: numpy::ndarray

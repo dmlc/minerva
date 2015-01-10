@@ -24,7 +24,8 @@ NArray = _owl.NArray
 def initialize(argv):
     """ Initialize Minerva System.
 
-    **Must be called before calling any owl's API**
+    .. note::
+        Must be called before calling any owl's API
 
     :param argv: commandline arguments
     :type argv: list str
@@ -104,16 +105,18 @@ def randb(shape, prob):
 def from_numpy(nparr):
     """ Create an owl.NArray from numpy.ndarray
 
-    The content will be directly copied to Minerva's memory system. However, due to
-    the different priority when treating dimensions between numpy and Minerva. The 
-    result ``owl.NArray``'s dimension will be *reversed*.
+    .. note::
 
-      >>> import numpy as np
-      >>> import owl
-      >>> a = np.zeros([200, 300, 50])
-      >>> b = owl.from_numpy(a)
-      >>> print b.shape
-      [50, 300, 200]
+        The content will be directly copied to Minerva's memory system. However, due to
+        the different priority when treating dimensions between numpy and Minerva. The 
+        result ``owl.NArray``'s dimension will be *reversed*.
+
+        >>> a = numpy.zeros([200, 300, 50])
+        >>> b = owl.from_numpy(a)
+        >>> print b.shape
+        [50, 300, 200]
+
+    .. seealso:: owl.NArray.to_numpy
 
     :param numpy.ndarray nparr: numpy ndarray
     :return: Minerva's ndarray
