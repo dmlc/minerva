@@ -1,20 +1,13 @@
-import sys,os
+import sys
 import time
-import math
 import numpy as np
-import subprocess
-
-import imageio
+import mnist_io
 import owl
 import owl.elewise as ele
 import owl.conv as conv
 
 class MNISTCNNModel:
     def __init__(self):
-        self.weights = []
-        self.bias = []
-        self.weightdelta = []
-        self.biasdelta = []
         self.convs = [
             conv.Convolver(0, 0, 1, 1),
             conv.Convolver(2, 2, 1, 1),
@@ -23,6 +16,7 @@ class MNISTCNNModel:
             conv.Pooler(2, 2, 2, 2, conv.pool_op.max),
             conv.Pooler(3, 3, 3, 3, conv.pool_op.max)
         ];
+
     def init_random(self):
         self.weights = [
             owl.randn([5, 5, 1, 16], 0.0, 0.1),
@@ -53,7 +47,7 @@ def print_training_accuracy(o, t, mbsize, prefix):
     print prefix, 'error: {}'.format((mbsize - correct) * 1.0 / mbsize)
 
 def bpprop(model, samples, label):
-    num_layers = 9
+    num_layers = 6
     num_samples = samples.shape[-1]
     fc_shape = [512, num_samples]
 
@@ -86,10 +80,9 @@ def bpprop(model, samples, label):
     return (out, weightgrad, biasgrad)
 
 def train_network(model, num_epochs = 100, minibatch_size = 256, lr = 0.01, mom = 0.75, wd = 5e-4):
-    owl.set_device(owl.create_gpu_device(0))
     count = 0
     # load data
-    (train_data, test_data) = imageio.load_mb_from_mat("mnist_all.mat", minibatch_size)
+    (train_data, test_data) = mnist_io.load_mb_from_mat("mnist_all.mat", minibatch_size)
     num_test_samples = test_data[0].shape[0]
     test_samples = owl.from_numpy(test_data[0]).reshape([28, 28, 1, num_test_samples])
     test_labels = owl.from_numpy(test_data[1])
@@ -106,7 +99,7 @@ def train_network(model, num_epochs = 100, minibatch_size = 256, lr = 0.01, mom 
                 model.biasdelta[k] = mom * model.biasdelta[k] - lr / num_samples * biasgrad[k]
                 model.weights[k] += model.weightdelta[k]
                 model.bias[k] += model.biasdelta[k]
-            
+
             count = count + 1
             if (count % 20) == 0:
                 print_training_accuracy(out, label, num_samples, 'Training')
@@ -117,7 +110,7 @@ def train_network(model, num_epochs = 100, minibatch_size = 256, lr = 0.01, mom 
 
 if __name__ == '__main__':
     owl.initialize(sys.argv)
-    owl.create_cpu_device()
+    owl.create_gpu_device(0)
     model = MNISTCNNModel()
     model.init_random()
     train_network(model)
