@@ -63,8 +63,10 @@ void ThreadedDevice::FreeDataIfExist(uint64_t data_id) {
 void ThreadedDevice::Execute(PhysicalOpNode* op_node, int thrid) {
   PreExecute();
   DataList input_shards;
+#ifndef NDEBUG
   WallTimer memory_timer;
   memory_timer.Start();
+#endif
   for (auto i : op_node->inputs_) {
     auto& input_data = i->data_;
     if (input_data.device_id == device_id_) {  // Input is local
@@ -90,17 +92,21 @@ void ThreadedDevice::Execute(PhysicalOpNode* op_node, int thrid) {
     CHECK(local_data_.Insert(i->data_.data_id));
     output_shards.emplace_back(ptr, i->data_.size);
   }
+#ifndef NDEBUG
   Barrier(thrid);
   memory_timer.Stop();
   MinervaSystem::Instance().profiler().RecordTime(TimerType::kMemory, op_node->op_.compute_fn->Name(), memory_timer);
+#endif
   auto& op = op_node->op_;
   CHECK_NOTNULL(op.compute_fn);
   DLOG(INFO) << Name() << " execute node #" << op_node->node_id() << ": " << op.compute_fn->Name();
   WallTimer calculate_timer;
   calculate_timer.Start();
   DoExecute(input_shards, output_shards, op, thrid);
+#ifndef NDEBUG
   calculate_timer.Stop();
   MinervaSystem::Instance().profiler().RecordTime(TimerType::kCalculation, op_node->op_.compute_fn->Name(), calculate_timer);
+#endif
   listener_->OnOperationComplete(op_node);
 }
 
