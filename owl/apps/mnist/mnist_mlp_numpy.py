@@ -2,7 +2,7 @@ import sys,os
 import math
 import numpy as np
 import numpy.random
-import imageio
+import mnist_io
 
 def sigmoid(m):
     return 1 / (1 + np.exp(-m))
@@ -29,7 +29,7 @@ class MnistTrainer:
         self.b2 = np.zeros([l3, 1])
 
     def run(self):
-        (train_data, test_data) = imageio.load_mb_from_mat(self.data_file, self.mb_size)
+        (train_data, test_data) = mnist_io.load_mb_from_mat(self.data_file, self.mb_size)
         np.set_printoptions(linewidth=200)
         num_test_samples = test_data[0].shape[0]
         (test_samples, test_labels) = test_data

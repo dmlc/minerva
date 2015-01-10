@@ -128,8 +128,8 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
 int main(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   FLAGS_alsologtostderr = 1;
+  MinervaSystem::Initialize(&argc, &argv);
   MinervaSystem& ms = MinervaSystem::Instance();
-  ms.Initialize(&argc, &argv);
   uint64_t cpu_device = ms.CreateCpuDevice();
   uint64_t gpu_device[2] = {ms.CreateGpuDevice(0), ms.CreateGpuDevice(1)};
   ms.current_device_id_ = gpu_device[0];

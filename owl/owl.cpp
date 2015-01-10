@@ -24,7 +24,7 @@ void Initialize(bp::list args) {
   for (int i = 0; i < argc; i++) {
     argv[i] = bp::extract<char*>(args[i]);
   }
-  m::MinervaSystem::Instance().Initialize(&argc, &argv);
+  m::MinervaSystem::Initialize(&argc, &argv);
 }
 
 uint64_t CreateCpuDevice() {
@@ -166,6 +166,14 @@ m::NArray SoftmaxBackward(m::NArray diff, m::NArray top, m::SoftmaxAlgorithm alg
   return m::Convolution::SoftmaxBackward(m::ImageBatch(diff), m::ImageBatch(top), algo);
 }
 
+void PrintProfilerResult() {
+  m::MinervaSystem::Instance().profiler().PrintResult();
+}
+
+void ResetProfilerResult() {
+  m::MinervaSystem::Instance().profiler().Reset();
+}
+
 } // end of namespace owl
 
 // python module
@@ -242,11 +250,14 @@ BOOST_PYTHON_MODULE(libowl) {
 
   // system
   def("initialize", &owl::Initialize);
+  def("finalize", &m::MinervaSystem::Finalize);
   def("create_cpu_device", &owl::CreateCpuDevice);
 #ifdef HAS_CUDA
   def("create_gpu_device", &owl::CreateGpuDevice);
 #endif
   def("set_device", &owl::SetDevice);
+  def("print_profiler_result", &owl::PrintProfilerResult);
+  def("reset_profiler_result", &owl::ResetProfilerResult);
 
   // elewise
   def("mult", &m::Elewise::Mult);

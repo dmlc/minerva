@@ -31,11 +31,11 @@ do
         -c | --clean)
             run_clean ;;
         --disable-cuda)
-            CXXFLAGS="$CXXFLAGS -DDISABLE_CUDA"; shift ;;
+            CXXFLAGS="$CXXFLAGS -DDISABLE_CUDA=ON"; shift ;;
         --prefix=*)
             CXXFLAGS="$CXXFLAGS -DCMAKE_INSTALL_PREFIX=`expr "x$1" : "x--prefix=\(.*\)"`"; shift ;;
         -D)
-            CXXFLAGS="$CXXFLAGS -D$2"; shift ;;
+            CXXFLAGS="$CXXFLAGS -D$2=ON"; shift ;;
         -D*)
             CXXFLAGS="$CXXFLAGS -D`expr "x$1" : "x-D\(.*\)"`" ;;
         *)

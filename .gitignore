@@ -18,7 +18,6 @@
 dist
 *egg-info
 
-
 # Generated directories
 debug
 release
@@ -52,9 +51,6 @@ Vagrantfile
 
 # configure file
 configure.in
-
-# Data files
-mnist.zip
 
 # doc files
 doc/_build
