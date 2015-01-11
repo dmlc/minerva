@@ -45,6 +45,10 @@ uint64_t MinervaSystem::CreateGpuDevice(int gid) {
   return device_manager_->CreateGpuDevice(gid);
 }
 
+int MinervaSystem::GetGpuDeviceCount() {
+  return device_manager_->GetGpuDeviceCount();
+}
+
 #endif
 
 shared_ptr<float> MinervaSystem::GetValue(const NArray& narr) {

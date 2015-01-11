@@ -36,6 +36,7 @@ class MinervaSystem :
   uint64_t CreateCpuDevice();
 #ifdef HAS_CUDA
   uint64_t CreateGpuDevice(int gid);
+  int GetGpuDeviceCount();
 #endif
   std::shared_ptr<float> GetValue(const NArray& narr);
   std::pair<Device::MemType, float*> GetPtr(uint64_t, uint64_t);

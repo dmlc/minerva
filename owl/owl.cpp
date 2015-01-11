@@ -4,13 +4,11 @@
 #include <boost/python/args.hpp>
 #include <boost/numpy.hpp>
 #include <boost/numpy/ndarray.hpp>
-
 #include <glog/logging.h>
-
 #include <iostream>
-using namespace std;
-
 #include "minerva.h"
+
+using namespace std;
 
 namespace m = minerva;
 namespace bp = boost::python;
@@ -28,13 +26,21 @@ void Initialize(bp::list args) {
 }
 
 uint64_t CreateCpuDevice() {
-  return m::MinervaSystem::Instance().device_manager().CreateCpuDevice();
+  return m::MinervaSystem::Instance().CreateCpuDevice();
 }
+
 #ifdef HAS_CUDA
+
 uint64_t CreateGpuDevice(int id) {
-  return m::MinervaSystem::Instance().device_manager().CreateGpuDevice(id);
+  return m::MinervaSystem::Instance().CreateGpuDevice(id);
 }
+
+int GetGpuDeviceCount() {
+  return m::MinervaSystem::Instance().GetGpuDeviceCount();
+}
+
 #endif
+
 void SetDevice(uint64_t id) {
   m::MinervaSystem::Instance().current_device_id_ = id;
 }
@@ -96,7 +102,7 @@ m::NArray FromNumpyWrapper(np::ndarray nparr) {
   memcpy(data.get(), reinterpret_cast<float*>(nparr.get_data()), sizeof(float) * length);
   return m::NArray::MakeNArray(shape, data);
 }
-  
+
 np::ndarray NArrayToNPArray(m::NArray narr) {
   std::shared_ptr<float> v = narr.Get();
   m::Scale shape = narr.Size();
@@ -254,6 +260,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("create_cpu_device", &owl::CreateCpuDevice);
 #ifdef HAS_CUDA
   def("create_gpu_device", &owl::CreateGpuDevice);
+  def("get_gpu_device_count", &owl::GetGpuDeviceCount);
 #endif
   def("set_device", &owl::SetDevice);
   def("print_profiler_result", &owl::PrintProfilerResult);
@@ -270,7 +277,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("relu_back", &m::Elewise::ReluBackward);
   def("tanh", &m::Elewise::TanhForward);
   def("tanh_back", &m::Elewise::TanhBackward);
-  
+
   // convolution
   class_<m::ConvInfo>("ConvInfo")
     .def_readwrite("pad_height", &m::ConvInfo::pad_height)

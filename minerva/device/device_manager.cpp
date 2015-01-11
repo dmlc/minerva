@@ -1,6 +1,10 @@
 #include "device/device_manager.h"
-#include "device/device.h"
 #include <glog/logging.h>
+#include "device/device.h"
+#include "common/cuda_utils.h"
+#ifdef HAS_CUDA
+#include <cuda.h>
+#endif
 
 using namespace std;
 
@@ -29,6 +33,12 @@ uint64_t DeviceManager::CreateGpuDevice(int gid) {
   Device* d = new GpuDevice(id, listener_, gid);
   CHECK(device_storage_.emplace(id, d).second);
   return id;
+}
+
+int DeviceManager::GetGpuDeviceCount() {
+  int ret;
+  CUDA_CALL(cudaGetDeviceCount(&ret));
+  return ret;
 }
 
 #endif

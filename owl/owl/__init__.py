@@ -53,6 +53,14 @@ def create_gpu_device(which):
     """
     return _owl.create_gpu_device(which)
 
+def get_gpu_device_count():
+    """ Get the number of compute-capable GPU devices
+
+    :return: Number of compute-capable GPU devices
+    "rtype: int
+    """
+    return _owl.get_gpu_device_count()
+
 def set_device(dev):
     """ Switch to the given device for running computations
 
