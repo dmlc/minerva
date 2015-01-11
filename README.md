@@ -17,5 +17,5 @@ You can use the "issues" tab in github to report bugs. For non-bug issues, pleas
 
 ## Wiki
 
-For more information on how to install, use or contribute to Minerva, plese visit our wiki page: https://github.com/minerva-developers/minerva/wiki
+For more information on how to install, use or contribute to Minerva, please visit our wiki page: https://github.com/minerva-developers/minerva/wiki
 
