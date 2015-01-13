@@ -38,6 +38,7 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
   }
 }
 
+/*
 void LRN(const DataList& inputs, const DataList& outputs, LRNClosure& closure, const CudaRuntimeContext & context) {
   CHECK_EQ(inputs.size(), 2) << "(LRN) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(LRN) #outputs is wrong!";
@@ -53,6 +54,7 @@ void LRN(const DataList& inputs, const DataList& outputs, LRNClosure& closure, c
   int height = closure.data_shape[0];
   CudaPerformLRN(bottom_data, scale_data, res_data, local_size, alpha, beta, num_img, channel, weight, height, context.stream);
 }
+*/
 
 void MatMult(const DataList& inputs, const DataList& outputs, MatMultClosure& closure, const CudaRuntimeContext & context) {
   CHECK_EQ(inputs.size(), 2) << "(matmult) #inputs is wrong!";

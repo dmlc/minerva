@@ -32,11 +32,13 @@ NArray NArray::RandBernoulli(const Scale& size, float p) {
   return NArray::GenerateOne(size, op);
 }
 
+/*
 NArray NArray::LRN(const NArray& scale, int local_size, float alpha, float beta) const{
   LRNOp* op = new LRNOp();
   op->closure = {local_size, alpha, beta, this->Size()};
   return NArray::ComputeOne({*this, scale}, op);
 }
+*/
 
 NArray NArray::LoadFromFile(const Scale& size, const string& fname, shared_ptr<IFileLoader> loader) {
   FileLoaderOp* loader_op = new FileLoaderOp();

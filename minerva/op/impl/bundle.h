@@ -42,6 +42,6 @@ INSTALL_DATAGEN_FN(RandnClosure, basic::Randn, NO_IMPL, cuda::Randn);
 INSTALL_DATAGEN_FN(RandBernoulliClosure, basic::RandBernoulli, NO_IMPL, cuda::RandBernoulli);
 INSTALL_DATAGEN_FN(FillClosure, basic::Fill, NO_IMPL, cuda::Fill);
 
-INSTALL_DATAGEN_FN(LRNClosure, NO_IMPL, NO_IMPL, cuda::LRN);
+//INSTALL_DATAGEN_FN(LRNClosure, NO_IMPL, NO_IMPL, cuda::LRN);
 
 }  // namespace minerva

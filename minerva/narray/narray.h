@@ -75,8 +75,10 @@ class NArray {
   NArray Max(int dim) const;
   NArray Max(const Scale& dims) const;
   NArray MaxIndex(int dim) const;
-  
+ 
+/* 
   NArray LRN(const NArray& scale, int local_size, float alpha, float beta) const;
+*/
 
   //NArray Concatenate(std::vector<const NArray&>) const;
 
