@@ -539,6 +539,26 @@ void CudaPerformFill(float* dst, size_t size, float val, cudaStream_t stream) {
   CheckCudaError("CudaPerformFill");
 }
 
+void CudaPerformLRN(float* bottom, float* scale, float* res, int local_size, float alpha, float beta, int num_img, int channel, int width, int height, cudaStream_t stream)
+{
+	int block, thread;
+	block = num_img * height * width;
+	thread = 1;
+	LRNFillScale<<<block, thread>>>(
+    block, bottom, num_img, channel, height, width, local_size,
+    alpha / local_size, scale);
+	CheckCudaError("LRNFillScale");
+
+
+
+
+
+}
+
+
+
+
+
 }  // namespace cuda
 }  // namespace minerva
 

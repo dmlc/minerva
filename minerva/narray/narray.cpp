@@ -32,6 +32,14 @@ NArray NArray::RandBernoulli(const Scale& size, float p) {
   return NArray::GenerateOne(size, op);
 }
 
+/*
+NArray NArray::LRN(const NArray& scale, int local_size, float alpha, float beta) const{
+  LRNOp* op = new LRNOp();
+  op->closure = {local_size, alpha, beta, this->Size()};
+  return NArray::ComputeOne({*this, scale}, op);
+}
+*/
+
 NArray NArray::LoadFromFile(const Scale& size, const string& fname, shared_ptr<IFileLoader> loader) {
   FileLoaderOp* loader_op = new FileLoaderOp();
   loader_op->closure = {fname, size, loader};
@@ -143,6 +151,14 @@ NArray operator*(const NArray& lhs, const NArray& rhs) {
   MatMultOp* matmult_op = new MatMultOp();
   return NArray::ComputeOne({lhs, rhs}, newsize, matmult_op);
 }
+
+/*
+NArray Concatenate(const std::vector<NArray>& arrays, int catdim) {
+
+}
+*/
+
+
 
 NArray& NArray::operator*=(const NArray& rhs) {
   return *this = (*this * rhs);

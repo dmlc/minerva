@@ -1,6 +1,7 @@
 import owl
 import owl.elewise as ele
 import owl.conv as co
+import numpy as np
 
 class Neuron(object):
     def __init__(self):
@@ -28,7 +29,7 @@ class ReluNeuron(Neuron):
     def ff(self, x):
         return ele.relu(x)
     def bp(self, y, ff_y, ff_x):
-        return ele.relu_back(y, ff_y)
+        return ele.relu_back(y, ff_x)
 
 class TahnNeuron(Neuron):
     def ff(self, x):
@@ -36,53 +37,45 @@ class TahnNeuron(Neuron):
     def bp(self, y, ff_y, ff_x):
         return ele.tahn_back(y)
 
-class PoolingNeuron(Neuron):
-    def __init__(self, h, w, stride_v, stride_h, op):
-        super(PoolingNeuron, self).__init__()
-        self.pooler = co.Pooler(h, w, stride_v, stride_h, op)
-    def ff(self, x):
-        return self.pooler.ff(x)
-    def bp(self, y, ff_y, ff_x):
-        return self.pooler.bp(y, ff_y, ff_x)
-
-
 class Layer(object):
-    def __init__(self, neuron, dropout):
+    def __init__(self, name, neuron, dropout):
+        self.name = name
         self.neuron = neuron
         self.dropout = dropout
         self.pre_nonlinear = None
         self.act = None
         self.sen = None
         self.dropmask = None
+        
+        # layer dimension
+        self.dim = []
+
         # connectivity
         self.ff_conns = []
         self.bp_conns = []
 
+    def get_act(self):
+        if type(self.neuron) == LinearNeuron:
+            return self.pre_nonlinear
+        else:
+            return self.act
+
     def ff(self):
-        if len(self.ff_conns) == 0:
-            return # input layer, act is set externally
-        self.act = None
-        for conn in self.ff_conns:
-            if self.act == None:
-                self.act = conn.ff()
-            else:
-                self.act += conn.ff()
-        if type(self.neuron) == PoolingNeuron: # to save memory, only store this for pooling neuron
-            self.pre_nonlinear = self.act
-        self.act = self.neuron.ff(self.act)
-        if self.dropout != 0.0:
-            self.dropmask = owl.randb(self.act.shape, self.dropout)
-            self.act = ele.mult(self.act, self.dropmask)
+        #some of the pre_nonlinear doesn't need to be stored
+        if type(self.neuron) == LinearNeuron or type(self.neuron) == SigmoidNeuron or type(self.neuron) == TahnNeuron:
+            self.pre_nonlinear = self.neuron.ff(self.pre_nonlinear)
+            if self.dropout != 0.0:
+                self.dropmask = owl.randb(self.pre_nonlinear.shape, self.dropout)
+                self.pre_nonlinear = ele.mult(self.pre_nonlinear, self.dropmask)
+            return self.pre_nonlinear
+        else:
+            self.act = self.neuron.ff(self.pre_nonlinear)
+            if self.dropout != 0.0:
+                self.dropmask = owl.randb(self.act.shape, self.dropout)
+                self.act = ele.mult(self.act, self.dropmask)
+            return self.act
 
     def bp(self):
-        if len(self.bp_conns) == 0:
-            return # output layer, sen is set externally
-        self.sen = None
-        for conn in self.bp_conns:
-            if self.sen == None:
-                self.sen = conn.bp()
-            else:
-                self.sen += conn.bp() #XXX correct ?
         if self.dropout != 0.0:
             self.sen = ele.mult(self.sen, self.dropmask)
             self.dropmask = None
@@ -90,16 +83,14 @@ class Layer(object):
         self.pre_nonlinear = None
 
 class Connection(object):
-    def __init__(self, wshape, bshape, winiter):
-        self.weight = winiter(wshape)
-        self.weightdelta = owl.zeros(wshape)
-        self.weightgrad = None
-        self.bias = owl.zeros(bshape)
-        self.biasdelta = owl.zeros(bshape)
-        self.biasgrad = None
-        # connectivity
-        self.lower = None
-        self.higher = None
+    def __init__(self, name):
+        self.name = name
+        self.bottom = []
+        self.top = []
+
+    def weightinit(self, weightshape, initer):
+        #TODO: hack, not all initer implemented, just the load from file
+        return owl.from_numpy(np.fromfile(initer, dtype=np.float32)).reshape(weightshape)
 
     def ff(self):
         pass
@@ -108,42 +99,116 @@ class Connection(object):
         pass
 
     def update(nsamples, mom, lr, wd):
-        self.weightdelta = mom * self.weightdelta - lr / nsamples * self.weightgrad - lr * wd * self.weight
-        self.weight += self.weightdelta
-        self.weightgrad = None # reset the grad to None to free the space
-        self.biasdelta = mom * self.biasdelta - lr / nsamples * self.biasgrad;
-        self.bias += self.biasdelta
-        self.biasgrad = None # reset the grad to None to free the space
+        pass
 
 class FullyConnection(Connection):
-    def __init__(self, wshape, bshape, winiter):
-        super(FullyConnection, self).__init__(wshape, bshape, winiter)
+    def __init__(self, name, wshape, bshape, winiter, biniter):
+        super(FullyConnection, self).__init__(name)
+        self.weight = self.weightinit(wshape, winiter)
+        self.weightdelta = owl.zeros(wshape)
+        self.weightgrad = None
+        self.bias = self.weightinit(bshape, biniter)
+        self.biasdelta = owl.zeros(bshape)
+        self.biasgrad = None
+        # learning rate of this connection
+        self.blobs_lr = [0, 0]
+        self.blobs_wd = [0, 0]
+        
     def ff(self):
-        shp = self.lower.act.shape
+        assert len(self.bottom) == 1
+        shp = self.bottom[0].get_act().shape
         if len(shp) > 2:
-            a = self.lower.act.reshape([np.prod(shp[0:-1]), shp[-1]])
+            a = self.bottom[0].get_act().reshape([np.prod(shp[0:-1]), shp[-1]])
         else:
-            a = self.lower.act
+            a = self.bottom[0].get_act()
         return self.weight * a + self.bias
     def bp(self):
-        self.weightgrad = self.higher.sen * self.lower.act.Trans()
-        self.biasgrad = self.higher.sen.sum(0)
-        s = self.weight.Trans() * self.higher.sen
-        shp = self.lower.act.shape
+        assert len(self.top) == 1 and len(self.bottom) == 1
+        self.weightgrad = self.top[0].sen * self.bottom[0].get_act().Trans()
+        self.biasgrad = self.top[0].sen.sum(0)
+        s = self.weight.Trans() * self.top[0].sen
+        shp = self.bottom[0].get_act().shape
         if len(shp) > 2:
             s = s.reshape(shp)
         return s
+    def update(self, nsamples, mom, lr, wd):
+        self.weightdelta = mom * self.weightdelta - lr * self.blobs_lr[0] / nsamples * self.weightgrad - lr * self.blobs_lr[0] * self.blobs_wd[0] * self.weight
+        self.weight += self.weightdelta
+        self.weightgrad = None # reset the grad to None to free the space
+        self.biasdelta = mom * self.biasdelta - lr * self.blobs_lr[1] / nsamples * self.biasgrad - lr * self.blobs_lr[1] * self.blobs_wd[1] * self.bias
+        self.bias += self.biasdelta
+        self.biasgrad = None # reset the grad to None to free the space
 
 class ConvConnection(Connection):
-    def __init__(self, wshape, bshape, winiter, pad_h, pad_w, stride_v, stride_h):
-        super(ConvConnection, self).__init__(wshape, bshape, winiter)
-        self.convolver = co.Convolver(pad_h, pad_w, stride_v, stride_h)
+    def __init__(self, name, wshape, bshape, winiter, biniter, pad, stride):
+        super(ConvConnection, self).__init__(name)
+        self.weight = self.weightinit(wshape, winiter)
+        self.weightdelta = owl.zeros(wshape)
+        self.weightgrad = None
+        self.bias = self.weightinit(bshape, biniter)
+        self.biasdelta = owl.zeros(bshape)
+        self.biasgrad = None
+        # learning rate of this connection
+        self.blobs_lr = [0, 0]
+        self.blobs_wd = [0, 0]
+        self.convolver = co.Convolver(pad, pad, stride, stride)
     def ff(self):
-        return self.convolver.ff(self.lower.act, self.weight, self.bias)
+        assert len(self.bottom) == 1
+        return self.convolver.ff(self.bottom[0].get_act(), self.weight, self.bias)
     def bp(self):
-        self.weightgrad = self.convolver.weight_grad(self.higher.sen, self.lower.act)
-        self.biasgrad = self.convolver.bias_grad(self.higher.sen)
-        return self.convolver.bp(self.higher.sen, self.weight)
+        assert len(self.top) == 1 and len(self.bottom) == 1
+        self.weightgrad = self.convolver.weight_grad(self.top[0].sen, self.bottom[0].get_act())
+        self.biasgrad = self.convolver.bias_grad(self.top[0].sen)
+        return self.convolver.bp(self.top[0].sen, self.weight)
+    def update(nsamples, mom, lr, wd):
+        self.weightdelta = mom * self.weightdelta - lr * self.blobs_lr[0] / nsamples * self.weightgrad - lr * self.blobs_lr[0] * self.blobs_wd[0] * self.weight
+        self.weight += self.weightdelta
+        self.weightgrad = None # reset the grad to None to free the space
+        self.biasdelta = mom * self.biasdelta - lr * self.blobs_lr[1] / nsamples * self.biasgrad - lr * self.blobs_lr[1] * self.blobs_wd[1] * self.bias
+        self.bias += self.biasdelta
+        self.biasgrad = None # reset the grad to None to free the space
+
+class PoolingConnection(Connection):
+    def __init__(self, name, kernel_size, stride, op):
+        super(PoolingConnection, self).__init__(name)
+        self.pooler = co.Pooler(kernel_size, kernel_size, stride, stride, op)
+    def ff(self):
+        assert len(self.bottom) == 1
+        return self.pooler.ff(self.bottom[0].get_act())
+    def bp(self):
+        assert len(self.bottom) == 1 and len(self.top) == 1
+        return self.pooler.bp(self.top[0].sen, self.top[0].pre_nonlinear, self.bottom[0].get_act())
+
+class LRNConnection(Connection):
+    def __init__(self, name, local_size, alpha, beta):
+        super(LRNConnection, self).__init__(name)
+        self.local_size = local_size
+        self.alpha = alpha
+        self.beta = beta
+    def ff(self):
+        #TODO:didn't implemented
+        return self.bottom[0].get_act() 
+    def bp(self):
+        return self.top[0].sen()
+
+class SoftMaxConnection(Connection):
+    def __init__(self, name):
+        super(SoftMaxConnection, self).__init__(name)
+    def ff(self):
+        assert len(self.bottom) == 2
+        return co.softmax(self.bottom[0].get_act(), co.soft_op.instance)
+    def bp(self):
+        assert len(self.bottom) == 2
+        return co.softmax(self.bottom[0].get_act(), co.soft_op.instance) - self.bottom[1].act
+
+class ConcatConnection(Connection):
+    def __init__(self, name, concat_dim):
+        super(ConcatConnection, self).__init__(name)
+        self.concat_dim = concat_dim
+    def ff(self):
+        pass    
+    def bp(self):
+        pass
 
 class Net:
     def __init__(self):

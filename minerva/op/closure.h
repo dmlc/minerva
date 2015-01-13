@@ -138,5 +138,13 @@ typedef PoolingClosure<0> PoolingForwardClosure;
 
 typedef PoolingClosure<1> PoolingBackwardClosure;
 
+/*
+struct LRNClosure {
+	int local_size;
+	float alpha, beta;
+	Scale data_shape;
+};
+*/
+
 }  // end of namespace minerva
 
