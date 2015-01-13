@@ -24,7 +24,7 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
   size_t size = outputs[0].size().Prod();
   switch (closure.type) {
     case ArithmeticType::kAdd:
-      CudaPerformAdd(left, right, res, size, context.cublas_handle);
+      CudaPerformAdd(left, right, res, size, context.stream);
       break;
     case ArithmeticType::kSub:
       CudaPerformSub(left, right, res, size, context.cublas_handle);

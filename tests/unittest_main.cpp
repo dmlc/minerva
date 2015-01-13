@@ -12,14 +12,14 @@ class MinervaTestEnvironment : public testing::Environment {
   MinervaTestEnvironment(int* argc, char*** argv) : argc(argc), argv(argv) {
   }
   void SetUp() {
-    MinervaSystem::Instance().Initialize(argc, argv);
+    MinervaSystem::Initialize(argc, argv);
     cpu_device = MinervaSystem::Instance().CreateCpuDevice();
 #ifdef HAS_CUDA
     gpu_device = MinervaSystem::Instance().CreateGpuDevice(0);
 #endif
   }
   void TearDown() {
-    MinervaSystem::Instance().Finalize();
+    MinervaSystem::Finalize();
   }
 
  private:

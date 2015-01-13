@@ -11,7 +11,7 @@ namespace cuda {
 
 void CudaPerformDotMult(float*, float*, float*, size_t, cudaStream_t);
 void CudaPerformDotDiv(float*, float*, float*, size_t, cudaStream_t);
-void CudaPerformAdd(float* a, float* b, float* c, size_t, cublasHandle_t);
+void CudaPerformAdd(float* a, float* b, float* c, size_t, cudaStream_t);
 void CudaPerformSub(float* a, float* b, float* c, size_t, cublasHandle_t);
 void CudaPerformMatMult(float*, float*, float*, int, int, int, cublasHandle_t);
 void CudaPerformScale(float* in_data, float* res_data, size_t, float val, cublasHandle_t);
