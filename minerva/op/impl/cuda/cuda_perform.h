@@ -68,6 +68,7 @@ void CudaPerformRandn(float* dst, size_t size, unsigned int seed, float mean, fl
 void CudaPerformRandBernoulli(float* dst, size_t size, unsigned int seed, float p, cudaStream_t stream);
 void CudaPerformFill(float* dst, size_t size, float val, cudaStream_t stream);
 
+void CudaPerformLRN(float* bottom, float* scale, float* res, int local_size, float alpha, float beta, int num_img, int channel, int width, int height, cudaStream_t);
 }
 #endif
 }
