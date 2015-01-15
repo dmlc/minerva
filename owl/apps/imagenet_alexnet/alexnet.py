@@ -5,10 +5,6 @@ import owl.elewise as ele
 
 class AlexModel:
     def __init__(self):
-        self.weights = []
-	self.weightsdelta = []
-        self.bias = []
-        self.biasdelta = []
 	self.convs = [
             co.Convolver(0, 0, 4, 4), # conv1
             co.Convolver(2, 2, 1, 1), # conv2
@@ -34,7 +30,6 @@ class AlexModel:
             owl.randn([4096, 4096], 0.0, 0.01),
             owl.randn([1000, 4096], 0.0, 0.01)
         ];
-
 	self.weightsdelta = [
             owl.zeros([11, 11, 3, 96]),
             owl.zeros([5, 5, 96, 256]),
@@ -45,7 +40,6 @@ class AlexModel:
             owl.zeros([4096, 4096]),
             owl.zeros([1000, 4096])
         ];
-
         self.bias = [
             owl.zeros([96]),
             owl.zeros([256]),
@@ -56,7 +50,6 @@ class AlexModel:
             owl.zeros([4096, 1]),
             owl.zeros([1000, 1])
         ];
-
         self.biasdelta = [
             owl.zeros([96]),
             owl.zeros([256]),
@@ -70,11 +63,11 @@ class AlexModel:
 
     def train_one_mb(self, data, label, dropout_rate):
         num_samples = data.shape[-1]
-        num_layers = 20
+        num_layers = 12
         acts = [None] * num_layers
         sens = [None] * num_layers
-        weightsgrad = [None] * 8
-        biasgrad = [None] * 8
+        weightsgrad = [None] * self.num_weights
+        biasgrad = [None] * self.num_weights
 
         # FF
         acts[0] = data

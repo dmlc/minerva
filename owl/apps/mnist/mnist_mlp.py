@@ -4,7 +4,7 @@ import owl
 import owl.elewise as ele
 import owl.conv as co
 import numpy as np
-import imageio
+import mnist_io
 
 class MnistTrainer:
     def __init__(self, data_file='mnist_all.mat', num_epochs=100, mb_size=256, eps_w=0.01, eps_b=0.01):
@@ -24,7 +24,7 @@ class MnistTrainer:
         self.b2 = owl.zeros([l3, 1])
 
     def run(self):
-        (train_data, test_data) = imageio.load_mb_from_mat(self.data_file, self.mb_size)
+        (train_data, test_data) = mnist_io.load_mb_from_mat(self.data_file, self.mb_size)
         np.set_printoptions(linewidth=200)
         num_test_samples = test_data[0].shape[0]
         (test_samples, test_labels) = map(lambda npdata : owl.from_numpy(npdata), test_data)
@@ -62,14 +62,14 @@ class MnistTrainer:
                 self.b2 -= self.eps_b * gb2
 
                 if (count % 40 == 0):
-                    correct = out.max_index(0) - target.max_index(0)
+                    correct = out.argmax(0) - target.argmax(0)
                     val = correct.to_numpy()
                     print 'Training error:', float(np.count_nonzero(val)) / num_samples
                     # test
                     a1 = test_samples
                     a2 = ele.sigm(self.w1 * a1 + self.b1)
                     a3 = ele.sigm(self.w2 * a2 + self.b2)
-                    correct = a3.max_index(0) - test_labels.max_index(0)
+                    correct = a3.argmax(0) - test_labels.argmax(0)
                     val = correct.to_numpy()
                     #print val
                     print 'Testing error:', float(np.count_nonzero(val)) / num_test_samples

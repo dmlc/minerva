@@ -9,7 +9,6 @@ set(app_list "")
 if (CUDA_FOUND)
   file(GLOB_RECURSE app_file_list "*.cpp")
 else (CUDA_FOUND)
-  #For CPU only.
   file(GLOB_RECURSE app_file_list "mnist_mlp.cpp")
 endif (CUDA_FOUND)
 

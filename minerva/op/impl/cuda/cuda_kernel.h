@@ -220,3 +220,49 @@ __global__ static void CudaPerformFillKernel(float* dst, size_t size, float val)
   }
 }
 
+__global__ static void LRNFillScale(const int nthreads, const float* in, const int num, const int channels, const int height, const int width, const int size, const float alpha_over_size, float* scale) {
+  
+	/*
+	CUDA_KERNEL_LOOP(index, nthreads) {
+    // find out the local offset
+    int w = index % width;
+    int h = (index / width) % height;
+    int n = index / width / height;
+    int offset = (n * channels * height + h) * width + w;
+    int step = height * width;
+    in += offset;
+    scale += offset;
+    int head = 0;
+    int pre_pad = (size - 1) / 2;
+    int post_pad = size - pre_pad - 1;
+    Dtype accum_scale = 0;
+    // fill the scale at [n, :, h, w]
+    // accumulate values
+    while (head < post_pad) {
+      accum_scale += in[head * step] * in[head * step];
+      ++head;
+    }
+    // until we reach size, nothing needs to be subtracted
+    while (head < size) {
+      accum_scale += in[head * step] * in[head * step];
+      scale[(head - post_pad) * step] = 1. + accum_scale * alpha_over_size;
+      ++head;
+    }
+    // both add and subtract
+    while (head < channels) {
+      accum_scale += in[head * step] * in[head * step];
+      accum_scale -= in[(head - size) * step] * in[(head - size) * step];
+      scale[(head - post_pad) * step] = 1. + accum_scale * alpha_over_size;
+      ++head;
+    }
+    // subtract only
+    while (head < channels + post_pad) {
+      accum_scale -= in[(head - size) * step] * in[(head - size) * step];
+      scale[(head - post_pad) * step] = 1. + accum_scale * alpha_over_size;
+      ++head;
+    }
+  }
+  */
+}
+
+

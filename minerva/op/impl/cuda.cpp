@@ -24,7 +24,7 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
   size_t size = outputs[0].size().Prod();
   switch (closure.type) {
     case ArithmeticType::kAdd:
-      CudaPerformAdd(left, right, res, size, context.cublas_handle);
+      CudaPerformAdd(left, right, res, size, context.stream);
       break;
     case ArithmeticType::kSub:
       CudaPerformSub(left, right, res, size, context.cublas_handle);
@@ -37,6 +37,24 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
       break;
   }
 }
+
+/*
+void LRN(const DataList& inputs, const DataList& outputs, LRNClosure& closure, const CudaRuntimeContext & context) {
+  CHECK_EQ(inputs.size(), 2) << "(LRN) #inputs is wrong!";
+  CHECK_EQ(outputs.size(), 1) << "(LRN) #outputs is wrong!";
+  float* bottom_data = inputs[0].data();
+  float* scale_data = inputs[1].data();
+  float* res_data = outputs[0].data();
+  int local_size = closure.local_size;
+  float alpha = closure.alpha;
+  float beta = closure.beta;
+  int num_img = closure.data_shape[3];
+  int channel = closure.data_shape[2];
+  int weight = closure.data_shape[1];
+  int height = closure.data_shape[0];
+  CudaPerformLRN(bottom_data, scale_data, res_data, local_size, alpha, beta, num_img, channel, weight, height, context.stream);
+}
+*/
 
 void MatMult(const DataList& inputs, const DataList& outputs, MatMultClosure& closure, const CudaRuntimeContext & context) {
   CHECK_EQ(inputs.size(), 2) << "(matmult) #inputs is wrong!";

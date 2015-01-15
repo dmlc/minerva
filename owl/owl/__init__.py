@@ -3,7 +3,7 @@
 
 The module encapsulates or directly maps some functions of Minerva's API to python.
 Only system APIs are defined here. For convolution APIs, please refer to conv.py.
-For element-wise operations, please refer to elewise.py. For other APIs such as member 
+For element-wise operations, please refer to elewise.py. For other APIs such as member
 functions of ``owl.NArray``, please refer to the API document.
 
 Note that Minerva is an dataflow system with lazy evaluation to construct dataflow graph
@@ -19,15 +19,25 @@ on numpy such as IO and visualization.
 import numpy as np
 import libowl as _owl
 
-def initialize(argv):
-    """ Initialize Minerva System.
+NArray = _owl.NArray
 
-    **Must be called before calling any owl's API**
+def initialize(argv):
+    """ Initialize Minerva System
+
+    .. note::
+        Must be called before calling any owl's API
 
     :param argv: commandline arguments
     :type argv: list str
     """
     _owl.initialize(argv)
+
+def finalize():
+    """ Finalize Minerva System
+
+    :return: None
+    """
+    _owl.finalize()
 
 def create_cpu_device():
     """ Create device for running on CPU cores
@@ -46,9 +56,17 @@ def create_gpu_device(which):
     """
     return _owl.create_gpu_device(which)
 
+def get_gpu_device_count():
+    """ Get the number of compute-capable GPU devices
+
+    :return: Number of compute-capable GPU devices
+    "rtype: int
+    """
+    return _owl.get_gpu_device_count()
+
 def set_device(dev):
     """ Switch to the given device for running computations
-    
+
     When ``set_device(dev)`` is called, all the subsequent codes will be run on ``dev``
     till another ``set_device`` is called.
 
@@ -102,19 +120,35 @@ def randb(shape, prob):
 def from_numpy(nparr):
     """ Create an owl.NArray from numpy.ndarray
 
-    The content will be directly copied to Minerva's memory system. However, due to
-    the different priority when treating dimensions between numpy and Minerva. The 
-    result ``owl.NArray``'s dimension will be *reversed*.
+    .. note::
 
-      >>> import numpy as np
-      >>> import owl
-      >>> a = np.zeros([200, 300, 50])
-      >>> b = owl.from_numpy(a)
-      >>> print b.shape
-      [50, 300, 200]
+        The content will be directly copied to Minerva's memory system. However, due to
+        the different priority when treating dimensions between numpy and Minerva. The 
+        result ``owl.NArray``'s dimension will be *reversed*.
+
+        >>> a = numpy.zeros([200, 300, 50])
+        >>> b = owl.from_numpy(a)
+        >>> print b.shape
+        [50, 300, 200]
+
+    .. seealso:: owl.NArray.to_numpy
 
     :param numpy.ndarray nparr: numpy ndarray
     :return: Minerva's ndarray
     :rtype: owl.NArray
     """
     return _owl.from_numpy(np.require(nparr, dtype=np.float32, requirements=['C']))
+
+def print_profiler_result():
+    """ Print result from execution profiler
+
+    :return: None
+    """
+    _owl.print_profiler_result()
+
+def reset_profiler_result():
+    """ Reset execution profiler
+
+    :return: None
+    """
+    _owl.reset_profiler_result()

@@ -31,14 +31,6 @@ pushd boost_1_57_0 > /dev/null
 ./b2 install -d0 -j4
 popd > /dev/null
 
-PRINT_INFO "Resolving NumPy"
-easy_install cython --prefix=${INSTALL_DIR}
-${GIT_CLONE} http://github.com/numpy/numpy.git
-pushd numpy > /dev/null
-python setup.py build
-python setup.py install --prefix=${INSTALL_DIR}
-popd > /dev/null
-
 PRINT_INFO "Resolving Boost.NumPy"
 ${GIT_CLONE} https://github.com/ndarray/Boost.NumPy.git
 pushd Boost.NumPy > /dev/null

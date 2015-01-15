@@ -32,10 +32,13 @@ void CudaPerformDotDiv(float* a, float* b, float* c, size_t size, cudaStream_t s
   CheckCudaError("CudaPerformDotDiv");
 }
 
-void CudaPerformAdd(float* a, float* b, float* c, size_t size, cublasHandle_t handle) {
-  float one = 1.0;
-  CUBLAS_CALL(cublasScopy(handle, size, a, 1, c, 1));
-  CUBLAS_CALL(cublasSaxpy(handle, size, &one, b, 1, c, 1));
+void CudaPerformAdd(float* a, float* b, float* c, size_t size, cudaStream_t stream) {
+  int block, thread;
+  FindConfiguration(size, block, thread);
+  CudaPerformDotKernel<<<block, thread, 0, stream>>>(a, b, c, size, SumOp());
+  // float one = 1.0;
+  // CUBLAS_CALL(cublasScopy(handle, size, a, 1, c, 1));
+  // CUBLAS_CALL(cublasSaxpy(handle, size, &one, b, 1, c, 1));
 }
 
 void CudaPerformSub(float* a, float* b, float* c, size_t size, cublasHandle_t handle) {
@@ -538,6 +541,26 @@ void CudaPerformFill(float* dst, size_t size, float val, cudaStream_t stream) {
   CudaPerformFillKernel<<<block, thread, 0, stream>>>(dst, size, val);
   CheckCudaError("CudaPerformFill");
 }
+
+void CudaPerformLRN(float* bottom, float* scale, float* res, int local_size, float alpha, float beta, int num_img, int channel, int width, int height, cudaStream_t stream)
+{
+	int block, thread;
+	block = num_img * height * width;
+	thread = 1;
+	LRNFillScale<<<block, thread>>>(
+    block, bottom, num_img, channel, height, width, local_size,
+    alpha / local_size, scale);
+	CheckCudaError("LRNFillScale");
+
+
+
+
+
+}
+
+
+
+
 
 }  // namespace cuda
 }  // namespace minerva

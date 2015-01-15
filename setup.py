@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 from setuptools import setup, Extension
-    
+
 minerva_include_path = os.getcwd() + '/minerva'
 minerva_lib_path = os.getcwd() + '/release/lib' # TODO: currently only use release version
 ex_include_dirs = [minerva_include_path]

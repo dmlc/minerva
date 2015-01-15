@@ -2,8 +2,7 @@ import owl
 import sys
 owl.initialize(sys.argv)
 cpu = owl.create_cpu_device()
-gpu0 = owl.create_gpu_device(0)
-gpu1 = owl.create_gpu_device(1)
+gpu = [owl.create_gpu_device(i) for i in range(owl.get_gpu_device_count())]
 print '''
      __   __   _   __   _   _____   ____    _    _   ___
     /  | /  | | | |  \\ | | |  ___| |  _ \\  | |  / / /   |
@@ -12,5 +11,5 @@ print '''
  / / |  / | | | | | |\\   | | |___  | |\\ \\  |   / / ___  |
 /_/  |_/  |_| |_| |_| \\__| |_____| |_| \\_\\ |__/ /_/   |_|
 '''
-owl.set_device(gpu0)
-print "[INFO] Set device to gpu0"
+print '[INFO] You have %d GPU devices' % len(gpu)
+print '[INFO] Set device to gpu[0]'
