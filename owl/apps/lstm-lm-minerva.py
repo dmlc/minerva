@@ -306,6 +306,7 @@ def LSTM_test(model, sents, vocab_size, words, tanhC_version = 1):
 
 	N = 10
 	K = vocab_size
+	print len(sents)
 
 	test_ll = 0
 	# For each sentence
@@ -377,8 +378,9 @@ def LSTM_test(model, sents, vocab_size, words, tanhC_version = 1):
 			output = Ym[t].trans() * data[t]
 			test_ll += math.log10( max(np.sum(output.to_numpy()),1e-20) )
 
-		test_ent = test_ll * (-1) / words
-		test_ppl = 10 ** test_ent
+	print test_ll, words
+	test_ent = test_ll * (-1) / words
+	test_ppl = 10 ** test_ent
 
 	print("Test PPL = %f" % (test_ppl))
 
@@ -387,5 +389,5 @@ if __name__ == '__main__':
 	gpu = owl.create_gpu_device(0)
 	owl.set_device(gpu)
 	model, train_sents, test_sents, vocab_size, train_words, test_words = LSTM_init()
-	LSTM_train(model, train_sents, vocab_size, train_words, 1)
+	#LSTM_train(model, train_sents, vocab_size, train_words, 1)
 	LSTM_test(model, test_sents, vocab_size, test_words)
