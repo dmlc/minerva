@@ -63,27 +63,35 @@ def LSTM_init():
 	wids = defaultdict(lambda: len(wids))
 	wids['<BIAS>'] = 0
 	wids['<s>'] = 1
-	sents = []
-	words = 0
+	train_sents = []
+	test_sents = []
+	train_words = 0
+	test_words = 0
 
 	fin = open("./train")
 	for line in fin:
 		wordlist = ("<s> %s <s>" % line.strip()).split(' ')
 		wordlist_id = [wids[w] for w in wordlist]
-		words += len(wordlist) - 2
-		sents.append(wordlist_id)
+		train_words += len(wordlist) - 2
+		train_sents.append(wordlist_id)
+
+	fin = open("./test")
+	for line in fin:
+		wordlist = ("<s> %s <s>" % line.strip()).split(' ')
+		wordlist_id = [wids[w] for w in wordlist]
+		test_words += len(wordlist) - 2
+		test_sents.append(wordlist_id)
 
 	# Define input-dependent variables
 	N = 10 # hidden units
 	vocab_size = len(wids)       # Vocabulary size
-	print "K",vocab_size,"words",words
+	print "K", vocab_size, "words", train_words, test_words
 
-	return LSTMModel(vocab_size, N, vocab_size), sents, vocab_size, words
+	return LSTMModel(vocab_size, N, vocab_size), train_sents, test_sents, vocab_size, train_words, test_words
 
-def LSTM_train(model, sents, vocab_size, words, tanhC_version = 1):
+def LSTM_train(model, sents, vocab_size, words, NUM_EPOCHS = 100, tanhC_version = 1):
 
 	# Constants
-	NUM_EPOCHS = 100    # Number of epochs default=1w
 	ALPHA = 1             # Learning rate
 	N = 10                # Number of units
 	learning_rate = 1
@@ -294,20 +302,10 @@ def LSTM_train(model, sents, vocab_size, words, tanhC_version = 1):
 		last_ll = epoch_ll
 		last_time = cur_time
 
-def LSTM_test(model, vocab_size):
-	words = 0
-	K = vocab_size
-	fin = open("./test")
-	for line in fin:
-		wordlist = ("<s> %s <s>" % line.strip()).split(' ')
-		wordlist_id=[]
-		for w in wordlist:
-			if wids.has_key(w):
-				words += 1
-				wordlist_id.append(wids[w])
-		sents.append(wordlist_id)
+def LSTM_test(model, sents, vocab_size, words, tanhC_version = 1):
 
-	Tau = len(sents)
+	N = 10
+	K = vocab_size
 
 	test_ll = 0
 	# For each sentence
@@ -379,12 +377,15 @@ def LSTM_test(model, vocab_size):
 			output = Ym[t].trans() * data[t]
 			test_ll += math.log10( max(np.sum(output.to_numpy()),1e-20) )
 
+		test_ent = test_ll * (-1) / words
+		test_ppl = 10 ** test_ent
+
 	print("Test PPL = %f" % (test_ppl))
 
 if __name__ == '__main__':
 	owl.initialize(sys.argv)
 	gpu = owl.create_gpu_device(0)
 	owl.set_device(gpu)
-	model, sents, vocab_size, words = LSTM_init()
-	LSTM_train(model, sents, vocab_size, words)
-	#LSTM_test()
+	model, train_sents, test_sents, vocab_size, train_words, test_words = LSTM_init()
+	LSTM_train(model, train_sents, vocab_size, train_words, 1)
+	LSTM_test(model, test_sents, vocab_size, test_words)
