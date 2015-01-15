@@ -306,7 +306,6 @@ def LSTM_test(model, sents, vocab_size, words, tanhC_version = 1):
 
 	N = 10
 	K = vocab_size
-	print len(sents)
 
 	test_ll = 0
 	# For each sentence
@@ -338,10 +337,6 @@ def LSTM_test(model, sents, vocab_size, words, tanhC_version = 1):
 		Ym = [None] * Tau
 		dY = [None] * Tau
 
-		dBd = owl.zeros([model.Layers[2], 1]) #dY.sum(0)
-		dWd = owl.zeros([model.Layers[1], model.Layers[2]]) #Hout.transpose().dot(dY)
-		dHout = [None] * Tau #dY.dot(model.decoder_weights.transpose())
-
 		##### Forward pass #####
 		# For each time step
 		for t in range(1, Tau):
@@ -368,17 +363,12 @@ def LSTM_test(model, sents, vocab_size, words, tanhC_version = 1):
 				Hout[t] = ele.mult(act_og[t], C[t])
 			Ym[t] = softmax(model.decoder_weights.trans() * Hout[t] + model.decoder_bias)
 
-			dY[t] = data[t] - Ym[t]
-			dBd += dY[t] / batch_size
-			dWd += Hout[t] * dY[t].trans() / batch_size
-			dHout[t] = model.decoder_weights * dY[t]
-
 			#print "Y_0[t]",Y_o[t]
 			#print "Y_o[t][sent[t]]",Y_o[t][sent[t]]
 			output = Ym[t].trans() * data[t]
 			test_ll += math.log10( max(np.sum(output.to_numpy()),1e-20) )
 
-	print test_ll, words
+	print test_ll
 	test_ent = test_ll * (-1) / words
 	test_ppl = 10 ** test_ent
 
@@ -389,5 +379,5 @@ if __name__ == '__main__':
 	gpu = owl.create_gpu_device(0)
 	owl.set_device(gpu)
 	model, train_sents, test_sents, vocab_size, train_words, test_words = LSTM_init()
-	#LSTM_train(model, train_sents, vocab_size, train_words, 1)
+	LSTM_train(model, train_sents, vocab_size, train_words, 100)
 	LSTM_test(model, test_sents, vocab_size, test_words)
