@@ -1,1 +1,1 @@
-from caffe_pb2 import *
+__all__ = ['caffe_pb2', 'converter']
