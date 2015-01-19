@@ -42,6 +42,13 @@ class FillOp : public PhyDataGenFnWithClosure<FillClosure> {
 };
 
 // Compute functions
+class SyncWithPSOp : public PhyComputeFnWithClosure<SyncWithPSClosure> {
+public:
+  std::string Name() const {
+    return std::string(":sync with ps on layer") + closure.layer_name;
+  }
+};
+
 class MatMultOp : public PhyComputeFnWithClosure<MatMultClosure> {
  public:
   std::string Name() const {

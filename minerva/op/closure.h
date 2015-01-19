@@ -39,6 +39,10 @@ struct FillClosure {
   float val;
 };
 
+struct SyncWithPSClosure {
+  std::string layer_name;
+};
+
 struct MatMultClosure {
 };
 

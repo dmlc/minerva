@@ -22,6 +22,7 @@ class NArray {
   static NArray Zeros(const Scale& size);
   static NArray Ones(const Scale& size);
   static NArray MakeNArray(const Scale& size, std::shared_ptr<float> array);
+  static NArray PushGradAndPullWeight(const NArray & grad, const std::string & layer_name);
   // DAG generating operations
   static std::vector<NArray> Compute(
       const std::vector<NArray>& params,
