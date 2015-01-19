@@ -14,6 +14,7 @@ void Reduction(const DataList&, const DataList&, ReductionClosure&);
 void NormArithmetic(const DataList&, const DataList&, NormArithmeticClosure&);
 void MaxIndex(const DataList&, const DataList&, MaxIndexClosure&);
 void Reshape(const DataList&, const DataList&, ReshapeClosure&);
+void SyncWithPS(const DataList& inputs, const DataList& outputs, SyncWithPSClosure& closure);
 
 void ArrayLoader(const DataList&, ArrayLoaderClosure&);
 void Randn(const DataList&, RandnClosure&);
