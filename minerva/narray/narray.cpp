@@ -32,14 +32,6 @@ NArray NArray::RandBernoulli(const Scale& size, float p) {
   return NArray::GenerateOne(size, op);
 }
 
-/*
-NArray NArray::LRN(const NArray& scale, int local_size, float alpha, float beta) const{
-  LRNOp* op = new LRNOp();
-  op->closure = {local_size, alpha, beta, this->Size()};
-  return NArray::ComputeOne({*this, scale}, op);
-}
-*/
-
 NArray NArray::LoadFromFile(const Scale& size, const string& fname, shared_ptr<IFileLoader> loader) {
   FileLoaderOp* loader_op = new FileLoaderOp();
   loader_op->closure = {fname, size, loader};
@@ -152,13 +144,24 @@ NArray operator*(const NArray& lhs, const NArray& rhs) {
   return NArray::ComputeOne({lhs, rhs}, newsize, matmult_op);
 }
 
-/*
-NArray Concatenate(const std::vector<NArray>& arrays, int catdim) {
-
+NArray Concat(const std::vector<NArray>& arrays, int catdim) {
+	CHECK_GT(arrays[0].Size().NumDims(), catdim) << "can't concat on non-sense dim";
+	CHECK_GT(arrays.size(), 1) << "Concat more than one narray";
+	ConcatOp* op = new ConcatOp();
+	op->closure = {catdim}; 
+	int target_dim = 0;
+	for(int i = 0; i < arrays.size(); i++)
+		target_dim += arrays[i].Size()[catdim];
+	std::vector<int> sizevec(arrays[0].Size().NumDims(), 0);
+	for(int i = 0; i < sizevec.size(); i++)
+	{
+		if(i == catdim)
+			sizevec[i] = target_dim;
+		else
+			sizevec[i] = arrays[0].Size()[i]; 
+	}
+	return NArray::ComputeOne(arrays, Scale(sizevec), op);
 }
-*/
-
-
 
 NArray& NArray::operator*=(const NArray& rhs) {
   return *this = (*this * rhs);
@@ -190,7 +193,7 @@ NArray NArray::NormArithmetic(const NArray& rhs, ArithmeticType type) const {
       LOG(FATAL) << "NormArithmetic cannot replicate a dimension that is not 1";
     } else {
       dims_to_replicate.push_back(i);
-    }
+	}
   }
   CHECK_GT(dims_to_replicate.size(), 0) << "nothing to replicate";
   NormArithmeticOp* op = new NormArithmeticOp();

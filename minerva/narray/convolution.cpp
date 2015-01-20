@@ -7,8 +7,9 @@ ImageBatch Convolution::ConvForward(ImageBatch src, Filter filter, NArray bias, 
   CHECK_EQ(src.GetNumFeatureMaps(), filter.GetNumInputs()) << "#input channels mismatch";
   CHECK_EQ(bias.Size().NumDims(), 1) << "bias dimension mismatch";
   CHECK_EQ(bias.Size()[0], filter.GetNumOutputs()) << "bias size mismatch";
-  CHECK_EQ((src.GetHeight() + 2 * info.pad_height - filter.GetHeight()) % info.stride_vertical, 0) << "filter height mismatch";
-  CHECK_EQ((src.GetWidth() + 2 * info.pad_width - filter.GetWidth()) % info.stride_horizontal, 0) << "filter width mismatch";
+  //no such limit
+  //CHECK_EQ((src.GetHeight() + 2 * info.pad_height - filter.GetHeight()) % info.stride_vertical, 0) << "filter height mismatch";
+  //CHECK_EQ((src.GetWidth() + 2 * info.pad_width - filter.GetWidth()) % info.stride_horizontal, 0) << "filter width mismatch";
   Scale new_size {
     (src.GetWidth() + 2 * info.pad_width - filter.GetWidth()) / info.stride_horizontal + 1,
     (src.GetHeight() + 2 * info.pad_height - filter.GetHeight()) / info.stride_vertical + 1,
@@ -97,11 +98,25 @@ ImageBatch Convolution::ActivationBackward(ImageBatch diff, ImageBatch top, Imag
 }
 
 ImageBatch Convolution::PoolingForward(ImageBatch src, PoolingInfo info) {
-  CHECK_EQ((src.GetHeight() - info.height) % info.stride_vertical, 0) << "window height mismatch";
-  CHECK_EQ((src.GetWidth() - info.width) % info.stride_horizontal, 0) << "window width mismatch";
+  //No such check
+  //CHECK_EQ((src.GetHeight() - info.height) % info.stride_vertical, 0) << "window height mismatch";
+  //CHECK_EQ((src.GetWidth() - info.width) % info.stride_horizontal, 0) << "window width mismatch";
+  int pooled_height = static_cast<int>(ceil(static_cast<float>((src.GetHeight() + 2 * info.pad_height - info.height)) / info.stride_vertical)) + 1;
+  int pooled_width = static_cast<int>(ceil(static_cast<float>((src.GetWidth() + 2 * info.pad_width - info.width)) / info.stride_horizontal)) + 1;
+
+  if (info.pad_height > 0 || info.pad_width > 0)
+  {
+	if((pooled_height - 1) * info.stride_vertical >= src.GetHeight() + info.pad_height)
+		--pooled_height;
+	if((pooled_width - 1) * info.stride_horizontal >= src.GetWidth() + info.pad_width)
+		--pooled_width;
+  }
+
+	//std::cout << "Pooled " << pooled_height << " " << pooled_width << " " << info.pad_height << " " << info.stride_vertical << std::endl; 
+	
   Scale new_size {
-    (src.GetWidth() - info.width) / info.stride_horizontal + 1,
-    (src.GetHeight() - info.height) / info.stride_vertical + 1,
+    pooled_height,
+    pooled_width,
     src.GetNumFeatureMaps(),
     src.GetNumImages()
   };
@@ -111,7 +126,9 @@ ImageBatch Convolution::PoolingForward(ImageBatch src, PoolingInfo info) {
     info.height,
     info.width,
     info.stride_vertical,
-    info.stride_horizontal
+    info.stride_horizontal,
+	info.pad_height,
+	info.pad_width
   };
   return NArray::ComputeOne({src}, new_size, op);
 }
@@ -130,9 +147,19 @@ ImageBatch Convolution::PoolingBackward(ImageBatch diff, ImageBatch top, ImageBa
     info.height,
     info.width,
     info.stride_vertical,
-    info.stride_horizontal
+    info.stride_horizontal,
+	info.pad_height,
+	info.pad_width
   };
   return NArray::ComputeOne({diff, top, bottom}, bottom.Size(), op);
+}
+
+
+ImageBatch Convolution::LRNForward(ImageBatch src, ImageBatch scale, int local_size, float alpha, float beta)
+{
+  LRNOp* op = new LRNOp();
+  op->closure = {local_size, alpha, beta, src.Size()};
+  return NArray::ComputeOne({src, scale}, src.Size(), op);
 }
 
 }  // namespace minerva

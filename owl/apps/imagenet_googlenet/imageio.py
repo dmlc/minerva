@@ -39,7 +39,11 @@ class ImageNetDataProvider:
                 im = np.fromstring(d.data, dtype=np.uint8).reshape([3, 256, 256]) - self.mean_data
                 
                 [crop_h, crop_w] = np.random.randint(256 - cropped_size, size=2)
-                
+                '''
+                #TODO: choose the mid
+                crop_h = 16
+                crop_w = 16
+                '''
                 im_cropped = im[:, crop_h:crop_h+cropped_size, crop_w:crop_w+cropped_size]
 
                 '''

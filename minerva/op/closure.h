@@ -132,19 +132,24 @@ template<int i> struct PoolingClosure {
   int width;
   int stride_vertical;
   int stride_horizontal;
+  int pad_height;
+  int pad_width;
 };
 
 typedef PoolingClosure<0> PoolingForwardClosure;
 
 typedef PoolingClosure<1> PoolingBackwardClosure;
 
-/*
 struct LRNClosure {
 	int local_size;
 	float alpha, beta;
 	Scale data_shape;
 };
-*/
+
+struct ConcatClosure {
+	int catdim;
+};
 
 }  // end of namespace minerva
+
 

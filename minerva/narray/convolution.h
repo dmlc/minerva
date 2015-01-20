@@ -16,6 +16,9 @@ class Convolution {
   static ImageBatch ActivationBackward(ImageBatch diff, ImageBatch top, ImageBatch bottom, ActivationAlgorithm algorithm);
   static ImageBatch PoolingForward(ImageBatch src, PoolingInfo info);
   static ImageBatch PoolingBackward(ImageBatch diff, ImageBatch top, ImageBatch bottom, PoolingInfo info);
+
+  static ImageBatch LRNForward(ImageBatch src, ImageBatch scale, int local_size, float alpha, float beta);
+
 };
 
 }  // namespace minerva

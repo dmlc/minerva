@@ -11,6 +11,7 @@ namespace cuda {
 
 void CudaPerformDotMult(float*, float*, float*, size_t, cudaStream_t);
 void CudaPerformDotDiv(float*, float*, float*, size_t, cudaStream_t);
+void CudaPerformCopy(float* a, float* b, size_t, cublasHandle_t);
 void CudaPerformAdd(float* a, float* b, float* c, size_t, cublasHandle_t);
 void CudaPerformSub(float* a, float* b, float* c, size_t, cublasHandle_t);
 void CudaPerformMatMult(float*, float*, float*, int, int, int, cublasHandle_t);
@@ -59,10 +60,10 @@ void CudaPerformTanhForward(float* bottom, float* top, int num_images, int num_c
 void CudaPerformSigmoidBackward(float* bottom, float* top, float* top_diff, float* bottom_diff, int num_images, int num_channels, int height, int width, cudaStream_t stream, cudnnHandle_t handle);
 void CudaPerformReluBackward(float* bottom, float* top, float* top_diff, float* bottom_diff, int num_images, int num_channels, int height, int width, cudaStream_t stream, cudnnHandle_t handle);
 void CudaPerformTanhBackward(float* bottom, float* top, float* top_diff, float* bottom_diff, int num_images, int num_channels, int height, int width, cudaStream_t stream, cudnnHandle_t handle);
-void CudaPerformMaxPoolingForward(float* bottom, float* top, int num_images, int num_channels, int bottom_height, int bottom_width, int stride_vertical, int stride_horizontal, int window_height, int window_width, cudaStream_t stream, cudnnHandle_t handle);
-void CudaPerformAveragePoolingForward(float* bottom, float* top, int num_images, int num_channels, int bottom_height, int bottom_width, int stride_vertical, int stride_horizontal, int window_height, int window_width, cudaStream_t stream, cudnnHandle_t handle);
-void CudaPerformMaxPoolingBackward(float* bottom, float* top, float* top_diff, float* bottom_diff, int num_images, int num_channels, int bottom_height, int bottom_width, int stride_vertical, int stride_horizontal, int window_height, int window_width, cudaStream_t stream, cudnnHandle_t handle);
-void CudaPerformAveragePoolingBackward(float* bottom, float* top, float* top_diff, float* bottom_diff, int num_images, int num_channels, int bottom_height, int bottom_width, int stride_vertical, int stride_horizontal, int window_height, int window_width, cudaStream_t stream, cudnnHandle_t handle);
+void CudaPerformMaxPoolingForward(float* bottom, float* top, int num_images, int num_channels, int bottom_height, int bottom_width, int stride_vertical, int stride_horizontal, int window_height, int window_width, int pad_height, int pad_width, cudaStream_t stream, cudnnHandle_t handle);
+void CudaPerformAveragePoolingForward(float* bottom, float* top, int num_images, int num_channels, int bottom_height, int bottom_width, int stride_vertical, int stride_horizontal, int window_height, int window_width, int pad_height, int pad_width,cudaStream_t stream, cudnnHandle_t handle);
+void CudaPerformMaxPoolingBackward(float* bottom, float* top, float* top_diff, float* bottom_diff, int num_images, int num_channels, int bottom_height, int bottom_width, int stride_vertical, int stride_horizontal, int window_height, int window_width,int pad_height, int pad_width, cudaStream_t stream, cudnnHandle_t handle);
+void CudaPerformAveragePoolingBackward(float* bottom, float* top, float* top_diff, float* bottom_diff, int num_images, int num_channels, int bottom_height, int bottom_width, int stride_vertical, int stride_horizontal, int window_height, int window_width, int pad_height, int pad_width, cudaStream_t stream, cudnnHandle_t handle);
 
 void CudaPerformRandn(float* dst, size_t size, unsigned int seed, float mean, float var);
 void CudaPerformRandBernoulli(float* dst, size_t size, unsigned int seed, float p, cudaStream_t stream);

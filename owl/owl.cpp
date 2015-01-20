@@ -166,6 +166,18 @@ m::NArray SoftmaxBackward(m::NArray diff, m::NArray top, m::SoftmaxAlgorithm alg
   return m::Convolution::SoftmaxBackward(m::ImageBatch(diff), m::ImageBatch(top), algo);
 }
 
+m::NArray LRNForward(m::NArray src, m::NArray scale, int local_size, float alpha, float beta) {
+  return m::Convolution::LRNForward(m::ImageBatch(src), m::ImageBatch(scale), local_size, alpha, beta);
+}
+
+m::NArray Concat(const bp::list& arrays, int concat_dim){
+	std::vector<m::NArray> Narrays;
+	for(int i = 0; i < len(arrays); i++)
+		Narrays.push_back(bp::extract<m::NArray>(arrays[i]));	
+	return m::Concat(Narrays, concat_dim);
+}
+
+
 } // end of namespace owl
 
 // python module
@@ -272,6 +284,8 @@ BOOST_PYTHON_MODULE(libowl) {
     .def_readwrite("width", &m::PoolingInfo::width)
     .def_readwrite("stride_vertical", &m::PoolingInfo::stride_vertical)
     .def_readwrite("stride_horizontal", &m::PoolingInfo::stride_horizontal)
+    .def_readwrite("pad_height", &m::PoolingInfo::pad_height)
+    .def_readwrite("pad_width", &m::PoolingInfo::pad_width)
     .def_readwrite("algorithm", &m::PoolingInfo::algorithm)
     ;
   enum_<m::ActivationAlgorithm>("activation_algo")
@@ -298,5 +312,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("conv_backward_bias", &owl::ConvBackwardBias);
   def("activation_backward", &owl::ActivationBackward);
   def("softmax_backward", &owl::SoftmaxBackward);
+  def("lrn_forward", &owl::LRNForward);
+  def("concat", &owl::Concat);
 }
 

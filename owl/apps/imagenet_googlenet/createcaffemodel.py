@@ -77,7 +77,8 @@ class MinervaModel:
                         #default pad = 0 stride = 1
                         pad = netconfig.layers[i].convolution_param.pad
                         stride = netconfig.layers[i].convolution_param.stride
-                        
+                       
+                        '''
                         #next scale
                         if pad > 0:
                             for right_pad in range(pad, 0, -1):
@@ -89,15 +90,19 @@ class MinervaModel:
                                 if (bot_dim[0] + right_pad - kernel_size) % stride == 0:
                                     this_scale = (bot_dim[0] + right_pad - kernel_size) / stride + 1
                                     break
+                        '''
 
+                        this_scale = (bot_dim[0] + pad * 2 - kernel_size) / stride + 1
                         this_dim = [this_scale, this_scale, num_output]
                         
                         #initer
                         #winiter = netconfig.layers[i].convolution_param.weight_filler.type
                         #biniter = netconfig.layers[i].convolution_param.bias_filler.type
                         #TODO: hack
-                        winiter = '%s/epoch0/%s_weights.dat' % (weight_dir, netconfig.layers[i].name)
-                        biniter = '%s/epoch0/%s_bias.dat' % (weight_dir, netconfig.layers[i].name)
+                        layername = netconfig.layers[i].name
+                        layername = layername.replace("/","_")
+                        winiter = '%s/epoch0/%s_weights.dat' % (weight_dir, layername)
+                        biniter = '%s/epoch0/%s_bias.dat' % (weight_dir, layername)
 
                         #blob learning rate and wd
                         self.blobs_lr = netconfig.layers[i].blobs_lr
@@ -114,18 +119,11 @@ class MinervaModel:
                         pad = netconfig.layers[i].pooling_param.pad
                         stride = netconfig.layers[i].pooling_param.stride
                         pooltype = netconfig.layers[i].pooling_param.pool
-                        
-                        if pad > 0:
-                            for right_pad in range(pad, 0, -1):
-                                if (bot_dim[0] + pad + right_pad - kernel_size) % stride == 0:
-                                    this_scale = (bot_dim[0] + pad + right_pad - kernel_size) / stride + 1
-                                    break
-                        else:
-                            for right_pad in range(stride-1, -1, -1):
-                                if (bot_dim[0] + right_pad - kernel_size) % stride == 0:
-                                    this_scale = (bot_dim[0] + right_pad - kernel_size) / stride + 1
-                                    break
-                        
+                       
+                        this_scale = int(np.ceil((float(bot_dim[0] + pad * 2) - kernel_size) / stride)) + 1
+                        if (this_scale - 1) * stride >= bot_dim[0] + pad:
+                            this_scale -= 1
+
                         this_dim = [this_scale, this_scale, bot_dim[2]]
                         if netconfig.layers[i].pooling_param.pool == 0:
                             op = conv.pool_op.max
@@ -133,7 +131,7 @@ class MinervaModel:
                             op = conv.pool_op.avg
                         else:
                             assert false
-                        self.connections[name] = net.PoolingConnection(name, kernel_size, stride, op)
+                        self.connections[name] = net.PoolingConnection(name, kernel_size, stride, pad, op)
                     elif  netconfig.layers[i].type == layerparam.LayerType.Value('INNER_PRODUCT'):
                         assert len(netconfig.layers[i].top) == 1 and len(netconfig.layers[i].bottom) == 1
                         bot_name = netconfig.layers[i].bottom[0]
@@ -150,8 +148,10 @@ class MinervaModel:
                         #winiter = netconfig.layers[i].inner_product_param.weight_filler.type
                         #biniter = netconfig.layers[i].inner_product_param.bias_filler.type
                         #TODO: hack
-                        winiter = '%s/epoch0/%s_weights.dat' % (weight_dir, netconfig.layers[i].name)
-                        biniter = '%s/epoch0/%s_bias.dat' % (weight_dir, netconfig.layers[i].name)
+                        layername = netconfig.layers[i].name
+                        layername = layername.replace("/","_")
+                        winiter = '%s/epoch0/%s_weights.dat' % (weight_dir, layername)
+                        biniter = '%s/epoch0/%s_bias.dat' % (weight_dir, layername)
                         
                         #blob learning rate and wd
                         self.blobs_lr = netconfig.layers[i].blobs_lr
@@ -167,7 +167,7 @@ class MinervaModel:
                         this_dim = self.layers[bot_name].dim
                         local_size = netconfig.layers[i].lrn_param.local_size
                         alpha = netconfig.layers[i].lrn_param.alpha
-                        beta = netconfig.layers[i].lrn_param.alpha
+                        beta = netconfig.layers[i].lrn_param.beta
                         self.connections[netconfig.layers[i].name] = net.LRNConnection(netconfig.layers[i].name, local_size, alpha, beta)
                     elif netconfig.layers[i].type == layerparam.LayerType.Value('SOFTMAX_LOSS'):
                         assert len(netconfig.layers[i].top) == 1 and len(netconfig.layers[i].bottom) == 2
@@ -217,7 +217,7 @@ class MinervaModel:
                     if netconfig.layers[i].type == layerparam.LayerType.Value('RELU'):
                         self.layers[netconfig.layers[i].bottom[0]].neuron = net.ReluNeuron()
                     elif netconfig.layers[i].type == layerparam.LayerType.Value('DROPOUT'):
-                        self.layers[netconfig.layers[i].bottom[0]].droprate = netconfig.layers[i].dropout_param.dropout_ratio
+                        self.layers[netconfig.layers[i].bottom[0]].dropout = netconfig.layers[i].dropout_param.dropout_ratio
                     else:
                         print 'Not Implemented Neuron'
                         print netconfig.layers[i].name
@@ -268,6 +268,16 @@ class MinervaModel:
             curjob.top[0].pre_nonlinear = curjob.ff()
             #activate trough non-linear function and dropout
             curjob.top[0].ff()
+ 
+            '''
+            if curjob.name == "fc6":
+                numpyarr = curjob.top[0].get_act().to_numpy()
+                res = np.reshape(numpyarr, np.prod(np.shape(numpyarr))).tolist()[112*0:112*1+10]
+                for i in range(len(res)):
+                    print '%d:%f' % (i, res[i])
+                print np.shape(numpyarr)
+                exit(0)
+            '''
 
             #trigger the followers
             for finishedlayer in self.connections[curjob.name].top:
@@ -298,45 +308,44 @@ class MinervaModel:
        
         outputlayer = []
         for nnlayer in self.layers:
-            if len(nnlayer.top) == 0:
-                output_layer.append(nnlayer)
+            if len(self.layers[nnlayer].ff_conns) == 0:
+                outputlayer.append(self.layers[nnlayer])
 
         #mark the inlayer ready
         for outlayer in outputlayer:
-            print outlayer.name
+            #print outlayer.name
             layerstatus[outlayer.name] = True
         
         #mark the ready connection
         for outlayer in outputlayer:
             #check whether the inlayer related connection is ready
-            for outlayer_conn in self.layers[outlayer].bp_conns:
-                connstatus[inlayer_conn.name] = True
-                for conn_bottom in inlayer_conn.bottom:
-                    if layerstatus[conn_bottom.name] == False:
-                        connstatus[inlayer_conn.name] = False
+            for outlayer_conn in self.layers[outlayer.name].bp_conns:
+                connstatus[outlayer_conn.name] = True
+                for conn_top in outlayer_conn.top:
+                    if layerstatus[conn_top.name] == False:
+                        connstatus[outlayer_conn.name] = False
                         break
-                if connstatus[inlayer_conn.name] == True:
-                    jobqueue.insert(0, inlayer_conn)
+                if connstatus[outlayer_conn.name] == True:
+                    jobqueue.insert(0, outlayer_conn)
 
         while(len(jobqueue)!=0):
             curjob = jobqueue.pop()
             #first connection ff, the output is the top's pre-nonlinear
             print curjob.name
             assert len(curjob.top) == 1
-            curjob.top[0].pre_nonlinear = curjob.ff()
-            #activate trough non-linear function and dropout
-            curjob.top[0].ff()
+            curjob.top[0].bp()
+            curjob.bp()
 
             #trigger the followers
-            for finishedlayer in self.connections[curjob.name].top:
+            for finishedlayer in self.connections[curjob.name].bottom:
                 layerstatus[finishedlayer.name] = True
-            for finishedlayer in self.connections[curjob.name].top:
-                for next_conn in finishedlayer.ff_conns:
+            for finishedlayer in self.connections[curjob.name].bottom:
+                for next_conn in finishedlayer.bp_conns:
                     if connstatus[next_conn.name] == True:
                         continue
                     connstatus[next_conn.name] = True
-                    for next_conn_bottom in next_conn.bottom:
-                        if layerstatus[next_conn_bottom.name] == False:
+                    for next_conn_top in next_conn.top:
+                        if layerstatus[next_conn_top.name] == False:
                             connstatus[next_conn.name] = False
                             break
                     if connstatus[next_conn.name] == True:
@@ -365,7 +374,7 @@ def train_network(model, num_epochs = 100, minibatch_size=10,
             test_db='/home/minjie/data/imagenet/ilsvrc12_test_lmdb')
 
     #mark the output layer
-    output_layer = 'fc8'
+    output_layer = 'prob'
 
     for i in xrange(num_epochs):
         print "---------------------Epoch #", i
@@ -376,6 +385,7 @@ def train_network(model, num_epochs = 100, minibatch_size=10,
             target = owl.from_numpy(labels)
             model.ff(data, target)
             print_training_accuracy(model.layers[output_layer].get_act(), target, minibatch_size)
+            model.bp(data, target)
             exit(0)
 
 if __name__ == '__main__':
@@ -384,7 +394,7 @@ if __name__ == '__main__':
     owl.set_device(cpu)
     #newconfig = CaffeModelConfig(configfile = '/home/tianjun/athena/athena/owl/apps/GoogLeNet/train_val.prototxt')
     #newconfig = CaffeModelConfig(configfile = '/home/minjie/caffe/caffe/models/bvlc_reference_caffenet/train_val.prototxt')
-    newconfig = CaffeModelConfig(configfile = '/home/minjie/caffe/caffe/models/VGG/VGG_ILSVRC_16_layers_deploy.prototxt')
+    newconfig = CaffeModelConfig(configfile = '/home/minjie/caffe/caffe/models/VGG/VGG_train_val.prototxt')
     model = MinervaModel(newconfig.netconfig, './VGGmodel')
     train_network(model)
 

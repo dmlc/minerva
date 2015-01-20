@@ -35,6 +35,41 @@ def softmax(x, op = soft_op.instance):
         soft_shape = x.shape[0:-1] + [1 for i in range(4 - len(ori_shape))] + [x.shape[-1]]
         return _owl.softmax_forward(x.reshape(soft_shape), op).reshape(ori_shape)
 
+class Lrner:
+    """ Wrapper class for LRN.
+
+    Attributes:
+      local_size (int) : the size of lrn across channel
+      alpha (float) : lrn parameters
+      beta (float) : lrn parameters
+
+    """
+    def __init__(self, local_size, alpha, beta):
+        """ Constructor for Convolver class
+        
+        Args:
+          local_size (int) : the size of lrn across channel
+          alpha (float) : lrn parameters
+          beta (float) : lrn parameters
+
+        """
+        self.local_size = local_size
+        self.alpha = alpha
+        self.beta = beta
+    
+    def ff(self, x, s):
+        """ Feed-forward convolution
+
+        Args:
+          x (owl.NArray): input of the lrn
+          s (owl.NArray): auxiliary matrix to help computing
+
+        Returns:
+          owl.NArray: result ndarray after forward lrn
+        """
+        #print np.reshape(x.to_numpy(), np.prod(np.shape(x.to_numpy()))).tolist()[0:100] 
+        return _owl.lrn_forward(x, s, self.local_size, self.alpha, self.beta)
+
 
 class Convolver:
     """ Wrapper class for convolution.
@@ -114,7 +149,7 @@ class Pooler:
     Attributes:
       param (libowl.PoolingInfo): pooling parameters
     """
-    def __init__(self, h, w, stride_v, stride_h, op):
+    def __init__(self, h, w, stride_v, stride_h, pad_h, pad_w, op):
         """ Constructor for Pooler class
 
         Args:
@@ -129,6 +164,8 @@ class Pooler:
         pi.width = w
         pi.stride_vertical = stride_v
         pi.stride_horizontal = stride_h
+        pi.pad_height = pad_h
+        pi.pad_width = pad_w
         pi.algorithm = op
         self.param = pi
 
@@ -141,6 +178,8 @@ class Pooler:
         Returns:
           owl.NArray: output ndarray after forward pooling
         """
+
+        #print "%d %d %d %d" % (self.param.height, self.param.width, self.param.stride_vertical, self.param.stride_horizontal)
         return _owl.pooling_forward(x, self.param)
 
     def bp(self, y, ff_y, ff_x):

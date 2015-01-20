@@ -220,10 +220,44 @@ __global__ static void CudaPerformFillKernel(float* dst, size_t size, float val)
   }
 }
 
+__global__ static void CudaMaxPoolForward(const int nthreads, const float* bottom_data,
+    const int num, const int channels, const int height,
+    const int width, const int pooled_height, const int pooled_width,
+    const int kernel_h, const int kernel_w, const int stride_h,
+    const int stride_w, const int pad_h, const int pad_w, float* top_data) {
+	for (int index = blockIdx.x * blockDim.x + threadIdx.x; index < nthreads; index += blockDim.x * gridDim.x )
+	{
+		int pw = index % pooled_width;
+		int ph = (index / pooled_width) % pooled_height;
+		int c = (index / pooled_width / pooled_height) % channels;
+		int n = index / pooled_width / pooled_height / channels;
+		int hstart = ph * stride_h - pad_h;
+		int wstart = pw * stride_w - pad_w;
+		int hend = min(hstart + kernel_h, height);
+		int wend = min(wstart + kernel_w, width);
+		hstart = max(hstart, 0);
+		wstart = max(wstart, 0);
+		float maxval = -3.4E+38F;
+		int maxidx = -1;
+		bottom_data += (n * channels + c) * height * width;
+		for (int h = hstart; h < hend; ++h) {
+		  for (int w = wstart; w < wend; ++w) {
+			if (bottom_data[h * width + w] > maxval) {
+			  maxidx = h * width + w;
+			  maxval = bottom_data[maxidx];
+			}
+		  }
+		}
+		top_data[index] = maxval;
+		//TODO: do not save mask currently
+		//top_mask[index] = maxidx;
+  }
+}
+
+
 __global__ static void LRNFillScale(const int nthreads, const float* in, const int num, const int channels, const int height, const int width, const int size, const float alpha_over_size, float* scale) {
-  
-	/*
-	CUDA_KERNEL_LOOP(index, nthreads) {
+	for (int index = blockIdx.x * blockDim.x + threadIdx.x; index < nthreads; index += blockDim.x * gridDim.x )
+	{
     // find out the local offset
     int w = index % width;
     int h = (index / width) % height;
@@ -235,7 +269,7 @@ __global__ static void LRNFillScale(const int nthreads, const float* in, const i
     int head = 0;
     int pre_pad = (size - 1) / 2;
     int post_pad = size - pre_pad - 1;
-    Dtype accum_scale = 0;
+    float accum_scale = 0;
     // fill the scale at [n, :, h, w]
     // accumulate values
     while (head < post_pad) {
@@ -262,7 +296,12 @@ __global__ static void LRNFillScale(const int nthreads, const float* in, const i
       ++head;
     }
   }
-  */
 }
 
-
+__global__ static void LRNComputeOutput(const int nthreads, const float* in,
+    const float* scale, const float negative_beta, float* out) {
+	for (int index = blockIdx.x * blockDim.x + threadIdx.x; index < nthreads; index += blockDim.x * gridDim.x )
+	{
+		out[index] = in[index] * pow(scale[index], negative_beta);
+	}
+}

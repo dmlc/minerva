@@ -129,3 +129,20 @@ def from_numpy(nparr):
       owl.NArray: Minerva's ndarray
     """
     return _owl.from_numpy(np.require(nparr, dtype=np.float32, requirements=['C']))
+
+def concat(narrays, concat_dim): 
+    """  Concatenate NArrays according to concat_dim
+    
+    Args:
+        narrays (owl.NArray): inputs for concatenation
+        concat_dim (int): the dimension to concate
+
+    Returns:
+        owl.NArray: result of concatenator
+    """
+    return _owl.concat(narrays, concat_dim)
+
+
+
+
+
