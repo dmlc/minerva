@@ -8,6 +8,11 @@
 
 using namespace std;
 
+#define HAS_PS
+#ifdef HAS_PS
+#include "op/impl/ps.h"
+#endif
+
 namespace minerva {
 namespace basic {
 
@@ -223,9 +228,6 @@ void Fill(const DataList& output, FillClosure& closure) {
     data[i] = closure.val;
   }
 }
-
-#define HAS_PS
-void PushGradAndPullWeight(const float * grad, float * weights, size_t size, const std::string & layer_name);
 
 void SyncWithPS(const DataList& inputs, const DataList& outputs, SyncWithPSClosure& closure) {
 #ifdef HAS_PS
