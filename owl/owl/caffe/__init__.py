@@ -1,1 +1,1 @@
-__all__ = ['caffe_pb2', 'converter']
+from caffe_pb2 import *

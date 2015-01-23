@@ -3,16 +3,13 @@ import owl.elewise as ele
 import owl.conv as co
 import numpy as np
 import Queue
-import caffe
+from caffe import *
 
 class Neuron(object):
     def __init__(self, params = None):
         self.params = params
-        pass
-
     def ff(self, x):
         pass
-
     def bp(self, y):
         pass
 
@@ -70,19 +67,25 @@ class SoftmaxNeuron(Neuron):
         super(SoftmaxNeuron, self).__init__(params)
     def ff(self, x):
         self.ff_y = co.softmax(x, co.soft_op.instance)
+        return self.ff_y
     def bp(self, y):
         return ff_y - y
 
+class LRNNeuron(Neuron):
+    def __init__(self, params):
+        super(LRNNeuron, self).__init__(params)
+    def ff(self, x):
+        return x
+    def bp(self, y):
+        return y
+
 class Layer(object):
-    def __init__(self, name, neurons):
-        self.name = name
-        self.neurons = neurons
+    def __init__(self, params = None):
+        self.params = params
+        self.neurons = []
         self.act = None
         self.sen = None
         
-        # layer dimension
-        self.dim = []
-
         # connectivity
         self.ff_conns = []
         self.bp_conns = []
@@ -116,8 +119,8 @@ class Layer(object):
             self.sen = neu.bp(self.sen)
 
 class Connection(object):
-    def __init__(self, name, params):
-        self.name = name
+    def __init__(self, params):
+        self.name = params.name
         self.params = params
         # weights and bias
         self.weight = None
@@ -148,8 +151,8 @@ class Connection(object):
     '''
 
 class FullyConnection(Connection):
-    def __init__(self, name, params):
-        super(FullyConnection, self).__init__(name, params)
+    def __init__(self, params):
+        super(FullyConnection, self).__init__(params)
         
     def ff(self):
         shp = self.bottom.act.shape
@@ -168,9 +171,11 @@ class FullyConnection(Connection):
         return s
 
 class ConvConnection(Connection):
-    def __init__(self, name, params):
-        super(ConvConnection, self).__init__(name, params)
-        self.convolver = co.Convolver(params.pad, params.pad, params.stride, params.stride)
+    def __init__(self, params):
+        super(ConvConnection, self).__init__(params)
+        self.conv_params = params.convolution_param
+        self.convolver = co.Convolver(self.conv_params.pad, 
+                self.conv_params.pad, self.conv_params.stride, self.conv_params.stride)
     def ff(self):
         return self.convolver.ff(self.bottom.act, self.weight, self.bias)
     def bp(self):
@@ -178,6 +183,7 @@ class ConvConnection(Connection):
         self.biasgrad = self.convolver.bias_grad(self.top.sen)
         return self.convolver.bp(self.top.sen, self.weight)
 
+'''
 class LRNConnection(Connection):
     def __init__(self, name, local_size, alpha, beta):
         super(LRNConnection, self).__init__(name)
@@ -198,6 +204,7 @@ class ConcatConnection(Connection):
         pass    
     def bp(self):
         pass
+'''
 
 class Net:
     def __init__(self):
@@ -258,7 +265,7 @@ class Net:
         for l in self._reverse_toporder():
             l.bp()
 
-class TestLayer(Layer):
+class _TestLayer(Layer):
     def __init__(self, name):
         self.name = name
         self.ff_conns = []
@@ -270,14 +277,14 @@ class TestLayer(Layer):
 
 if __name__ == '__main__':
     net = Net()
-    net.add_layer('l1', TestLayer('l1'))
-    net.add_layer('l2', TestLayer('l2'))
-    net.add_layer('l3', TestLayer('l3'))
-    net.add_layer('l4', TestLayer('l4'))
-    net.add_layer('l5', TestLayer('l5'))
-    net.add_layer('l6', TestLayer('l6'))
-    net.add_layer('l7', TestLayer('l7'))
-    net.add_layer('l8', TestLayer('l8'))
+    net.add_layer('l1', _TestLayer('l1'))
+    net.add_layer('l2', _TestLayer('l2'))
+    net.add_layer('l3', _TestLayer('l3'))
+    net.add_layer('l4', _TestLayer('l4'))
+    net.add_layer('l5', _TestLayer('l5'))
+    net.add_layer('l6', _TestLayer('l6'))
+    net.add_layer('l7', _TestLayer('l7'))
+    net.add_layer('l8', _TestLayer('l8'))
     net.connect('l1', 'l2', 1)
     net.connect('l1', 'l3', 2)
     net.connect('l2', 'l4', 3)
