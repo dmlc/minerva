@@ -226,6 +226,7 @@ class MinervaModel:
                     assert netconfig.layers[i].type == layerparam.LayerType.Value('DATA')
 
     def ff(self, data, labels):
+        print "======================="
         print "Network Feed Forward"
         #init status
         connstatus = dict()
@@ -295,6 +296,7 @@ class MinervaModel:
                         jobqueue.insert(0, next_conn)
     
     def bp(self, data, labels):
+        print "======================="
         print "Network Backward"
         #init status
         connstatus = dict()
@@ -350,6 +352,14 @@ class MinervaModel:
                             break
                     if connstatus[next_conn.name] == True:
                         jobqueue.insert(0, next_conn)
+    
+    def update(self, numsamples, lr, mom, wd):
+        print "======================="
+        print "Update"
+        for conns in self.connections:
+            print conns
+            if type(self.connections[conns]) == net.ConvConnection or type(self.connections[conns]) == net.FullyConnection:
+                self.connections[conns].update(numsamples, lr, mom, wd)
 
 
 def print_training_accuracy(o, t, minibatch_size):
@@ -360,7 +370,7 @@ def print_training_accuracy(o, t, minibatch_size):
     sys.stdout.flush()
 
 def train_network(model, num_epochs = 100, minibatch_size=10,
-        dropout_rate = 0.5, eps_w = 0.01, eps_b = 0.01, mom = 0.9, wd = 0.0005):
+        dropout_rate = 0.5, eps_w = 0.01, mom = 0.9, wd = 0.0005):
     gpu0 = owl.create_gpu_device(0)
     owl.set_device(gpu0)
     num_weights = 8

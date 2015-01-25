@@ -106,7 +106,7 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
   sens[6] = (weights[2].Trans() * sens[7]).Reshape(acts[6].Size());
   sens[5] = Convolution::PoolingBackward(sens[6], acts[6], acts[5], pool_info[1]);
   sens[4] = Convolution::ActivationBackward(sens[5], acts[5], acts[4], ActivationAlgorithm::kRelu);
-  sens[3] = Convolution::ConvBackwardData(sens[4], weights[1], conv_info[1]);
+  sens[3] = Convolution::ConvBackwardData(sens[4], acts[3], weights[1], conv_info[1]);
   sens[2] = Convolution::PoolingBackward(sens[3], acts[3], acts[2], pool_info[0]);
   sens[1] = Convolution::ActivationBackward(sens[2], acts[2], acts[1], ActivationAlgorithm::kRelu);
 
@@ -116,9 +116,9 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
   }
 
   vector<NArray> ret;
-  ret.push_back(Convolution::ConvBackwardFilter(sens[1], acts[0], conv_info[0]));
+  ret.push_back(Convolution::ConvBackwardFilter(sens[1], weights[0], acts[0], conv_info[0]));
   ret.push_back(Convolution::ConvBackwardBias(sens[1]));
-  ret.push_back(Convolution::ConvBackwardFilter(sens[4], acts[3], conv_info[1]));
+  ret.push_back(Convolution::ConvBackwardFilter(sens[4], weights[0], acts[3], conv_info[1]));
   ret.push_back(Convolution::ConvBackwardBias(sens[4]));
   ret.push_back(sens[7] * re_acts6.Trans());
   ret.push_back(sens[7].Sum(1));

@@ -163,6 +163,23 @@ NArray Concat(const std::vector<NArray>& arrays, int catdim) {
 	return NArray::ComputeOne(arrays, Scale(sizevec), op);
 }
 
+NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count)
+{
+	CHECK_GT(src.Size().NumDims(), slice_dim) << "can't concat on non-sense dim";
+	std::vector<int> sizevec(src.Size().NumDims(), 0);
+	for(int i = 0; i < sizevec.size(); i++)
+	{
+		if(i == slice_dim)
+			sizevec[i] = slice_count;
+		else
+			sizevec[i] = src.Size()[i]; 
+	}
+	SliceOp* op = new SliceOp();
+	op->closure = {slice_dim, st_off, slice_count};
+	return NArray::ComputeOne({src}, Scale(sizevec), op);
+}
+
+
 NArray& NArray::operator*=(const NArray& rhs) {
   return *this = (*this * rhs);
 }

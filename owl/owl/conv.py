@@ -58,7 +58,7 @@ class Lrner:
         self.beta = beta
     
     def ff(self, x, s):
-        """ Feed-forward convolution
+        """ Feed-forward local response norm
 
         Args:
           x (owl.NArray): input of the lrn
@@ -69,6 +69,20 @@ class Lrner:
         """
         #print np.reshape(x.to_numpy(), np.prod(np.shape(x.to_numpy()))).tolist()[0:100] 
         return _owl.lrn_forward(x, s, self.local_size, self.alpha, self.beta)
+    
+    def bp(self, bottom_data, top_data, scale, top_diff):
+        """ Backward local response norm
+
+        Args:
+          bottom_data (owl.NArray): activation before lrn
+          top_data (owl.NArray): activation after lrn
+          scale (owl.NArray): auxiliary matrix to help computing
+          top_diff (owl.NArray): error derivative
+
+        Returns:
+          owl.NArray: result ndarray after backward lrn
+        """      
+        return _owl.lrn_backward(bottom_data, top_data, scale, top_diff, self.local_size, self.alpha, self.beta)
 
 
 class Convolver:
@@ -108,29 +122,31 @@ class Convolver:
         """
         return _owl.conv_forward(x, w, b, self.param)
 
-    def bp(self, y, w):
+    def bp(self, y, x, w):
         """ Backward convolution
 
         Args:
           y (owl.NArray): error of the convolution usually passed by higher layers
+          x (owl.NArray): bottom activation
           w (owl.NArray): filters
 
         Returns:
           owl.NArray: result ndarray after backward convolution
         """
-        return _owl.conv_backward_data(y, w, self.param)
+        return _owl.conv_backward_data(y, x, w, self.param)
 
-    def weight_grad(self, y, x):
+    def weight_grad(self, y, w, x):
         """ Compute the gradient of filters
 
         Args:
           y (owl.NArray): error (sensitivity) passed by higher layer
+          w (owl.NArray): weight (used to get the filter dimension)
           x (owl.NArray): input (activation) of lower layer
 
         Returns:
           owl.NArray: the gradient of filters
         """
-        return _owl.conv_backward_filter(y, x, self.param)
+        return _owl.conv_backward_filter(y, w, x, self.param)
 
     def bias_grad(self, y):
         """ Compute the gradient of bias

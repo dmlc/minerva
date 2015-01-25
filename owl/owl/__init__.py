@@ -142,7 +142,17 @@ def concat(narrays, concat_dim):
     """
     return _owl.concat(narrays, concat_dim)
 
+def slice(src, slice_dim, st_off, slice_count): 
+    """  Slice NArrays according to slice_dim
+    
+    Args:
+        src (owl.NArray): inputs for slice
+        slice_dim (int): the dimension to slice
+        st_off (int): where to start slice
+        slice_count (int): how many data_chunk on slice_dim
 
-
-
+    Returns:
+        owl.NArray: result of slicer
+    """
+    return _owl.slice(src, slice_dim, st_off, slice_count)
 

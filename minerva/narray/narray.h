@@ -66,7 +66,8 @@ class NArray {
   NArray& operator*=(const NArray&);
 
   // Concat
-  //friend NArray Concat(const std::vector<NArray>& params, int concat_dim);
+  friend NArray Concat(const std::vector<NArray>& params, int concat_dim);
+  friend NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count);	
 
   // Shape
   const Scale& Size() const { return CHECK_NOTNULL(data_node_)->data_.size; }
@@ -101,6 +102,6 @@ class NArray {
 // Matmult
 NArray operator*(const NArray&, const NArray&);
 NArray Concat(const std::vector<NArray>& params, int concat_dim);
-
+NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count);	
 } // end of namespace minerva
 

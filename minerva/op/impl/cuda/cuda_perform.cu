@@ -513,6 +513,32 @@ void CudaPerformMaxPoolingBackward(float* bottom, float* top, float* top_diff, f
   cudnnPoolingDescriptor_t pool_desc;
   cudnnTensor4dDescriptor_t top_desc;
 
+    //Calculate the dimension after pooling	
+  int pooled_height = static_cast<int>(ceil(static_cast<float>((bottom_height + 2 * pad_height - window_height)) / stride_vertical)) + 1;
+  int pooled_width = static_cast<int>(ceil(static_cast<float>((bottom_width + 2 * pad_width - window_width)) / stride_horizontal)) + 1;
+
+  if (pad_height > 0 || pad_width > 0)
+  {
+	  if((pooled_height - 1) * stride_vertical >= bottom_height + pad_height)
+		--pooled_height;  
+	  if((pooled_width - 1) * stride_horizontal >= bottom_width + pad_width)
+		--pooled_width;
+
+  	  int block, thread;
+	  int size = num_images * num_channels * bottom_width * bottom_height;
+	  FindConfiguration(size, block, thread);
+
+	  //set bottom_diff 0
+	  CudaPerformFillKernel<<<block, thread, 0, stream>>>(bottom_diff, size, 0.0);
+	  CheckCudaError("CudaPerformFill");
+	  
+	  block = size;
+	  CudaMaxPoolBackward<<<block, thread>>>(
+	  size, bottom, top_diff, bottom_diff, num_images, num_channels, bottom_height, bottom_width, pooled_height, pooled_width, window_height, window_width, stride_vertical, stride_horizontal, pad_height, pad_width);
+	  CheckCudaError("CudaMaxPoolBackward");
+	  return;
+  }
+
   CUDNN_CALL(cudnnCreateTensor4dDescriptor(&bottom_desc));
   CUDNN_CALL(cudnnCreatePoolingDescriptor(&pool_desc));
   CUDNN_CALL(cudnnCreateTensor4dDescriptor(&top_desc));
@@ -572,7 +598,7 @@ void CudaPerformFill(float* dst, size_t size, float val, cudaStream_t stream) {
   CheckCudaError("CudaPerformFill");
 }
 
-void CudaPerformLRN(float* bottom, float* scale, float* res, int local_size, float alpha, float beta, int num_img, int channel, int width, int height, cudaStream_t stream)
+void CudaPerformLRNForward(float* bottom, float* scale, float* res, int local_size, float alpha, float beta, int num_img, int channel, int width, int height, cudaStream_t stream)
 {
 	int block, thread;
 	int size = num_img * channel * width * height;
@@ -589,7 +615,17 @@ void CudaPerformLRN(float* bottom, float* scale, float* res, int local_size, flo
 	CheckCudaError("LRNComputeOutput");
 }
 
-
+void CudaPerformLRNBackward(float* bottom_data, float* top_data, float* scale, float* top_diff, float* bottom_diff, int local_size, float alpha, float beta, int num_img, int channel, int width, int height, cudaStream_t stream)
+{
+	int block, thread;
+	int size = num_img * channel * width * height;
+	FindConfiguration(size, block, thread);
+	block = num_img * height * width;
+	LRNComputeDiff<<<block, thread>>>(
+    block, bottom_data, top_data, scale, top_diff,  num_img, channel, height, width, local_size,
+    -beta, float(2. * alpha * beta / local_size), bottom_diff);
+	CheckCudaError("LRNBackward");
+}
 
 
 

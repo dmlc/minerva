@@ -26,14 +26,17 @@ ImageBatch Convolution::ConvForward(ImageBatch src, Filter filter, NArray bias, 
   return NArray::ComputeOne({src, filter, bias}, new_size, op);
 }
 
-ImageBatch Convolution::ConvBackwardData(ImageBatch diff, Filter filter, ConvInfo info) {
+ImageBatch Convolution::ConvBackwardData(ImageBatch diff, ImageBatch bottom, Filter filter, ConvInfo info) {
   CHECK_EQ(diff.GetNumFeatureMaps(), filter.GetNumOutputs()) << "#output channels mismatch";
+  /*
+   * We can't get filter size when (top + 2*pad) % stride != 0
   Scale new_size {
     (diff.GetWidth() - 1) * info.stride_horizontal + filter.GetWidth() - 2 * info.pad_width,
     (diff.GetHeight() - 1) * info.stride_vertical + filter.GetHeight() - 2 * info.pad_height,
     filter.GetNumInputs(),
     diff.GetNumImages()
   };
+  */
   ConvBackwardDataOp* op = new ConvBackwardDataOp();
   op->closure = {
     info.pad_height,
@@ -41,17 +44,20 @@ ImageBatch Convolution::ConvBackwardData(ImageBatch diff, Filter filter, ConvInf
     info.stride_vertical,
     info.stride_horizontal
   };
-  return NArray::ComputeOne({diff, filter}, new_size, op);
+  return NArray::ComputeOne({diff, filter}, bottom.Size(), op);
 }
 
-Filter Convolution::ConvBackwardFilter(ImageBatch diff, ImageBatch bottom, ConvInfo info) {
+Filter Convolution::ConvBackwardFilter(ImageBatch diff, ImageBatch bottom, Filter filter, ConvInfo info) {
   CHECK_EQ(diff.GetNumImages(), bottom.GetNumImages()) << "#images mismatch";
+  /*
+   * We can't get filter size when (top + 2*pad) % stride != 0
   Scale new_size {
     -(diff.GetWidth() - 1) * info.stride_horizontal + bottom.GetWidth() + 2 * info.pad_width,
     -(diff.GetHeight() - 1) * info.stride_vertical + bottom.GetHeight() + 2 * info.pad_height,
     bottom.GetNumFeatureMaps(),
     diff.GetNumFeatureMaps()
   };
+  */
   ConvBackwardFilterOp* op = new ConvBackwardFilterOp();
   op->closure = {
     info.pad_height,
@@ -59,7 +65,7 @@ Filter Convolution::ConvBackwardFilter(ImageBatch diff, ImageBatch bottom, ConvI
     info.stride_vertical,
     info.stride_horizontal
   };
-  return NArray::ComputeOne({diff, bottom}, new_size, op);
+  return NArray::ComputeOne({diff, bottom}, filter.Size(), op);
 }
 
 NArray Convolution::ConvBackwardBias(ImageBatch diff) {
@@ -137,10 +143,21 @@ ImageBatch Convolution::PoolingBackward(ImageBatch diff, ImageBatch top, ImageBa
   CHECK_EQ(diff.Size(), top.Size()) << "inputs sizes mismatch";
   CHECK_EQ(diff.GetNumImages(), bottom.GetNumImages()) << "#images mismatch";
   CHECK_EQ(diff.GetNumFeatureMaps(), bottom.GetNumFeatureMaps()) << "#channels mismatch";
-  int bottom_height = (diff.GetHeight() - 1) * info.stride_vertical + info.height;
-  int bottom_width = (diff.GetWidth() - 1) * info.stride_horizontal + info.width;
-  CHECK_EQ(bottom.GetHeight(), bottom_height) << "height mismatch";
-  CHECK_EQ(bottom.GetWidth(), bottom_width) << "width mismatch";
+  
+  int pooled_height = static_cast<int>(ceil(static_cast<float>((bottom.GetHeight() + 2 * info.pad_height - info.height)) / info.stride_vertical)) + 1;
+  int pooled_width = static_cast<int>(ceil(static_cast<float>((bottom.GetWidth() + 2 * info.pad_width - info.width)) / info.stride_horizontal)) + 1;
+
+  if (info.pad_height > 0 || info.pad_width > 0)
+  {
+	if((pooled_height - 1) * info.stride_vertical >= bottom.GetHeight() + info.pad_height)
+		--pooled_height;
+	if((pooled_width - 1) * info.stride_horizontal >= bottom.GetWidth() + info.pad_width)
+		--pooled_width;
+  }
+
+  CHECK_EQ(top.GetHeight(), pooled_height) << "height mismatch";
+  CHECK_EQ(top.GetWidth(), pooled_width) << "width mismatch";
+  
   PoolingBackwardOp* op = new PoolingBackwardOp();
   op->closure = {
     info.algorithm,
@@ -157,10 +174,18 @@ ImageBatch Convolution::PoolingBackward(ImageBatch diff, ImageBatch top, ImageBa
 
 ImageBatch Convolution::LRNForward(ImageBatch src, ImageBatch scale, int local_size, float alpha, float beta)
 {
-  LRNOp* op = new LRNOp();
+  LRNForwardOp* op = new LRNForwardOp();
   op->closure = {local_size, alpha, beta, src.Size()};
   return NArray::ComputeOne({src, scale}, src.Size(), op);
 }
+
+ImageBatch Convolution::LRNBackward(ImageBatch bottom_data, ImageBatch top_data, ImageBatch scale, ImageBatch top_diff , int local_size, float alpha, float beta)
+{
+  LRNBackwardOp* op = new LRNBackwardOp();
+  op->closure = {local_size, alpha, beta, bottom_data.Size()};
+  return NArray::ComputeOne({bottom_data, top_data, scale, top_diff}, bottom_data.Size(), op);
+}
+
 
 }  // namespace minerva
 

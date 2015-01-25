@@ -38,9 +38,9 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
   }
 }
 
-void LRN(const DataList& inputs, const DataList& outputs, LRNClosure& closure, const CudaRuntimeContext & context) {
-  CHECK_EQ(inputs.size(), 2) << "(LRN) #inputs is wrong!";
-  CHECK_EQ(outputs.size(), 1) << "(LRN) #outputs is wrong!";
+void LRNForward(const DataList& inputs, const DataList& outputs, LRNForwardClosure& closure, const CudaRuntimeContext & context) {
+  CHECK_EQ(inputs.size(), 2) << "(LRNForward) #inputs is wrong!";
+  CHECK_EQ(outputs.size(), 1) << "(LRNForward) #outputs is wrong!";
   float* bottom_data = inputs[0].data();
   float* scale_data = inputs[1].data();
   float* res_data = outputs[0].data();
@@ -51,8 +51,27 @@ void LRN(const DataList& inputs, const DataList& outputs, LRNClosure& closure, c
   int channel = closure.data_shape[2];
   int weight = closure.data_shape[1];
   int height = closure.data_shape[0];
-  CudaPerformLRN(bottom_data, scale_data, res_data, local_size, alpha, beta, num_img, channel, weight, height, context.stream);
+  CudaPerformLRNForward(bottom_data, scale_data, res_data, local_size, alpha, beta, num_img, channel, weight, height, context.stream);
 }
+
+void LRNBackward(const DataList& inputs, const DataList& outputs, LRNBackwardClosure& closure, const CudaRuntimeContext & context) {
+  CHECK_EQ(inputs.size(), 4) << "(LRNBackward) #inputs is wrong!";
+  CHECK_EQ(outputs.size(), 1) << "(LRNBackward) #outputs is wrong!";
+  float* bottom_data = inputs[0].data();
+  float* top_data = inputs[1].data();
+  float* scale_data = inputs[2].data();
+  float* top_diff = inputs[3].data();
+  float* bottom_diff = outputs[0].data();
+  int local_size = closure.local_size;
+  float alpha = closure.alpha;
+  float beta = closure.beta;
+  int num_img = closure.data_shape[3];
+  int channel = closure.data_shape[2];
+  int weight = closure.data_shape[1];
+  int height = closure.data_shape[0];
+  CudaPerformLRNBackward(bottom_data, top_data, scale_data, top_diff, bottom_diff, local_size, alpha, beta, num_img, channel, weight, height, context.stream);
+}
+
 
 void Concat(const DataList& inputs, const DataList& outputs, ConcatClosure& closure, const CudaRuntimeContext & context)
 {
@@ -91,6 +110,42 @@ void Concat(const DataList& inputs, const DataList& outputs, ConcatClosure& clos
 			CudaPerformCopy(bottom_data + n * bot_num_elem, top_data + n * top_num_elem + offset_channel * img_size, bot_num_elem, context.cublas_handle);
 		}
 		offset_channel += bot_channel;
+	}
+  }
+}
+
+void Slice(const DataList& inputs, const DataList& outputs, SliceClosure& closure, const CudaRuntimeContext & context)
+{
+  CHECK_EQ(inputs.size(), 1) << "(Slice) #inputs is wrong!";
+  CHECK_EQ(outputs.size(), 1) << "(Slice) #outputs is wrong!";
+  CHECK_LE(inputs[0].size().NumDims() - closure.slice_dim, 3) << "(Slice) #Currently only support concat on the last two dims!";
+  
+  int slice_dim = closure.slice_dim;
+  float* input_data = inputs[0].data();
+  if (slice_dim == inputs[0].size().NumDims() - 1){
+	int offset_num = 0;
+	float* output_data = outputs[0].data();
+	int img_size = 1;
+	for (int i = 0; i < inputs[0].size().NumDims() - 1; i++)
+		img_size *= inputs[0].size()[i];
+	offset_num = closure.st_off * img_size;
+	CudaPerformCopy(input_data + offset_num, output_data, outputs[0].size().Prod(), context.cublas_handle);
+  }
+  else{
+	int offset_channel = closure.st_off;
+	float* output_data = outputs[0].data();
+	int output_num_elem = 1;
+	int input_num_elem = 1;
+	int img_size = 1;
+	for (int idx = 0; idx < outputs[0].size().NumDims() - 1; idx++){
+		output_num_elem *= outputs[0].size()[idx];
+		input_num_elem *= inputs[0].size()[idx];
+		if(idx < inputs[0].size().NumDims() - 2) 
+			img_size *= outputs[0].size()[idx]; 
+	}
+	int imgnum = inputs[0].size()[inputs[0].size().NumDims()-1];
+	for (int n = 0; n < imgnum; ++n) {
+		CudaPerformCopy(input_data + n * output_num_elem + offset_channel * img_size, output_data + n * output_num_elem, output_num_elem, context.cublas_handle);
 	}
   }
 }

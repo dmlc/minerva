@@ -111,7 +111,7 @@ class FullyConnection(Connection):
         self.biasdelta = owl.zeros(bshape)
         self.biasgrad = None
         # learning rate of this connection
-        self.blobs_lr = [0, 0]
+        self.blobs_lr = [1, 1]
         self.blobs_wd = [0, 0]
         
     def ff(self):
@@ -130,7 +130,7 @@ class FullyConnection(Connection):
         else:
             botact = self.bottom[0].get_act()
         self.weightgrad = self.top[0].sen * botact.trans()
-        self.biasgrad = self.top[0].sen.sum(0)
+        self.biasgrad = self.top[0].sen.sum(1) 
         s = self.weight.trans() * self.top[0].sen
         shp = self.bottom[0].get_act().shape
         if len(shp) > 2:
@@ -138,10 +138,10 @@ class FullyConnection(Connection):
         self.bottom[0].sen = s
 
     def update(self, nsamples, mom, lr, wd):
-        self.weightdelta = mom * self.weightdelta - lr * self.blobs_lr[0] / nsamples * self.weightgrad - lr * self.blobs_lr[0] * self.blobs_wd[0] * self.weight
+        self.weightdelta = mom * self.weightdelta - lr * self.blobs_lr[0] / nsamples * self.weightgrad - lr * self.blobs_lr[0] * wd * self.blobs_wd[0] * self.weight
         self.weight += self.weightdelta
         self.weightgrad = None # reset the grad to None to free the space
-        self.biasdelta = mom * self.biasdelta - lr * self.blobs_lr[1] / nsamples * self.biasgrad - lr * self.blobs_lr[1] * self.blobs_wd[1] * self.bias
+        self.biasdelta = mom * self.biasdelta - lr * self.blobs_lr[1] / nsamples * self.biasgrad - lr * self.blobs_lr[1] * wd * self.blobs_wd[1] * self.bias
         self.bias += self.biasdelta
         self.biasgrad = None # reset the grad to None to free the space
 
@@ -163,15 +163,16 @@ class ConvConnection(Connection):
         return self.convolver.ff(self.bottom[0].get_act(), self.weight, self.bias)
     def bp(self):
         assert len(self.top) == 1 and len(self.bottom) == 1
-        self.weightgrad = self.convolver.weight_grad(self.top[0].sen, self.bottom[0].get_act())
+        self.weightgrad = self.convolver.weight_grad(self.top[0].sen, self.bottom[0].get_act(), self.weight)
         self.biasgrad = self.convolver.bias_grad(self.top[0].sen)
-        self.bottom[0].sen = self.convolver.bp(self.top[0].sen, self.weight)
+        self.bottom[0].sen = self.convolver.bp(self.top[0].sen, self.bottom[0].get_act(), self.weight)
+        print self.bottom[0].sen.shape
 
-    def update(nsamples, mom, lr, wd):
-        self.weightdelta = mom * self.weightdelta - lr * self.blobs_lr[0] / nsamples * self.weightgrad - lr * self.blobs_lr[0] * self.blobs_wd[0] * self.weight
+    def update(self, nsamples, mom, lr, wd):
+        self.weightdelta = mom * self.weightdelta - lr * self.blobs_lr[0] / nsamples * self.weightgrad - lr * self.blobs_lr[0] * wd * self.blobs_wd[0] * self.weight
         self.weight += self.weightdelta
         self.weightgrad = None # reset the grad to None to free the space
-        self.biasdelta = mom * self.biasdelta - lr * self.blobs_lr[1] / nsamples * self.biasgrad - lr * self.blobs_lr[1] * self.blobs_wd[1] * self.bias
+        self.biasdelta = mom * self.biasdelta - lr * self.blobs_lr[1] / nsamples * self.biasgrad - lr * self.blobs_lr[1] * wd * self.blobs_wd[1] * self.bias
         self.bias += self.biasdelta
         self.biasgrad = None # reset the grad to None to free the space
 
@@ -190,12 +191,12 @@ class LRNConnection(Connection):
     def __init__(self, name, local_size, alpha, beta):
         super(LRNConnection, self).__init__(name)
         self.lrner = co.Lrner(local_size, alpha, beta)
+        self.scale = None
     def ff(self):
-        #TODO:didn't implemented
-        scale = owl.zeros(self.bottom[0].get_act().shape)
-        return self.lrner.ff(self.bottom[0].get_act(), scale)
+        self.scale = owl.zeros(self.bottom[0].get_act().shape)
+        return self.lrner.ff(self.bottom[0].get_act(), self.scale)
     def bp(self):
-        return self.top[0].sen()
+        self.bottom[0].sen = self.lrner.bp(self.bottom[0].get_act(), self.top[0].get_act(), self.scale, self.top[0].sen)
 
 class SoftMaxConnection(Connection):
     def __init__(self, name):
@@ -219,7 +220,14 @@ class ConcatConnection(Connection):
         return owl.concat(narrays, self.concat_dim)
 
     def bp(self):
-        pass
+        assert len(self.bottom) > 1
+        st_off = 0
+        for i in range(len(self.bottom)):
+            slice_count = self.bottom[i].get_act().shape[self.concat_dim]
+            self.bottom[i].sen = owl.slice(self.top[0].sen, self.concat_dim, st_off, slice_count)
+            st_off += slice_count
+        return
+
 
 class Net:
     def __init__(self):
