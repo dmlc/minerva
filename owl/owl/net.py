@@ -5,42 +5,85 @@ import numpy as np
 import Queue
 from caffe import *
 
-class Neuron(object):
+class ComputeUnit(object):
     def __init__(self, params = None):
         self.params = params
+        self.bottom = []
+        self.top = []
+        self.act = []
+        self.sen = []
+    def __str__(self):
+        return 'N/A unit'
+    def ff(self):
+        pass
+    def bp(self):
+        pass
+    def update(self):
+        pass
+
+class WeightedComputeUnit(ComputeUnit):
+    def __init__(self, params):
+        super(WeightedComputeUnit, self).__init__(params)
+        self.name = params.name
+        self.params = params
+        # weights and bias
+        self.weight = None
+        self.weightdelta = None
+        self.weightgrad = None
+        self.bias = None
+        self.biasdelta = None
+        self.biasgrad = None
+
+class NeuronUnit(ComputeUnit):
+    def __init__(self, params):
+        super(NeuronUnit, self).__init__(params)
+    def ff(self):
+        self.act[0] = self.ff(self.bottom[0].act[0])
+    def bp(self):
+        self.sen[0] = self.bp(self.top[0].sen[0])
     def ff(self, x):
         pass
     def bp(self, y):
         pass
+    def __str__(self):
+        return 'N/A neuron'
 
-class LinearNeuron(Neuron):
+class LinearUnit(NeuronUnit):
     def ff(self, x):
         return x
     def bp(self, y):
         return y
+    def __str__(self):
+        return 'linear'
 
-class SigmoidNeuron(Neuron):
+class SigmoidUnit(NeuronUnit):
     def ff(self, x):
         return ele.sigm(x)
     def bp(self, y):
         return ele.sigm_back(y)
+    def __str__(self):
+        return 'sigmoid'
 
-class ReluNeuron(Neuron):
+class ReluUnit(NeuronUnit):
     def ff(self, x):
         self.ff_x = x
         return ele.relu(x)
     def bp(self, y):
         return ele.relu_back(y, self.ff_x)
+    def __str__(self):
+        return 'relu'
 
-class TahnNeuron(Neuron):
+class TanhUnit(NeuronUnit):
     def ff(self, x):
-        return ele.tahn(x)
+        return ele.tanh(x)
     def bp(self, y):
-        return ele.tahn_back(y)
+        return ele.tanh_back(y)
+    def __str__(self):
+        return 'tanh'
 
-class PoolingNeuron(Neuron):
+class PoolingUnit(NeuronUnit):
     def __init__(self, params):
-        super(PoolingNeuron, self).__init__(params)
+        super(PoolingUnit, self).__init__(params)
         if params.pool == PoolingParameter.PoolMethod.Value('MAX'):
             pool_ty = co.pool_op.max
         elif params.pool == PoolingParameter.PoolMethod.Value('AVE'):
@@ -52,136 +95,91 @@ class PoolingNeuron(Neuron):
         return self.ff_y
     def bp(self, y):
         return self.pooler.bp(y, self.ff_y, self.ff_x)
+    def __str__(self):
+        return 'pooling'
 
-class DropoutNeuron(Neuron):
+class DropoutUnit(NeuronUnit):
     def __init__(self, params):
-        super(DropoutNeuron, self).__init__(params)
+        super(DropoutUnit, self).__init__(params)
     def ff(self, x):
         self.dropmask = owl.randb(x, self.params.dropout_ratio)
         return ele.mult(x, self.dropmask)
     def bp(self, y):
         return ele.mult(y, self.dropmask)
+    def __str__(self):
+        return 'dropout'
 
-class SoftmaxNeuron(Neuron):
+class SoftmaxUnit(NeuronUnit):
     def __init__(self, params):
-        super(SoftmaxNeuron, self).__init__(params)
+        super(SoftmaxUnit, self).__init__(params)
     def ff(self, x):
         self.ff_y = co.softmax(x, co.soft_op.instance)
         return self.ff_y
     def bp(self, y):
         return ff_y - y
+    def __str__(self):
+        return 'softmax'
 
-class LRNNeuron(Neuron):
+class LRNUnit(NeuronUnit):
     def __init__(self, params):
-        super(LRNNeuron, self).__init__(params)
+        super(LRNUnit, self).__init__(params)
     def ff(self, x):
         return x
     def bp(self, y):
         return y
+    def __str__(self):
+        return 'lrn'
 
-class Layer(object):
-    def __init__(self, params = None):
-        self.params = params
-        self.neurons = []
-        self.act = None
-        self.sen = None
-        
-        # connectivity
-        self.ff_conns = []
-        self.bp_conns = []
-
-    def ff(self):
-        # do merged sum
-        merged_ff = None
-        for ffconn in self.ff_conns:
-            if merged_ff == None:
-                merged_ff = ffconn.ff()
-            else:
-                merged_ff += ffconn.ff()
-        if merged_ff != None:
-            self.act = merged_ff
-        # perform nonlinear functions
-        for neu in self.neurons:
-            self.act = neu.ff(self.act)
-
-    def bp(self):
-        # do merged sum
-        merged_bp = None
-        for bpconn in self.bp_conns:
-            if merged_bp == None:
-                merged_bp = bpconn.bp()
-            else:
-                merged_bp += bpconn.bp()
-        if merged_bp != None:
-            self.sen = merged_bp
-        # derivative of nonlinear function
-        for neu in reversed(self.neurons):
-            self.sen = neu.bp(self.sen)
-
-class Connection(object):
+class ConcatUnit(ComputeUnit):
     def __init__(self, params):
-        self.name = params.name
-        self.params = params
-        # weights and bias
-        self.weight = None
-        self.weightdelta = None
-        self.weightgrad = None
-        self.bias = None
-        self.biasdelta = None
-        self.biasgrad = None
-        # connectivity
-        self.bottom = None
-        self.top = None
+        super(ConcatUnit, self).__init__(params)
 
-    def ff(self):
-        pass
-
-    def bp(self):
-        pass
-
-    '''
-    def update(self, nsamples, glob_param):
-        mom = glob_param.
-        self.weightdelta = mom * self.weightdelta - lr / nsamples * self.weightgrad - lr * wd * self.weight
-        self.weight += self.weightdelta
-        self.weightgrad = None # reset the grad to None to free the space
-        self.biasdelta = mom * self.biasdelta - lr / nsamples * self.biasgrad - lr * wd * self.bias
-        self.bias += self.biasdelta
-        self.biasgrad = None # reset the grad to None to free the space
-    '''
-
-class FullyConnection(Connection):
+class FullyConnection(WeightedComputeUnit):
     def __init__(self, params):
         super(FullyConnection, self).__init__(params)
         
     def ff(self):
-        shp = self.bottom.act.shape
+        shp = self.bottom[0].act[0].shape
         if len(shp) > 2:
-            a = self.bottom.act.reshape([np.prod(shp[0:-1]), shp[-1]])
+            a = self.bottom[0].act[0].reshape([np.prod(shp[0:-1]), shp[-1]])
         else:
-            a = self.bottom[0].act
+            a = self.bottom[0].act[0]
         return self.weight * a + self.bias
     def bp(self):
-        self.weightgrad = self.top.sen * self.bottom.act.Trans()
-        self.biasgrad = self.top.sen.sum(0)
-        s = self.weight.Trans() * self.top.sen
-        shp = self.bottom.act.shape
+        self.weightgrad = self.top[0].sen[0] * self.bottom[0].act[0].Trans()
+        self.biasgrad = self.top[0].sen[0].sum(0)
+        s = self.weight.Trans() * self.top[0].sen[0]
+        shp = self.bottom[0].act[0].shape
         if len(shp) > 2:
             s = s.reshape(shp)
         return s
+    def __str__(self):
+        return 'fc'
 
-class ConvConnection(Connection):
+class ConvConnection(WeightedComputeUnit):
     def __init__(self, params):
         super(ConvConnection, self).__init__(params)
         self.conv_params = params.convolution_param
         self.convolver = co.Convolver(self.conv_params.pad, 
                 self.conv_params.pad, self.conv_params.stride, self.conv_params.stride)
     def ff(self):
-        return self.convolver.ff(self.bottom.act, self.weight, self.bias)
+        return self.convolver.ff(self.bottom[0].act[0], self.weight, self.bias)
     def bp(self):
-        self.weightgrad = self.convolver.weight_grad(self.top.sen, self.bottom.act)
-        self.biasgrad = self.convolver.bias_grad(self.top.sen)
-        return self.convolver.bp(self.top.sen, self.weight)
+        self.weightgrad = self.convolver.weight_grad(self.top[0].sen[0], self.bottom[0].act[0])
+        self.biasgrad = self.convolver.bias_grad(self.top[0].sen[0])
+        return self.convolver.bp(self.top[0].sen[0], self.weight)
+    def __str__(self):
+        return 'conv'
+
+class DataUnit(ComputeUnit):
+    def __init__(self, params):
+        super(DataUnit, self).__init__(params)
+    def ff(self):
+        pass
+    def bp(self):
+        pass
+    def __str__(self):
+        return 'data'
 
 '''
 class LRNConnection(Connection):
@@ -208,51 +206,50 @@ class ConcatConnection(Connection):
 
 class Net:
     def __init__(self):
-        self.layers = {}
-        self.connections = []
+        self.units = {}
         self.adjacent = {}
         self.reverse_adjacent = {}
 
-    def add_layer(self, name, layer):
-        self.layers[name] = layer
+    def add_unit(self, name, unit):
+        self.units[name] = unit
         self.adjacent[name] = []
         self.reverse_adjacent[name] = []
 
-    def connect(self, lname1, lname2, conn):
-        self.adjacent[lname1].append(lname2)
-        self.reverse_adjacent[lname2].append(lname1)
-        self.connections.append(conn)
-        l1 = self.layers[lname1]
-        l2 = self.layers[lname2]
-        l1.bp_conns.append(l2)
-        l2.ff_conns.append(l1)
-        conn.bottom = lname1
-        conn.top = lname2
+    def has_unit(self, name):
+        return name in self.units
+
+    def connect(self, n1, n2):
+        self.adjacent[n1].append(n2)
+        self.reverse_adjacent[n2].append(n1)
+        l1 = self.units[n1]
+        l2 = self.units[n2]
+        l1.top.append(l2)
+        l2.bottom.append(l1)
 
     def _toporder(self):
-        depcount = {layer : len(inlayers) for layer, inlayers in self.reverse_adjacent.iteritems()}
+        depcount = {unit : len(inunits) for unit, inunits in self.reverse_adjacent.iteritems()}
         queue = Queue.Queue()
-        for layer, count in depcount.iteritems():
+        for unit, count in depcount.iteritems():
             if count == 0:
-                queue.put(layer)
+                queue.put(unit)
         while not queue.empty():
-            layer = queue.get()
-            yield self.layers[layer]
-            for l in self.adjacent[layer]:
+            unit = queue.get()
+            yield self.units[unit]
+            for l in self.adjacent[unit]:
                 depcount[l] -= 1
                 if depcount[l] == 0:
                     queue.put(l)
 
     def _reverse_toporder(self):
-        depcount = {layer : len(outlayers) for layer, outlayers in self.adjacent.iteritems()}
+        depcount = {unit : len(outunits) for unit, outunits in self.adjacent.iteritems()}
         queue = Queue.Queue()
-        for layer, count in depcount.iteritems():
+        for unit, count in depcount.iteritems():
             if count == 0:
-                queue.put(layer)
+                queue.put(unit)
         while not queue.empty():
-            layer = queue.get()
-            yield self.layers[layer]
-            for l in self.reverse_adjacent[layer]:
+            unit = queue.get()
+            yield self.units[unit]
+            for l in self.reverse_adjacent[unit]:
                 depcount[l] -= 1
                 if depcount[l] == 0:
                     queue.put(l)
@@ -264,12 +261,18 @@ class Net:
     def bp(self):
         for l in self._reverse_toporder():
             l.bp()
+    
+    def __str__(self):
+        ret = 'digraph G {\n'
+        for k, l in self.adjacent.iteritems():
+            for n in l:
+                ret += '"' + str(k) + '"->"' + str(n) + '"\n'
+        return ret + '}\n'
 
-class _TestLayer(Layer):
+class TestUnit(ComputeUnit):
     def __init__(self, name):
+        super(TestUnit, self).__init__()
         self.name = name
-        self.ff_conns = []
-        self.bp_conns = []
     def ff(self):
         print 'ff:', self.name
     def bp(self):
@@ -277,21 +280,21 @@ class _TestLayer(Layer):
 
 if __name__ == '__main__':
     net = Net()
-    net.add_layer('l1', _TestLayer('l1'))
-    net.add_layer('l2', _TestLayer('l2'))
-    net.add_layer('l3', _TestLayer('l3'))
-    net.add_layer('l4', _TestLayer('l4'))
-    net.add_layer('l5', _TestLayer('l5'))
-    net.add_layer('l6', _TestLayer('l6'))
-    net.add_layer('l7', _TestLayer('l7'))
-    net.add_layer('l8', _TestLayer('l8'))
-    net.connect('l1', 'l2', 1)
-    net.connect('l1', 'l3', 2)
-    net.connect('l2', 'l4', 3)
-    net.connect('l3', 'l5', 4)
-    net.connect('l4', 'l5', 5)
-    net.connect('l5', 'l6', 6)
-    net.connect('l5', 'l7', 7)
-    net.connect('l7', 'l8', 8)
+    net.add_unit('l1', TestUnit('l1'))
+    net.add_unit('l2', TestUnit('l2'))
+    net.add_unit('l3', TestUnit('l3'))
+    net.add_unit('l4', TestUnit('l4'))
+    net.add_unit('l5', TestUnit('l5'))
+    net.add_unit('l6', TestUnit('l6'))
+    net.add_unit('l7', TestUnit('l7'))
+    net.add_unit('l8', TestUnit('l8'))
+    net.connect('l1', 'l2')
+    net.connect('l1', 'l3')
+    net.connect('l2', 'l4')
+    net.connect('l3', 'l5')
+    net.connect('l4', 'l5')
+    net.connect('l5', 'l6')
+    net.connect('l5', 'l7')
+    net.connect('l7', 'l8')
     net.ff()
     net.bp()
