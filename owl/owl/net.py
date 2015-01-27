@@ -120,6 +120,7 @@ class SoftmaxUnit(NeuronUnit):
     def __str__(self):
         return 'softmax'
 
+# TODO
 class LRNUnit(NeuronUnit):
     def __init__(self, params):
         super(LRNUnit, self).__init__(params)
@@ -130,10 +131,10 @@ class LRNUnit(NeuronUnit):
     def __str__(self):
         return 'lrn'
 
+# TODO
 class ConcatUnit(ComputeUnit):
     def __init__(self, params):
         super(ConcatUnit, self).__init__(params)
-
 
 class FullyConnection(WeightedComputeUnit):
     def __init__(self, params):
