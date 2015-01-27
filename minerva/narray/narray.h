@@ -64,6 +64,11 @@ class NArray {
   // Matmult
   friend NArray operator*(const NArray&, const NArray&);
   NArray& operator*=(const NArray&);
+
+  // Concat
+  friend NArray Concat(const std::vector<NArray>& params, int concat_dim);
+  friend NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count);	
+
   // Shape
   const Scale& Size() const { return CHECK_NOTNULL(data_node_)->data_.size; }
   int Size(int dim) const { return CHECK_NOTNULL(data_node_)->data_.size[dim]; }
@@ -76,12 +81,6 @@ class NArray {
   NArray Max(const Scale& dims) const;
   NArray MaxIndex(int dim) const;
  
-/* 
-  NArray LRN(const NArray& scale, int local_size, float alpha, float beta) const;
-*/
-
-  //NArray Concatenate(std::vector<const NArray&>) const;
-
   // Replicate matrix
   NArray NormArithmetic(const NArray&, ArithmeticType) const;
   // Non-lazy reductions
@@ -102,6 +101,7 @@ class NArray {
 
 // Matmult
 NArray operator*(const NArray&, const NArray&);
-
+NArray Concat(const std::vector<NArray>& params, int concat_dim);
+NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count);	
 } // end of namespace minerva
 

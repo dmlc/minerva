@@ -152,3 +152,29 @@ def reset_profiler_result():
     :return: None
     """
     _owl.reset_profiler_result()
+
+def concat(narrays, concat_dim): 
+    """  Concatenate NArrays according to concat_dim
+    
+    Args:
+        narrays (owl.NArray): inputs for concatenation
+        concat_dim (int): the dimension to concate
+
+    Returns:
+        owl.NArray: result of concatenator
+    """
+    return _owl.concat(narrays, concat_dim)
+
+def slice(src, slice_dim, st_off, slice_count): 
+    """  Slice NArrays according to slice_dim
+    
+    Args:
+        src (owl.NArray): inputs for slice
+        slice_dim (int): the dimension to slice
+        st_off (int): where to start slice
+        slice_count (int): how many data_chunk on slice_dim
+
+    Returns:
+        owl.NArray: result of slicer
+    """
+    return _owl.slice(src, slice_dim, st_off, slice_count)

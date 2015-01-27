@@ -27,7 +27,9 @@ class CaffeModelLoader:
         for i in range(len(netparam.layers)):
             #print '%d %d' % (i, curweights)
             if hasattr(netparam.layers[i], 'blobs') and len(netparam.layers[i].blobs) == 2:
-                filename = '%s/epoch0/%s_weights.dat' % (weightdir, netparam.layers[i].name)
+                layername = netparam.layers[i].name
+                layername = layername.replace("/","_")
+                filename = '%s/epoch0/%s_weights.dat' % (weightdir, layername)
                 #print filename
                 if netparam.layers[i].type == layerparam.LayerType.Value('CONVOLUTION'):
                     num_output = netparam.layers[i].convolution_param.num_output
@@ -47,10 +49,12 @@ class CaffeModelLoader:
                     theweight.tofile(filename)
                 #np.array(netparam.layers[i].blobs[0].data, dtype=np.float32).tofile(filename)
                 
-                filename = '%s/epoch0/%s_bias.dat' % (weightdir, netparam.layers[i].name)
+                filename = '%s/epoch0/%s_bias.dat' % (weightdir, layername)
                 #print filename
                 np.array(netparam.layers[i].blobs[1].data, dtype=np.float32).tofile(filename)
 
 if __name__ == '__main__':
-    dp = CaffeModelLoader(model_file='/home/minjie/caffe/caffe/models/VGG/VGG_ILSVRC_16_layers.caffemodel', weightdir = 'VGGmodel')
+    #dp = CaffeModelLoader(model_file='/home/minjie/caffe/caffe/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel', weightdir = 'Refcafmodel')
+    dp = CaffeModelLoader(model_file='./PricetonNet/imagenet_googlenet.caffemodel', weightdir = 'PrincetonModel')
+    #dp = CaffeModelLoader(model_file='/home/minjie/caffe/caffe/models/VGG/VGG_ILSVRC_16_layers.caffemodel', weightdir = 'VGGmodel')
     count = 0

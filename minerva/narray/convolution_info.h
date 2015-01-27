@@ -19,6 +19,8 @@ struct PoolingInfo {
   int width;
   int stride_vertical;
   int stride_horizontal;
+  int pad_height;
+  int pad_width;
 };
 
 enum class SoftmaxAlgorithm {
