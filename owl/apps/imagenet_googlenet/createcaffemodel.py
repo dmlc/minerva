@@ -242,9 +242,9 @@ class MinervaModel:
         for inlayer in self.inputlayer:
             print inlayer
             if inlayer == 'data':
-                self.layers[inlayer].pre_nonlinear = data
+                self.layers[inlayer].pre_act = data
             elif inlayer == 'label':
-                self.layers[inlayer].pre_nonlinear = labels
+                self.layers[inlayer].pre_act = labels
             else:
                 assert False
             layerstatus[inlayer] = True
@@ -266,7 +266,7 @@ class MinervaModel:
             #first connection ff, the output is the top's pre-nonlinear
             print curjob.name
             assert len(curjob.top) == 1
-            curjob.top[0].pre_nonlinear = curjob.ff()
+            curjob.top[0].pre_act = curjob.ff()
             #activate trough non-linear function and dropout
             curjob.top[0].ff()
  
