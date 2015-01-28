@@ -16,8 +16,8 @@ class MNISTCNNModel:
             conv.Convolver(2, 2, 1, 1),
         ];
         self.poolings = [
-            conv.Pooler(2, 2, 2, 2, conv.pool_op.max),
-            conv.Pooler(3, 3, 3, 3, conv.pool_op.max)
+            conv.Pooler(2, 2, 2, 2, 0, 0, conv.pool_op.max),
+            conv.Pooler(3, 3, 3, 3, 0, 0, conv.pool_op.max)
         ];
 
     def init_random(self):
@@ -70,14 +70,14 @@ def bpprop(model, samples, label):
     errs[5] = out - label
     errs[4] = (model.weights[2].trans() * errs[5]).reshape(acts[4].shape)
     errs[3] = ele.relu_back(model.poolings[1].bp(errs[4], acts[4], acts[3]), acts[3])
-    errs[2] = model.convs[1].bp(errs[3], model.weights[1])
+    errs[2] = model.convs[1].bp(errs[3], acts[2], model.weights[1])
     errs[1] = ele.relu_back(model.poolings[0].bp(errs[2], acts[2], acts[1]), acts[1])
 
     weightgrad[2] = errs[5] * acts[4].reshape(fc_shape).trans()
     biasgrad[2] = errs[5].sum(1)
-    weightgrad[1] = model.convs[1].weight_grad(errs[3], acts[2])
+    weightgrad[1] = model.convs[1].weight_grad(errs[3], acts[2], model.weights[1])
     biasgrad[1] = model.convs[1].bias_grad(errs[3])
-    weightgrad[0] = model.convs[0].weight_grad(errs[1], acts[0])
+    weightgrad[0] = model.convs[0].weight_grad(errs[1], acts[0], model.weights[0])
     biasgrad[0] = model.convs[0].bias_grad(errs[1])
     return (out, weightgrad, biasgrad)
 
