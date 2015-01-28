@@ -88,7 +88,7 @@ class PoolingUnit(NeuronUnit):
             pool_ty = co.pool_op.max
         elif params.pool == PoolingParameter.PoolMethod.Value('AVE'):
             pool_ty = co.pool_op.avg
-        self.pooler = co.Pooler(params.kernel_size, params.kernel_size, params.stride, params.stride, pool_ty)
+        self.pooler = co.Pooler(params.kernel_size, params.kernel_size, params.stride, params.stride, params.pad, params.pad, pool_ty)
     def ff(self, x):
         self.ff_x = x
         self.ff_y = self.pooler.ff(x)
