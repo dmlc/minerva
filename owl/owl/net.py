@@ -8,20 +8,31 @@ from caffe import *
 class ComputeUnit(object):
     def __init__(self, params = None):
         self.params = params
-        self.bottom = []
-        self.top = []
-        self.act = []
-        self.sen = []
+        self.btm_names = []
+        self.top_names = []
     def __str__(self):
         return 'N/A unit'
-    def ff(self):
+    def ff(self, from_btm, to_top):
         pass
-    def bp(self):
+    def bp(self, from_top, to_btm):
         pass
     def update(self):
         pass
 
-class WeightedComputeUnit(ComputeUnit):
+class ComputeUnitSimple(ComputeUnit):
+    def __init__(self, params = None):
+        super(ComputeUnitSimple, self).__init__(params)
+    def ff(self, from_btm, to_top):
+        to_top[self.top_names[0]] = self.ff(from_btm[self.btm_names[0]])
+    def ff(self, act):
+        pass
+    def bp(self, from_top, to_btm):
+        to_btm[self.btm_names[0]] = self.bp(from_top[self.top_names[0]])
+        pass
+    def bp(self, sen):
+        pass
+
+class WeightedComputeUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(WeightedComputeUnit, self).__init__(params)
         self.name = params.name
@@ -34,21 +45,7 @@ class WeightedComputeUnit(ComputeUnit):
         self.biasdelta = None
         self.biasgrad = None
 
-class NeuronUnit(ComputeUnit):
-    def __init__(self, params):
-        super(NeuronUnit, self).__init__(params)
-    def ff(self):
-        self.act[0] = self.ff(self.bottom[0].act[0])
-    def bp(self):
-        self.sen[0] = self.bp(self.top[0].sen[0])
-    def ff(self, x):
-        pass
-    def bp(self, y):
-        pass
-    def __str__(self):
-        return 'N/A neuron'
-
-class LinearUnit(NeuronUnit):
+class LinearUnit(ComputeUnitSimple):
     def ff(self, x):
         return x
     def bp(self, y):
@@ -56,7 +53,7 @@ class LinearUnit(NeuronUnit):
     def __str__(self):
         return 'linear'
 
-class SigmoidUnit(NeuronUnit):
+class SigmoidUnit(ComputeUnitSimple):
     def ff(self, x):
         return ele.sigm(x)
     def bp(self, y):
@@ -64,7 +61,7 @@ class SigmoidUnit(NeuronUnit):
     def __str__(self):
         return 'sigmoid'
 
-class ReluUnit(NeuronUnit):
+class ReluUnit(ComputeUnitSimple):
     def ff(self, x):
         self.ff_x = x
         return ele.relu(x)
@@ -73,7 +70,7 @@ class ReluUnit(NeuronUnit):
     def __str__(self):
         return 'relu'
 
-class TanhUnit(NeuronUnit):
+class TanhUnit(ComputeUnitSimple):
     def ff(self, x):
         return ele.tanh(x)
     def bp(self, y):
@@ -81,14 +78,15 @@ class TanhUnit(NeuronUnit):
     def __str__(self):
         return 'tanh'
 
-class PoolingUnit(NeuronUnit):
+class PoolingUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(PoolingUnit, self).__init__(params)
         if params.pool == PoolingParameter.PoolMethod.Value('MAX'):
             pool_ty = co.pool_op.max
         elif params.pool == PoolingParameter.PoolMethod.Value('AVE'):
             pool_ty = co.pool_op.avg
-        self.pooler = co.Pooler(params.kernel_size, params.kernel_size, params.stride, params.stride, pool_ty)
+        self.pooler = co.Pooler(params.kernel_size, params.kernel_size, 
+                params.stride, params.stride, pool_ty)
     def ff(self, x):
         self.ff_x = x
         self.ff_y = self.pooler.ff(x)
@@ -98,7 +96,7 @@ class PoolingUnit(NeuronUnit):
     def __str__(self):
         return 'pooling'
 
-class DropoutUnit(NeuronUnit):
+class DropoutUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(DropoutUnit, self).__init__(params)
     def ff(self, x):
@@ -109,7 +107,7 @@ class DropoutUnit(NeuronUnit):
     def __str__(self):
         return 'dropout'
 
-class SoftmaxUnit(NeuronUnit):
+class SoftmaxUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(SoftmaxUnit, self).__init__(params)
     def ff(self, x):
@@ -121,7 +119,7 @@ class SoftmaxUnit(NeuronUnit):
         return 'softmax'
 
 # TODO
-class LRNUnit(NeuronUnit):
+class LRNUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(LRNUnit, self).__init__(params)
     def ff(self, x):
@@ -135,54 +133,13 @@ class LRNUnit(NeuronUnit):
 class ConcatUnit(ComputeUnit):
     def __init__(self, params):
         super(ConcatUnit, self).__init__(params)
-
-class FullyConnection(WeightedComputeUnit):
-    def __init__(self, params):
-        super(FullyConnection, self).__init__(params)
-        
-    def ff(self):
-        shp = self.bottom[0].act[0].shape
-        if len(shp) > 2:
-            a = self.bottom[0].act[0].reshape([np.prod(shp[0:-1]), shp[-1]])
-        else:
-            a = self.bottom[0].act[0]
-        return self.weight * a + self.bias
-    def bp(self):
-        self.weightgrad = self.top[0].sen[0] * self.bottom[0].act[0].Trans()
-        self.biasgrad = self.top[0].sen[0].sum(0)
-        s = self.weight.Trans() * self.top[0].sen[0]
-        shp = self.bottom[0].act[0].shape
-        if len(shp) > 2:
-            s = s.reshape(shp)
-        return s
-    def __str__(self):
-        return 'fc'
-
-class ConvConnection(WeightedComputeUnit):
-    def __init__(self, params):
-        super(ConvConnection, self).__init__(params)
-        self.conv_params = params.convolution_param
-        self.convolver = co.Convolver(self.conv_params.pad, 
-                self.conv_params.pad, self.conv_params.stride, self.conv_params.stride)
-    def ff(self):
-        return self.convolver.ff(self.bottom[0].act[0], self.weight, self.bias)
-    def bp(self):
-        self.weightgrad = self.convolver.weight_grad(self.top[0].sen[0], self.bottom[0].act[0])
-        self.biasgrad = self.convolver.bias_grad(self.top[0].sen[0])
-        return self.convolver.bp(self.top[0].sen[0], self.weight)
-    def __str__(self):
-        return 'conv'
-
-class DataUnit(ComputeUnit):
-    def __init__(self, params):
-        super(DataUnit, self).__init__(params)
-    def ff(self):
+    def ff(self, from_btm, to_top):
         pass
-    def bp(self):
+    def bp(self, from_top, to_btm):
         pass
     def __str__(self):
-        return 'data'
-
+        return 'concat'
+'''
 class LRNConnection(Connection):
     def __init__(self, name, local_size, alpha, beta):
         super(LRNConnection, self).__init__(name)
@@ -214,6 +171,57 @@ class ConcatConnection(Connection):
             self.bottom[i].sen = owl.slice(self.top[0].sen, self.concat_dim, st_off, slice_count)
             st_off += slice_count
         pass
+'''
+
+class FullyConnection(WeightedComputeUnit):
+    def __init__(self, params):
+        super(FullyConnection, self).__init__(params)
+        
+    def ff(self, act):
+        shp = act.shape
+        if len(shp) > 2:
+            a = act.reshape([np.prod(shp[0:-1]), shp[-1]])
+        else:
+            a = act
+        self.ff_act = act # save ff value
+        return self.weight * a + self.bias
+    def bp(self, sen):
+        self.weightgrad = sen * self.ff_act.Trans()
+        self.biasgrad = act.sum(0)
+        s = self.weight.Trans() * sen 
+        shp = self.ff_act.shape
+        if len(shp) > 2:
+            s = s.reshape(shp)
+        return s
+    def __str__(self):
+        return 'fc'
+
+class ConvConnection(WeightedComputeUnit):
+    def __init__(self, params):
+        super(ConvConnection, self).__init__(params)
+        self.conv_params = params.convolution_param
+        self.convolver = co.Convolver(self.conv_params.pad, 
+                self.conv_params.pad, self.conv_params.stride, self.conv_params.stride)
+    def ff(self, act):
+        self.ff_act = act
+        return self.convolver.ff(act, self.weight, self.bias)
+    def bp(self, sen):
+        self.weightgrad = self.convolver.weight_grad(sen, self.weight, self.ff_act)
+        self.biasgrad = self.convolver.bias_grad(sen)
+        return self.convolver.bp(sen, self.ff_act, self.weight)
+    def __str__(self):
+        return 'conv'
+
+# TODO
+class DataUnit(ComputeUnit):
+    def __init__(self, params):
+        super(DataUnit, self).__init__(params)
+    def ff(self, from_btm, to_top):
+        pass
+    def bp(self, from_top, to_btm):
+        pass
+    def __str__(self):
+        return 'data'
 
 class Net:
     def __init__(self):
@@ -280,13 +288,13 @@ class Net:
                 ret += '"' + str(k) + '"->"' + str(n) + '"\n'
         return ret + '}\n'
 
-class TestUnit(ComputeUnit):
+class TestUnit(ComputeUnitSimple):
     def __init__(self, name):
         super(TestUnit, self).__init__()
         self.name = name
-    def ff(self):
+    def ff(self, act):
         print 'ff:', self.name
-    def bp(self):
+    def bp(self, sen):
         print 'bp:', self.name
 
 if __name__ == '__main__':
