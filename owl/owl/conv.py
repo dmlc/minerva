@@ -125,16 +125,16 @@ class Convolver:
         """
         return _owl.conv_backward_data(y, x, w, self.param)
 
-    def weight_grad(self, y, w, x):
+    def weight_grad(self, y, x, w):
         """ Compute the gradient of filters
 
         :param owl.NArray y: error (sensitivity) passed by higher layer
-        :param owl.NArray w: weight (used to get the filter dimension)
         :param owl.NArray x: input (activation) of lower layer
+        :param owl.NArray w: weight (used to get the filter dimension)
         :return: the gradient of filters
         :rtype: owl.NArray
         """
-        return _owl.conv_backward_filter(y, w, x, self.param)
+        return _owl.conv_backward_filter(y, x, w, self.param)
 
     def bias_grad(self, y):
         """ Compute the gradient of bias
