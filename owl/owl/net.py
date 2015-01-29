@@ -12,9 +12,9 @@ class ComputeUnit(object):
         self.top_names = []
     def __str__(self):
         return 'N/A unit'
-    def ff(self, from_btm, to_top):
+    def forward(self, from_btm, to_top):
         pass
-    def bp(self, from_top, to_btm):
+    def backward(self, from_top, to_btm):
         pass
     def update(self):
         pass
@@ -22,11 +22,11 @@ class ComputeUnit(object):
 class ComputeUnitSimple(ComputeUnit):
     def __init__(self, params = None):
         super(ComputeUnitSimple, self).__init__(params)
-    def ff(self, from_btm, to_top):
+    def forward(self, from_btm, to_top):
         to_top[self.top_names[0]] = self.ff(from_btm[self.btm_names[0]])
     def ff(self, act):
         pass
-    def bp(self, from_top, to_btm):
+    def backward(self, from_top, to_btm):
         to_btm[self.btm_names[0]] = self.bp(from_top[self.top_names[0]])
         pass
     def bp(self, sen):
@@ -216,9 +216,9 @@ class ConvConnection(WeightedComputeUnit):
 class DataUnit(ComputeUnit):
     def __init__(self, params):
         super(DataUnit, self).__init__(params)
-    def ff(self, from_btm, to_top):
+    def forward(self, from_btm, to_top):
         pass
-    def bp(self, from_top, to_btm):
+    def backward(self, from_top, to_btm):
         pass
     def __str__(self):
         return 'data'
@@ -242,8 +242,6 @@ class Net:
         self.reverse_adjacent[n2].append(n1)
         l1 = self.units[n1]
         l2 = self.units[n2]
-        l1.top.append(l2)
-        l2.bottom.append(l1)
 
     def _toporder(self):
         depcount = {unit : len(inunits) for unit, inunits in self.reverse_adjacent.iteritems()}
@@ -253,7 +251,7 @@ class Net:
                 queue.put(unit)
         while not queue.empty():
             unit = queue.get()
-            yield self.units[unit]
+            yield unit
             for l in self.adjacent[unit]:
                 depcount[l] -= 1
                 if depcount[l] == 0:
@@ -267,19 +265,27 @@ class Net:
                 queue.put(unit)
         while not queue.empty():
             unit = queue.get()
-            yield self.units[unit]
+            yield unit
             for l in self.reverse_adjacent[unit]:
                 depcount[l] -= 1
                 if depcount[l] == 0:
                     queue.put(l)
 
-    def ff(self):
-        for l in self._toporder():
-            l.ff()
+    def forward(self):
+        unit_to_tops = {name : {} for name in self.units}
+        for u in self._toporder():
+            from_btm = {}
+            for btm in self.reverse_adjacent[u]:
+                from_btm.update(unit_to_tops[btm])
+            self.units[u].forward(from_btm, unit_to_tops[u])
 
-    def bp(self):
-        for l in self._reverse_toporder():
-            l.bp()
+    def backward(self):
+        unit_to_btms = {name : {} for name in self.units}
+        for u in self._reverse_toporder():
+            from_top = {}
+            for top in self.adjacent[u]:
+                from_top.update(unit_to_btms[top])
+            self.units[u].backward(from_top, unit_to_btms[u])
     
     def __str__(self):
         ret = 'digraph G {\n'
@@ -288,32 +294,72 @@ class Net:
                 ret += '"' + str(k) + '"->"' + str(n) + '"\n'
         return ret + '}\n'
 
-class TestUnit(ComputeUnitSimple):
+
+############### Test code
+class _StartUnit(ComputeUnit):
     def __init__(self, name):
-        super(TestUnit, self).__init__()
+        super(_StartUnit, self).__init__()
         self.name = name
-    def ff(self, act):
-        print 'ff:', self.name
-    def bp(self, sen):
-        print 'bp:', self.name
+    def forward(self, from_btm, to_top):
+        print 'ff|start name:', self.name
+        to_top[self.top_names[0]] = 0
+    def backward(self, from_top, to_btm):
+        pass
+
+class _EndUnit(ComputeUnit):
+    def __init__(self, name):
+        super(_EndUnit, self).__init__()
+        self.name = name
+    def forward(self, from_btm, to_top):
+        pass
+    def backward(self, from_top, to_btm):
+        print 'bp|end name:', self.name
+        to_btm[self.btm_names[0]] = 0
+
+class _TestUnit(ComputeUnitSimple):
+    def __init__(self, name):
+        super(_TestUnit, self).__init__()
+        self.name = name
+    def ff(self, x):
+        print 'ff|name:', self.name, 'val:', x
+        return x + 1
+    def bp(self, y):
+        print 'bp|name:', self.name, 'val:', y
+        return y - 1
 
 if __name__ == '__main__':
     net = Net()
-    net.add_unit('l1', TestUnit('l1'))
-    net.add_unit('l2', TestUnit('l2'))
-    net.add_unit('l3', TestUnit('l3'))
-    net.add_unit('l4', TestUnit('l4'))
-    net.add_unit('l5', TestUnit('l5'))
-    net.add_unit('l6', TestUnit('l6'))
-    net.add_unit('l7', TestUnit('l7'))
-    net.add_unit('l8', TestUnit('l8'))
+    s = _StartUnit('s')
+    l1 = _TestUnit('l1')
+    l2 = _TestUnit('l2')
+    l3 = _TestUnit('l3')
+    l4 = _TestUnit('l4')
+    l5 = _TestUnit('l5')
+    e = _EndUnit('e')
+    s.top_names = ['s']
+    l1.btm_names = ['s']
+    l1.top_names = ['l1']
+    l2.btm_names = ['l1']
+    l2.top_names = ['l2']
+    l3.btm_names = ['l2']
+    l3.top_names = ['l3']
+    l4.btm_names = ['l3']
+    l4.top_names = ['l4']
+    l5.btm_names = ['l4']
+    l5.top_names = ['l5']
+    e.btm_names = ['l5']
+    net.add_unit('s', s)
+    net.add_unit('l1', l1)
+    net.add_unit('l2', l2)
+    net.add_unit('l3', l3)
+    net.add_unit('l4', l4)
+    net.add_unit('l5', l5)
+    net.add_unit('e', e)
+    net.connect('s', 'l1')
     net.connect('l1', 'l2')
-    net.connect('l1', 'l3')
-    net.connect('l2', 'l4')
-    net.connect('l3', 'l5')
+    net.connect('l2', 'l3')
+    net.connect('l3', 'l4')
     net.connect('l4', 'l5')
-    net.connect('l5', 'l6')
-    net.connect('l5', 'l7')
-    net.connect('l7', 'l8')
-    net.ff()
-    net.bp()
+    net.connect('l5', 'e')
+    net.forward()
+    net.backward()
