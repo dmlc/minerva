@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11")
 string(REPLACE "," ";" EXTERNAL_LIB_PATH "${EXTERN_LIB_PATH}")
 string(REPLACE "," ";" EXTERNAL_INCLUDE_PATH "${EXTERN_INCLUDE_PATH}")
 
-if (GPU)
+if (NOT DEFINED NOGPU OR NOT NOGPU)
   set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_ROOT})
   find_package(CUDA)
   if (CUDA_FOUND)
@@ -31,7 +31,7 @@ if (GPU)
     set(CUDA_NVCC_FLAGS_RELEASE "-Xcompiler \\\"${CUDA_CONCAT_RELEASE}\\\"")
     set(CUDA_NVCC_FLAGS "-arch sm_35")
   endif (CUDA_FOUND)
-endif(GPU)
+endif (NOT DEFINED NOGPU OR NOT NOGPU)
 
 include_directories(
   SYSTEM ${EXTERNAL_INCLUDE_PATH}

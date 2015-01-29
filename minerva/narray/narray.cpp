@@ -52,10 +52,16 @@ NArray NArray::MakeNArray(const Scale& size, shared_ptr<float> array) {
   return NArray::GenerateOne(size, loader_op);
 }
 
-NArray PushGradAndPullWeight(const NArray & grad, const std::string & layer_name) {
+NArray NArray::PushGradAndPullWeight(const NArray & grad, const std::string & layer_name) {
   SyncWithPSOp * op = new SyncWithPSOp();
   op->closure = { layer_name };
   return NArray::ComputeOne({ grad }, grad.Size(), op);
+}
+
+NArray& NArray::Pull(const std::string & layer_name) {
+  SyncWithPSOp * op = new SyncWithPSOp();
+  op->closure = { layer_name };
+  return *this = NArray::GenerateOne(this->Size(), op);
 }
 
 // DAG building operations

@@ -22,7 +22,6 @@ class NArray {
   static NArray Zeros(const Scale& size);
   static NArray Ones(const Scale& size);
   static NArray MakeNArray(const Scale& size, std::shared_ptr<float> array);
-  static NArray PushGradAndPullWeight(const NArray & grad, const std::string & layer_name);
   // DAG generating operations
   static std::vector<NArray> Compute(
       const std::vector<NArray>& params,
@@ -88,7 +87,9 @@ class NArray {
   std::shared_ptr<float> Get() const;
   void ToStream(std::ostream& out, const FileFormat& format) const;
   void ToFile(const std::string& filename, const FileFormat& format) const;
-
+  // PS related
+  static NArray PushGradAndPullWeight(const NArray & grad, const std::string & layer_name);
+  NArray& Pull(const std::string & layer_name);
  private:
   NArray(PhysicalDataNode*);
   PhysicalDataNode* data_node_;

@@ -230,11 +230,18 @@ void Fill(const DataList& output, FillClosure& closure) {
 }
 
 void SyncWithPS(const DataList& inputs, const DataList& outputs, SyncWithPSClosure& closure) {
-#ifdef HAS_PS
-  CHECK_EQ(inputs.size(), 1);
   CHECK_EQ(outputs.size(), 1);
-  CHECK_EQ(inputs[0].size().Prod(), outputs[0].size().Prod()) << "Pushed and pulled matrix must be of same dim";
-  PushGradAndPullWeight(inputs[0].data(), outputs[0].data(), inputs[0].size().Prod(), closure.layer_name);
+#ifdef HAS_PS
+  if (inputs.empty())
+  {
+    PushGradAndPullWeight(nullptr, outputs[0].data(), outputs[0].size().Prod(), closure.layer_name);
+  }
+  else
+  {
+    CHECK_EQ(inputs.size(), 1);
+    CHECK_EQ(inputs[0].size().Prod(), outputs[0].size().Prod()) << "Pushed and pulled matrix must be of same dim";
+    PushGradAndPullWeight(inputs[0].data(), outputs[0].data(), inputs[0].size().Prod(), closure.layer_name);
+  }
 #else
   LOG_ASSERT(0) << "HAS_PS is not enabled when you compile minerva, please enable it";
 #endif

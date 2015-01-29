@@ -12,10 +12,10 @@ const int num_mb_per_epoch = 235;
 const string weight_init_files[] = { "w12.dat", "w23.dat" };
 const string weight_out_files[] = { "w12.dat", "w23.dat" };
 const string bias_out_files[] = { "b2_trained.dat", "b3_trained.dat" };
-const string train_data_file = "/home/cs_user/data/mnist/traindata.dat";
-const string train_label_file = "/home/cs_user/data/mnist/trainlabel.dat";
-const string test_data_file = "/home/cs_user/data/mnist/testdata.dat";
-const string test_label_file = "/home/cs_user/data/mnist/testlabel.dat";
+const string train_data_file = "/home/hct/mnist/traindata.dat";
+const string train_label_file = "/home/hct/mnist/trainlabel.dat";
+const string test_data_file = "/home/hct/mnist/testdata.dat";
+const string test_label_file = "/home/hct/mnist/testlabel.dat";
 
 const int num_layers = 3;
 const int lsize[num_layers] = {784, 256, 10};
