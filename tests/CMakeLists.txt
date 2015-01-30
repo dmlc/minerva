@@ -15,7 +15,10 @@ endif (CUDA_FOUND)
 set(unittest_list "")
 set(test_list "")
 
-file(GLOB_RECURSE test_file_list "*.cpp")
+if (NOT HAS_PS)
+  file(GLOB_RECURSE test_file_list "*.cpp")
+endif (NOT HAS_PS)
+
 foreach(test_src ${test_file_list})
   get_filename_component(test_name ${test_src} NAME_WE)
   string(REGEX MATCH "^unittest_.*" unittest_name "${test_name}")

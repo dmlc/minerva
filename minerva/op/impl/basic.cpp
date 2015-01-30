@@ -8,7 +8,6 @@
 
 using namespace std;
 
-#define HAS_PS
 #ifdef HAS_PS
 #include "op/impl/ps.h"
 #endif

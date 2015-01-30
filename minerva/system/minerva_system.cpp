@@ -29,7 +29,12 @@ MinervaSystem::~MinervaSystem() {
 }
 
 void MinervaSystem::Initialize(int* argc, char*** argv) {
+#ifndef HAS_PS
+  // workaround
+  // glog is initialized in PS::main, and also here, so we will hit a 
+  // double-initalize error when compiling with PS
   google::InitGoogleLogging((*argv)[0]);
+#endif
   physical_dag_ = new PhysicalDag();
   dag_scheduler_ = new DagScheduler(physical_dag_);
   device_manager_ = new DeviceManager(dag_scheduler_);

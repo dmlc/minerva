@@ -50,7 +50,7 @@ Configurations:
     -h, --help              Display this help and exit
     -c, --clean             Clean up debug and release build
     -Dvar=value             Specify definitions to be passed on to cmake
-	                    e.g: GPU=false
+	                    e.g: HAS_GPU, HAS_PS=1
 EOF
 exit 0;
 fi
