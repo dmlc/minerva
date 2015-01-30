@@ -68,15 +68,15 @@ def LSTM_init():
 	train_words = 0
 	test_words = 0
 
-	fin = open("./train")
-	for line in fin:
+	fin_train = open("./train")
+	for line in fin_train:
 		wordlist = ("<s> %s <s>" % line.strip()).split(' ')
 		wordlist_id = [wids[w] for w in wordlist]
 		train_words += len(wordlist) - 2
 		train_sents.append(wordlist_id)
 
-	fin = open("./test")
-	for line in fin:
+	fin_test = open("./test")
+	for line in fin_test:
 		wordlist = ("<s> %s <s>" % line.strip()).split(' ')
 		wordlist_id = [wids[w] for w in wordlist]
 		test_words += len(wordlist) - 2
@@ -309,7 +309,7 @@ def LSTM_test(model, sents, vocab_size, words, tanhC_version = 1):
 
 	test_ll = 0
 	# For each sentence
-	for sent in enumerate(sents):
+	for sent_id, sent in enumerate(sents):
 		#print "sent_id",sent_id
 		#print "sent", sent
 		#print "sents", sents
@@ -335,7 +335,6 @@ def LSTM_test(model, sents, vocab_size, words, tanhC_version = 1):
 		C = [None] * Tau
 		C[0] = owl.zeros([N, 1])
 		Ym = [None] * Tau
-		dY = [None] * Tau
 
 		##### Forward pass #####
 		# For each time step
@@ -379,5 +378,5 @@ if __name__ == '__main__':
 	gpu = owl.create_gpu_device(0)
 	owl.set_device(gpu)
 	model, train_sents, test_sents, vocab_size, train_words, test_words = LSTM_init()
-	LSTM_train(model, train_sents, vocab_size, train_words, 100)
+	LSTM_train(model, train_sents, vocab_size, train_words, 5)
 	LSTM_test(model, test_sents, vocab_size, test_words)
