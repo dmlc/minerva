@@ -8,6 +8,10 @@ from caffe import *
 class ComputeUnit(object):
     def __init__(self, params = None):
         self.params = params
+        if params == None:
+            self.name = 'N/A'
+        else:
+            self.name = params.name
         self.btm_names = []
         self.top_names = []
     def __str__(self):
@@ -224,28 +228,26 @@ class DataUnit(ComputeUnit):
 
 class Net:
     def __init__(self):
-        self.units = {}
-        self.adjacent = {}
-        self.reverse_adjacent = {}
+        self.units = []
+        self.adjacent = []
+        self.reverse_adjacent = []
 
-    def add_unit(self, name, unit):
-        self.units[name] = unit
-        self.adjacent[name] = []
-        self.reverse_adjacent[name] = []
+    def add_unit(self, unit):
+        uid = len(self.units)
+        self.units.append(unit)
+        self.adjacent.append([])
+        self.reverse_adjacent.append([])
+        return uid
 
-    def has_unit(self, name):
-        return name in self.units
-
-    def connect(self, n1, n2):
-        self.adjacent[n1].append(n2)
-        self.reverse_adjacent[n2].append(n1)
-        l1 = self.units[n1]
-        l2 = self.units[n2]
+    def connect(self, u1, u2):
+        self.adjacent[u1].append(u2)
+        self.reverse_adjacent[u2].append(u1)
 
     def _toporder(self):
-        depcount = {unit : len(inunits) for unit, inunits in self.reverse_adjacent.iteritems()}
+        depcount = [len(inunits) for inunits in self.reverse_adjacent]
         queue = Queue.Queue()
-        for unit, count in depcount.iteritems():
+        for unit in range(len(depcount)):
+            count = depcount[unit]
             if count == 0:
                 queue.put(unit)
         while not queue.empty():
@@ -257,9 +259,10 @@ class Net:
                     queue.put(l)
 
     def _reverse_toporder(self):
-        depcount = {unit : len(outunits) for unit, outunits in self.adjacent.iteritems()}
+        depcount = [len(outunits) for outunits in self.adjacent]
         queue = Queue.Queue()
-        for unit, count in depcount.iteritems():
+        for unit in range(len(depcount)):
+            count = depcount[unit]
             if count == 0:
                 queue.put(unit)
         while not queue.empty():
@@ -271,7 +274,7 @@ class Net:
                     queue.put(l)
 
     def forward(self):
-        unit_to_tops = {name : {} for name in self.units}
+        unit_to_tops = [{} for name in self.units]
         for u in self._toporder():
             from_btm = {}
             for btm in self.reverse_adjacent[u]:
@@ -279,7 +282,7 @@ class Net:
             self.units[u].forward(from_btm, unit_to_tops[u])
 
     def backward(self):
-        unit_to_btms = {name : {} for name in self.units}
+        unit_to_btms = [{} for name in self.units]
         for u in self._reverse_toporder():
             from_top = {}
             for top in self.adjacent[u]:
@@ -328,37 +331,37 @@ class _TestUnit(ComputeUnitSimple):
 
 if __name__ == '__main__':
     net = Net()
-    s = _StartUnit('s')
-    l1 = _TestUnit('l1')
-    l2 = _TestUnit('l2')
-    l3 = _TestUnit('l3')
-    l4 = _TestUnit('l4')
-    l5 = _TestUnit('l5')
-    e = _EndUnit('e')
-    s.top_names = ['s']
-    l1.btm_names = ['s']
-    l1.top_names = ['l1']
-    l2.btm_names = ['l1']
-    l2.top_names = ['l2']
-    l3.btm_names = ['l2']
-    l3.top_names = ['l3']
-    l4.btm_names = ['l3']
-    l4.top_names = ['l4']
-    l5.btm_names = ['l4']
-    l5.top_names = ['l5']
-    e.btm_names = ['l5']
-    net.add_unit('s', s)
-    net.add_unit('l1', l1)
-    net.add_unit('l2', l2)
-    net.add_unit('l3', l3)
-    net.add_unit('l4', l4)
-    net.add_unit('l5', l5)
-    net.add_unit('e', e)
-    net.connect('s', 'l1')
-    net.connect('l1', 'l2')
-    net.connect('l2', 'l3')
-    net.connect('l3', 'l4')
-    net.connect('l4', 'l5')
-    net.connect('l5', 'e')
+    us = _StartUnit('s')
+    u1 = _TestUnit('u1')
+    u2 = _TestUnit('u2')
+    u3 = _TestUnit('u3')
+    u4 = _TestUnit('u4')
+    u5 = _TestUnit('u5')
+    ue = _EndUnit('e')
+    us.top_names = ['s']
+    u1.btm_names = ['s']
+    u1.top_names = ['u1']
+    u2.btm_names = ['u1']
+    u2.top_names = ['u2']
+    u3.btm_names = ['u2']
+    u3.top_names = ['u3']
+    u4.btm_names = ['u3']
+    u4.top_names = ['u4']
+    u5.btm_names = ['u4']
+    u5.top_names = ['u5']
+    ue.btm_names = ['u5']
+    ls = net.add_unit(us)
+    l1 = net.add_unit(u1)
+    l2 = net.add_unit(u2)
+    l3 = net.add_unit(u3)
+    l4 = net.add_unit(u4)
+    l5 = net.add_unit(u5)
+    le = net.add_unit(ue)
+    net.connect(ls, l1)
+    net.connect(l1, l2)
+    net.connect(l2, l3)
+    net.connect(l3, l4)
+    net.connect(l4, l5)
+    net.connect(l5, le)
     net.forward()
     net.backward()

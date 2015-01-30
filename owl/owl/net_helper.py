@@ -24,6 +24,7 @@ class CaffeNetBuilder:
         caffe_to_owl_map = {}
         stacked_layers = {}
         rev_stacked_layers = {}
+        top_name_to_layer = {}
         # 1. record name and its caffe.LayerParameter data in a map
         # 2. some layers is stacked into one in caffe's configure format
         for l in self.netconfig.layers:
@@ -35,6 +36,9 @@ class CaffeNetBuilder:
                 stack_to = l.bottom[0]
                 stacked_layers[stack_to].append(l.name)
                 rev_stacked_layers[l.name] = stack_to
+            else:
+                for t in l.top:
+                    top_name_to_layer[t] = l.name
             owl_net.add_unit(l.name, caffe_to_owl_map[l.name])
         # 3. connect
         for base_layer, stacks in stacked_layers.iteritems():
