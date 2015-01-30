@@ -32,6 +32,7 @@ void ActivationForward(const DataList&, const DataList&, ActivationForwardClosur
 void ActivationBackward(const DataList&, const DataList&, ActivationBackwardClosure&, const CudaRuntimeContext&);
 void PoolingForward(const DataList&, const DataList&, PoolingForwardClosure&, const CudaRuntimeContext&);
 void PoolingBackward(const DataList&, const DataList&, PoolingBackwardClosure&, const CudaRuntimeContext&);
+void SyncWithPS(const DataList& inputs, const DataList& outputs, SyncWithPSClosure& closure, const CudaRuntimeContext&);
 
 void ArrayLoader(const DataList&, ArrayLoaderClosure& closure, const CudaRuntimeContext&);
 void Randn(const DataList&, RandnClosure&, const CudaRuntimeContext&);

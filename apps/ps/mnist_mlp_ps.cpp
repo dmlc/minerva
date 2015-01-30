@@ -147,11 +147,7 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
   for (int i = 0; i < num_layers - 1; ++i)
   {
     weights[i].Pull(GetWeightName(i));
-    //weights[i] = weights[i].PushGradAndPullWeight(weights[i], GetWeightName(i));
-    //LOG(ERROR) << "weights_" << i << " " << arrstr(weights[i].Get().get(), weights[i].Size().Prod());
     bias[i].Pull(GetBiasName(i));
-    //bias[i] = bias[i].PushGradAndPullWeight(bias[i], GetBiasName(i));
-    //LOG(ERROR) << "bias_" << i << " " << arrstr(bias[i].Get().get(), bias[i].Size().Prod());
   }
   /*  if(FLAGS_init) {
   cout << "Generate initial weights" << endl;
@@ -176,7 +172,9 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
     cout << "  Epoch #" << epoch << endl;
     ifstream data_file_in(train_data_file.c_str());
     ifstream label_file_in(train_label_file.c_str());
-    for (int mb = 0; mb < num_mb_per_epoch; ++mb) {
+    data_file_in.seekg(rank * lsize[0] * mb_size * sizeof(float));
+    label_file_in.seekg(rank * lsize[num_layers - 1] * mb_size * sizeof(float));
+    for (int mb = rank; mb < num_mb_per_epoch; mb+=size) {
 
       ms.current_device_id_ = cpuDevice;
 
@@ -186,6 +184,8 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
       shared_ptr<float> label_ptr(new float[label_size.Prod()]);
       data_file_in.read(reinterpret_cast<char*>(data_ptr.get()), data_size.Prod() * sizeof(float));
       label_file_in.read(reinterpret_cast<char*>(label_ptr.get()), label_size.Prod() * sizeof(float));
+      data_file_in.seekg(size * data_size.Prod() * sizeof(float), ios_base::cur);
+      label_file_in.seekg(size * label_size.Prod() * sizeof(float), ios_base::cur);
 
       acts[0] = NArray::MakeNArray(data_size, data_ptr);
       NArray label = NArray::MakeNArray(label_size, label_ptr);
@@ -220,14 +220,18 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
       weights[k] -= epsW * sens[k + 1] * acts[k].Trans() / mb_size;
       }
       */
+      ms.current_device_id_ = cpuDevice;
       for (int k = 0; k < num_layers - 1; ++k) {
         bias[k] = NArray::PushGradAndPullWeight(sens[k + 1].Sum(1) / mb_size, GetBiasName(k));
         weights[k] = NArray::PushGradAndPullWeight(sens[k + 1] * acts[k].Trans() / mb_size, GetWeightName(k));
       }
+      ms.current_device_id_ = gpuDevice;
 
       if (mb % 20 == 0) {
         ms.current_device_id_ = cpuDevice;
-        PrintTrainingAccuracy(acts[num_layers - 1], label);
+        acts[num_layers - 1].WaitForEval();
+        if (rank == 0)
+          PrintTrainingAccuracy(acts[num_layers - 1], label);
       }
     }
     data_file_in.close();

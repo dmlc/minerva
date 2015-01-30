@@ -9,6 +9,10 @@
 #include <cuda_runtime.h>
 #endif
 
+#ifdef HAS_PS
+#include "ps.h"
+#endif
+
 using namespace std;
 
 namespace minerva {
@@ -492,6 +496,32 @@ void RandBernoulli(const DataList& outputs, RandBernoulliClosure& closure, const
 void Fill(const DataList& outputs, FillClosure& closure, const CudaRuntimeContext& context) {
   CHECK_EQ(outputs.size(), 1) << "(fill) #outputs wrong";
   CudaPerformFill(outputs[0].data(), outputs[0].size().Prod(), closure.val, context.stream);
+}
+
+void SyncWithPS(const DataList& inputs, const DataList& outputs, SyncWithPSClosure& closure, const CudaRuntimeContext& context) {
+  CHECK_EQ(outputs.size(), 1);
+#ifdef HAS_PS
+  // TODO: use memory allocator, or directly pass CPU pointer in
+  // we are creating temp space on CPU for now, should use memory allocator
+  size_t size = outputs[0].size().Prod();
+  vector<float> weight(size);
+  if (inputs.empty())
+  {
+    PushGradAndPullWeight(nullptr, &weight[0], size, closure.layer_name);
+  }
+  else
+  {
+    CHECK_EQ(inputs.size(), 1);
+    CHECK_EQ(inputs[0].size().Prod(), outputs[0].size().Prod()) << "Pushed and pulled matrix must be of same dim";
+    vector<float> grad(size);
+    CUDA_CALL(cudaMemcpyAsync(&grad[0], inputs[0].data(), size, cudaMemcpyDefault, context.stream));
+    CUDA_CALL(cudaStreamSynchronize(context.stream));    
+    PushGradAndPullWeight(&grad[0], &weight[0], size, closure.layer_name);
+  }
+  CUDA_CALL(cudaMemcpyAsync(outputs[0].data(), &weight[0], size, cudaMemcpyDefault, context.stream));    
+#else
+  LOG_ASSERT(0) << "HAS_PS is not enabled when you compile minerva, please enable it";
+#endif
 }
 
 }
