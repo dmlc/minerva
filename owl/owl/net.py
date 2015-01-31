@@ -39,7 +39,6 @@ class ComputeUnitSimple(ComputeUnit):
 class WeightedComputeUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(WeightedComputeUnit, self).__init__(params)
-        self.name = params.name
         self.params = params
         # weights and bias
         self.weight = None
@@ -85,11 +84,12 @@ class TanhUnit(ComputeUnitSimple):
 class PoolingUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(PoolingUnit, self).__init__(params)
-        if params.pool == PoolingParameter.PoolMethod.Value('MAX'):
+        ppa = params.pooling_param
+        if ppa.pool == PoolingParameter.PoolMethod.Value('MAX'):
             pool_ty = co.pool_op.max
-        elif params.pool == PoolingParameter.PoolMethod.Value('AVE'):
+        elif ppa.pool == PoolingParameter.PoolMethod.Value('AVE'):
             pool_ty = co.pool_op.avg
-        self.pooler = co.Pooler(params.kernel_size, params.kernel_size, params.stride, params.stride, params.pad, params.pad, pool_ty)
+        self.pooler = co.Pooler(ppa.kernel_size, ppa.kernel_size, ppa.stride, ppa.stride, ppa.pad, ppa.pad, pool_ty)
     def ff(self, x):
         self.ff_x = x
         self.ff_y = self.pooler.ff(x)
@@ -103,7 +103,7 @@ class DropoutUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(DropoutUnit, self).__init__(params)
     def ff(self, x):
-        self.dropmask = owl.randb(x, self.params.dropout_ratio)
+        self.dropmask = owl.randb(x, self.params.dropout_param.dropout_ratio)
         return ele.mult(x, self.dropmask)
     def bp(self, y):
         return ele.mult(y, self.dropmask)
@@ -291,9 +291,11 @@ class Net:
     
     def __str__(self):
         ret = 'digraph G {\n'
-        for k, l in self.adjacent.iteritems():
-            for n in l:
-                ret += '"' + str(k) + '"->"' + str(n) + '"\n'
+        for uid in range(len(self.units)):
+            ret += 'n' + str(uid) + ' [label="' + self.units[uid].name + '"]\n'
+        for uid in range(len(self.units)):
+            for nuid in self.adjacent[uid]:
+                ret += 'n' + str(uid) + ' -> n' + str(nuid) + '\n'
         return ret + '}\n'
 
 
