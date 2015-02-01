@@ -8,13 +8,17 @@ from caffe import *
 class ComputeUnit(object):
     def __init__(self, params = None):
         self.params = params
+        if params == None:
+            self.name = 'N/A'
+        else:
+            self.name = params.name
         self.btm_names = []
         self.top_names = []
     def __str__(self):
         return 'N/A unit'
-    def ff(self, from_btm, to_top):
+    def forward(self, from_btm, to_top):
         pass
-    def bp(self, from_top, to_btm):
+    def backward(self, from_top, to_btm):
         pass
     def update(self):
         pass
@@ -22,11 +26,11 @@ class ComputeUnit(object):
 class ComputeUnitSimple(ComputeUnit):
     def __init__(self, params = None):
         super(ComputeUnitSimple, self).__init__(params)
-    def ff(self, from_btm, to_top):
+    def forward(self, from_btm, to_top):
         to_top[self.top_names[0]] = self.ff(from_btm[self.btm_names[0]])
     def ff(self, act):
         pass
-    def bp(self, from_top, to_btm):
+    def backward(self, from_top, to_btm):
         to_btm[self.btm_names[0]] = self.bp(from_top[self.top_names[0]])
         pass
     def bp(self, sen):
@@ -35,7 +39,6 @@ class ComputeUnitSimple(ComputeUnit):
 class WeightedComputeUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(WeightedComputeUnit, self).__init__(params)
-        self.name = params.name
         self.params = params
         # weights and bias
         self.weight = None
@@ -81,11 +84,12 @@ class TanhUnit(ComputeUnitSimple):
 class PoolingUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(PoolingUnit, self).__init__(params)
-        if params.pool == PoolingParameter.PoolMethod.Value('MAX'):
+        ppa = params.pooling_param
+        if ppa.pool == PoolingParameter.PoolMethod.Value('MAX'):
             pool_ty = co.pool_op.max
-        elif params.pool == PoolingParameter.PoolMethod.Value('AVE'):
+        elif ppa.pool == PoolingParameter.PoolMethod.Value('AVE'):
             pool_ty = co.pool_op.avg
-        self.pooler = co.Pooler(params.kernel_size, params.kernel_size, params.stride, params.stride, params.pad, params.pad, pool_ty)
+        self.pooler = co.Pooler(ppa.kernel_size, ppa.kernel_size, ppa.stride, ppa.stride, ppa.pad, ppa.pad, pool_ty)
     def ff(self, x):
         self.ff_x = x
         self.ff_y = self.pooler.ff(x)
@@ -99,7 +103,7 @@ class DropoutUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(DropoutUnit, self).__init__(params)
     def ff(self, x):
-        self.dropmask = owl.randb(x, self.params.dropout_ratio)
+        self.dropmask = owl.randb(x, self.params.dropout_param.dropout_ratio)
         return ele.mult(x, self.dropmask)
     def bp(self, y):
         return ele.mult(y, self.dropmask)
@@ -215,104 +219,151 @@ class ConvConnection(WeightedComputeUnit):
 class DataUnit(ComputeUnit):
     def __init__(self, params):
         super(DataUnit, self).__init__(params)
-    def ff(self, from_btm, to_top):
+    def forward(self, from_btm, to_top):
         pass
-    def bp(self, from_top, to_btm):
+    def backward(self, from_top, to_btm):
         pass
     def __str__(self):
         return 'data'
 
 class Net:
     def __init__(self):
-        self.units = {}
-        self.adjacent = {}
-        self.reverse_adjacent = {}
+        self.units = []
+        self.adjacent = []
+        self.reverse_adjacent = []
 
-    def add_unit(self, name, unit):
-        self.units[name] = unit
-        self.adjacent[name] = []
-        self.reverse_adjacent[name] = []
+    def add_unit(self, unit):
+        uid = len(self.units)
+        self.units.append(unit)
+        self.adjacent.append([])
+        self.reverse_adjacent.append([])
+        return uid
 
-    def has_unit(self, name):
-        return name in self.units
-
-    def connect(self, n1, n2):
-        self.adjacent[n1].append(n2)
-        self.reverse_adjacent[n2].append(n1)
-        l1 = self.units[n1]
-        l2 = self.units[n2]
-        l1.top.append(l2)
-        l2.bottom.append(l1)
+    def connect(self, u1, u2):
+        self.adjacent[u1].append(u2)
+        self.reverse_adjacent[u2].append(u1)
 
     def _toporder(self):
-        depcount = {unit : len(inunits) for unit, inunits in self.reverse_adjacent.iteritems()}
+        depcount = [len(inunits) for inunits in self.reverse_adjacent]
         queue = Queue.Queue()
-        for unit, count in depcount.iteritems():
+        for unit in range(len(depcount)):
+            count = depcount[unit]
             if count == 0:
                 queue.put(unit)
         while not queue.empty():
             unit = queue.get()
-            yield self.units[unit]
+            yield unit
             for l in self.adjacent[unit]:
                 depcount[l] -= 1
                 if depcount[l] == 0:
                     queue.put(l)
 
     def _reverse_toporder(self):
-        depcount = {unit : len(outunits) for unit, outunits in self.adjacent.iteritems()}
+        depcount = [len(outunits) for outunits in self.adjacent]
         queue = Queue.Queue()
-        for unit, count in depcount.iteritems():
+        for unit in range(len(depcount)):
+            count = depcount[unit]
             if count == 0:
                 queue.put(unit)
         while not queue.empty():
             unit = queue.get()
-            yield self.units[unit]
+            yield unit
             for l in self.reverse_adjacent[unit]:
                 depcount[l] -= 1
                 if depcount[l] == 0:
                     queue.put(l)
 
-    def ff(self):
-        for l in self._toporder():
-            l.ff()
+    def forward(self):
+        unit_to_tops = [{} for name in self.units]
+        for u in self._toporder():
+            from_btm = {}
+            for btm in self.reverse_adjacent[u]:
+                from_btm.update(unit_to_tops[btm])
+            self.units[u].forward(from_btm, unit_to_tops[u])
 
-    def bp(self):
-        for l in self._reverse_toporder():
-            l.bp()
+    def backward(self):
+        unit_to_btms = [{} for name in self.units]
+        for u in self._reverse_toporder():
+            from_top = {}
+            for top in self.adjacent[u]:
+                from_top.update(unit_to_btms[top])
+            self.units[u].backward(from_top, unit_to_btms[u])
     
     def __str__(self):
         ret = 'digraph G {\n'
-        for k, l in self.adjacent.iteritems():
-            for n in l:
-                ret += '"' + str(k) + '"->"' + str(n) + '"\n'
+        for uid in range(len(self.units)):
+            ret += 'n' + str(uid) + ' [label="' + self.units[uid].name + '"]\n'
+        for uid in range(len(self.units)):
+            for nuid in self.adjacent[uid]:
+                ret += 'n' + str(uid) + ' -> n' + str(nuid) + '\n'
         return ret + '}\n'
 
-class TestUnit(ComputeUnitSimple):
+
+############### Test code
+class _StartUnit(ComputeUnit):
     def __init__(self, name):
-        super(TestUnit, self).__init__()
+        super(_StartUnit, self).__init__()
         self.name = name
-    def ff(self, act):
-        print 'ff:', self.name
-    def bp(self, sen):
-        print 'bp:', self.name
+    def forward(self, from_btm, to_top):
+        print 'ff|start name:', self.name
+        to_top[self.top_names[0]] = 0
+    def backward(self, from_top, to_btm):
+        pass
+
+class _EndUnit(ComputeUnit):
+    def __init__(self, name):
+        super(_EndUnit, self).__init__()
+        self.name = name
+    def forward(self, from_btm, to_top):
+        pass
+    def backward(self, from_top, to_btm):
+        print 'bp|end name:', self.name
+        to_btm[self.btm_names[0]] = 0
+
+class _TestUnit(ComputeUnitSimple):
+    def __init__(self, name):
+        super(_TestUnit, self).__init__()
+        self.name = name
+    def ff(self, x):
+        print 'ff|name:', self.name, 'val:', x
+        return x + 1
+    def bp(self, y):
+        print 'bp|name:', self.name, 'val:', y
+        return y - 1
 
 if __name__ == '__main__':
     net = Net()
-    net.add_unit('l1', TestUnit('l1'))
-    net.add_unit('l2', TestUnit('l2'))
-    net.add_unit('l3', TestUnit('l3'))
-    net.add_unit('l4', TestUnit('l4'))
-    net.add_unit('l5', TestUnit('l5'))
-    net.add_unit('l6', TestUnit('l6'))
-    net.add_unit('l7', TestUnit('l7'))
-    net.add_unit('l8', TestUnit('l8'))
-    net.connect('l1', 'l2')
-    net.connect('l1', 'l3')
-    net.connect('l2', 'l4')
-    net.connect('l3', 'l5')
-    net.connect('l4', 'l5')
-    net.connect('l5', 'l6')
-    net.connect('l5', 'l7')
-    net.connect('l7', 'l8')
-    net.ff()
-    net.bp()
+    us = _StartUnit('s')
+    u1 = _TestUnit('u1')
+    u2 = _TestUnit('u2')
+    u3 = _TestUnit('u3')
+    u4 = _TestUnit('u4')
+    u5 = _TestUnit('u5')
+    ue = _EndUnit('e')
+    us.top_names = ['s']
+    u1.btm_names = ['s']
+    u1.top_names = ['u1']
+    u2.btm_names = ['u1']
+    u2.top_names = ['u2']
+    u3.btm_names = ['u2']
+    u3.top_names = ['u3']
+    u4.btm_names = ['u3']
+    u4.top_names = ['u4']
+    u5.btm_names = ['u4']
+    u5.top_names = ['u5']
+    ue.btm_names = ['u5']
+    ls = net.add_unit(us)
+    l1 = net.add_unit(u1)
+    l2 = net.add_unit(u2)
+    l3 = net.add_unit(u3)
+    l4 = net.add_unit(u4)
+    l5 = net.add_unit(u5)
+    le = net.add_unit(ue)
+    net.connect(ls, l1)
+    net.connect(l1, l2)
+    net.connect(l2, l3)
+    net.connect(l3, l4)
+    net.connect(l4, l5)
+    net.connect(l5, le)
+    net.forward()
+    net.backward()
