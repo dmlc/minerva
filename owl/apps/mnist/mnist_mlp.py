@@ -7,7 +7,7 @@ import numpy as np
 import mnist_io
 
 class MnistTrainer:
-    def __init__(self, data_file='mnist_all.mat', num_epochs=100, mb_size=128, eps_w=0.01, eps_b=0.01):
+    def __init__(self, data_file='mnist_all.mat', num_epochs=100, mb_size=256, eps_w=0.01, eps_b=0.01):
         self.cpu = owl.create_cpu_device()
         self.gpu = owl.create_gpu_device(0)
         self.data_file = data_file
@@ -67,13 +67,12 @@ class MnistTrainer:
 
             # test
             a1 = test_samples
-            a2 = ele.sigm(self.w1 * a1 + self.b1)
-            a3 = ele.sigm(self.w2 * a2 + self.b2)
+            a2 = ele.relu(self.w1 * a1 + self.b1)
+            a3 = self.w2 * a2 + self.b2
             correct = a3.argmax(0) - test_labels.argmax(0)
             val = correct.to_numpy()
             #print val
             print 'Testing error:', float(np.count_nonzero(val)) / num_test_samples
-
             print '---Finish epoch #%d' % epoch
 
 if __name__ == '__main__':
