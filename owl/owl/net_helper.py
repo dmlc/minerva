@@ -19,7 +19,6 @@ class CaffeNetBuilder:
             text_format.Merge(str(f.read()), self.solverconfig)
 
     def build_net(self, owl_net):
-        owl_net = net.Net()
         stacked_layers = {}
         rev_stacked_layers = {}
         top_name_to_layer = {}
@@ -68,7 +67,7 @@ class CaffeNetBuilder:
             for btm in owl_net.units[uid].btm_names:
                 for btm_uid in top_name_to_layer[btm]:
                     owl_net.connect(btm_uid, uid)
-        print owl_net
+        #print owl_net
 
     def _convert_type(self, caffe_layer):
         ty = caffe_layer.type

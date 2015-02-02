@@ -240,30 +240,52 @@ class Net:
         self.adjacent[u1].append(u2)
         self.reverse_adjacent[u2].append(u1)
 
-    def _toporder(self):
+    def _is_excluded(self, unit, phase):
+        p = self.units[unit].params
+        return phase != None and len(p.include) != 0 and p.include[0].phase != Phase.Value(phase)
+
+    def _toporder(self, phase = None):
         depcount = [len(inunits) for inunits in self.reverse_adjacent]
         queue = Queue.Queue()
+        # remove dep from excluded units
+        for unit in range(len(depcount)):
+            if self._is_excluded(unit, phase):
+                for l in self.adjacent[unit]:
+                    depcount[l] -= 1
+        # find start units
         for unit in range(len(depcount)):
             count = depcount[unit]
             if count == 0:
                 queue.put(unit)
+        # run
         while not queue.empty():
             unit = queue.get()
+            if self._is_excluded(unit, phase):
+                continue
             yield unit
             for l in self.adjacent[unit]:
                 depcount[l] -= 1
                 if depcount[l] == 0:
                     queue.put(l)
 
-    def _reverse_toporder(self):
+    def _reverse_toporder(self, phase = None):
         depcount = [len(outunits) for outunits in self.adjacent]
         queue = Queue.Queue()
+        # remove dep from excluded units
+        for unit in range(len(depcount)):
+            if self._is_excluded(unit, phase):
+                for l in self.reverse_adjacent[unit]:
+                    depcount[l] -= 1
+        # find start units
         for unit in range(len(depcount)):
             count = depcount[unit]
             if count == 0:
                 queue.put(unit)
+        # run
         while not queue.empty():
             unit = queue.get()
+            if self._is_excluded(unit, phase):
+                continue
             yield unit
             for l in self.reverse_adjacent[unit]:
                 depcount[l] -= 1
