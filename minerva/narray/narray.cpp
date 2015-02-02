@@ -150,12 +150,11 @@ NArray Concat(const std::vector<NArray>& arrays, int catdim) {
 	ConcatOp* op = new ConcatOp();
 	op->closure = {catdim}; 
 	int target_dim = 0;
-	for(int i = 0; i < arrays.size(); i++)
+	for(size_t i = 0; i < arrays.size(); i++)
 		target_dim += arrays[i].Size()[catdim];
 	std::vector<int> sizevec(arrays[0].Size().NumDims(), 0);
-	for(int i = 0; i < sizevec.size(); i++)
-	{
-		if(i == catdim)
+	for(size_t i = 0; i < sizevec.size(); i++) {
+		if(i == (size_t)catdim)
 			sizevec[i] = target_dim;
 		else
 			sizevec[i] = arrays[0].Size()[i]; 
@@ -167,9 +166,8 @@ NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count)
 {
 	CHECK_GT(src.Size().NumDims(), slice_dim) << "can't concat on non-sense dim";
 	std::vector<int> sizevec(src.Size().NumDims(), 0);
-	for(int i = 0; i < sizevec.size(); i++)
-	{
-		if(i == slice_dim)
+	for(size_t i = 0; i < sizevec.size(); i++) {
+		if(i == (size_t)slice_dim)
 			sizevec[i] = slice_count;
 		else
 			sizevec[i] = src.Size()[i]; 

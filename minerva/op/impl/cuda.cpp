@@ -73,44 +73,43 @@ void LRNBackward(const DataList& inputs, const DataList& outputs, LRNBackwardClo
 }
 
 
-void Concat(const DataList& inputs, const DataList& outputs, ConcatClosure& closure, const CudaRuntimeContext & context)
-{
+void Concat(const DataList& inputs, const DataList& outputs, ConcatClosure& closure, const CudaRuntimeContext & context) {
   CHECK_GT(inputs.size(), 2) << "(Concat) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(Concat) #outputs is wrong!";
   CHECK_LE(inputs[0].size().NumDims() - closure.catdim, 3) << "(Concat) #Currently only support concat on the last two dims!";
   
-  int concat_dim = closure.catdim;
+  size_t concat_dim = closure.catdim;
   float* top_data = outputs[0].data();
-  if (concat_dim == inputs[0].size().NumDims() - 1){
-	int offset_num = 0;
-	for (int i = 0; i < inputs.size(); ++i) {
-		float* bottom_data = inputs[i].data();
-		CudaPerformCopy(bottom_data, top_data + offset_num, inputs[i].size().Prod(), context.cublas_handle);
-		offset_num += inputs[i].size().Prod();
-	}
+  if (concat_dim == inputs[0].size().NumDims() - 1) {
+    int offset_num = 0;
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      float* bottom_data = inputs[i].data();
+      CudaPerformCopy(bottom_data, top_data + offset_num, inputs[i].size().Prod(), context.cublas_handle);
+      offset_num += inputs[i].size().Prod();
+    }
   }
-  else{
-	int offset_channel = 0;
-	for (int i = 0; i < inputs.size(); ++i) {
-		float* bottom_data = inputs[i].data();
-		int bot_num_elem = 1;
-		int top_num_elem = 1;
-		int img_size = 1;
-		int bot_channel = 1;
-		for (int idx = 0; idx < inputs[i].size().NumDims() - 1; idx++){
-			bot_num_elem *= inputs[i].size()[idx];
-			top_num_elem *= outputs[0].size()[idx];
-			if(idx < inputs[i].size().NumDims() - 2) 
-				img_size *= inputs[i].size()[idx]; 
-			else
-				bot_channel = inputs[i].size()[idx];
-		}
-		int imgnum = inputs[i].size()[inputs[i].size().NumDims()-1];
-		for (int n = 0; n < imgnum; ++n) {
-			CudaPerformCopy(bottom_data + n * bot_num_elem, top_data + n * top_num_elem + offset_channel * img_size, bot_num_elem, context.cublas_handle);
-		}
-		offset_channel += bot_channel;
-	}
+  else {
+    int offset_channel = 0;
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      float* bottom_data = inputs[i].data();
+      int bot_num_elem = 1;
+      int top_num_elem = 1;
+      int img_size = 1;
+      int bot_channel = 1;
+      for (size_t idx = 0; idx < inputs[i].size().NumDims() - 1; idx++){
+        bot_num_elem *= inputs[i].size()[idx];
+        top_num_elem *= outputs[0].size()[idx];
+        if(idx < inputs[i].size().NumDims() - 2) 
+          img_size *= inputs[i].size()[idx]; 
+        else
+          bot_channel = inputs[i].size()[idx];
+      }
+      int imgnum = inputs[i].size()[inputs[i].size().NumDims()-1];
+      for (int n = 0; n < imgnum; ++n) {
+        CudaPerformCopy(bottom_data + n * bot_num_elem, top_data + n * top_num_elem + offset_channel * img_size, bot_num_elem, context.cublas_handle);
+      }
+      offset_channel += bot_channel;
+    }
   }
 }
 
@@ -120,16 +119,17 @@ void Slice(const DataList& inputs, const DataList& outputs, SliceClosure& closur
   CHECK_EQ(outputs.size(), 1) << "(Slice) #outputs is wrong!";
   CHECK_LE(inputs[0].size().NumDims() - closure.slice_dim, 3) << "(Slice) #Currently only support concat on the last two dims!";
   
-  int slice_dim = closure.slice_dim;
+  size_t slice_dim = closure.slice_dim;
   float* input_data = inputs[0].data();
   if (slice_dim == inputs[0].size().NumDims() - 1){
-	int offset_num = 0;
-	float* output_data = outputs[0].data();
-	int img_size = 1;
-	for (int i = 0; i < inputs[0].size().NumDims() - 1; i++)
-		img_size *= inputs[0].size()[i];
-	offset_num = closure.st_off * img_size;
-	CudaPerformCopy(input_data + offset_num, output_data, outputs[0].size().Prod(), context.cublas_handle);
+    int offset_num = 0;
+    float* output_data = outputs[0].data();
+    int img_size = 1;
+    for (size_t i = 0; i < inputs[0].size().NumDims() - 1; i++) {
+      img_size *= inputs[0].size()[i];
+    }
+    offset_num = closure.st_off * img_size;
+    CudaPerformCopy(input_data + offset_num, output_data, outputs[0].size().Prod(), context.cublas_handle);
   }
   else{
 	int offset_channel = closure.st_off;
@@ -137,7 +137,7 @@ void Slice(const DataList& inputs, const DataList& outputs, SliceClosure& closur
 	int output_num_elem = 1;
 	int input_num_elem = 1;
 	int img_size = 1;
-	for (int idx = 0; idx < outputs[0].size().NumDims() - 1; idx++){
+	for (size_t idx = 0; idx < outputs[0].size().NumDims() - 1; idx++){
 		output_num_elem *= outputs[0].size()[idx];
 		input_num_elem *= inputs[0].size()[idx];
 		if(idx < inputs[0].size().NumDims() - 2) 
@@ -610,4 +610,3 @@ void Fill(const DataList& outputs, FillClosure& closure, const CudaRuntimeContex
 }
 #endif
 }
-
