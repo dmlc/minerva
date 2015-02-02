@@ -6,12 +6,9 @@ import Queue
 from caffe import *
 
 class ComputeUnit(object):
-    def __init__(self, params = None):
+    def __init__(self, params):
         self.params = params
-        if params == None:
-            self.name = 'N/A'
-        else:
-            self.name = params.name
+        self.name = params.name
         self.btm_names = []
         self.top_names = []
     def __str__(self):
@@ -24,7 +21,7 @@ class ComputeUnit(object):
         pass
 
 class ComputeUnitSimple(ComputeUnit):
-    def __init__(self, params = None):
+    def __init__(self, params):
         super(ComputeUnitSimple, self).__init__(params)
     def forward(self, from_btm, to_top):
         to_top[self.top_names[0]] = self.ff(from_btm[self.btm_names[0]])
@@ -302,8 +299,9 @@ class Net:
 ############### Test code
 class _StartUnit(ComputeUnit):
     def __init__(self, name):
-        super(_StartUnit, self).__init__()
         self.name = name
+        self.btm_names = []
+        self.top_names = []
     def forward(self, from_btm, to_top):
         print 'ff|start name:', self.name
         to_top[self.top_names[0]] = 0
@@ -312,8 +310,9 @@ class _StartUnit(ComputeUnit):
 
 class _EndUnit(ComputeUnit):
     def __init__(self, name):
-        super(_EndUnit, self).__init__()
         self.name = name
+        self.btm_names = []
+        self.top_names = []
     def forward(self, from_btm, to_top):
         pass
     def backward(self, from_top, to_btm):
@@ -322,8 +321,9 @@ class _EndUnit(ComputeUnit):
 
 class _TestUnit(ComputeUnitSimple):
     def __init__(self, name):
-        super(_TestUnit, self).__init__()
         self.name = name
+        self.btm_names = []
+        self.top_names = []
     def ff(self, x):
         print 'ff|name:', self.name, 'val:', x
         return x + 1
