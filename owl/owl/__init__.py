@@ -19,10 +19,13 @@ on numpy such as IO and visualization.
 import numpy as np
 import libowl as _owl
 
+NArray = _owl.NArray
+
 def initialize(argv):
     """ Initialize Minerva System
 
-    **Must be called before calling any owl's API**
+    .. note::
+        Must be called before calling any owl's API
 
     :param argv: commandline arguments
     :type argv: list str
@@ -117,16 +120,18 @@ def randb(shape, prob):
 def from_numpy(nparr):
     """ Create an owl.NArray from numpy.ndarray
 
-    The content will be directly copied to Minerva's memory system. However, due to
-    the different priority when treating dimensions between numpy and Minerva. The
-    result ``owl.NArray``'s dimension will be *reversed*.
+    .. note::
 
-      >>> import numpy as np
-      >>> import owl
-      >>> a = np.zeros([200, 300, 50])
-      >>> b = owl.from_numpy(a)
-      >>> print b.shape
-      [50, 300, 200]
+        The content will be directly copied to Minerva's memory system. However, due to
+        the different priority when treating dimensions between numpy and Minerva. The 
+        result ``owl.NArray``'s dimension will be *reversed*.
+
+        >>> a = numpy.zeros([200, 300, 50])
+        >>> b = owl.from_numpy(a)
+        >>> print b.shape
+        [50, 300, 200]
+
+    .. seealso:: owl.NArray.to_numpy
 
     :param numpy.ndarray nparr: numpy ndarray
     :return: Minerva's ndarray
@@ -147,3 +152,29 @@ def reset_profiler_result():
     :return: None
     """
     _owl.reset_profiler_result()
+
+def concat(narrays, concat_dim): 
+    """  Concatenate NArrays according to concat_dim
+    
+    Args:
+        narrays (owl.NArray): inputs for concatenation
+        concat_dim (int): the dimension to concate
+
+    Returns:
+        owl.NArray: result of concatenator
+    """
+    return _owl.concat(narrays, concat_dim)
+
+def slice(src, slice_dim, st_off, slice_count): 
+    """  Slice NArrays according to slice_dim
+    
+    Args:
+        src (owl.NArray): inputs for slice
+        slice_dim (int): the dimension to slice
+        st_off (int): where to start slice
+        slice_count (int): how many data_chunk on slice_dim
+
+    Returns:
+        owl.NArray: result of slicer
+    """
+    return _owl.slice(src, slice_dim, st_off, slice_count)

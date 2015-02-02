@@ -33,6 +33,55 @@ def softmax(x, op = soft_op.instance):
         soft_shape = x.shape[0:-1] + [1 for i in range(4 - len(ori_shape))] + [x.shape[-1]]
         return _owl.softmax_forward(x.reshape(soft_shape), op).reshape(ori_shape)
 
+class Lrner:
+    """ Wrapper class for LRN.
+
+    Attributes:
+      local_size (int) : the size of lrn across channel
+      alpha (float) : lrn parameters
+      beta (float) : lrn parameters
+
+    """
+    def __init__(self, local_size, alpha, beta):
+        """ Constructor for Convolver class
+        
+        Args:
+          local_size (int) : the size of lrn across channel
+          alpha (float) : lrn parameters
+          beta (float) : lrn parameters
+
+        """
+        self.local_size = local_size
+        self.alpha = alpha
+        self.beta = beta
+    
+    def ff(self, x, s):
+        """ Feed-forward local response norm
+
+        Args:
+          x (owl.NArray): input of the lrn
+          s (owl.NArray): auxiliary matrix to help computing
+
+        Returns:
+          owl.NArray: result ndarray after forward lrn
+        """
+        #print np.reshape(x.to_numpy(), np.prod(np.shape(x.to_numpy()))).tolist()[0:100] 
+        return _owl.lrn_forward(x, s, self.local_size, self.alpha, self.beta)
+    
+    def bp(self, bottom_data, top_data, scale, top_diff):
+        """ Backward local response norm
+
+        Args:
+          bottom_data (owl.NArray): activation before lrn
+          top_data (owl.NArray): activation after lrn
+          scale (owl.NArray): auxiliary matrix to help computing
+          top_diff (owl.NArray): error derivative
+
+        Returns:
+          owl.NArray: result ndarray after backward lrn
+        """      
+        return _owl.lrn_backward(bottom_data, top_data, scale, top_diff, self.local_size, self.alpha, self.beta)
+
 
 class Convolver:
     """ Wrapper class for convolution.
@@ -65,25 +114,27 @@ class Convolver:
         """
         return _owl.conv_forward(x, w, b, self.param)
 
-    def bp(self, y, w):
+    def bp(self, y, x, w):
         """ Backward convolution
 
         :param owl.NArray y: error of the convolution usually passed by higher layers
+        :param owl.NArray x: bottom activation
         :param owl.NArray w: filters
         :return: result ndarray after backward convolution
         :rtype: owl.NArray
         """
-        return _owl.conv_backward_data(y, w, self.param)
+        return _owl.conv_backward_data(y, x, w, self.param)
 
-    def weight_grad(self, y, x):
+    def weight_grad(self, y, x, w):
         """ Compute the gradient of filters
 
         :param owl.NArray y: error (sensitivity) passed by higher layer
         :param owl.NArray x: input (activation) of lower layer
+        :param owl.NArray w: weight (used to get the filter dimension)
         :return: the gradient of filters
         :rtype: owl.NArray
         """
-        return _owl.conv_backward_filter(y, x, self.param)
+        return _owl.conv_backward_filter(y, x, w, self.param)
 
     def bias_grad(self, y):
         """ Compute the gradient of bias
@@ -99,7 +150,7 @@ class Pooler:
 
     :ivar libowl.PoolingInfo param: pooling parameters
     """
-    def __init__(self, h, w, stride_v, stride_h, op):
+    def __init__(self, h, w, stride_v, stride_h, pad_h, pad_w, op):
         """ Constructor for Pooler class
 
         :param int h: pooling height
@@ -113,6 +164,8 @@ class Pooler:
         pi.width = w
         pi.stride_vertical = stride_v
         pi.stride_horizontal = stride_h
+        pi.pad_height = pad_h
+        pi.pad_width = pad_w
         pi.algorithm = op
         self.param = pi
 
@@ -123,6 +176,8 @@ class Pooler:
         :return: output ndarray after forward pooling
         :rtype: owl.NArray
         """
+
+        #print "%d %d %d %d" % (self.param.height, self.param.width, self.param.stride_vertical, self.param.stride_horizontal)
         return _owl.pooling_forward(x, self.param)
 
     def bp(self, y, ff_y, ff_x):

@@ -38,6 +38,11 @@ void Randn(const DataList&, RandnClosure&, const CudaRuntimeContext&);
 void RandBernoulli(const DataList&, RandBernoulliClosure&, const CudaRuntimeContext&);
 void Fill(const DataList&, FillClosure&, const CudaRuntimeContext&);
 
+void LRNForward(const DataList&, const DataList&, LRNForwardClosure&, const CudaRuntimeContext&);
+void LRNBackward(const DataList&, const DataList&, LRNBackwardClosure&, const CudaRuntimeContext&);
+void Concat(const DataList&, const DataList&, ConcatClosure&, const CudaRuntimeContext&);
+void Slice(const DataList&, const DataList&, SliceClosure&, const CudaRuntimeContext&);
+
 }
 #endif
 }

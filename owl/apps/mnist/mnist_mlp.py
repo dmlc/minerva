@@ -29,27 +29,25 @@ class MnistTrainer:
         num_test_samples = test_data[0].shape[0]
         (test_samples, test_labels) = map(lambda npdata : owl.from_numpy(npdata), test_data)
         count = 1
+        owl.set_device(self.gpu)
         for epoch in range(self.num_epochs):
             print '---Start epoch #%d' % epoch
             # train
             for (mb_samples, mb_labels) in train_data:
                 num_samples = mb_samples.shape[0]
 
-                owl.set_device(self.cpu)
                 a1 = owl.from_numpy(mb_samples)
                 target = owl.from_numpy(mb_labels)
-                owl.set_device(self.gpu)
 
                 # ff
-                a2 = ele.sigm(self.w1 * a1 + self.b1)
-                a3 = ele.sigm(self.w2 * a2 + self.b2)
+                a2 = ele.relu(self.w1 * a1 + self.b1)
+                a3 = self.w2 * a2 + self.b2
                 # softmax & error
                 out = co.softmax(a3)
                 s3 = out - target
                 # bp
-                s3 = ele.mult(s3, 1 - s3)
                 s2 = self.w2.trans() * s3
-                s2 = ele.mult(s2, 1 - s2)
+                s2 = ele.relu_back(s2, a2)
                 # grad
                 gw1 = s2 * a1.trans() / num_samples
                 gb1 = s2.sum(1) / num_samples
@@ -62,19 +60,19 @@ class MnistTrainer:
                 self.b2 -= self.eps_b * gb2
 
                 if (count % 40 == 0):
-                    correct = out.max_index(0) - target.max_index(0)
+                    correct = out.argmax(0) - target.argmax(0)
                     val = correct.to_numpy()
                     print 'Training error:', float(np.count_nonzero(val)) / num_samples
-                    # test
-                    a1 = test_samples
-                    a2 = ele.sigm(self.w1 * a1 + self.b1)
-                    a3 = ele.sigm(self.w2 * a2 + self.b2)
-                    correct = a3.max_index(0) - test_labels.max_index(0)
-                    val = correct.to_numpy()
-                    #print val
-                    print 'Testing error:', float(np.count_nonzero(val)) / num_test_samples
                 count = count + 1
 
+            # test
+            a1 = test_samples
+            a2 = ele.relu(self.w1 * a1 + self.b1)
+            a3 = self.w2 * a2 + self.b2
+            correct = a3.argmax(0) - test_labels.argmax(0)
+            val = correct.to_numpy()
+            #print val
+            print 'Testing error:', float(np.count_nonzero(val)) / num_test_samples
             print '---Finish epoch #%d' % epoch
 
 if __name__ == '__main__':

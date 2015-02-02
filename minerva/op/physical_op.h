@@ -325,5 +325,34 @@ class PoolingBackwardOp : public PhyComputeFnWithClosure<PoolingBackwardClosure>
   }
 };
 
+class LRNForwardOp : public PhyComputeFnWithClosure<LRNForwardClosure> {
+ public:
+  std::string Name() const {
+    return "LRN Forward";
+  }
+};
+
+class LRNBackwardOp : public PhyComputeFnWithClosure<LRNBackwardClosure> {
+ public:
+  std::string Name() const {
+    return "LRN Backward";
+  }
+};
+
+class ConcatOp : public PhyComputeFnWithClosure<ConcatClosure> {
+ public:
+  std::string Name() const {
+    return "Concat";
+  }
+};
+
+class SliceOp : public PhyComputeFnWithClosure<SliceClosure> {
+ public:
+  std::string Name() const {
+    return "Slice";
+  }
+};
+
+
 }  // namespace minerva
 

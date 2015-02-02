@@ -124,13 +124,13 @@ bp::list ShapeWrapper(m::NArray narr) {
   return ToPythonList(narr.Size());
 }
 
-bp::list NArrayToList(m::NArray narr) {
+/*bp::list NArrayToList(m::NArray narr) {
   bp::list l;
   std::shared_ptr<float> v = narr.Get();
   for(int i = 0; i < narr.Size().Prod(); ++i)
     l.append(v.get()[i]);
   return l;
-}
+}*/
 
 m::NArray ConvForward(m::NArray src, m::NArray filter, m::NArray bias, m::ConvInfo info) {
   return m::Convolution::ConvForward(m::ImageBatch(src), m::Filter(filter), bias, info);
@@ -148,12 +148,12 @@ m::NArray PoolingBackward(m::NArray diff, m::NArray top, m::NArray bottom, m::Po
   return m::Convolution::PoolingBackward(m::ImageBatch(diff), m::ImageBatch(top), m::ImageBatch(bottom), info);
 }
 
-m::NArray ConvBackwardData(m::NArray diff, m::NArray filter, m::ConvInfo info) {
-  return m::Convolution::ConvBackwardData(m::ImageBatch(diff), m::Filter(filter), info);
+m::NArray ConvBackwardData(m::NArray diff, m::NArray bottom, m::NArray filter, m::ConvInfo info) {
+  return m::Convolution::ConvBackwardData(m::ImageBatch(diff), m::ImageBatch(bottom), m::Filter(filter), info);
 }
 
-m::NArray ConvBackwardFilter(m::NArray diff, m::NArray bottom, m::ConvInfo info) {
-  return m::Convolution::ConvBackwardFilter(m::ImageBatch(diff), m::ImageBatch(bottom), info);
+m::NArray ConvBackwardFilter(m::NArray diff, m::NArray bottom, m::NArray filter, m::ConvInfo info) {
+  return m::Convolution::ConvBackwardFilter(m::ImageBatch(diff), m::ImageBatch(bottom), m::Filter(filter), info);
 }
 
 m::NArray ConvBackwardBias(m::NArray diff) {
@@ -178,6 +178,26 @@ void PrintProfilerResult() {
 
 void ResetProfilerResult() {
   m::MinervaSystem::Instance().profiler().Reset();
+}
+
+m::NArray LRNForward(m::NArray src, m::NArray scale, int local_size, float alpha, float beta) {
+  return m::Convolution::LRNForward(m::ImageBatch(src), m::ImageBatch(scale), local_size, alpha, beta);
+}
+
+m::NArray LRNBackward(m::NArray bottom_data, m::NArray top_data, m::NArray scale, m::NArray top_diff, int local_size, float alpha, float beta) {
+  return m::Convolution::LRNBackward(m::ImageBatch(bottom_data), m::ImageBatch(top_data), m::ImageBatch(scale), m::ImageBatch(top_diff), local_size, alpha, beta);
+}
+
+
+m::NArray Concat(const bp::list& arrays, int concat_dim){
+	std::vector<m::NArray> Narrays;
+	for(int i = 0; i < len(arrays); i++)
+		Narrays.push_back(bp::extract<m::NArray>(arrays[i]));	
+	return m::Concat(Narrays, concat_dim);
+}
+
+m::NArray Slice(const m::NArray src, int slice_dim, int st_off, int slice_count){
+	return m::Slice(src, slice_dim, st_off, slice_count);
 }
 
 } // end of namespace owl
@@ -234,7 +254,7 @@ BOOST_PYTHON_MODULE(libowl) {
     //.def("max", max0) TODO not implemented yet
     .def("max", max1)
     .def("max", max2)
-    .def("max_index", &m::NArray::MaxIndex)
+    .def("argmax", &m::NArray::MaxIndex)
     .def("count_zero", &m::NArray::CountZero)
     // normalize
     //.def("norm_arithmetic", &m::NArray::NormArithmetic)
@@ -290,6 +310,8 @@ BOOST_PYTHON_MODULE(libowl) {
     .def_readwrite("width", &m::PoolingInfo::width)
     .def_readwrite("stride_vertical", &m::PoolingInfo::stride_vertical)
     .def_readwrite("stride_horizontal", &m::PoolingInfo::stride_horizontal)
+    .def_readwrite("pad_height", &m::PoolingInfo::pad_height)
+    .def_readwrite("pad_width", &m::PoolingInfo::pad_width)
     .def_readwrite("algorithm", &m::PoolingInfo::algorithm)
     ;
   enum_<m::ActivationAlgorithm>("activation_algo")
@@ -316,5 +338,8 @@ BOOST_PYTHON_MODULE(libowl) {
   def("conv_backward_bias", &owl::ConvBackwardBias);
   def("activation_backward", &owl::ActivationBackward);
   def("softmax_backward", &owl::SoftmaxBackward);
+  def("lrn_forward", &owl::LRNForward);
+  def("lrn_backward", &owl::LRNBackward);
+  def("concat", &owl::Concat);
+  def("slice", &owl::Slice);
 }
-

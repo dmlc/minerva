@@ -283,8 +283,8 @@ def savemodel(i, model):
         weightarray.tofile(filename)
 
 def print_training_accuracy(o, t, minibatch_size):
-    predict = o.max_index(0)
-    ground_truth = t.max_index(0)
+    predict = o.argmax(0)
+    ground_truth = t.argmax(0)
     
     '''
     print predict.tolist()

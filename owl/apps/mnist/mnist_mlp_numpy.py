@@ -4,8 +4,13 @@ import numpy as np
 import numpy.random
 import mnist_io
 
-def sigmoid(m):
-    return 1 / (1 + np.exp(-m))
+def relu(x):
+    zm = np.zeros(x.shape)
+    return np.greater(x, zm) * x
+
+def relu_back(y, x):
+    zm = np.zeros(x.shape)
+    return np.greater(x, zm) * y
 
 def softmax(m):
     maxval = np.max(m, axis=0)
@@ -44,15 +49,14 @@ class MnistTrainer:
                 target = mb_labels.T
 
                 # ff
-                a2 = sigmoid(np.dot(self.w1, a1) + self.b1)
-                a3 = sigmoid(np.dot(self.w2, a2) + self.b2)
+                a2 = relu(np.dot(self.w1, a1) + self.b1)
+                a3 = np.dot(self.w2, a2) + self.b2
                 # softmax & error
                 out = softmax(a3)
                 s3 = out - target
                 # bp
-                s3 = s3 * (1 - s3)
                 s2 = np.dot(self.w2.T, s3)
-                s2 = s2 * (1 - s2)
+                s2 = relu_back(s2, a2)
                 # grad
                 gw1 = np.dot(s2, a1.T) / num_samples
                 gb1 = np.sum(s2, axis=1, keepdims=True) / num_samples
@@ -67,15 +71,15 @@ class MnistTrainer:
                 if (count % 40 == 0):
                     correct = np.argmax(out, axis=0) - np.argmax(target, axis=0)
                     print 'Training error:', float(np.count_nonzero(correct)) / num_samples
-                    # test
-                    a1 = test_samples.T
-                    a2 = sigmoid(np.dot(self.w1, a1) + self.b1)
-                    a3 = sigmoid(np.dot(self.w2, a2) + self.b2)
-                    correct = np.argmax(a3, axis=0) - np.argmax(test_labels.T, axis=0)
-                    #print correct
-                    print 'Testing error:', float(np.count_nonzero(correct)) / num_test_samples
                 count = count + 1
 
+            # test
+            a1 = test_samples.T
+            a2 = relu(np.dot(self.w1, a1) + self.b1)
+            a3 = np.dot(self.w2, a2) + self.b2
+            correct = np.argmax(a3, axis=0) - np.argmax(test_labels.T, axis=0)
+            #print correct
+            print 'Testing error:', float(np.count_nonzero(correct)) / num_test_samples
             print '---Finish epoch #%d' % epoch
 
 if __name__ == '__main__':
