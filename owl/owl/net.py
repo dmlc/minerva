@@ -292,17 +292,17 @@ class Net:
                 if depcount[l] == 0:
                     queue.put(l)
 
-    def forward(self):
+    def forward(self, phase = 'TRAIN'):
         unit_to_tops = [{} for name in self.units]
-        for u in self._toporder():
+        for u in self._toporder(phase):
             from_btm = {}
             for btm in self.reverse_adjacent[u]:
                 from_btm.update(unit_to_tops[btm])
             self.units[u].forward(from_btm, unit_to_tops[u])
 
-    def backward(self):
+    def backward(self, phase = 'TRAIN'):
         unit_to_btms = [{} for name in self.units]
-        for u in self._reverse_toporder():
+        for u in self._reverse_toporder(phase):
             from_top = {}
             for top in self.adjacent[u]:
                 from_top.update(unit_to_btms[top])
