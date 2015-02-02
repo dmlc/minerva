@@ -6,6 +6,8 @@
 using namespace std;
 using namespace minerva;
 
+#define LL LOG(ERROR)
+
 template <typename V>
 inline std::string arrstr(const V* data, int n) {
   std::stringstream ss;
@@ -63,16 +65,22 @@ bool IsBiasName(const std::string & name)
   return StartsWith(name, "bias_");
 }
 
+void DumpParams(int epoch)
+{
+  //FileFormat format;
+  //format.binary = false;
+  //for (int i = 0; i < num_layers - 1; ++i)
+  //  weights[i].ToFile(string("w_") + to_string(i + 1) + to_string(i + 2) + "_" + to_string(epoch), format);
+  //for (int i = 0; i < num_layers - 1; ++i)
+  //  bias[i].ToFile(string("b_") + to_string(i + 1) + "_" + to_string(epoch), format);
+}
+
 void GenerateInitWeight() {
   for (int i = 0; i < num_layers - 1; ++i)
   {
     weights[i] = NArray::Randn({ lsize[i + 1], lsize[i] }, 0.0, sqrt(4.0 / (lsize[0] + lsize[1])));
     bias[i] = NArray::Constant({ lsize[i + 1], 1 }, 1.0);
   }
-  FileFormat format;
-  format.binary = true;
-  for (int i = 0; i < num_layers - 1; ++i)
-    weights[i].ToFile(weight_init_files[i], format);
 }
 
 NArray Softmax(NArray m) {
@@ -91,7 +99,7 @@ void PrintTrainingAccuracy(NArray o, NArray t) {
   NArray groundtruth = t.MaxIndex(0);
 
   float correct = (predict - groundtruth).CountZero();
-  cout << "Training Error: " << (mb_size - correct) / mb_size << endl;
+  LL << "Training Error: " << (mb_size - correct) / mb_size << endl;
 }
 
 
@@ -133,6 +141,8 @@ void UpdateLayer(const std::string &name, float* weight, float* gradient, size_t
 }
 
 int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
+  LL << "this is worker " << rank << " of " << size;
+
   MinervaSystem& ms = MinervaSystem::Instance();
   ms.Initialize(&argc, &argv);
   uint64_t cpuDevice = ms.CreateCpuDevice();
@@ -149,23 +159,7 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
     weights[i].Pull(GetWeightName(i));
     bias[i].Pull(GetBiasName(i));
   }
-  /*  if(FLAGS_init) {
-  cout << "Generate initial weights" << endl;
-  GenerateInitWeight();
-  cout << "Finished!" << endl;
-  return 0;
-  } else {
-  cout << "Init weights and bias" << endl;
-  InitWeight();
-  }
-  */
-
-  //for (int i = 0; i < num_layers - 1; ++i)
-  //{
-  //  weights[i] = NArray::PushGradAndPullWeight()
-  //  bias[i] = NArray::Constant({ lsize[i + 1], 1 }, 1.0);
-  //}
-
+ 
   cout << "Training procedure:" << endl;
   NArray acts[num_layers], sens[num_layers];
   for (int epoch = 0; epoch < numepochs; ++epoch) {
@@ -174,6 +168,7 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
     ifstream label_file_in(train_label_file.c_str());
     data_file_in.seekg(rank * lsize[0] * mb_size * sizeof(float));
     label_file_in.seekg(rank * lsize[num_layers - 1] * mb_size * sizeof(float));
+    DumpParams(0);
     for (int mb = rank; mb < num_mb_per_epoch; mb+=size) {
 
       ms.current_device_id_ = cpuDevice;
@@ -184,8 +179,8 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
       shared_ptr<float> label_ptr(new float[label_size.Prod()]);
       data_file_in.read(reinterpret_cast<char*>(data_ptr.get()), data_size.Prod() * sizeof(float));
       label_file_in.read(reinterpret_cast<char*>(label_ptr.get()), label_size.Prod() * sizeof(float));
-      data_file_in.seekg(size * data_size.Prod() * sizeof(float), ios_base::cur);
-      label_file_in.seekg(size * label_size.Prod() * sizeof(float), ios_base::cur);
+      data_file_in.seekg((size - 1) * data_size.Prod() * sizeof(float), ios_base::cur);
+      label_file_in.seekg((size - 1) * label_size.Prod() * sizeof(float), ios_base::cur);
 
       acts[0] = NArray::MakeNArray(data_size, data_ptr);
       NArray label = NArray::MakeNArray(label_size, label_ptr);
@@ -210,16 +205,6 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
         sens[k] = Elewise::Mult(sens[k], d_act);
       }
 
-      /*
-      // Update bias
-      for (int k = 0; k < num_layers - 1; ++k) { // no input layer
-      bias[k] -= epsB * sens[k + 1].Sum(1) / mb_size;
-      }
-      // Update weight
-      for (int k = 0; k < num_layers - 1; ++k) {
-      weights[k] -= epsW * sens[k + 1] * acts[k].Trans() / mb_size;
-      }
-      */
       ms.current_device_id_ = cpuDevice;
       for (int k = 0; k < num_layers - 1; ++k) {
         bias[k] = NArray::PushGradAndPullWeight(sens[k + 1].Sum(1) / mb_size, GetBiasName(k));
@@ -227,12 +212,12 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
       }
       ms.current_device_id_ = gpuDevice;
 
-      if (mb % 20 == 0) {
+      if ((mb - rank) % 20 == 0) {
         ms.current_device_id_ = cpuDevice;
         acts[num_layers - 1].WaitForEval();
-        if (rank == 0)
-          PrintTrainingAccuracy(acts[num_layers - 1], label);
+        PrintTrainingAccuracy(acts[num_layers - 1], label);
       }
+      DumpParams(mb + 1);
     }
     data_file_in.close();
     label_file_in.close();
