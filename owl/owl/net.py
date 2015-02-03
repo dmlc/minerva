@@ -7,12 +7,9 @@ from caffe import *
 from netio import ImageNetDataProvider
 
 class ComputeUnit(object):
-    def __init__(self, params = None):
+    def __init__(self, params):
         self.params = params
-        if params == None:
-            self.name = 'N/A'
-        else:
-            self.name = params.name
+        self.name = params.name
         self.btm_names = []
         self.top_names = []
     def __str__(self):
@@ -25,7 +22,7 @@ class ComputeUnit(object):
         pass
 
 class ComputeUnitSimple(ComputeUnit):
-    def __init__(self, params = None):
+    def __init__(self, params):
         super(ComputeUnitSimple, self).__init__(params)
     def forward(self, from_btm, to_top):
         to_top[self.top_names[0]] = self.ff(from_btm[self.btm_names[0]])
@@ -279,50 +276,72 @@ class Net:
         self.adjacent[u1].append(u2)
         self.reverse_adjacent[u2].append(u1)
 
-    def _toporder(self):
+    def _is_excluded(self, unit, phase):
+        p = self.units[unit].params
+        return phase != None and len(p.include) != 0 and p.include[0].phase != Phase.Value(phase)
+
+    def _toporder(self, phase = None):
         depcount = [len(inunits) for inunits in self.reverse_adjacent]
         queue = Queue.Queue()
+        # remove dep from excluded units
+        for unit in range(len(depcount)):
+            if self._is_excluded(unit, phase):
+                for l in self.adjacent[unit]:
+                    depcount[l] -= 1
+        # find start units
         for unit in range(len(depcount)):
             count = depcount[unit]
             if count == 0:
                 queue.put(unit)
+        # run
         while not queue.empty():
             unit = queue.get()
+            if self._is_excluded(unit, phase):
+                continue
             yield unit
             for l in self.adjacent[unit]:
                 depcount[l] -= 1
                 if depcount[l] == 0:
                     queue.put(l)
 
-    def _reverse_toporder(self):
+    def _reverse_toporder(self, phase = None):
         depcount = [len(outunits) for outunits in self.adjacent]
         queue = Queue.Queue()
+        # remove dep from excluded units
+        for unit in range(len(depcount)):
+            if self._is_excluded(unit, phase):
+                for l in self.reverse_adjacent[unit]:
+                    depcount[l] -= 1
+        # find start units
         for unit in range(len(depcount)):
             count = depcount[unit]
             if count == 0:
                 queue.put(unit)
+        # run
         while not queue.empty():
             unit = queue.get()
+            if self._is_excluded(unit, phase):
+                continue
             yield unit
             for l in self.reverse_adjacent[unit]:
                 depcount[l] -= 1
                 if depcount[l] == 0:
                     queue.put(l)
 
-    def forward(self):
+    def forward(self, phase = 'TRAIN'):
         print "begin forward =============================="
         unit_to_tops = [{} for name in self.units]
-        for u in self._toporder():
+        for u in self._toporder(phase):
             from_btm = {}
             for btm in self.reverse_adjacent[u]:
                 from_btm.update(unit_to_tops[btm])
             #print self.units[u].name
             self.units[u].forward(from_btm, unit_to_tops[u])
 
-    def backward(self):
+    def backward(self, phase = 'TRAIN'):
         print "begin backward ============================"
         unit_to_btms = [{} for name in self.units]
-        for u in self._reverse_toporder():
+        for u in self._reverse_toporder(phase):
             from_top = {}
             for top in self.adjacent[u]:
                 from_top.update(unit_to_btms[top])
@@ -347,8 +366,9 @@ class Net:
 ############### Test code
 class _StartUnit(ComputeUnit):
     def __init__(self, name):
-        super(_StartUnit, self).__init__()
         self.name = name
+        self.btm_names = []
+        self.top_names = []
     def forward(self, from_btm, to_top):
         print 'ff|start name:', self.name
         to_top[self.top_names[0]] = 0
@@ -357,8 +377,9 @@ class _StartUnit(ComputeUnit):
 
 class _EndUnit(ComputeUnit):
     def __init__(self, name):
-        super(_EndUnit, self).__init__()
         self.name = name
+        self.btm_names = []
+        self.top_names = []
     def forward(self, from_btm, to_top):
         pass
     def backward(self, from_top, to_btm):
@@ -367,8 +388,9 @@ class _EndUnit(ComputeUnit):
 
 class _TestUnit(ComputeUnitSimple):
     def __init__(self, name):
-        super(_TestUnit, self).__init__()
         self.name = name
+        self.btm_names = []
+        self.top_names = []
     def ff(self, x):
         print 'ff|name:', self.name, 'val:', x
         return x + 1
