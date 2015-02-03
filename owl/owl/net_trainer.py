@@ -41,9 +41,3 @@ if __name__ == "__main__":
                 print "Accuracy this mb: %f" % (accunit.acc)
                 acc_num += accunit.acc * accunit.minibatch_size
                 test_num += accunit.minibatch_size
-
-
-
-
-
-

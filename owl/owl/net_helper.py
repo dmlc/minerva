@@ -200,5 +200,3 @@ if __name__ == "__main__":
     owl_net = net.Net()
     builder.build_net(owl_net)
     owl_net.forward()
-
-
