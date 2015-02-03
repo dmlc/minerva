@@ -26,7 +26,8 @@ class CaffeNetBuilder:
         owl_net.base_lr = self.solverconfig.base_lr
         owl_net.base_weight_decay = self.solverconfig.weight_decay
         owl_net.momentum = self.solverconfig.momentum
-
+        owl_net.solver = self.solverconfig
+        
         stacked_layers = {}
         rev_stacked_layers = {}
         top_name_to_layer = {}
@@ -35,13 +36,14 @@ class CaffeNetBuilder:
         for l in self.netconfig.layers:
             owl_struct = self._convert_type(l)
             
-            #handle IO, may need better         
-            ty = l.type
-            if ty == LayerParameter.LayerType.Value('DATA'):
-                owl_net.batch_size = l.data_param.batch_size
-            
             if owl_struct != None:
                 uid = owl_net.add_unit(owl_struct)
+                
+                #handle IO, may need better         
+                ty = l.type
+                if ty == LayerParameter.LayerType.Value('DATA'):
+                    owl_net.batch_size = l.data_param.batch_size
+                
                 # stack issues
                 #stacked_layers[l.name] = [uid]
                 #rev_stacked_layers[uid] = l.name

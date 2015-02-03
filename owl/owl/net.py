@@ -18,7 +18,7 @@ class ComputeUnit(object):
         pass
     def backward(self, from_top, to_btm):
         pass
-    def update(self):
+    def weight_update(self, base_lr, base_weight_decay, momentum, batch_size):
         pass
 
 class ComputeUnitSimple(ComputeUnit):
@@ -52,13 +52,15 @@ class WeightedComputeUnit(ComputeUnitSimple):
         #TODO: need recheck with caffe with what's the multiplier for weight decay
         if self.weightdelta == None:
             self.weightdelta = owl.zeros(self.weightgrad.shape)
-        self.weightdelta = momentum * self.weightdelta - base_lr * self.blobs_lr[0] * self.weightgrad / batch_size - base_lr * self.blobs_lr[0] * base_weight_decay * self.weight_decay[0] / batch_size * self.weight
+        
+        self.weightdelta = momentum * self.weightdelta - (base_lr * self.blobs_lr[0] / batch_size) * self.weightgrad  - (base_lr * self.blobs_lr[0] * base_weight_decay * self.weight_decay[0]) * self.weight
         self.weight += self.weightdelta 
         self.weightgrad = None
         
         if self.biasdelta == None:
             self.biasdelta = owl.zeros(self.biasgrad.shape)
-        self.biasdelta = momentum * self.biasdelta - base_lr * self.blobs_lr[1] * self.biasgrad / batch_size - base_lr * self.blobs_lr[1] * base_weight_decay * self.weight_decay[1] / batch_size * self.bias
+        
+        self.biasdelta = momentum * self.biasdelta - (base_lr * self.blobs_lr[1] / batch_size) * self.biasgrad - (base_lr * self.blobs_lr[1] * base_weight_decay * self.weight_decay[1]) * self.bias
         self.bias += self.biasdelta 
         self.biasgrad = None
 
@@ -142,12 +144,13 @@ class AccuracyUnit(ComputeUnit):
     def __init__(self, params):
         super(AccuracyUnit, self).__init__(params)
         self.acc = 0
+        self.minibatch_size = 0
     def forward(self, from_btm, to_top):
         predict = from_btm[self.btm_names[0]].argmax(0)
         ground_truth = from_btm[self.btm_names[1]].argmax(0)   
-        minibatch_size = from_btm[self.btm_names[0]].shape[1]
+        self.minibatch_size = from_btm[self.btm_names[0]].shape[1]
         correct = (predict - ground_truth).count_zero()
-        self.acc = 1 - (minibatch_size - correct) * 1.0 / minibatch_size 
+        self.acc = 1 - (self.minibatch_size - correct) * 1.0 / self.minibatch_size 
 
     def backward(self, from_top, to_btm):
         pass
@@ -240,16 +243,26 @@ class DataUnit(ComputeUnit):
     def __init__(self, params):
         super(DataUnit, self).__init__(params)
         self.crop_size = params.transform_param.crop_size
-        #TODO: set num_channel to 3, it's a hack
         self.num_output = 3
         self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.data_param.source, params.data_param.batch_size, params.transform_param.crop_size)
         self.generator = self.dp.get_train_mb()
-        #return ImageNetDataProvider(params.transform_param.mean_file, params.data_param.source, params.data_param.batch_size, params.transform_param.crop_size)
+        #prefetch
+        (self.pre_samples, self.pre_labels) = next(self.generator)
 
     def forward(self, from_btm, to_top):
-        samples, labels = next(self.generator) 
+        samples = self.pre_samples
+        labels = self.pre_labels
+  
         to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
         to_top[self.top_names[1]] = owl.from_numpy(labels)
+    
+        #prefetch
+        try:
+            (self.pre_samples, self.pre_labels) = next(self.generator)
+        except StopIteration:
+            self.generator = self.dp.get_train_mb()
+            (self.pre_samples, self.pre_labels) = next(self.generator) 
+
     def backward(self, from_top, to_btm):
         pass
     def __str__(self):
@@ -264,8 +277,6 @@ class Net:
         self.base_weight_decay = 0
         self.momentum = 0
         self.name_to_uid = {}
-        #self.dataprovider = []
-        #self.dname_to_dpid = {}
 
     def add_unit(self, unit):
         uid = len(self.units)
@@ -340,7 +351,6 @@ class Net:
             from_btm = {}
             for btm in self.reverse_adjacent[u]:
                 from_btm.update(unit_to_tops[btm])
-            #print self.units[u].name
             self.units[u].forward(from_btm, unit_to_tops[u])
 
     def backward(self, phase = 'TRAIN'):
@@ -350,13 +360,11 @@ class Net:
             from_top = {}
             for top in self.adjacent[u]:
                 from_top.update(unit_to_btms[top])
-            #print self.units[u].name
             self.units[u].backward(from_top, unit_to_btms[u])
     
     def weight_update(self):
         for i in range(len(self.units)):
-            if isinstance(self.units[i], WeightedComputeUnit):
-                self.units[i].weight_update(self.base_lr, self.base_weight_decay, self.momentum, self.batch_size)
+            self.units[i].weight_update(self.base_lr, self.base_weight_decay, self.momentum, self.batch_size)
 
     def __str__(self):
         ret = 'digraph G {\n'
