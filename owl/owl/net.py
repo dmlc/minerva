@@ -47,6 +47,7 @@ class WeightedComputeUnit(ComputeUnitSimple):
         # blob learning rate and weight decay
         self.blobs_lr = params.blobs_lr
         self.weight_decay = params.weight_decay
+
     def weight_update(self, base_lr, base_weight_decay, momentum, batch_size):
         #TODO: need recheck with caffe with what's the multiplier for weight decay
         if self.weightdelta == None:
@@ -262,6 +263,7 @@ class Net:
         self.base_lr = 0
         self.base_weight_decay = 0
         self.momentum = 0
+        self.name_to_uid = {}
         #self.dataprovider = []
         #self.dname_to_dpid = {}
 
@@ -270,6 +272,9 @@ class Net:
         self.units.append(unit)
         self.adjacent.append([])
         self.reverse_adjacent.append([])
+        if not unit.name in self.name_to_uid:
+            self.name_to_uid[unit.name] = []
+        self.name_to_uid[unit.name].append(uid)
         return uid
 
     def connect(self, u1, u2):
