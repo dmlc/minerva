@@ -4,6 +4,7 @@ import owl.conv as co
 import numpy as np
 import Queue
 from caffe import *
+from netio import ImageNetDataProvider
 
 class ComputeUnit(object):
     def __init__(self, params = None):
@@ -32,7 +33,6 @@ class ComputeUnitSimple(ComputeUnit):
         pass
     def backward(self, from_top, to_btm):
         to_btm[self.btm_names[0]] = self.bp(from_top[self.top_names[0]])
-        pass
     def bp(self, sen):
         pass
 
@@ -47,6 +47,24 @@ class WeightedComputeUnit(ComputeUnitSimple):
         self.bias = None
         self.biasdelta = None
         self.biasgrad = None
+        # blob learning rate and weight decay
+        self.blobs_lr = params.blobs_lr
+        self.weight_decay = params.weight_decay
+    def weight_update(self, base_lr, base_weight_decay, momentum, batch_size):
+        #TODO: need recheck with caffe with what's the multiplier for weight decay
+        if self.weightdelta == None:
+            self.weightdelta = owl.zeros(self.weightgrad.shape)
+        self.weightdelta = momentum * self.weightdelta - base_lr * self.blobs_lr[0] * self.weightgrad / batch_size - base_lr * self.blobs_lr[0] * base_weight_decay * self.weight_decay[0] / batch_size * self.weight
+        self.weight += self.weightdelta 
+        self.weightgrad = None
+        
+        if self.biasdelta == None:
+            self.biasdelta = owl.zeros(self.biasgrad.shape)
+        self.biasdelta = momentum * self.biasdelta - base_lr * self.blobs_lr[1] * self.biasgrad / batch_size - base_lr * self.blobs_lr[1] * base_weight_decay * self.weight_decay[1] / batch_size * self.bias
+        self.bias += self.biasdelta 
+        self.biasgrad = None
+
+
 
 class LinearUnit(ComputeUnitSimple):
     def ff(self, x):
@@ -103,82 +121,81 @@ class DropoutUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(DropoutUnit, self).__init__(params)
     def ff(self, x):
-        self.dropmask = owl.randb(x, self.params.dropout_param.dropout_ratio)
+        self.dropmask = owl.randb(x.shape, self.params.dropout_param.dropout_ratio)
         return ele.mult(x, self.dropmask)
     def bp(self, y):
         return ele.mult(y, self.dropmask)
     def __str__(self):
         return 'dropout'
 
-class SoftmaxUnit(ComputeUnitSimple):
+class SoftmaxUnit(ComputeUnit):
     def __init__(self, params):
         super(SoftmaxUnit, self).__init__(params)
-    def ff(self, x):
-        self.ff_y = co.softmax(x, co.soft_op.instance)
-        return self.ff_y
-    def bp(self, y):
-        return ff_y - y
+    def forward(self, from_btm, to_top):
+        to_top[self.top_names[0]] = co.softmax(from_btm[self.btm_names[0]], co.soft_op.instance)
+        self.ff_y = to_top[self.top_names[0]]
+        self.y = from_btm[self.btm_names[0]]
+    def backward(self, from_top, to_btm):
+        to_btm[self.btm_names[0]] = self.ff_y - self.y
     def __str__(self):
         return 'softmax'
 
-# TODO
+class AccuracyUnit(ComputeUnit):
+    def __init__(self, params):
+        super(AccuracyUnit, self).__init__(params)
+        self.acc = 0
+    def forward(self, from_btm, to_top):
+        predict = from_btm[self.btm_names[0]].argmax(0)
+        ground_truth = from_btm[self.btm_names[1]].argmax(0)   
+        minibatch_size = from_btm[self.btm_names[0]].shape[1]
+        correct = (predict - ground_truth).count_zero()
+        self.acc = 1 - (minibatch_size - correct) * 1.0 / minibatch_size 
+
+    def backward(self, from_top, to_btm):
+        pass
+    def __str__(self):
+        return 'accuracy'
+
 class LRNUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(LRNUnit, self).__init__(params)
+        self.lrner = co.Lrner(params.lrn_param.local_size, params.lrn_param.alpha, params.lrn_param.beta)
+        self.scale = None
     def ff(self, x):
-        return x
+        self.ff_x = x
+        self.scale = owl.zeros(x.shape)
+        self.ff_y = self.lrner.ff(x, self.scale)
+        return self.ff_y
     def bp(self, y):
-        return y
+        return self.lrner.bp(self.ff_x, self.ff_y, self.scale, y)
     def __str__(self):
         return 'lrn'
 
-# TODO
 class ConcatUnit(ComputeUnit):
     def __init__(self, params):
         super(ConcatUnit, self).__init__(params)
-    def ff(self, from_btm, to_top):
-        pass
-    def bp(self, from_top, to_btm):
-        pass
+        self.concat_dim_caffe = params.concat_param.concat_dim
+        self.slice_count = []
+    def forward(self, from_btm, to_top):
+        narrays = []
+        self.concat_dim = len(from_btm[self.btm_names[0]].shape) - 1 - self.concat_dim_caffe
+        for i in range(len(self.btm_names)):
+            narrays.append(from_btm[self.btm_names[i]])
+            self.slice_count.append(from_btm[self.btm_names[i]].shape[self.concat_dim])
+        #caffe concat_dim is reversed
+        to_top[self.top_names[0]] = owl.concat(narrays, self.concat_dim)
+    def backward(self, from_top, to_btm):
+        st_off = 0
+        for i in range(len(self.btm_names)):
+            to_btm[self.btm_names[i]]  = owl.slice(from_top[self.top_names[0]], self.concat_dim, st_off, self.slice_count[i])
+            st_off += self.slice_count[i]
     def __str__(self):
         return 'concat'
-'''
-class LRNConnection(Connection):
-    def __init__(self, name, local_size, alpha, beta):
-        super(LRNConnection, self).__init__(name)
-        self.lrner = co.Lrner(local_size, alpha, beta)
-        self.scale = None
-    def ff(self):
-        self.scale = owl.zeros(self.bottom[0].get_act().shape)
-        return self.lrner.ff(self.bottom[0].get_act(), self.scale)
-    def bp(self):
-        self.bottom[0].sen = self.lrner.bp(self.bottom[0].get_act(), self.top[0].get_act(), self.scale, self.top[0].sen)
-
-
-class ConcatConnection(Connection):
-    def __init__(self, name, concat_dim):
-        super(ConcatConnection, self).__init__(name)
-        self.concat_dim = concat_dim
-    def ff(self):
-        assert len(self.bottom) > 1
-        narrays = []
-        for i in range(len(self.bottom)):
-            narrays.append(self.bottom[i].get_act())
-        return owl.concat(narrays, self.concat_dim)
-
-    def bp(self):
-        assert len(self.bottom) > 1
-        st_off = 0
-        for i in range(len(self.bottom)):
-            slice_count = self.bottom[i].get_act().shape[self.concat_dim]
-            self.bottom[i].sen = owl.slice(self.top[0].sen, self.concat_dim, st_off, slice_count)
-            st_off += slice_count
-        pass
-'''
 
 class FullyConnection(WeightedComputeUnit):
     def __init__(self, params):
         super(FullyConnection, self).__init__(params)
+        self.inner_product_param = params.inner_product_param
         
     def ff(self, act):
         shp = act.shape
@@ -189,10 +206,14 @@ class FullyConnection(WeightedComputeUnit):
         self.ff_act = act # save ff value
         return self.weight * a + self.bias
     def bp(self, sen):
-        self.weightgrad = sen * self.ff_act.Trans()
-        self.biasgrad = act.sum(0)
-        s = self.weight.Trans() * sen 
         shp = self.ff_act.shape
+        if len(shp) > 2:
+            a = self.ff_act.reshape([np.prod(shp[0:-1]), shp[-1]])
+        else:
+            a = self.ff_act
+        self.weightgrad = sen * a.trans()
+        self.biasgrad = sen.sum(1)
+        s = self.weight.trans() * sen 
         if len(shp) > 2:
             s = s.reshape(shp)
         return s
@@ -205,22 +226,32 @@ class ConvConnection(WeightedComputeUnit):
         self.conv_params = params.convolution_param
         self.convolver = co.Convolver(self.conv_params.pad, 
                 self.conv_params.pad, self.conv_params.stride, self.conv_params.stride)
+        self.convolution_param = params.convolution_param
+        self.num_output = params.convolution_param.num_output
     def ff(self, act):
         self.ff_act = act
         return self.convolver.ff(act, self.weight, self.bias)
     def bp(self, sen):
-        self.weightgrad = self.convolver.weight_grad(sen, self.weight, self.ff_act)
+        self.weightgrad = self.convolver.weight_grad(sen, self.ff_act, self.weight)
         self.biasgrad = self.convolver.bias_grad(sen)
         return self.convolver.bp(sen, self.ff_act, self.weight)
     def __str__(self):
         return 'conv'
 
-# TODO
 class DataUnit(ComputeUnit):
     def __init__(self, params):
         super(DataUnit, self).__init__(params)
+        self.crop_size = params.transform_param.crop_size
+        #TODO: set num_channel to 3, it's a hack
+        self.num_output = 3
+        self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.data_param.source, params.data_param.batch_size, params.transform_param.crop_size)
+        self.generator = self.dp.get_train_mb()
+        #return ImageNetDataProvider(params.transform_param.mean_file, params.data_param.source, params.data_param.batch_size, params.transform_param.crop_size)
+
     def forward(self, from_btm, to_top):
-        pass
+        samples, labels = next(self.generator) 
+        to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
+        to_top[self.top_names[1]] = owl.from_numpy(labels)
     def backward(self, from_top, to_btm):
         pass
     def __str__(self):
@@ -231,6 +262,11 @@ class Net:
         self.units = []
         self.adjacent = []
         self.reverse_adjacent = []
+        self.base_lr = 0
+        self.base_weight_decay = 0
+        self.momentum = 0
+        #self.dataprovider = []
+        #self.dname_to_dpid = {}
 
     def add_unit(self, unit):
         uid = len(self.units)
@@ -274,21 +310,30 @@ class Net:
                     queue.put(l)
 
     def forward(self):
+        print "begin forward =============================="
         unit_to_tops = [{} for name in self.units]
         for u in self._toporder():
             from_btm = {}
             for btm in self.reverse_adjacent[u]:
                 from_btm.update(unit_to_tops[btm])
+            #print self.units[u].name
             self.units[u].forward(from_btm, unit_to_tops[u])
 
     def backward(self):
+        print "begin backward ============================"
         unit_to_btms = [{} for name in self.units]
         for u in self._reverse_toporder():
             from_top = {}
             for top in self.adjacent[u]:
                 from_top.update(unit_to_btms[top])
+            #print self.units[u].name
             self.units[u].backward(from_top, unit_to_btms[u])
     
+    def weight_update(self):
+        for i in range(len(self.units)):
+            if isinstance(self.units[i], WeightedComputeUnit):
+                self.units[i].weight_update(self.base_lr, self.base_weight_decay, self.momentum, self.batch_size)
+
     def __str__(self):
         ret = 'digraph G {\n'
         for uid in range(len(self.units)):

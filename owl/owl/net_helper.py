@@ -2,6 +2,9 @@ import sys
 import owl.net as net
 from caffe import *
 from google.protobuf import text_format
+import numpy as np
+import owl
+from PIL import Image
 
 class INetBuilder:
     def build_net(self, owl_net):
@@ -19,7 +22,11 @@ class CaffeNetBuilder:
             text_format.Merge(str(f.read()), self.solverconfig)
 
     def build_net(self, owl_net):
-        owl_net = net.Net()
+        #set globle lr and wd
+        owl_net.base_lr = self.solverconfig.base_lr
+        owl_net.base_weight_decay = self.solverconfig.weight_decay
+        owl_net.momentum = self.solverconfig.momentum
+
         stacked_layers = {}
         rev_stacked_layers = {}
         top_name_to_layer = {}
@@ -27,6 +34,12 @@ class CaffeNetBuilder:
         # 2. some layers is stacked into one in caffe's configure format
         for l in self.netconfig.layers:
             owl_struct = self._convert_type(l)
+            
+            #handle IO, may need better         
+            ty = l.type
+            if ty == LayerParameter.LayerType.Value('DATA'):
+                owl_net.batch_size = l.data_param.batch_size
+            
             if owl_struct != None:
                 uid = owl_net.add_unit(owl_struct)
                 # stack issues
@@ -68,6 +81,8 @@ class CaffeNetBuilder:
             for btm in owl_net.units[uid].btm_names:
                 for btm_uid in top_name_to_layer[btm]:
                     owl_net.connect(btm_uid, uid)
+        #may need outside
+        self.top_name_to_layer = top_name_to_layer
         print owl_net
 
     def _convert_type(self, caffe_layer):
@@ -94,11 +109,94 @@ class CaffeNetBuilder:
             return net.LRNUnit(caffe_layer)
         elif ty == LayerParameter.LayerType.Value('CONCAT'):
             return net.ConcatUnit(caffe_layer)
+        elif ty == LayerParameter.LayerType.Value('ACCURACY'):
+            return net.AccuracyUnit(caffe_layer)
         else:
             print "Not implemented type:", LayerParameter.LayerType.Name(caffe_layer.type)
             return None
+    
+    def init_net_from_file(self, owl_net, weightpath):
+        for i in range(len(owl_net.units)):
+            if isinstance(owl_net.units[i], net.FullyConnection):
+                #print owl_net.units[i].name
+                layername = owl_net.units[i].name
+                layername = layername.replace("/","_")
+                weightname = '%s%s_weights.dat' % (weightpath, layername)
+                npweight = np.fromfile(weightname, dtype = np.float32)
+                length = np.shape(npweight)[0]
+                wshape = [owl_net.units[i].inner_product_param.num_output, length / owl_net.units[i].inner_product_param.num_output]
+                owl_net.units[i].weight = owl.from_numpy(npweight).reshape(wshape)
+                biasname = '%s%s_bias.dat' % (weightpath, layername)
+                npbias = np.fromfile(biasname, dtype = np.float32)
+                bshape = [owl_net.units[i].inner_product_param.num_output, 1]
+                owl_net.units[i].bias = owl.from_numpy(npbias).reshape(bshape)
+            if isinstance(owl_net.units[i], net.ConvConnection):
+                #print owl_net.units[i].name
+                layername = owl_net.units[i].name
+                layername = layername.replace("/","_")
+                weightname = '%s%s_weights.dat' % (weightpath, layername)
+                npweight = np.fromfile(weightname, dtype = np.float32)
+                length = np.shape(npweight)[0]
+                conv_params = owl_net.units[i].conv_params
+                input_channel = length / conv_params.kernel_size / conv_params.kernel_size / conv_params.num_output
+                wshape = [conv_params.kernel_size, conv_params.kernel_size, input_channel, conv_params.num_output]
+                owl_net.units[i].weight = owl.from_numpy(npweight).reshape(wshape)
+                biasname = '%s%s_bias.dat' % (weightpath, layername)
+                npbias = np.fromfile(biasname, dtype = np.float32)
+                bshape = [owl_net.units[i].conv_params.num_output]
+                owl_net.units[i].bias = owl.from_numpy(npbias).reshape(bshape)
+ 
+class CaffeModelLoader:
+    def __init__(self, model_file, weightdir):
+        netparam = NetParameter()
+        layerparam = LayerParameter()
+        with open(model_file, 'rb') as f:
+            netparam.ParseFromString(f.read())
+        
+        cmd = 'mkdir %s' % (weightdir) 
+        res = subprocess.call(cmd, shell=True)
+
+        cmd = 'mkdir %s/epoch0' % (weightdir) 
+        res = subprocess.call(cmd, shell=True)
+
+        print len(netparam.layers)
+        curweights = 0
+        for i in range(len(netparam.layers)):
+            #print '%d %d' % (i, curweights)
+            if hasattr(netparam.layers[i], 'blobs') and len(netparam.layers[i].blobs) == 2:
+                layername = netparam.layers[i].name
+                layername = layername.replace("/","_")
+                filename = '%s/epoch0/%s_weights.dat' % (weightdir, layername)
+                #print filename
+                if netparam.layers[i].type == layerparam.LayerType.Value('CONVOLUTION'):
+                    num_output = netparam.layers[i].convolution_param.num_output
+                    kernelsize = netparam.layers[i].convolution_param.kernel_size
+                    orifilters = np.array(netparam.layers[i].blobs[0].data, dtype=np.float32)
+                    channels = np.shape(orifilters)[0] / num_output / kernelsize / kernelsize
+                    orifilters = orifilters.reshape([num_output, channels, kernelsize, kernelsize])
+                    newfilters = np.zeros(np.shape(orifilters), dtype=np.float32)
+                    for outidx in range(num_output):
+                        for chaidx in range(channels):
+                            newfilters[outidx, chaidx, :, :] = np.rot90(orifilters[outidx, chaidx, :,:],2)
+                    newfilters.reshape(np.prod(np.shape(newfilters)[0:4])).tofile(filename)
+                else:
+                    num_output = netparam.layers[i].inner_product_param.num_output
+                    input_dim = np.shape(np.array(netparam.layers[i].blobs[0].data, dtype=np.float32))[0] / num_output
+                    theweight = np.transpose(np.array(netparam.layers[i].blobs[0].data, dtype=np.float32).reshape([num_output, input_dim]))
+                    theweight.tofile(filename)
+                #np.array(netparam.layers[i].blobs[0].data, dtype=np.float32).tofile(filename)
+                
+                filename = '%s/epoch0/%s_bias.dat' % (weightdir, layername)
+                #print filename
+                np.array(netparam.layers[i].blobs[1].data, dtype=np.float32).tofile(filename)
+
+
+
 
 if __name__ == "__main__":
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])
     owl_net = net.Net()
     builder.build_net(owl_net)
+    owl_net.forward()
+
+
