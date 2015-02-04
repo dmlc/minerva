@@ -12,12 +12,10 @@ namespace minerva {
 namespace cuda {
 
 static void FindConfiguration(size_t size, int& num_blocks, int& num_threads, bool block_crop = true) {
-  num_threads = size < 1024? 32 : 1024;
+  num_threads = size < 1024? 256 : 1024;
   num_blocks = static_cast<int>((size + num_threads - 1) / num_threads);
-  if (block_crop) {
-    if (num_blocks < 0 || 128 < num_blocks) {
-      num_blocks = 128;
-    }
+  if (num_blocks < 0 || 128 < num_blocks) {
+    num_blocks = 128;
   }
   //printf("#s=%d #t=%d #b=%d\n", size, num_threads, num_blocks);
   
@@ -46,9 +44,10 @@ void CudaPerformAdd(float* a, float* b, float* c, size_t size, cudaStream_t stre
   int block, thread;
   FindConfiguration(size, block, thread);
   CudaPerformDotKernel<<<block, thread, 0, stream>>>(a, b, c, size, SumOp());
-  // float one = 1.0;
-  // CUBLAS_CALL(cublasScopy(handle, size, a, 1, c, 1));
-  // CUBLAS_CALL(cublasSaxpy(handle, size, &one, b, 1, c, 1));
+  CheckCudaError("CudaPerformAdd");
+  //float one = 1.0;
+  //CUBLAS_CALL(cublasScopy(handle, size, a, 1, c, 1));
+  //CUBLAS_CALL(cublasSaxpy(handle, size, &one, b, 1, c, 1));
 }
 
 void CudaPerformCopy(float* a, float* b, size_t size, cublasHandle_t handle) {
@@ -454,6 +453,7 @@ void CudaPerformMaxPoolingForward(float* bottom, float* top, int num_images, int
   //Calculate the dimension after pooling	
   int pooled_height = static_cast<int>(ceil(static_cast<float>((bottom_height + 2 * pad_height - window_height)) / stride_vertical)) + 1;
   int pooled_width = static_cast<int>(ceil(static_cast<float>((bottom_width + 2 * pad_width - window_width)) / stride_horizontal)) + 1;
+  //printf("btm_h=%d btm_w=%d pooled_h=%d pooled_width=%d\n", bottom_height, bottom_width, pooled_height, pooled_width);
 
   if (pad_height > 0 || pad_width > 0) {
     // has padding, call caffe's pooling mthod
@@ -462,10 +462,10 @@ void CudaPerformMaxPoolingForward(float* bottom, float* top, int num_images, int
 	  if((pooled_width - 1) * stride_horizontal >= bottom_width + pad_width)
 		--pooled_width;
 
-  	  int block, thread;
+  	int block, thread;
 	  int size = num_images * num_channels * pooled_width * pooled_height;
 	  FindConfiguration(size, block, thread, false);
-	  //block = size;
+    //printf("size=%d block=%d thread=%d\n", size, block, thread);
 	  CudaMaxPoolForward<<<block, thread, 0, stream>>>(
       size, bottom, num_images, num_channels, bottom_height, bottom_width, pooled_height, pooled_width,
       window_height, window_width, stride_vertical, stride_horizontal, pad_height, pad_width, top);
@@ -531,8 +531,7 @@ void CudaPerformMaxPoolingBackward(float* bottom, float* top, float* top_diff, f
   int pooled_height = static_cast<int>(ceil(static_cast<float>((bottom_height + 2 * pad_height - window_height)) / stride_vertical)) + 1;
   int pooled_width = static_cast<int>(ceil(static_cast<float>((bottom_width + 2 * pad_width - window_width)) / stride_horizontal)) + 1;
 
-  if (pad_height > 0 || pad_width > 0)
-  {
+  if (pad_height > 0 || pad_width > 0) {
 	  if((pooled_height - 1) * stride_vertical >= bottom_height + pad_height)
 		--pooled_height;  
 	  if((pooled_width - 1) * stride_horizontal >= bottom_width + pad_width)
@@ -544,29 +543,27 @@ void CudaPerformMaxPoolingBackward(float* bottom, float* top, float* top_diff, f
 
 	  //set bottom_diff 0
 	  CudaPerformFillKernel<<<block, thread, 0, stream>>>(bottom_diff, size, 0.0);
-  	  CheckCudaError("CudaPerformFill");
+  	CheckCudaError("CudaPerformFill");
 	  
-	  //block = size;
 	  CudaMaxPoolBackward<<<block, thread, 0, stream>>>(
 	  size, bottom, top_diff, bottom_diff, num_images, num_channels, bottom_height, bottom_width, pooled_height, pooled_width, window_height, window_width, stride_vertical, stride_horizontal, pad_height, pad_width);
 	  CheckCudaError("CudaMaxPoolBackward");
-	  return;
+  } else {
+    CUDNN_CALL(cudnnCreateTensor4dDescriptor(&bottom_desc));
+    CUDNN_CALL(cudnnCreatePoolingDescriptor(&pool_desc));
+    CUDNN_CALL(cudnnCreateTensor4dDescriptor(&top_desc));
+
+    CUDNN_CALL(cudnnSetTensor4dDescriptor(bottom_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, num_channels, bottom_height, bottom_width));
+    CUDNN_CALL(cudnnSetPoolingDescriptor(pool_desc, CUDNN_POOLING_MAX, window_height, window_width, stride_vertical, stride_horizontal));
+    CUDNN_CALL(cudnnSetTensor4dDescriptor(top_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, num_channels, static_cast<int>(ceil(static_cast<float>((bottom_height - window_height)) / stride_vertical)) + 1, static_cast<int>(ceil(static_cast<float>((bottom_width - window_width)) / stride_horizontal)) + 1));
+
+    CUDNN_CALL(cudnnPoolingBackward(handle, pool_desc, top_desc, top, top_desc, top_diff, bottom_desc, bottom, bottom_desc, bottom_diff));
+    CUDA_CALL(cudaStreamSynchronize(stream));  // Synchronize before destruction
+
+    CUDNN_CALL(cudnnDestroyTensor4dDescriptor(top_desc));
+    CUDNN_CALL(cudnnDestroyPoolingDescriptor(pool_desc));
+    CUDNN_CALL(cudnnDestroyTensor4dDescriptor(bottom_desc));
   }
-
-  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&bottom_desc));
-  CUDNN_CALL(cudnnCreatePoolingDescriptor(&pool_desc));
-  CUDNN_CALL(cudnnCreateTensor4dDescriptor(&top_desc));
-
-  CUDNN_CALL(cudnnSetTensor4dDescriptor(bottom_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, num_channels, bottom_height, bottom_width));
-  CUDNN_CALL(cudnnSetPoolingDescriptor(pool_desc, CUDNN_POOLING_MAX, window_height, window_width, stride_vertical, stride_horizontal));
-  CUDNN_CALL(cudnnSetTensor4dDescriptor(top_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, num_channels, static_cast<int>(ceil(static_cast<float>((bottom_height - window_height)) / stride_vertical)) + 1, static_cast<int>(ceil(static_cast<float>((bottom_width - window_width)) / stride_horizontal)) + 1));
-
-  CUDNN_CALL(cudnnPoolingBackward(handle, pool_desc, top_desc, top, top_desc, top_diff, bottom_desc, bottom, bottom_desc, bottom_diff));
-  CUDA_CALL(cudaStreamSynchronize(stream));  // Synchronize before destruction
-
-  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(top_desc));
-  CUDNN_CALL(cudnnDestroyPoolingDescriptor(pool_desc));
-  CUDNN_CALL(cudnnDestroyTensor4dDescriptor(bottom_desc));
 }
 
 void CudaPerformAveragePoolingBackward(float* bottom, float* top, float* top_diff, float* bottom_diff, int num_images, int num_channels, int bottom_height, int bottom_width, int stride_vertical, int stride_horizontal, int window_height, int window_width, int pad_height, int pad_width, cudaStream_t stream, cudnnHandle_t handle) {
@@ -624,7 +621,6 @@ void CudaPerformLRNForward(float* bottom, float* scale, float* res, int local_si
 	
 	size = num_img * channel * width * height;
 	FindConfiguration(size, block, thread, false);
-	//block = size;
 	// NOLINT_NEXT_LINE(whitespace/operators)
 	LRNComputeOutput<<<block, thread, 0, stream>>>(size, bottom, scale, -beta, res);
 	CheckCudaError("LRNComputeOutput");
@@ -635,7 +631,6 @@ void CudaPerformLRNBackward(float* bottom_data, float* top_data, float* scale, f
 	int block, thread;
 	int size = num_img * width * height;
 	FindConfiguration(size, block, thread, false);
-	//block = num_img * height * width;
 	LRNComputeDiff<<<block, thread, 0, stream>>>(
     size, bottom_data, top_data, scale, top_diff,  num_img, channel, height, width, local_size,
     -beta, float(2. * alpha * beta / local_size), bottom_diff);

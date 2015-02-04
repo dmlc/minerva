@@ -97,12 +97,17 @@ inline const char* CurandGetErrorString(curandStatus_t status) {
 
 #define CheckCudaError(msg) { \
   cudaError_t e = cudaGetLastError(); \
-  CHECK_EQ(e, cudaSuccess) << msg << " CUDA: " << cudaGetErrorString(e); \
+  CHECK_EQ(e, cudaSuccess) << (msg) << " CUDA: " << cudaGetErrorString(e); \
 }
 
 #define CUDA_CALL(func) { \
   cudaError_t e = (func); \
   CHECK_EQ(e, cudaSuccess) << "CUDA: " << cudaGetErrorString(e); \
+}
+
+#define CUDA_CALL_MSG(msg, func) {\
+  cudaError_t e = (func); \
+  CHECK_EQ(e, cudaSuccess) << (msg) << "CUDA: " << cudaGetErrorString(e); \
 }
 
 #define CUBLAS_CALL(func) { \

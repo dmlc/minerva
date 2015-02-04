@@ -181,7 +181,7 @@ void GpuDevice::DoExecute(const DataList& in, const DataList& out, PhysicalOp& o
   ctx.cublas_handle = cublas_handle_[thrid];
   ctx.cudnn_handle = cudnn_handle_[thrid];
   op.compute_fn->Execute(in, out, ctx);
-  CUDA_CALL(cudaStreamSynchronize(stream_[thrid]));
+  CUDA_CALL_MSG(op.compute_fn->Name(), cudaStreamSynchronize(stream_[thrid]));
 }
 
 #endif
