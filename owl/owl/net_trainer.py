@@ -27,13 +27,12 @@ if __name__ == "__main__":
 
     for iteridx in range(owl_net.solver.max_iter):
         owl_net.forward('TRAIN')
-        #owl_net.backward('TRAIN')
-        #owl_net.weight_update()
+        owl_net.backward('TRAIN')
+        owl_net.weight_update()
         
         accunit = owl_net.units[builder.top_name_to_layer[acc_name][0]]
         print "time: %s" % (time.time() - last)
-        print owl_net.batch_size
-        print accunit.acc
+        print "Accuracy: %f" % (accunit.acc)
         last = time.time()
 
         #decide whether to test

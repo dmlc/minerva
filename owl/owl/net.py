@@ -236,16 +236,20 @@ class ConvConnection(WeightedComputeUnit):
         self.convolution_param = params.convolution_param
         self.num_output = params.convolution_param.num_output
         self.group = params.convolution_param.group 
+        #TODO: hack, we don't want to slice agian to use it into bp as a parameter
+        self.group_data = []
+        self.group_filter = []
+        self.group_bias = []
     def ff(self, act):
         if self.group == 1:
             self.ff_act = act
             return self.convolver.ff(act, self.weight, self.bias)
         else:
             #slice data
-            group_data = []
-            group_filter = []
-            group_bias = []
+            self.group_data = []
             group_result = []
+            self.group_filter = []
+            self.group_bias = []
             
             data_concat_dim = 2
             filter_concat_dim = 3
@@ -253,17 +257,45 @@ class ConvConnection(WeightedComputeUnit):
             data_slice_count = act.shape[data_concat_dim] / self.group
             filter_slice_count = self.weight.shape[filter_concat_dim] / self.group
             for i in xrange(self.group):
-                group_data.append(owl.slice(act, data_concat_dim, data_slice_count * i, data_slice_count))
-                group_filter.append(owl.slice(self.weight, filter_concat_dim, filter_slice_count * i, filter_slice_count))
-                group_bias.append(owl.slice(self.bias, bias_concat_dim, filter_slice_count * i, filter_slice_count))
-                group_result.append(self.convolver.ff(group_data[i], group_filter[i], group_bias[i]))
+                self.group_data.append(owl.slice(act, data_concat_dim, data_slice_count * i, data_slice_count))
+                self.group_filter.append(owl.slice(self.weight, filter_concat_dim, filter_slice_count * i, filter_slice_count))
+                self.group_bias.append(owl.slice(self.bias, bias_concat_dim, filter_slice_count * i, filter_slice_count))
+                group_result.append(self.convolver.ff(self.group_data[i], self.group_filter[i], self.group_bias[i]))
             #concat
             return owl.concat(group_result, data_concat_dim)
 
     def bp(self, sen):
-        self.weightgrad = self.convolver.weight_grad(sen, self.ff_act, self.weight)
-        self.biasgrad = self.convolver.bias_grad(sen)
-        return self.convolver.bp(sen, self.ff_act, self.weight)
+        if self.group == 1:
+            self.weightgrad = self.convolver.weight_grad(sen, self.ff_act, self.weight)
+            self.biasgrad = self.convolver.bias_grad(sen)
+            return self.convolver.bp(sen, self.ff_act, self.weight)
+        else:
+            #slice data
+            group_sen = []
+            group_wgrad = []
+            group_bgrad = []
+            group_result = []
+            
+            data_concat_dim = 2
+            filter_concat_dim = 3
+            bias_concat_dim = 0
+            data_slice_count = sen.shape[data_concat_dim] / self.group
+            filter_slice_count = self.weight.shape[filter_concat_dim] / self.group
+            for i in xrange(self.group):
+                group_sen.append(owl.slice(sen, data_concat_dim, data_slice_count * i, data_slice_count))
+                group_wgrad.append(self.convolver.weight_grad(group_sen[i], self.group_data[i], self.group_filter[i]))
+                group_bgrad.append(self.convolver.bias_grad(group_sen[i]))
+                group_result.append(self.convolver.bp(group_sen[i], self.group_data[i], self.group_filter[i]))
+            #concat
+            self.weightgrad = owl.concat(group_wgrad, filter_concat_dim)
+            self.biasgrad = owl.concat(group_bgrad, bias_concat_dim)
+            
+            #free space
+            self.group_data = []
+            self.group_filter = []
+            self.group_bias = []
+            return owl.concat(group_result, data_concat_dim)
+
     def __str__(self):
         return 'conv'
 
