@@ -74,7 +74,7 @@ void LRNBackward(const DataList& inputs, const DataList& outputs, LRNBackwardClo
 
 
 void Concat(const DataList& inputs, const DataList& outputs, ConcatClosure& closure, const CudaRuntimeContext & context) {
-  CHECK_GT(inputs.size(), 2) << "(Concat) #inputs is wrong!";
+  CHECK_GT(inputs.size(), 1) << "(Concat) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(Concat) #outputs is wrong!";
   CHECK_LE(inputs[0].size().NumDims() - closure.catdim, 3) << "(Concat) #Currently only support concat on the last two dims!";
   
@@ -145,7 +145,7 @@ void Slice(const DataList& inputs, const DataList& outputs, SliceClosure& closur
     }
     int imgnum = inputs[0].size()[inputs[0].size().NumDims()-1];
     for (int n = 0; n < imgnum; ++n) {
-      CudaPerformCopy(input_data + n * output_num_elem + offset_channel * img_size, output_data + n * output_num_elem, output_num_elem, context.cublas_handle);
+      CudaPerformCopy(input_data + n * input_num_elem + offset_channel * img_size, output_data + n * output_num_elem, output_num_elem, context.cublas_handle);
     }
   }
 }

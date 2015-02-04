@@ -150,6 +150,10 @@ class AccuracyUnit(ComputeUnit):
     def forward(self, from_btm, to_top):
         predict = from_btm[self.btm_names[0]].argmax(0)
         ground_truth = from_btm[self.btm_names[1]].argmax(0)   
+        
+        #print predict.trans().to_numpy()
+        #print ground_truth.trans().to_numpy()
+        
         self.batch_size = from_btm[self.btm_names[0]].shape[1]
         correct = (predict - ground_truth).count_zero()
         self.acc = 1 - (self.batch_size - correct) * 1.0 / self.batch_size 
@@ -231,9 +235,31 @@ class ConvConnection(WeightedComputeUnit):
                 self.conv_params.pad, self.conv_params.stride, self.conv_params.stride)
         self.convolution_param = params.convolution_param
         self.num_output = params.convolution_param.num_output
+        self.group = params.convolution_param.group 
     def ff(self, act):
-        self.ff_act = act
-        return self.convolver.ff(act, self.weight, self.bias)
+        if self.group == 1:
+            self.ff_act = act
+            return self.convolver.ff(act, self.weight, self.bias)
+        else:
+            #slice data
+            group_data = []
+            group_filter = []
+            group_bias = []
+            group_result = []
+            
+            data_concat_dim = 2
+            filter_concat_dim = 3
+            bias_concat_dim = 0
+            data_slice_count = act.shape[data_concat_dim] / self.group
+            filter_slice_count = self.weight.shape[filter_concat_dim] / self.group
+            for i in xrange(self.group):
+                group_data.append(owl.slice(act, data_concat_dim, data_slice_count * i, data_slice_count))
+                group_filter.append(owl.slice(self.weight, filter_concat_dim, filter_slice_count * i, filter_slice_count))
+                group_bias.append(owl.slice(self.bias, bias_concat_dim, filter_slice_count * i, filter_slice_count))
+                group_result.append(self.convolver.ff(group_data[i], group_filter[i], group_bias[i]))
+            #concat
+            return owl.concat(group_result, data_concat_dim)
+
     def bp(self, sen):
         self.weightgrad = self.convolver.weight_grad(sen, self.ff_act, self.weight)
         self.biasgrad = self.convolver.bias_grad(sen)
