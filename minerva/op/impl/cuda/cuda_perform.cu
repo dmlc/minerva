@@ -11,7 +11,7 @@
 namespace minerva {
 namespace cuda {
 
-static void FindConfiguration(size_t size, int& num_blocks, int& num_threads, bool block_crop = true) {
+static void FindConfiguration(size_t size, int& num_blocks, int& num_threads) {
   num_threads = 0;
   if(size <= 32)
     num_threads = 32;
@@ -476,7 +476,7 @@ void CudaPerformMaxPoolingForward(float* bottom, float* top, int num_images, int
 
   	int block, thread;
 	  int size = num_images * num_channels * pooled_width * pooled_height;
-	  FindConfiguration(size, block, thread, false);
+	  FindConfiguration(size, block, thread);
     //printf("size=%d block=%d thread=%d\n", size, block, thread);
 	  CudaMaxPoolForward<<<block, thread, 0, stream>>>(
       size, bottom, num_images, num_channels, bottom_height, bottom_width, pooled_height, pooled_width,
@@ -551,7 +551,7 @@ void CudaPerformMaxPoolingBackward(float* bottom, float* top, float* top_diff, f
 
 	  int block, thread;
 	  int size = num_images * num_channels * bottom_width * bottom_height;
-	  FindConfiguration(size, block, thread, false);
+	  FindConfiguration(size, block, thread);
 
 	  //set bottom_diff 0
 	  CudaPerformFillKernel<<<block, thread, 0, stream>>>(bottom_diff, size, 0.0);
@@ -625,14 +625,14 @@ void CudaPerformLRNForward(float* bottom, float* scale, float* res, int local_si
 {
 	int block, thread, size;
 	size = num_img * height * width;
-	FindConfiguration(size, block, thread, false);
+	FindConfiguration(size, block, thread);
 	LRNFillScale<<<block, thread, 0, stream>>>(
     size, bottom, num_img, channel, height, width, local_size,
     alpha / local_size, scale);
 	CheckCudaError("LRNFillScale");
 	
 	size = num_img * channel * width * height;
-	FindConfiguration(size, block, thread, false);
+	FindConfiguration(size, block, thread);
 	// NOLINT_NEXT_LINE(whitespace/operators)
 	LRNComputeOutput<<<block, thread, 0, stream>>>(size, bottom, scale, -beta, res);
 	CheckCudaError("LRNComputeOutput");
@@ -642,7 +642,7 @@ void CudaPerformLRNBackward(float* bottom_data, float* top_data, float* scale, f
 {
 	int block, thread;
 	int size = num_img * width * height;
-	FindConfiguration(size, block, thread, false);
+	FindConfiguration(size, block, thread);
 	LRNComputeDiff<<<block, thread, 0, stream>>>(
     size, bottom_data, top_data, scale, top_diff,  num_img, channel, height, width, local_size,
     -beta, float(2. * alpha * beta / local_size), bottom_diff);
