@@ -397,10 +397,3 @@ __global__ static void LRNComputeDiff(const int nthreads, const float* bottom_da
 		}
   }
 }
-
-
-
-
-
-
-

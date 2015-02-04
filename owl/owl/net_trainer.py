@@ -15,9 +15,9 @@ if __name__ == "__main__":
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])
     owl_net = net.Net()
     builder.build_net(owl_net)
-    #builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/epoch0/')
+    builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/epoch0/')
     #builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/VGGmodel/epoch0/')
-    builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Alexmodel/epoch0/')
+    #builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Alexmodel/epoch0/')
     
     #set the accuracy layer
     #acc_name = 'loss/top-1'
@@ -30,9 +30,10 @@ if __name__ == "__main__":
         owl_net.backward('TRAIN')
         owl_net.weight_update()
         
-        accunit = owl_net.units[builder.top_name_to_layer[acc_name][0]]
+        #accunit = owl_net.units[builder.top_name_to_layer[acc_name][0]]
+        owl_net.units[owl_net.name_to_uid['loss3/loss3'][0]].ff_y.to_numpy()
         print "time: %s" % (time.time() - last)
-        print "Accuracy: %f" % (accunit.acc)
+        #print "Accuracy: %f" % (accunit.acc)
         last = time.time()
 
         #decide whether to test
