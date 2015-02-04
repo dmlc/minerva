@@ -12,7 +12,19 @@ namespace minerva {
 namespace cuda {
 
 static void FindConfiguration(size_t size, int& num_blocks, int& num_threads, bool block_crop = true) {
-  num_threads = size < 1024? 256 : 1024;
+  num_threads = 0;
+  if(size <= 32)
+    num_threads = 32;
+  else if(size <= 64)
+    num_threads = 64;
+  else if(size <= 128)
+    num_threads = 128;
+  else if(size <= 256)
+    num_threads = 256;
+  else if(size <= 512)
+    num_threads = 512;
+  else
+    num_threads = 1024;
   num_blocks = static_cast<int>((size + num_threads - 1) / num_threads);
   if (num_blocks < 0 || 128 < num_blocks) {
     num_blocks = 128;
