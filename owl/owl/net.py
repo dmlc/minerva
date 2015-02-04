@@ -50,6 +50,7 @@ class WeightedComputeUnit(ComputeUnitSimple):
 
     def weight_update(self, base_lr, base_weight_decay, momentum, batch_size):
         #TODO: need recheck with caffe with what's the multiplier for weight decay
+        '''
         if self.weightdelta == None:
             self.weightdelta = owl.zeros(self.weightgrad.shape)
         
@@ -63,8 +64,9 @@ class WeightedComputeUnit(ComputeUnitSimple):
         self.biasdelta = momentum * self.biasdelta - (base_lr * self.blobs_lr[1] / batch_size) * self.biasgrad - (base_lr * self.blobs_lr[1] * base_weight_decay * self.weight_decay[1]) * self.bias
         self.bias += self.biasdelta 
         self.biasgrad = None
-
-
+        '''
+        self.weight += self.weightgrad
+        self.bias += self.biasgrad
 
 class LinearUnit(ComputeUnitSimple):
     def ff(self, x):
@@ -246,22 +248,11 @@ class DataUnit(ComputeUnit):
         self.num_output = 3
         self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.data_param.source, params.data_param.batch_size, params.transform_param.crop_size)
         self.generator = self.dp.get_train_mb()
-        #prefetch
-        (self.pre_samples, self.pre_labels) = next(self.generator)
 
     def forward(self, from_btm, to_top):
-        samples = self.pre_samples
-        labels = self.pre_labels
-  
+        (samples, labels) = next(self.generator)
         to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
         to_top[self.top_names[1]] = owl.from_numpy(labels)
-    
-        #prefetch
-        try:
-            (self.pre_samples, self.pre_labels) = next(self.generator)
-        except StopIteration:
-            self.generator = self.dp.get_train_mb()
-            (self.pre_samples, self.pre_labels) = next(self.generator) 
 
     def backward(self, from_top, to_btm):
         pass

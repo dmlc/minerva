@@ -8,8 +8,8 @@ from net_helper import CaffeNetBuilder
 
 if __name__ == "__main__":
     owl.initialize(sys.argv)
-    gpu1 = owl.create_gpu_device(1)
-    owl.set_device(gpu1)
+    gpu = owl.create_gpu_device(1)
+    owl.set_device(gpu)
     
     #prepare the net and solver
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])
@@ -24,10 +24,13 @@ if __name__ == "__main__":
     for iteridx in range(owl_net.solver.max_iter):
         owl_net.forward('TRAIN')
         owl_net.backward('TRAIN')
-        #owl_net.weight_update()
+        owl_net.weight_update()
         
-        accunit = owl_net.units[builder.top_name_to_layer[acc_name][0]]
-        print "Training Accuracy this mb: %f" % (accunit.acc)
+        owl_net.units[owl_net.name_to_uid['loss3/loss3'][0]].ff_y.to_numpy()
+        #accunit = owl_net.units[builder.top_name_to_layer[acc_name][0]]
+        #print "Training Accuracy this mb: %f" % (accunit.acc)
+        #if iteridx % 2 == 0:
+        #    print owl_net.units[owl_net.name_to_uid['loss3/loss3'][0]].ff_y.to_numpy()
         print "time: %s" % (time.time() - last)
         last = time.time()
 
