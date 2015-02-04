@@ -16,6 +16,7 @@ if __name__ == "__main__":
     owl_net = net.Net()
     builder.build_net(owl_net)
     builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/epoch0/')
+    #builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/VGGmodel/epoch0/')
     
     #set the accuracy layer
     acc_name = 'loss3/top-1'
@@ -24,12 +25,13 @@ if __name__ == "__main__":
     for iteridx in range(owl_net.solver.max_iter):
         owl_net.forward('TRAIN')
         owl_net.backward('TRAIN')
-        #owl_net.weight_update()
+        owl_net.weight_update()
         
-        accunit = owl_net.units[builder.top_name_to_layer[acc_name][0]]
-        print "Training Accuracy this mb: %f" % (accunit.acc)
-        print "time: %s" % (time.time() - last)
-        last = time.time()
+        if iteridx % 10 == 0:
+            accunit = owl_net.units[builder.top_name_to_layer[acc_name][0]]
+            print "Training Accuracy this mb: %f" % (accunit.acc)
+            print "time: %s" % (time.time() - last)
+            last = time.time()
 
         #decide whether to test
         if (iteridx + 1) % owl_net.solver.test_interval == 0:

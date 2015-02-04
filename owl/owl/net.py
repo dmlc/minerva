@@ -47,6 +47,10 @@ class WeightedComputeUnit(ComputeUnitSimple):
         # blob learning rate and weight decay
         self.blobs_lr = params.blobs_lr
         self.weight_decay = params.weight_decay
+        if len(self.blobs_lr) == 0:
+            self.blobs_lr = [1,1]
+        if len(self.weight_decay) == 0:
+            self.weight_decay = [1, 0]
 
     def weight_update(self, base_lr, base_weight_decay, momentum, batch_size):
         #TODO: need recheck with caffe with what's the multiplier for weight decay
@@ -54,14 +58,14 @@ class WeightedComputeUnit(ComputeUnitSimple):
             self.weightdelta = owl.zeros(self.weightgrad.shape)
         
         self.weightdelta = momentum * self.weightdelta - (base_lr * self.blobs_lr[0] / batch_size) * self.weightgrad  - (base_lr * self.blobs_lr[0] * base_weight_decay * self.weight_decay[0]) * self.weight
-        self.weight += self.weightdelta 
+        self.weight = self.weight + self.weightdelta 
         self.weightgrad = None
         
         if self.biasdelta == None:
             self.biasdelta = owl.zeros(self.biasgrad.shape)
         
         self.biasdelta = momentum * self.biasdelta - (base_lr * self.blobs_lr[1] / batch_size) * self.biasgrad - (base_lr * self.blobs_lr[1] * base_weight_decay * self.weight_decay[1]) * self.bias
-        self.bias += self.biasdelta 
+        self.bias = self.bias + self.biasdelta 
         self.biasgrad = None
 
 
