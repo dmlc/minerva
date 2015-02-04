@@ -68,8 +68,6 @@ class WeightedComputeUnit(ComputeUnitSimple):
         self.bias = self.bias + self.biasdelta 
         self.biasgrad = None
 
-
-
 class LinearUnit(ComputeUnitSimple):
     def ff(self, x):
         return x
@@ -148,13 +146,13 @@ class AccuracyUnit(ComputeUnit):
     def __init__(self, params):
         super(AccuracyUnit, self).__init__(params)
         self.acc = 0
-        self.minibatch_size = 0
+        self.batch_size = 0
     def forward(self, from_btm, to_top):
         predict = from_btm[self.btm_names[0]].argmax(0)
         ground_truth = from_btm[self.btm_names[1]].argmax(0)   
-        self.minibatch_size = from_btm[self.btm_names[0]].shape[1]
+        self.batch_size = from_btm[self.btm_names[0]].shape[1]
         correct = (predict - ground_truth).count_zero()
-        self.acc = 1 - (self.minibatch_size - correct) * 1.0 / self.minibatch_size 
+        self.acc = 1 - (self.batch_size - correct) * 1.0 / self.batch_size 
 
     def backward(self, from_top, to_btm):
         pass
@@ -250,22 +248,11 @@ class DataUnit(ComputeUnit):
         self.num_output = 3
         self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.data_param.source, params.data_param.batch_size, params.transform_param.crop_size)
         self.generator = self.dp.get_train_mb()
-        #prefetch
-        (self.pre_samples, self.pre_labels) = next(self.generator)
 
     def forward(self, from_btm, to_top):
-        samples = self.pre_samples
-        labels = self.pre_labels
-  
+        (samples, labels) = next(self.generator)
         to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
         to_top[self.top_names[1]] = owl.from_numpy(labels)
-    
-        #prefetch
-        try:
-            (self.pre_samples, self.pre_labels) = next(self.generator)
-        except StopIteration:
-            self.generator = self.dp.get_train_mb()
-            (self.pre_samples, self.pre_labels) = next(self.generator) 
 
     def backward(self, from_top, to_btm):
         pass
@@ -378,76 +365,3 @@ class Net:
             for nuid in self.adjacent[uid]:
                 ret += 'n' + str(uid) + ' -> n' + str(nuid) + '\n'
         return ret + '}\n'
-
-
-############### Test code
-class _StartUnit(ComputeUnit):
-    def __init__(self, name):
-        self.name = name
-        self.btm_names = []
-        self.top_names = []
-    def forward(self, from_btm, to_top):
-        print 'ff|start name:', self.name
-        to_top[self.top_names[0]] = 0
-    def backward(self, from_top, to_btm):
-        pass
-
-class _EndUnit(ComputeUnit):
-    def __init__(self, name):
-        self.name = name
-        self.btm_names = []
-        self.top_names = []
-    def forward(self, from_btm, to_top):
-        pass
-    def backward(self, from_top, to_btm):
-        print 'bp|end name:', self.name
-        to_btm[self.btm_names[0]] = 0
-
-class _TestUnit(ComputeUnitSimple):
-    def __init__(self, name):
-        self.name = name
-        self.btm_names = []
-        self.top_names = []
-    def ff(self, x):
-        print 'ff|name:', self.name, 'val:', x
-        return x + 1
-    def bp(self, y):
-        print 'bp|name:', self.name, 'val:', y
-        return y - 1
-
-if __name__ == '__main__':
-    net = Net()
-    us = _StartUnit('s')
-    u1 = _TestUnit('u1')
-    u2 = _TestUnit('u2')
-    u3 = _TestUnit('u3')
-    u4 = _TestUnit('u4')
-    u5 = _TestUnit('u5')
-    ue = _EndUnit('e')
-    us.top_names = ['s']
-    u1.btm_names = ['s']
-    u1.top_names = ['u1']
-    u2.btm_names = ['u1']
-    u2.top_names = ['u2']
-    u3.btm_names = ['u2']
-    u3.top_names = ['u3']
-    u4.btm_names = ['u3']
-    u4.top_names = ['u4']
-    u5.btm_names = ['u4']
-    u5.top_names = ['u5']
-    ue.btm_names = ['u5']
-    ls = net.add_unit(us)
-    l1 = net.add_unit(u1)
-    l2 = net.add_unit(u2)
-    l3 = net.add_unit(u3)
-    l4 = net.add_unit(u4)
-    l5 = net.add_unit(u5)
-    le = net.add_unit(ue)
-    net.connect(ls, l1)
-    net.connect(l1, l2)
-    net.connect(l2, l3)
-    net.connect(l3, l4)
-    net.connect(l4, l5)
-    net.connect(l5, le)
-    net.forward()
-    net.backward()
