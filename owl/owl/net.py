@@ -308,7 +308,14 @@ class DataUnit(ComputeUnit):
         self.generator = self.dp.get_train_mb()
 
     def forward(self, from_btm, to_top):
-        (samples, labels) = next(self.generator)
+        while True:
+            try:
+                (samples, labels) = next(self.generator)
+            except StopIteration:
+                print 'Have scanned the whole dataset; start from the begginning agin'
+                self.generator = self.dp.get_train_mb()
+                continue
+            break
         to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
         to_top[self.top_names[1]] = owl.from_numpy(labels)
 
@@ -336,6 +343,9 @@ class Net:
             self.name_to_uid[unit.name] = []
         self.name_to_uid[unit.name].append(uid)
         return uid
+
+    def get_units_by_name(self, name):
+        return [self.units[uid] for uid in self.name_to_uid[name]]
 
     def connect(self, u1, u2):
         self.adjacent[u1].append(u2)
@@ -394,7 +404,6 @@ class Net:
                     queue.put(l)
 
     def forward(self, phase = 'TRAIN'):
-        print "begin forward =============================="
         unit_to_tops = [{} for name in self.units]
         for u in self._toporder(phase):
             from_btm = {}
@@ -403,7 +412,6 @@ class Net:
             self.units[u].forward(from_btm, unit_to_tops[u])
 
     def backward(self, phase = 'TRAIN'):
-        print "begin backward ============================"
         unit_to_btms = [{} for name in self.units]
         for u in self._reverse_toporder(phase):
             from_top = {}
@@ -414,6 +422,12 @@ class Net:
     def weight_update(self):
         for i in range(len(self.units)):
             self.units[i].weight_update(self.base_lr, self.base_weight_decay, self.momentum, self.batch_size)
+
+    def get_data_unit(self, phase = 'TRAIN'):
+        data_units = self.name_to_uid['data']
+        for du in data_units:
+            if not self._is_excluded(du, phase):
+                return self.units[du]
 
     def __str__(self):
         ret = 'digraph G {\n'

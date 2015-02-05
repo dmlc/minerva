@@ -84,8 +84,8 @@ class CaffeNetBuilder:
                 for btm_uid in top_name_to_layer[btm]:
                     owl_net.connect(btm_uid, uid)
         #may need outside
-        self.top_name_to_layer = top_name_to_layer
-        print owl_net
+        #self.top_name_to_layer = top_name_to_layer
+        #print owl_net
 
     def _convert_type(self, caffe_layer):
         ty = caffe_layer.type
