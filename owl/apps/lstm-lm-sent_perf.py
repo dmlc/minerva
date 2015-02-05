@@ -34,6 +34,7 @@ class LSTMModel:
 
 	def __init__(self, input_size, hidden_size, output_size):
 		self.Layers = [input_size, hidden_size, output_size]
+                print 'Model size:', self.Layers
 		# Recurrent weights: take x_t, h_{t-1}, and bias unit
 		# and produce the 3 gates and the input to cell signal
 
@@ -86,7 +87,6 @@ def LSTM_init():
 	N = 10 # hidden units
 	vocab_size = len(wids)       # Vocabulary size
 	print "K", vocab_size, "words", train_words, test_words
-
 	return LSTMModel(vocab_size, N, vocab_size), train_sents, test_sents, train_words, test_words
 
 def LSTM_train(model, sents, words, learning_rate, EPOCH, tanhC_version = 1):
@@ -97,11 +97,15 @@ def LSTM_train(model, sents, words, learning_rate, EPOCH, tanhC_version = 1):
 
 	# For each epoch
 	last_ll = 1e99
-	last_time = time.time()
 	for epoch_id in range(EPOCH, EPOCH + 10):
+                print 'Start epoch #', epoch_id
+	        last_time = time.time()
 		epoch_ll = 0
 		# For each sentence
 		for sent_id, sent in enumerate(sents):
+                        if sent_id % 100 == 0:
+                            cur_time = time.time()
+                            print 'Finished', sent_id, 'sentences. Time used:', cur_time - last_time, 's. sent/s:', float(sent_id) / (cur_time - last_time)
 			#print "sent_id",sent_id
 			#print "sent", sent
 			#print "sents", sents
@@ -137,8 +141,8 @@ def LSTM_train(model, sents, words, learning_rate, EPOCH, tanhC_version = 1):
 			##### Forward pass #####
 			# For each time step
 			for t in range(1, Tau):
-				#prev[t] = Hout[t - 1]
-				prev[t] = owl.zeros([N, 1])
+				prev[t] = Hout[t - 1]
+				#prev[t] = owl.zeros([N, 1])
 				data[t] = owl.zeros([K, 1])
 				# embed = np.zeros((K, 1))
 				# embed[sent[t]] = 1
@@ -173,10 +177,12 @@ def LSTM_train(model, sents, words, learning_rate, EPOCH, tanhC_version = 1):
 				# output = Ym[t].trans() * data[t]
 				# sent_ll += math.log10( max(np.sum(output.to_numpy()),1e-20) )
 			##### Initialize gradient vectors #####
-			for t in range(1, Tau):
-				Ym[t].start_eval()
-				# output = Ym[t].trans() * data[t]
-				# sent_ll += math.log10( max(np.sum(output.to_numpy()),1e-20) )
+                        Ym[-1].wait_for_eval()
+                        continue
+			#for t in range(1, Tau):
+                                #Ym[t].wait_for_eval()
+				#output = Ym[t].trans() * data[t]
+				#sent_ll += math.log10( max(np.sum(output.to_numpy()),1e-20) )
 
 			sen_ig = [None] * Tau
 			sen_fg = [None] * Tau
@@ -253,39 +259,22 @@ def LSTM_train(model, sents, words, learning_rate, EPOCH, tanhC_version = 1):
 					dHout[t - 1] += model.ff_weight_prev.trans() * sen_ff[t]
 
 			# normalize the gradients
-			# dWLSTM /= batch_size
-			weight_update_ig_prev /= batch_size
-			weight_update_ig_data /= batch_size
-			weight_update_ig_bias /= batch_size
-
-			weight_update_fg_prev /= batch_size
-			weight_update_fg_data /= batch_size
-			weight_update_fg_bias /= batch_size
-
-			weight_update_og_prev /= batch_size
-			weight_update_og_data /= batch_size
-			weight_update_og_bias /= batch_size
-
-			weight_update_ff_prev /= batch_size
-			weight_update_ff_data /= batch_size
-			weight_update_ff_bias /= batch_size
-
 			# weight update
-			model.ig_weight_prev += learning_rate * weight_update_ig_prev
-			model.ig_weight_data += learning_rate * weight_update_ig_data
-			model.ig_weight_bias += learning_rate * weight_update_ig_bias
+			model.ig_weight_prev += learning_rate / batch_size * weight_update_ig_prev
+			model.ig_weight_data += learning_rate / batch_size * weight_update_ig_data
+			model.ig_weight_bias += learning_rate / batch_size * weight_update_ig_bias
 
-			model.fg_weight_prev += learning_rate * weight_update_fg_prev
-			model.fg_weight_data += learning_rate * weight_update_fg_data
-			model.fg_weight_bias += learning_rate * weight_update_fg_bias
+			model.fg_weight_prev += learning_rate / batch_size * weight_update_fg_prev
+			model.fg_weight_data += learning_rate / batch_size * weight_update_fg_data
+			model.fg_weight_bias += learning_rate / batch_size * weight_update_fg_bias
 
-			model.og_weight_prev += learning_rate * weight_update_og_prev
-			model.og_weight_data += learning_rate * weight_update_og_data
-			model.og_weight_bias += learning_rate * weight_update_og_bias
+			model.og_weight_prev += learning_rate / batch_size * weight_update_og_prev
+			model.og_weight_data += learning_rate / batch_size * weight_update_og_data
+			model.og_weight_bias += learning_rate / batch_size * weight_update_og_bias
 
-			model.ff_weight_prev += learning_rate * weight_update_ff_prev
-			model.ff_weight_data += learning_rate * weight_update_ff_data
-			model.ff_weight_bias += learning_rate * weight_update_ff_bias
+			model.ff_weight_prev += learning_rate / batch_size * weight_update_ff_prev
+			model.ff_weight_data += learning_rate / batch_size * weight_update_ff_data
+			model.ff_weight_bias += learning_rate / batch_size * weight_update_ff_bias
 
 			model.decoder_weights += learning_rate * dWd
 			model.decoder_bias += learning_rate * dBd
@@ -298,10 +287,10 @@ def LSTM_train(model, sents, words, learning_rate, EPOCH, tanhC_version = 1):
 		cur_time = time.time()
 		print("Epoch %d (alpha=%f) PPL=%f" % (epoch_id, learning_rate, epoch_ppl))
 		print "  time consumed:", cur_time - last_time
+		last_time = cur_time
 		if last_ll > epoch_ll:
 			learning_rate /= 2.0
 		last_ll = epoch_ll
-		last_time = cur_time
 
 	return model, learning_rate
 
@@ -377,10 +366,13 @@ def LSTM_test(model, sents, words, tanhC_version = 1):
 
 if __name__ == '__main__':
 	owl.initialize(sys.argv)
-	gpu = owl.create_gpu_device(1)
+	gpu = owl.create_gpu_device(0)
 	owl.set_device(gpu)
+        print 'initializing...',
 	model, train_sents, test_sents, train_words, test_words = LSTM_init()
+        print 'finished.'
 	learning_rate = 1
 	for i in range(1, 21):
 		model, learning_rate = LSTM_train(model, train_sents, train_words, learning_rate, (i - 1) * 10)
+                print 'Testing...'
 		LSTM_test(model, test_sents, test_words)
