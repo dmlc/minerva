@@ -15,8 +15,8 @@ if __name__ == "__main__":
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])
     owl_net = net.Net()
     builder.build_net(owl_net)
-    #builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/epoch0/')
-    builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/VGGmodel/epoch0/')
+    builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/epoch0/')
+    #builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/VGGmodel/epoch0/')
     #builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Alexmodel/epoch0/')
     
     for iteridx in range(owl_net.solver.max_iter):
@@ -25,7 +25,7 @@ if __name__ == "__main__":
         owl_net.weight_update()
         
         last = time.time()
-        owl_net.get_units_by_name('prob')[0].ff_y.wait_for_eval()
+        owl_net.get_units_by_name('loss3/loss3')[0].ff_y.wait_for_eval()
         print "Finished training 1 minibatch"
         print "time: %s" % (time.time() - last)
         continue
