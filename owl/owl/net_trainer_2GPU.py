@@ -15,64 +15,50 @@ def get_weights_id(owl_net):
 
 if __name__ == "__main__":
     owl.initialize(sys.argv)
-    gpu = []
-    gpu.append(owl.create_gpu_device(0))
-    gpu.append(owl.create_gpu_device(1))
-    owl.set_device(gpu[0])
+    gpu = [None] * 2
+    gpu[0] = owl.create_gpu_device(0)
+    gpu[1] = owl.create_gpu_device(1)
     
     #prepare the net and solver
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])
     owl_net = net.Net()
     builder.build_net(owl_net)
-    builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/epoch0/')
-    #builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/VGGmodel/epoch0/')
-    #builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Alexmodel/epoch0/')
-    
-    #set the accuracy layer
-    acc_name = 'loss3/top-1'
-    #acc_name = 'accuracy'
+    builder.init_net_from_file(owl_net, sys.argv[3])
+    accunitname = sys.argv[4]
     last = time.time()
+
+    wunits = get_weights_id(owl_net)
+    wgrad = []
+    bgrad = []
     
-    count = 0
-
-    wgrad = [[] for i in xrange(2)]
-    bgrad = [[] for i in xrange(2)]
-    num_samples = 0
-    weights_id = get_weights_id(owl_net)
-
-    for iteridx in xrange(owl_net.solver.max_iter):
-        count = count + 1
-        gpuid = count % 2
-
-        owl.set_device(gpu[gpuid]) 
-        
+    for iteridx in range(owl_net.solver.max_iter):
+        owl.set_device(gpu[iteridx % 2])
         owl_net.forward('TRAIN')
         owl_net.backward('TRAIN')
-        num_samples += owl_net.units[builder.top_name_to_layer[acc_name][0]].batch_size
+        if iteridx % 2 == 0:
+            for wid in wunits:
+                wgrad.append(owl_net.units[wid].weightgrad)
+                bgrad.append(owl_net.units[wid].biasgrad)
+        else:
+            for i in range(len(wunits)):
+                wid = wunits[i]
+                owl_net.units[wid].weightgrad += wgrad[i]
+                owl_net.units[wid].biasgrad += bgrad[i]
+            wgrad = []
+            bgrad = []
+            owl_net.weight_update()
+            owl_net.get_units_by_name(accunitname)[0].ff_y.wait_for_eval()
+            print "Finished training 1 minibatch"
+            print "time: %s" % (time.time() - last)
+            last = time.time()
 
-        #get the grad
-        for widx in xrange(len(weights_id)):
-            wgrad[gpuid].append(owl_net.units[weights_id[widx]].weightgrad)
-            bgrad[gpuid].append(owl_net.units[weights_id[widx]].biasgrad)
-        
-        if count % 2 != 0:
-            continue
-       
-        #merge grad
-        for k in xrange(len(weights_id)):
-            wgrad[0][k] += wgrad[1][k]
-            bgrad[0][k] += bgrad[1][k]
-            #update into owl_net
-            owl_net.units[weights_id[k]].weight += (owl_net.base_lr * wgrad[0][k])
-            owl_net.units[weights_id[k]].bias += (owl_net.base_lr * bgrad[0][k])
-
-        #owl_net.units[builder.top_name_to_layer['prob']].to_numpy()
-        accunit = owl_net.units[builder.top_name_to_layer[acc_name][0]]
-        print "time: %s" % (time.time() - last)
-        print accunit.acc
-        last = time.time()
-        
-        wgrad = [[] for i in xrange(2)]
-        bgrad = [[] for i in xrange(2)]
-        num_samples = 0
-
+        '''
+        #decide whether to test
+        if (iteridx + 1) % owl_net.solver.test_interval == 0:
+            acc_num = 0
+            test_num = 0
+            for testiteridx in range(owl_net.solver.test_iter):
+                owl_net.forward('TEST')
+                accunit = owl_net.get_units_by_name('loss3/top-1')[0]
+                print "Accuracy this mb: %f" % (accunit.acc)
+        '''
