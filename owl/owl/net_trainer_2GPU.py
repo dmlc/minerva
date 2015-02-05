@@ -40,6 +40,7 @@ if __name__ == "__main__":
             for wid in wunits:
                 wgrad.append(owl_net.units[wid].weightgrad)
                 bgrad.append(owl_net.units[wid].biasgrad)
+            owl_net.get_units_by_name(accunitname)[0].ff_y.start_eval()
         else:
             for i in range(len(wunits)):
                 wid = wunits[i]
