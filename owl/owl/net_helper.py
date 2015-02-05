@@ -5,6 +5,7 @@ from google.protobuf import text_format
 import numpy as np
 import owl
 from PIL import Image
+import subprocess
 
 class INetBuilder:
     def build_net(self, owl_net):
@@ -196,7 +197,10 @@ class CaffeModelLoader:
 
 
 if __name__ == "__main__":
+    CaffeModelLoader('/home/tianjun/caffe/caffe/models/bvlc_googlenet/bvlc_googlenet.caffemodel', '/home/tianjun/caffe/caffe/models/bvlc_googlenet/MinervaModel/')
+    '''
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])
     owl_net = net.Net()
     builder.build_net(owl_net)
     owl_net.forward()
+    '''

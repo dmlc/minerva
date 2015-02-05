@@ -15,14 +15,16 @@ if __name__ == "__main__":
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])
     owl_net = net.Net()
     builder.build_net(owl_net)
-    builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/epoch0/')
+    
+    #builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/epoch0/')
     #builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/VGGmodel/epoch0/')
     #builder.init_net_from_file(owl_net, '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Alexmodel/epoch0/')
+    builder.init_net_from_file(owl_net, sys.argv[3])
     
     #set the accuracy layer
     #acc_name = 'loss/top-1'
-    #acc_name = 'loss3/top-1'
-    acc_name = 'accuracy'
+    acc_name = 'loss3/top-1'
+    #acc_name = 'accuracy'
     last = time.time()
 
     for iteridx in range(owl_net.solver.max_iter):
@@ -44,5 +46,5 @@ if __name__ == "__main__":
                 owl_net.forward('TEST')
                 accunit = owl_net.units[builder.top_name_to_layer[acc_name][0]]
                 print "Accuracy this mb: %f" % (accunit.acc)
-                acc_num += accunit.acc * accunit.minibatch_size
-                test_num += accunit.minibatch_size
+                acc_num += accunit.acc * accunit.batch_size
+                test_num += accunit.batch_size
