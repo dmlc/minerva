@@ -15,9 +15,11 @@ def get_weights_id(owl_net):
 
 if __name__ == "__main__":
     owl.initialize(sys.argv)
-    gpu = [None] * 2
+    gpu = [None] * 4
     gpu[0] = owl.create_gpu_device(0)
     gpu[1] = owl.create_gpu_device(1)
+    gpu[2] = owl.create_gpu_device(2)
+    gpu[3] = owl.create_gpu_device(3)
     
     #prepare the net and solver
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])
@@ -29,27 +31,39 @@ if __name__ == "__main__":
 
     wunits = get_weights_id(owl_net)
     print len(wunits)
-    wgrad = []
-    bgrad = []
+    wgrad = [[] for i in xrange(4)] 
+    bgrad = [[] for i in xrange(4)]
     
     for iteridx in range(owl_net.solver.max_iter):
-        owl.set_device(gpu[iteridx % 2])
+        gpuidx = iteridx % 4
+        owl.set_device(gpu[gpuidx])
         owl_net.forward('TRAIN')
         owl_net.backward('TRAIN')
-        if iteridx % 2 == 0:
-            for wid in wunits:
-                wgrad.append(owl_net.units[wid].weightgrad)
-                bgrad.append(owl_net.units[wid].biasgrad)
-            owl_net.get_units_by_name(accunitname)[0].ff_y.start_eval()
-        else:
+            
+        for wid in wunits:
+            wgrad[gpuidx].append(owl_net.units[wid].weightgrad)
+            bgrad[gpuidx].append(owl_net.units[wid].biasgrad)
+        owl_net.get_units_by_name(accunitname)[0].ff_y.start_eval()
+        
+        if (iteridx+1) % 2 == 0:
             for i in range(len(wunits)):
                 wid = wunits[i]
-                owl_net.units[wid].weightgrad += wgrad[i]
-                owl_net.units[wid].biasgrad += bgrad[i]
-            wgrad = []
-            bgrad = []
+                wgrad[gpuidx][i] += wgrad[gpuidx-1][i]
+                bgrad[gpuidx][i] += bgrad[gpuidx-1][i]
+
+        if (iteridx+1) % 4 == 0:
+            for i in range(len(wunits)):
+                wid = wunits[i]
+                wgrad[gpuidx][i] += wgrad[gpuidx-2][i]
+                bgrad[gpuidx][i] += bgrad[gpuidx-2][i]
+                owl_net.units[wid].weightgrad = wgrad[gpuidx][i]
+                owl_net.units[wid].biasgrad = bgrad[gpuidx][i]
+
+            wgrad = [[] for i in xrange(4)] 
+            bgrad = [[] for i in xrange(4)]
             owl_net.weight_update()
             owl_net.get_units_by_name(accunitname)[0].ff_y.wait_for_eval()
+            #print owl_net.get_units_by_name('accuracy')[0].acc
             print "Finished training 1 minibatch"
             print "time: %s" % (time.time() - last)
             last = time.time()

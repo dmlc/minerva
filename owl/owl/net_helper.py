@@ -85,8 +85,8 @@ class CaffeNetBuilder:
                 for btm_uid in top_name_to_layer[btm]:
                     owl_net.connect(btm_uid, uid)
         #may need outside
-        self.top_name_to_layer = top_name_to_layer
-        print owl_net
+        #self.top_name_to_layer = top_name_to_layer
+        #print owl_net
 
     def _convert_type(self, caffe_layer):
         ty = caffe_layer.type
@@ -197,7 +197,10 @@ class CaffeModelLoader:
 
 
 if __name__ == "__main__":
-    CaffeModelLoader('/home/tianjun/caffe/caffe/models/bvlc_googlenet/bvlc_googlenet.caffemodel', '/home/tianjun/caffe/caffe/models/bvlc_googlenet/MinervaModel/')
+    CaffeModelLoader('/home/tianjun/caffe/caffe/models/VGG/VGG_ILSVRC_16_layers.caffemodel', '/home/tianjun/caffe/caffe/models/VGG/MinervaModel/')
+    
+    #CaffeModelLoader('/home/tianjun/caffe/caffe/models/bvlc_alexnet/caffe_alexnet_train_iter_20.caffemodel', '/home/tianjun/caffe/caffe/models/bvlc_alexnet/Minervamodel/')
+    
     '''
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])
     owl_net = net.Net()
