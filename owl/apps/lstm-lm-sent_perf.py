@@ -83,7 +83,7 @@ def LSTM_init():
 		test_sents.append(wordlist_id)
 
 	# Define input-dependent variables
-	N = 256 # hidden units
+	N = 10 # hidden units
 	vocab_size = len(wids)       # Vocabulary size
 	print "K", vocab_size, "words", train_words, test_words
 
@@ -98,7 +98,7 @@ def LSTM_train(model, sents, words, learning_rate, EPOCH, tanhC_version = 1):
 	# For each epoch
 	last_ll = 1e99
 	last_time = time.time()
-	for epoch_id in range(EPOCH, EPOCH + 1):
+	for epoch_id in range(EPOCH, EPOCH + 10):
 		epoch_ll = 0
 		# For each sentence
 		for sent_id, sent in enumerate(sents):
@@ -112,9 +112,10 @@ def LSTM_train(model, sents, words, learning_rate, EPOCH, tanhC_version = 1):
 
 			data = [None] * Tau
 			prev = [None] * Tau
-			embed = np.zeros((K, 1))
-			embed[sent[0]] = 1
-			data[0] = owl.from_numpy(embed).trans()
+			data[0] = owl.zeros([K, 1])
+			# embed = np.zeros((K, 1))
+			# embed[sent[0]] = 1
+			# data[0] = owl.from_numpy(embed).trans()
 
 			Hout = [None] * Tau
 			Hout[0] = owl.zeros([N, 1])
@@ -136,10 +137,12 @@ def LSTM_train(model, sents, words, learning_rate, EPOCH, tanhC_version = 1):
 			##### Forward pass #####
 			# For each time step
 			for t in range(1, Tau):
-				prev[t] = Hout[t - 1]
-				embed = np.zeros((K, 1))
-				embed[sent[t]] = 1
-				data[t] = owl.from_numpy(embed).trans()
+				#prev[t] = Hout[t - 1]
+				prev[t] = owl.zeros([N, 1])
+				data[t] = owl.zeros([K, 1])
+				# embed = np.zeros((K, 1))
+				# embed[sent[t]] = 1
+				# data[t] = owl.from_numpy(embed).trans()
 
 				act_ig[t] = model.ig_weight_data.trans() * data[t - 1] + model.ig_weight_prev.trans() * prev[t] + model.ig_weight_bias
 				act_fg[t] = model.fg_weight_data.trans() * data[t - 1] + model.fg_weight_prev.trans() * prev[t] + model.fg_weight_bias
@@ -171,8 +174,9 @@ def LSTM_train(model, sents, words, learning_rate, EPOCH, tanhC_version = 1):
 				# sent_ll += math.log10( max(np.sum(output.to_numpy()),1e-20) )
 			##### Initialize gradient vectors #####
 			for t in range(1, Tau):
-				output = Ym[t].trans() * data[t]
-				sent_ll += math.log10( max(np.sum(output.to_numpy()),1e-20) )
+				Ym[t].start_eval()
+				# output = Ym[t].trans() * data[t]
+				# sent_ll += math.log10( max(np.sum(output.to_numpy()),1e-20) )
 
 			sen_ig = [None] * Tau
 			sen_fg = [None] * Tau
@@ -373,11 +377,10 @@ def LSTM_test(model, sents, words, tanhC_version = 1):
 
 if __name__ == '__main__':
 	owl.initialize(sys.argv)
-	gpu = owl.create_gpu_device(0)
+	gpu = owl.create_gpu_device(1)
 	owl.set_device(gpu)
 	model, train_sents, test_sents, train_words, test_words = LSTM_init()
 	learning_rate = 1
 	for i in range(1, 21):
-		for j in range(1, 6):
-			model, learning_rate = LSTM_train(model, train_sents, train_words, learning_rate, (i - 1) * 5 + j)
+		model, learning_rate = LSTM_train(model, train_sents, train_words, learning_rate, (i - 1) * 10)
 		LSTM_test(model, test_sents, test_words)
