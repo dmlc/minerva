@@ -28,6 +28,7 @@ if __name__ == "__main__":
     last = time.time()
 
     wunits = get_weights_id(owl_net)
+    print len(wunits)
     wgrad = []
     bgrad = []
     

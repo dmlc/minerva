@@ -21,8 +21,8 @@ if __name__ == "__main__":
     
     for iteridx in range(owl_net.solver.max_iter):
         owl_net.forward('TRAIN')
-        owl_net.backward('TRAIN')
-        owl_net.weight_update()
+        #owl_net.backward('TRAIN')
+        #owl_net.weight_update()
         
         #print owl_net.get_units_by_name(accunitname)[0].acc
         owl_net.get_units_by_name(accunitname)[0].ff_y.wait_for_eval()
