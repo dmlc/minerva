@@ -1,3 +1,4 @@
+import subprocess
 import sys
 import owl.net as net
 from caffe import *
@@ -196,7 +197,11 @@ class CaffeModelLoader:
 
 
 if __name__ == "__main__":
+    CaffeModelLoader('/home/minjie/caffe/caffe/models/bvlc_alexnet/caffe_alexnet_train_iter_20.caffemodel', '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Alexmodel/')
+    
+    '''
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])
     owl_net = net.Net()
     builder.build_net(owl_net)
     owl_net.forward()
+    '''
