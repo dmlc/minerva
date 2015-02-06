@@ -25,6 +25,8 @@ if __name__ == "__main__":
         owl_net.weight_update()
         
         #print owl_net.get_units_by_name(accunitname)[0].acc
+        owl.print_dag_to_file('dag.txt')
+        sys.exit(0)
         owl_net.get_units_by_name(accunitname)[0].ff_y.wait_for_eval()
         print "Finished training 1 minibatch"
         print "time: %s" % (time.time() - last)

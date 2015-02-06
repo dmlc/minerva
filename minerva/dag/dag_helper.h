@@ -17,4 +17,3 @@ class DagHelper {
 };
 
 }  // namespace minerva
-
