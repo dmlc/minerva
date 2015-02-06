@@ -8,7 +8,7 @@ from net_helper import CaffeNetBuilder
 
 if __name__ == "__main__":
     owl.initialize(sys.argv)
-    gpu = owl.create_gpu_device(3)
+    gpu = owl.create_gpu_device(0)
     owl.set_device(gpu)
     
     #prepare the net and solver
