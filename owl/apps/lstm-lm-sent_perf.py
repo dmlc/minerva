@@ -101,16 +101,15 @@ def LSTM_train(model, sents, words, learning_rate, EPOCH, tanhC_version = 1):
                 print 'Start epoch #', epoch_id
 	        last_time = time.time()
 		epoch_ll = 0
+                tau_sum = 0
 		# For each sentence
 		for sent_id, sent in enumerate(sents):
-                        if sent_id % 100 == 0:
-                            cur_time = time.time()
-                            print 'Finished', sent_id, 'sentences. Time used:', cur_time - last_time, 's. sent/s:', float(sent_id) / (cur_time - last_time)
 			#print "sent_id",sent_id
 			#print "sent", sent
 			#print "sents", sents
 			##### Initialize activations #####
 			Tau = len(sent)
+                        tau_sum += Tau
 			sent_ll = 0 # Sentence log likelihood
 			batch_size = Tau
 
@@ -141,12 +140,12 @@ def LSTM_train(model, sents, words, learning_rate, EPOCH, tanhC_version = 1):
 			##### Forward pass #####
 			# For each time step
 			for t in range(1, Tau):
-				prev[t] = Hout[t - 1]
-				#prev[t] = owl.zeros([N, 1])
+				#prev[t] = Hout[t - 1]
+                                prev[t] = owl.zeros([N, 1])
 				data[t] = owl.zeros([K, 1])
-				# embed = np.zeros((K, 1))
-				# embed[sent[t]] = 1
-				# data[t] = owl.from_numpy(embed).trans()
+				#embed = np.zeros((K, 1))
+				#embed[sent[t]] = 1
+				#data[t] = owl.from_numpy(embed).trans()
 
 				act_ig[t] = model.ig_weight_data.trans() * data[t - 1] + model.ig_weight_prev.trans() * prev[t] + model.ig_weight_bias
 				act_fg[t] = model.fg_weight_data.trans() * data[t - 1] + model.fg_weight_prev.trans() * prev[t] + model.fg_weight_bias
@@ -177,12 +176,17 @@ def LSTM_train(model, sents, words, learning_rate, EPOCH, tanhC_version = 1):
 				# output = Ym[t].trans() * data[t]
 				# sent_ll += math.log10( max(np.sum(output.to_numpy()),1e-20) )
 			##### Initialize gradient vectors #####
-                        Ym[-1].wait_for_eval()
-                        continue
-			#for t in range(1, Tau):
-                                #Ym[t].wait_for_eval()
+                        #Ym[-1].wait_for_eval()
+			for t in range(1, Tau):
+                                Ym[t].wait_for_eval()
 				#output = Ym[t].trans() * data[t]
 				#sent_ll += math.log10( max(np.sum(output.to_numpy()),1e-20) )
+                        if sent_id % 100 == 0:
+                                cur_time = time.time()
+                                print 'Finished', sent_id, 'sentences. Time used:', cur_time - last_time, 's. sent/s:', float(sent_id) / (cur_time - last_time), 'tau_sum=', tau_sum
+                                #print owl.print_profiler_result()
+                                tau_sum = 0
+                        continue
 
 			sen_ig = [None] * Tau
 			sen_fg = [None] * Tau
