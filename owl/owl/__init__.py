@@ -190,4 +190,4 @@ def print_dag_to_file(fname):
     :type fname: str
     :return: None
     """
-    _owl.print_dat_to_file(fname)
+    _owl.print_dag_to_file(fname)

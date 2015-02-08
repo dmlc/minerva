@@ -134,13 +134,13 @@ std::string Dag<D, O>::PrintDag() const {
   ns << "Nodes:" << std::endl;
   es << "Edges:" << std::endl;
   for (auto i : index_to_node_) {
-    ns << i.first << ":";
+    ns << i.first << ">>>>";
     if (i.second->Type() == DagNode::NodeType::kOpNode) {
       Dag<D, O>::ONode* onode = dynamic_cast<Dag<D, O>::ONode*>(i.second);
-      ns << "type=o;" << NodePrinter::OpToString(onode->op_) << std::endl;
+      ns << "type===o;;;" << NodePrinter::OpToString(onode->op_) << std::endl;
     } else {
       Dag<D, O>::DNode* dnode = dynamic_cast<Dag<D, O>::DNode*>(i.second);
-      ns << "type=d;" << NodePrinter::DataToString(dnode->data_) << std::endl;
+      ns << "type===d;;;" << NodePrinter::DataToString(dnode->data_) << std::endl;
     }
     for (auto j : i.second->successors_) {
       es << i.first << " -> " << j->node_id() << std::endl;
