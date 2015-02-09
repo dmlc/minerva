@@ -135,8 +135,8 @@ class SoftmaxUnit(ComputeUnit):
         super(SoftmaxUnit, self).__init__(params)
     def forward(self, from_btm, to_top):
         to_top[self.top_names[0]] = co.softmax(from_btm[self.btm_names[0]], co.soft_op.instance)
-        self.ff_y = to_top[self.top_names[0]]
-        self.y = from_btm[self.btm_names[0]]
+        self.ff_y = from_btm[self.btm_names[0]]
+        self.y = from_btm[self.btm_names[1]]
     def backward(self, from_top, to_btm):
         to_btm[self.btm_names[0]] = self.ff_y - self.y
     def __str__(self):
