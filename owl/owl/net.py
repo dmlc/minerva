@@ -2,6 +2,7 @@ import owl
 import owl.elewise as ele
 import owl.conv as co
 import numpy as np
+import math
 import Queue
 from caffe import *
 from netio import ImageNetDataProvider
@@ -125,8 +126,16 @@ class DropoutUnit(ComputeUnitSimple):
     def ff(self, x):
         self.dropmask = owl.randb(x.shape, self.params.dropout_param.dropout_ratio)
         return ele.mult(x, self.dropmask)
+        '''
+        #for gradient test
+        return x
+        '''
     def bp(self, y):
         return ele.mult(y, self.dropmask)
+        '''
+        #for gradient test
+        return y
+        '''
     def __str__(self):
         return 'dropout'
 
@@ -136,9 +145,40 @@ class SoftmaxUnit(ComputeUnit):
     def forward(self, from_btm, to_top):
         to_top[self.top_names[0]] = co.softmax(from_btm[self.btm_names[0]], co.soft_op.instance)
         self.ff_y = to_top[self.top_names[0]]
-        self.y = from_btm[self.btm_names[0]]
+        self.y = from_btm[self.btm_names[1]]
     def backward(self, from_top, to_btm):
         to_btm[self.btm_names[0]] = self.ff_y - self.y
+
+    def getloss(self):
+        #get accuracy
+        batch_size = self.ff_y.shape[1]
+        predict = self.ff_y.argmax(0)
+        ground_truth = self.y.argmax(0)
+        correct = (predict - ground_truth).count_zero()
+        acc = 1 - (batch_size - correct) * 1.0 / batch_size 
+        print acc 
+  
+        lossmat = ele.mult(ele.ln(self.ff_y), self.y)
+        res = lossmat.sum(0).sum(1).to_numpy()
+        return -res[0][0]     
+        
+        ''' 
+        outputlist = self.ff_y.to_numpy()
+        outputshape = np.shape(outputlist)
+        outputlist = outputlist.reshape(np.prod(outputshape[0:len(outputshape)]))
+        labellist = self.y.to_numpy().reshape(np.prod(outputshape[0:len(outputshape)]))
+        res = 0
+        for i in xrange(np.prod(outputshape[0:len(outputshape)])):
+            if labellist[i] > 0.5:
+                res -= math.log(outputlist[i])
+        #print res
+        return res
+        '''
+
+
+
+
+    
     def __str__(self):
         return 'softmax'
 
@@ -189,7 +229,6 @@ class ConcatUnit(ComputeUnit):
         for i in range(len(self.btm_names)):
             narrays.append(from_btm[self.btm_names[i]])
             self.slice_count.append(from_btm[self.btm_names[i]].shape[self.concat_dim])
-        #caffe concat_dim is reversed
         to_top[self.top_names[0]] = owl.concat(narrays, self.concat_dim)
     def backward(self, from_top, to_btm):
         st_off = 0
@@ -218,6 +257,7 @@ class FullyConnection(WeightedComputeUnit):
             a = self.ff_act.reshape([np.prod(shp[0:-1]), shp[-1]])
         else:
             a = self.ff_act
+        
         self.weightgrad = sen * a.trans()
         self.biasgrad = sen.sum(1)
         s = self.weight.trans() * sen 
@@ -422,7 +462,13 @@ class Net:
         for u in self._reverse_toporder(phase):
             from_top = {}
             for top in self.adjacent[u]:
-                from_top.update(unit_to_btms[top])
+                for keys in unit_to_btms[top]:
+                    if keys in from_top:
+                        #print "has %s" % (keys)
+                        from_top[keys] += unit_to_btms[top][keys]
+                    else:
+                        from_top[keys] = unit_to_btms[top][keys]
+                #from_top.update(unit_to_btms[top])
             self.units[u].backward(from_top, unit_to_btms[u])
     
     def weight_update(self):

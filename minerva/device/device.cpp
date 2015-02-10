@@ -14,6 +14,7 @@
 #include <cudnn.h>
 #endif
 
+//#undef NDEBUG
 #define DEFAULT_POOL_SIZE ((size_t) 5.8 * 1024 * 1024 * 1024)
 
 using namespace std;

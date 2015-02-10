@@ -14,6 +14,7 @@ def get_weights_id(owl_net):
     return weights_id
 
 if __name__ == "__main__":
+    beg_time = time.time()
     owl.initialize(sys.argv)
     gpu = [None] * 2
     gpu[0] = owl.create_gpu_device(0)
@@ -31,8 +32,9 @@ if __name__ == "__main__":
     print len(wunits)
     wgrad = []
     bgrad = []
-    
-    for iteridx in range(owl_net.solver.max_iter):
+   
+    for iteridx in range(10):
+    #for iteridx in range(owl_net.solver.max_iter):
         owl.set_device(gpu[iteridx % 2])
         owl_net.forward('TRAIN')
         owl_net.backward('TRAIN')
@@ -51,9 +53,9 @@ if __name__ == "__main__":
             owl_net.weight_update()
             owl_net.get_units_by_name(accunitname)[0].ff_y.wait_for_eval()
             print "Finished training 1 minibatch"
-            print "time: %s" % (time.time() - last)
+            thistime = time.time() - last
+            print "time: %s" % (thistime)
             last = time.time()
-
         '''
         #decide whether to test
         if (iteridx + 1) % owl_net.solver.test_interval == 0:
@@ -64,3 +66,5 @@ if __name__ == "__main__":
                 accunit = owl_net.get_units_by_name('loss3/top-1')[0]
                 print "Accuracy this mb: %f" % (accunit.acc)
         '''
+    owl.print_profiler_result()
+    print time.time() - beg_time
