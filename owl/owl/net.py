@@ -246,7 +246,7 @@ class FullyConnection(WeightedComputeUnit):
     def ff(self, act):
         shp = act.shape
         if len(shp) > 2:
-            a = act.reshape([np.prod(shp[0:-1]), shp[-1]])
+            a = act.reshape([np.prod(shp[0:-1], dtype=np.int32), shp[-1]])
         else:
             a = act
         self.ff_act = act # save ff value
@@ -254,7 +254,7 @@ class FullyConnection(WeightedComputeUnit):
     def bp(self, sen):
         shp = self.ff_act.shape
         if len(shp) > 2:
-            a = self.ff_act.reshape([np.prod(shp[0:-1]), shp[-1]])
+            a = self.ff_act.reshape([np.prod(shp[0:-1], dtype=np.int32), shp[-1]])
         else:
             a = self.ff_act
         

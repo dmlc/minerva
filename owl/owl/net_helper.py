@@ -1,4 +1,3 @@
-import subprocess
 import sys
 import owl.net as net
 from caffe import *
@@ -6,6 +5,7 @@ from google.protobuf import text_format
 import numpy as np
 import owl
 from PIL import Image
+import subprocess
 
 class INetBuilder:
     def build_net(self, owl_net):
@@ -197,7 +197,9 @@ class CaffeModelLoader:
 
 
 if __name__ == "__main__":
-    CaffeModelLoader('/home/minjie/caffe/caffe/models/bvlc_alexnet/caffe_alexnet_train_iter_20.caffemodel', '/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Alexmodel/')
+    CaffeModelLoader('/home/tianjun/caffe/caffe/models/VGG/VGG_ILSVRC_16_layers.caffemodel', '/home/tianjun/caffe/caffe/models/VGG/MinervaModel/')
+    
+    #CaffeModelLoader('/home/tianjun/caffe/caffe/models/bvlc_alexnet/caffe_alexnet_train_iter_20.caffemodel', '/home/tianjun/caffe/caffe/models/bvlc_alexnet/Minervamodel/')
     
     '''
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])

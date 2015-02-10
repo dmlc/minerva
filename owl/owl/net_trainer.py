@@ -8,9 +8,8 @@ from net_helper import CaffeNetBuilder
 
 if __name__ == "__main__":
     owl.initialize(sys.argv)
-    gpu0 = owl.create_gpu_device(0)
-    gpu1 = owl.create_gpu_device(1)
-    owl.set_device(gpu0)
+    gpu = owl.create_gpu_device(0)
+    owl.set_device(gpu)
     
     #prepare the net and solver
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])
@@ -23,10 +22,8 @@ if __name__ == "__main__":
     
     for iteridx in range(10):
     #for iteridx in range(owl_net.solver.max_iter):
-        #owl.set_device(gpu0)
         owl_net.forward('TRAIN')
         owl_net.backward('TRAIN')
-        #owl.set_device(gpu1)
         owl_net.weight_update()
         
         #print owl_net.get_units_by_name(accunitname)[0].acc
