@@ -25,10 +25,12 @@ class CaffeNetBuilder:
     def build_net(self, owl_net):
         #set globle lr and wd
         owl_net.base_lr = self.solverconfig.base_lr
+        owl_net.current_lr = self.solverconfig.base_lr
         owl_net.base_weight_decay = self.solverconfig.weight_decay
         owl_net.momentum = self.solverconfig.momentum
         owl_net.solver = self.solverconfig
-        
+        owl_net.lr_policy = self.solverconfig.lr_policy
+
         stacked_layers = {}
         rev_stacked_layers = {}
         top_name_to_layer = {}
@@ -118,7 +120,8 @@ class CaffeNetBuilder:
             print "Not implemented type:", LayerParameter.LayerType.Name(caffe_layer.type)
             return None
     
-    def init_net_from_file(self, owl_net, weightpath):
+    def init_net_from_file(self, owl_net, weightpath, epochidx):
+        weightpath = "%ssnapshot%d/" % (weightpath, epochidx)
         for i in range(len(owl_net.units)):
             if isinstance(owl_net.units[i], net.FullyConnection):
                 #print owl_net.units[i].name
@@ -149,8 +152,28 @@ class CaffeNetBuilder:
                 bshape = [owl_net.units[i].conv_params.num_output]
                 owl_net.units[i].bias = owl.from_numpy(npbias).reshape(bshape)
  
+    def save_net_to_file(self, owl_net, weightpath, epochidx):
+        weightpath = "%ssnapshot%d/" % (weightpath, epochidx)
+        cmd = "mkdir %s" % (weightpath)
+        res = subprocess.call(cmd, shell=True)
+        for i in range(len(owl_net.units)):
+            if isinstance(owl_net.units[i], net.ConvConnection) or isinstance(owl_net.units[i], net.FullyConnection):
+                #print owl_net.units[i].name
+                layername = owl_net.units[i].name
+                layername = layername.replace("/","_")
+                weightname = '%s%s_weights.dat' % (weightpath, layername)
+                wshape = owl_net.units[i].weight.shape 
+                length = np.prod(wshape)
+                npweight = owl_net.units[i].weight.to_numpy().reshape(length)
+                npweight.tofile(weightname)
+                biasname = '%s%s_bias.dat' % (weightpath, layername)
+                bshape = owl_net.units[i].bias.shape
+                length = np.prod(bshape)
+                npbias = owl_net.units[i].bias.to_numpy().reshape(length)
+                npbias.tofile(biasname)
+
 class CaffeModelLoader:
-    def __init__(self, model_file, weightdir):
+    def __init__(self, model_file, weightdir, snapshot):
         netparam = NetParameter()
         layerparam = LayerParameter()
         with open(model_file, 'rb') as f:
@@ -159,7 +182,7 @@ class CaffeModelLoader:
         cmd = 'mkdir %s' % (weightdir) 
         res = subprocess.call(cmd, shell=True)
 
-        cmd = 'mkdir %s/epoch0' % (weightdir) 
+        cmd = 'mkdir %s/snapshot%d' % (weightdir, snapshot) 
         res = subprocess.call(cmd, shell=True)
 
         print len(netparam.layers)
@@ -169,7 +192,7 @@ class CaffeModelLoader:
             if hasattr(netparam.layers[i], 'blobs') and len(netparam.layers[i].blobs) == 2:
                 layername = netparam.layers[i].name
                 layername = layername.replace("/","_")
-                filename = '%s/epoch0/%s_weights.dat' % (weightdir, layername)
+                filename = '%s/snapshot%d/%s_weights.dat' % (weightdir, snapshot, layername)
                 #print filename
                 if netparam.layers[i].type == layerparam.LayerType.Value('CONVOLUTION'):
                     num_output = netparam.layers[i].convolution_param.num_output
@@ -189,7 +212,7 @@ class CaffeModelLoader:
                     theweight.tofile(filename)
                 #np.array(netparam.layers[i].blobs[0].data, dtype=np.float32).tofile(filename)
                 
-                filename = '%s/epoch0/%s_bias.dat' % (weightdir, layername)
+                filename = '%s/snapshot%d/%s_bias.dat' % (weightdir, snapshot, layername)
                 #print filename
                 np.array(netparam.layers[i].blobs[1].data, dtype=np.float32).tofile(filename)
 
@@ -197,7 +220,7 @@ class CaffeModelLoader:
 
 
 if __name__ == "__main__":
-    CaffeModelLoader('/home/tianjun/caffe/caffe/models/VGG/VGG_ILSVRC_16_layers.caffemodel', '/home/tianjun/caffe/caffe/models/VGG/MinervaModel/')
+    CaffeModelLoader('/home/minjie/caffe/caffe/models/bvlc_googlenet/bvlc_googlenet_quick_iter_20.caffemodel', '/home/tianjun/models/GoogModel/', 0)
     
     #CaffeModelLoader('/home/tianjun/caffe/caffe/models/bvlc_alexnet/caffe_alexnet_train_iter_20.caffemodel', '/home/tianjun/caffe/caffe/models/bvlc_alexnet/Minervamodel/')
     

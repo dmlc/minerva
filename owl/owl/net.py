@@ -15,7 +15,7 @@ class ComputeUnit(object):
         self.top_names = []
     def __str__(self):
         return 'N/A unit'
-    def forward(self, from_btm, to_top):
+    def forward(self, from_btm, to_top, phase = 'TRAIN'):
         pass
     def backward(self, from_top, to_btm):
         pass
@@ -25,9 +25,9 @@ class ComputeUnit(object):
 class ComputeUnitSimple(ComputeUnit):
     def __init__(self, params):
         super(ComputeUnitSimple, self).__init__(params)
-    def forward(self, from_btm, to_top):
-        to_top[self.top_names[0]] = self.ff(from_btm[self.btm_names[0]])
-    def ff(self, act):
+    def forward(self, from_btm, to_top, phase = 'TRAIN'):
+        to_top[self.top_names[0]] = self.ff(from_btm[self.btm_names[0]], phase)
+    def ff(self, act, phase):
         pass
     def backward(self, from_top, to_btm):
         to_btm[self.btm_names[0]] = self.bp(from_top[self.top_names[0]])
@@ -70,7 +70,7 @@ class WeightedComputeUnit(ComputeUnitSimple):
         self.biasgrad = None
 
 class LinearUnit(ComputeUnitSimple):
-    def ff(self, x):
+    def ff(self, x, phase):
         return x
     def bp(self, y):
         return y
@@ -78,7 +78,7 @@ class LinearUnit(ComputeUnitSimple):
         return 'linear'
 
 class SigmoidUnit(ComputeUnitSimple):
-    def ff(self, x):
+    def ff(self, x, phase):
         return ele.sigm(x)
     def bp(self, y):
         return ele.sigm_back(y)
@@ -86,7 +86,7 @@ class SigmoidUnit(ComputeUnitSimple):
         return 'sigmoid'
 
 class ReluUnit(ComputeUnitSimple):
-    def ff(self, x):
+    def ff(self, x, phase):
         self.ff_x = x
         return ele.relu(x)
     def bp(self, y):
@@ -95,7 +95,7 @@ class ReluUnit(ComputeUnitSimple):
         return 'relu'
 
 class TanhUnit(ComputeUnitSimple):
-    def ff(self, x):
+    def ff(self, x, phase):
         return ele.tanh(x)
     def bp(self, y):
         return ele.tanh_back(y)
@@ -111,7 +111,7 @@ class PoolingUnit(ComputeUnitSimple):
         elif ppa.pool == PoolingParameter.PoolMethod.Value('AVE'):
             pool_ty = co.pool_op.avg
         self.pooler = co.Pooler(ppa.kernel_size, ppa.kernel_size, ppa.stride, ppa.stride, ppa.pad, ppa.pad, pool_ty)
-    def ff(self, x):
+    def ff(self, x, phase):
         self.ff_x = x
         self.ff_y = self.pooler.ff(x)
         return self.ff_y
@@ -123,9 +123,13 @@ class PoolingUnit(ComputeUnitSimple):
 class DropoutUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(DropoutUnit, self).__init__(params)
-    def ff(self, x):
+    def ff(self, x, phase):
         self.dropmask = owl.randb(x.shape, self.params.dropout_param.dropout_ratio)
-        return ele.mult(x, self.dropmask)
+        if phase == "TRAIN":
+            return ele.mult(x, self.dropmask)
+        else:
+            return x * (1 - self.params.dropout_param.dropout_ratio)
+        
         '''
         #for gradient test
         return x
@@ -142,7 +146,7 @@ class DropoutUnit(ComputeUnitSimple):
 class SoftmaxUnit(ComputeUnit):
     def __init__(self, params):
         super(SoftmaxUnit, self).__init__(params)
-    def forward(self, from_btm, to_top):
+    def forward(self, from_btm, to_top, phase = 'TRAIN'):
         to_top[self.top_names[0]] = co.softmax(from_btm[self.btm_names[0]], co.soft_op.instance)
         self.ff_y = to_top[self.top_names[0]]
         self.y = from_btm[self.btm_names[1]]
@@ -151,13 +155,15 @@ class SoftmaxUnit(ComputeUnit):
 
     def getloss(self):
         #get accuracy
+        '''
         batch_size = self.ff_y.shape[1]
         predict = self.ff_y.argmax(0)
         ground_truth = self.y.argmax(0)
         correct = (predict - ground_truth).count_zero()
         acc = 1 - (batch_size - correct) * 1.0 / batch_size 
         print acc 
-  
+        '''
+
         lossmat = ele.mult(ele.ln(self.ff_y), self.y)
         res = lossmat.sum(0).sum(1).to_numpy()
         return -res[0][0]     
@@ -187,13 +193,11 @@ class AccuracyUnit(ComputeUnit):
         super(AccuracyUnit, self).__init__(params)
         self.acc = 0
         self.batch_size = 0
-    def forward(self, from_btm, to_top):
+    def forward(self, from_btm, to_top, phase = 'TRAIN'):
         predict = from_btm[self.btm_names[0]].argmax(0)
         ground_truth = from_btm[self.btm_names[1]].argmax(0)   
-        
         #print predict.trans().to_numpy()
         #print ground_truth.trans().to_numpy()
-        
         self.batch_size = from_btm[self.btm_names[0]].shape[1]
         correct = (predict - ground_truth).count_zero()
         self.acc = 1 - (self.batch_size - correct) * 1.0 / self.batch_size 
@@ -208,7 +212,7 @@ class LRNUnit(ComputeUnitSimple):
         super(LRNUnit, self).__init__(params)
         self.lrner = co.Lrner(params.lrn_param.local_size, params.lrn_param.alpha, params.lrn_param.beta)
         self.scale = None
-    def ff(self, x):
+    def ff(self, x, phase):
         self.ff_x = x
         self.scale = owl.zeros(x.shape)
         self.ff_y = self.lrner.ff(x, self.scale)
@@ -223,7 +227,7 @@ class ConcatUnit(ComputeUnit):
         super(ConcatUnit, self).__init__(params)
         self.concat_dim_caffe = params.concat_param.concat_dim
         self.slice_count = []
-    def forward(self, from_btm, to_top):
+    def forward(self, from_btm, to_top, phase = 'TRAIN'):
         narrays = []
         self.concat_dim = len(from_btm[self.btm_names[0]].shape) - 1 - self.concat_dim_caffe
         for i in range(len(self.btm_names)):
@@ -243,7 +247,7 @@ class FullyConnection(WeightedComputeUnit):
         super(FullyConnection, self).__init__(params)
         self.inner_product_param = params.inner_product_param
         
-    def ff(self, act):
+    def ff(self, act, phase):
         shp = act.shape
         if len(shp) > 2:
             a = act.reshape([np.prod(shp[0:-1], dtype=np.int32), shp[-1]])
@@ -280,7 +284,7 @@ class ConvConnection(WeightedComputeUnit):
         self.group_data = []
         self.group_filter = []
         self.group_bias = []
-    def ff(self, act):
+    def ff(self, act, phase):
         if self.group == 1:
             self.ff_act = act
             return self.convolver.ff(act, self.weight, self.bias)
@@ -347,10 +351,9 @@ class DataUnit(ComputeUnit):
         self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.data_param.source, params.data_param.batch_size, params.transform_param.crop_size)
         self.generator = self.dp.get_train_mb()
         
-        (self.samples, self.labels) = next(self.generator)
+        #(self.samples, self.labels) = next(self.generator)
 
-    def forward(self, from_btm, to_top):
-        '''
+    def forward(self, from_btm, to_top, phase = 'TRAIN'):
         while True:
             try:
                 (samples, labels) = next(self.generator)
@@ -364,6 +367,7 @@ class DataUnit(ComputeUnit):
         '''
         to_top[self.top_names[0]] = owl.from_numpy(self.samples).reshape([self.crop_size, self.crop_size, 3, self.samples.shape[0]])
         to_top[self.top_names[1]] = owl.from_numpy(self.labels)
+        '''
 
     def backward(self, from_top, to_btm):
         pass
@@ -455,7 +459,7 @@ class Net:
             from_btm = {}
             for btm in self.reverse_adjacent[u]:
                 from_btm.update(unit_to_tops[btm])
-            self.units[u].forward(from_btm, unit_to_tops[u])
+            self.units[u].forward(from_btm, unit_to_tops[u], phase)
 
     def backward(self, phase = 'TRAIN'):
         unit_to_btms = [{} for name in self.units]
@@ -471,9 +475,9 @@ class Net:
                 #from_top.update(unit_to_btms[top])
             self.units[u].backward(from_top, unit_to_btms[u])
     
-    def weight_update(self):
+    def weight_update(self, num_gpu = 1):
         for i in range(len(self.units)):
-            self.units[i].weight_update(self.base_lr, self.base_weight_decay, self.momentum, self.batch_size)
+            self.units[i].weight_update(self.current_lr, self.base_weight_decay, self.momentum, self.batch_size * num_gpu)
 
     def get_data_unit(self, phase = 'TRAIN'):
         data_units = self.name_to_uid['data']
