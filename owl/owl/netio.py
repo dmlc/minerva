@@ -17,7 +17,7 @@ class ImageNetDataProvider:
         self.mb_size = mb_size
         self.cropped_size = cropped_size
 
-    def get_train_mb(self):
+    def get_train_mb(self, phase = 'TRAIN'):
         mb_size = self.mb_size
         cropped_size = self.cropped_size
         env = lmdb.open(self.train_db, readonly=True)
@@ -30,7 +30,13 @@ class ImageNetDataProvider:
                 d = Datum()
                 d.ParseFromString(value)
                 im = np.fromstring(d.data, dtype=np.uint8).reshape([3, 256, 256]) - self.mean_data
-                [crop_h, crop_w] = np.random.randint(256 - cropped_size, size=2)
+                
+                if phase == 'TRAIN':
+                    [crop_h, crop_w] = np.random.randint(256 - cropped_size, size=2)
+                else:
+                    crop_h = (256 - cropped_size) / 2
+                    crop_w = (256 - cropped_size) / 2
+                
                 im_cropped = im[:, crop_h:crop_h+cropped_size, crop_w:crop_w+cropped_size]
                 samples[count, :] = im_cropped.reshape(cropped_size ** 2 * 3).astype(np.float32)
                 labels[count, d.label] = 1

@@ -1,3 +1,4 @@
+import os
 import sys
 import owl.net as net
 from caffe import *
@@ -132,14 +133,26 @@ class CaffeNetBuilder:
                 length = np.shape(npweight)[0]
                 wshape = [owl_net.units[i].inner_product_param.num_output, length / owl_net.units[i].inner_product_param.num_output]
                 owl_net.units[i].weight = owl.from_numpy(npweight).reshape(wshape)
+                
+                weightname = '%s%s_weightdelta.dat' % (weightpath, layername)
+                if os.path.isfile(weightname):
+                    npweightdelta = np.fromfile(weightname, dtype = np.float32)
+                    owl_net.units[i].weightdelta = owl.from_numpy(npweightdelta).reshape(wshape)             
+                
                 biasname = '%s%s_bias.dat' % (weightpath, layername)
                 npbias = np.fromfile(biasname, dtype = np.float32)
                 bshape = [owl_net.units[i].inner_product_param.num_output, 1]
                 owl_net.units[i].bias = owl.from_numpy(npbias).reshape(bshape)
+                
+                biasname = '%s%s_biasdelta.dat' % (weightpath, layername)
+                if os.path.isfile(biasname):
+                    npbiasdetla = np.fromfile(biasname, dtype = np.float32)
+                    owl_net.units[i].biasdelta = owl.from_numpy(npbiasdetla).reshape(bshape)
             if isinstance(owl_net.units[i], net.ConvConnection):
                 #print owl_net.units[i].name
                 layername = owl_net.units[i].name
                 layername = layername.replace("/","_")
+                
                 weightname = '%s%s_weights.dat' % (weightpath, layername)
                 npweight = np.fromfile(weightname, dtype = np.float32)
                 length = np.shape(npweight)[0]
@@ -147,11 +160,22 @@ class CaffeNetBuilder:
                 input_channel = length / conv_params.kernel_size / conv_params.kernel_size / conv_params.num_output
                 wshape = [conv_params.kernel_size, conv_params.kernel_size, input_channel, conv_params.num_output]
                 owl_net.units[i].weight = owl.from_numpy(npweight).reshape(wshape)
+   
+                weightname = '%s%s_weightdelta.dat' % (weightpath, layername)
+                if os.path.isfile(weightname):
+                    npweightdelta = np.fromfile(weightname, dtype = np.float32)
+                    owl_net.units[i].weightdelta = owl.from_numpy(npweightdelta).reshape(wshape)              
+                
                 biasname = '%s%s_bias.dat' % (weightpath, layername)
                 npbias = np.fromfile(biasname, dtype = np.float32)
                 bshape = [owl_net.units[i].conv_params.num_output]
                 owl_net.units[i].bias = owl.from_numpy(npbias).reshape(bshape)
- 
+                 
+                biasname = '%s%s_biasdelta.dat' % (weightpath, layername)
+                if os.path.isfile(biasname):
+                    npbiasdetla = np.fromfile(biasname, dtype = np.float32)
+                    owl_net.units[i].biasdelta = owl.from_numpy(npbiasdetla).reshape(bshape)
+    
     def save_net_to_file(self, owl_net, weightpath, epochidx):
         weightpath = "%ssnapshot%d/" % (weightpath, epochidx)
         cmd = "mkdir %s" % (weightpath)
@@ -166,19 +190,34 @@ class CaffeNetBuilder:
                 length = np.prod(wshape)
                 npweight = owl_net.units[i].weight.to_numpy().reshape(length)
                 npweight.tofile(weightname)
+
+                weightname = '%s%s_weightdelta.dat' % (weightpath, layername)
+                npweightdelta = owl_net.units[i].weightdelta.to_numpy().reshape(length)
+                npweightdelta.tofile(weightname)
+                
                 biasname = '%s%s_bias.dat' % (weightpath, layername)
                 bshape = owl_net.units[i].bias.shape
                 length = np.prod(bshape)
                 npbias = owl_net.units[i].bias.to_numpy().reshape(length)
                 npbias.tofile(biasname)
 
+                biasname = '%s%s_biasdelta.dat' % (weightpath, layername)
+                npbiasdetla = owl_net.units[i].biasdelta.to_numpy().reshape(length)
+                npbiasdetla.tofile(biasname)
+
 class CaffeModelLoader:
-    def __init__(self, model_file, weightdir, snapshot):
+    def __init__(self, model_file, status_file, weightdir, snapshot):
         netparam = NetParameter()
         layerparam = LayerParameter()
         with open(model_file, 'rb') as f:
             netparam.ParseFromString(f.read())
-        
+       
+        '''
+        netdelta = SolverState()
+        with open(status_file, 'rb') as fd:
+            netdelta.ParseFromString(fd.read())
+        '''
+
         cmd = 'mkdir %s' % (weightdir) 
         res = subprocess.call(cmd, shell=True)
 
@@ -193,7 +232,6 @@ class CaffeModelLoader:
                 layername = netparam.layers[i].name
                 layername = layername.replace("/","_")
                 filename = '%s/snapshot%d/%s_weights.dat' % (weightdir, snapshot, layername)
-                #print filename
                 if netparam.layers[i].type == layerparam.LayerType.Value('CONVOLUTION'):
                     num_output = netparam.layers[i].convolution_param.num_output
                     kernelsize = netparam.layers[i].convolution_param.kernel_size
@@ -210,17 +248,41 @@ class CaffeModelLoader:
                     input_dim = np.shape(np.array(netparam.layers[i].blobs[0].data, dtype=np.float32))[0] / num_output
                     theweight = np.transpose(np.array(netparam.layers[i].blobs[0].data, dtype=np.float32).reshape([num_output, input_dim]))
                     theweight.tofile(filename)
-                #np.array(netparam.layers[i].blobs[0].data, dtype=np.float32).tofile(filename)
                 
                 filename = '%s/snapshot%d/%s_bias.dat' % (weightdir, snapshot, layername)
-                #print filename
                 np.array(netparam.layers[i].blobs[1].data, dtype=np.float32).tofile(filename)
-
+               
+                '''
+                #trans delta
+                filename = '%s/snapshot%d/%s_weightdelta.dat' % (weightdir, snapshot, layername)
+                if netparam.layers[i].type == layerparam.LayerType.Value('CONVOLUTION'):
+                    num_output = netparam.layers[i].convolution_param.num_output
+                    kernelsize = netparam.layers[i].convolution_param.kernel_size
+                    oridelta = np.array(netdelta.layers[i].blobs[0].data, dtype=np.float32)
+                    channels = np.shape(oridelta)[0] / num_output / kernelsize / kernelsize
+                    oridelta = oridelta.reshape([num_output, channels, kernelsize, kernelsize])
+                    newdelta = np.zeros(np.shape(oridelta), dtype=np.float32)
+                    for outidx in range(num_output):
+                        for chaidx in range(channels):
+                            newdelta[outidx, chaidx, :, :] = np.rot90(oridelta[outidx, chaidx, :,:],2)
+                    print newdelta
+                    newdelta.reshape(np.prod(np.shape(newdelta)[0:4])).tofile(filename)
+                else:
+                    num_output = netdelta.layers[i].inner_product_param.num_output
+                    input_dim = np.shape(np.array(netdelta.layers[i].blobs[0].data, dtype=np.float32))[0] / num_output
+                    thedelta = np.transpose(np.array(netdelta.layers[i].blobs[0].data, dtype=np.float32).reshape([num_output, input_dim]))
+                    thedelta.tofile(filename)
+                
+                filename = '%s/snapshot%d/%s_biasdelta.dat' % (weightdir, snapshot, layername)
+                print netdelta
+                exit(0)
+                np.array(netdelta.layers[i].blobs[1].data, dtype=np.float32).tofile(filename)
+                '''
 
 
 
 if __name__ == "__main__":
-    CaffeModelLoader('/home/minjie/caffe/caffe/models/bvlc_googlenet/bvlc_googlenet_quick_iter_20.caffemodel', '/home/tianjun/models/GoogModel/', 0)
+    CaffeModelLoader('/home/tianjun/caffe/caffe/models/bvlc_googlenet/bvlc_googlenet_quick_iter_40.caffemodel', '/home/tianjun/caffe/caffe/models/bvlc_googlenet/bvlc_googlenet_quick_iter_40.solverstate', '/home/tianjun/models/GoogModel/', 0)
     
     #CaffeModelLoader('/home/tianjun/caffe/caffe/models/bvlc_alexnet/caffe_alexnet_train_iter_20.caffemodel', '/home/tianjun/caffe/caffe/models/bvlc_alexnet/Minervamodel/')
     

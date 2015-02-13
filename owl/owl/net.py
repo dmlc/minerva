@@ -349,17 +349,19 @@ class DataUnit(ComputeUnit):
         self.crop_size = params.transform_param.crop_size
         self.num_output = 3
         self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.data_param.source, params.data_param.batch_size, params.transform_param.crop_size)
-        self.generator = self.dp.get_train_mb()
-        
+        self.generator = None
         #(self.samples, self.labels) = next(self.generator)
 
     def forward(self, from_btm, to_top, phase = 'TRAIN'):
+        if self.generator == None:
+            self.generator = self.dp.get_train_mb(phase)
+        
         while True:
             try:
                 (samples, labels) = next(self.generator)
             except StopIteration:
                 print 'Have scanned the whole dataset; start from the begginning agin'
-                self.generator = self.dp.get_train_mb()
+                self.generator = self.dp.get_train_mb(phase)
                 continue
             break
         to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
