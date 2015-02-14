@@ -89,7 +89,8 @@ if __name__ == "__main__":
                 accunit = owl_net.get_units_by_name(acclayername)[0]
                 test_num += accunit.batch_size
                 acc_num += (accunit.batch_size * accunit.acc)
-                print "Accuracy this mb: %f" % (accunit.acc)
+                print "Accuracy the %d mb: %f" % (testiteridx, accunit.acc)
+                sys.stdout.flush()
             print "Testing Accuracy: %f" % (float(acc_num)/test_num)
         
         if (iteridx + 1) % owl_net.solver.snapshot == 0:
