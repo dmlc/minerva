@@ -30,6 +30,7 @@ class Dag {
   size_t NumNodes() const;
   void RegisterMonitor(DagMonitor<Dag<Data, Op>>*);
   void ClearMonitor();
+  template<typename NodePrinter=DagHelper<Data, Op>> std::string PrintDagDot() const;
   template<typename NodePrinter=DagHelper<Data, Op>> std::string PrintDag() const;
   mutable std::recursive_mutex m_;
 
@@ -43,4 +44,3 @@ class Dag {
 }  // end of namespace minerva
 
 #include "dag.inl"
-

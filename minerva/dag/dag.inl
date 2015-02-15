@@ -104,7 +104,7 @@ void Dag<D, O>::ClearMonitor() {
 
 template<typename D, typename O>
 template<typename NodePrinter>
-std::string Dag<D, O>::PrintDag() const {
+std::string Dag<D, O>::PrintDagDot() const {
   std::ostringstream out;
   out << "digraph G {" << std::endl;
   for (auto i : index_to_node_) {
@@ -128,10 +128,31 @@ std::string Dag<D, O>::PrintDag() const {
 }
 
 template<typename D, typename O>
+template<typename NodePrinter>
+std::string Dag<D, O>::PrintDag() const {
+  std::ostringstream ns, es;
+  ns << "Nodes:" << std::endl;
+  es << "Edges:" << std::endl;
+  for (auto i : index_to_node_) {
+    ns << i.first << ">>>>";
+    if (i.second->Type() == DagNode::NodeType::kOpNode) {
+      Dag<D, O>::ONode* onode = dynamic_cast<Dag<D, O>::ONode*>(i.second);
+      ns << "type===o;;;" << NodePrinter::OpToString(onode->op_) << std::endl;
+    } else {
+      Dag<D, O>::DNode* dnode = dynamic_cast<Dag<D, O>::DNode*>(i.second);
+      ns << "type===d;;;" << NodePrinter::DataToString(dnode->data_) << std::endl;
+    }
+    for (auto j : i.second->successors_) {
+      es << i.first << " -> " << j->node_id() << std::endl;
+    }
+  }
+  return ns.str() + es.str();
+}
+
+template<typename D, typename O>
 uint64_t Dag<D, O>::NewIndex() {
   static uint64_t index_counter = 0;
   return index_counter++;
 }
 
 }  // end of namespace minerva
-

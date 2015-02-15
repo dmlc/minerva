@@ -15,9 +15,9 @@ class ComputeUnit(object):
         self.top_names = []
     def __str__(self):
         return 'N/A unit'
-    def forward(self, from_btm, to_top, phase = 'TRAIN'):
+    def forward(self, from_btm, to_top, phase):
         pass
-    def backward(self, from_top, to_btm):
+    def backward(self, from_top, to_btm, phase):
         pass
     def weight_update(self, base_lr, base_weight_decay, momentum, batch_size):
         pass
@@ -25,11 +25,11 @@ class ComputeUnit(object):
 class ComputeUnitSimple(ComputeUnit):
     def __init__(self, params):
         super(ComputeUnitSimple, self).__init__(params)
-    def forward(self, from_btm, to_top, phase = 'TRAIN'):
+    def forward(self, from_btm, to_top, phase):
         to_top[self.top_names[0]] = self.ff(from_btm[self.btm_names[0]], phase)
     def ff(self, act, phase):
         pass
-    def backward(self, from_top, to_btm):
+    def backward(self, from_top, to_btm, phase):
         to_btm[self.btm_names[0]] = self.bp(from_top[self.top_names[0]])
     def bp(self, sen):
         pass
@@ -146,11 +146,11 @@ class DropoutUnit(ComputeUnitSimple):
 class SoftmaxUnit(ComputeUnit):
     def __init__(self, params):
         super(SoftmaxUnit, self).__init__(params)
-    def forward(self, from_btm, to_top, phase = 'TRAIN'):
+    def forward(self, from_btm, to_top, phase):
         to_top[self.top_names[0]] = co.softmax(from_btm[self.btm_names[0]], co.soft_op.instance)
         self.ff_y = to_top[self.top_names[0]]
         self.y = from_btm[self.btm_names[1]]
-    def backward(self, from_top, to_btm):
+    def backward(self, from_top, to_btm, phase):
         to_btm[self.btm_names[0]] = self.ff_y - self.y
 
     def getloss(self):
@@ -180,10 +180,6 @@ class SoftmaxUnit(ComputeUnit):
         #print res
         return res
         '''
-
-
-
-
     
     def __str__(self):
         return 'softmax'
@@ -193,16 +189,14 @@ class AccuracyUnit(ComputeUnit):
         super(AccuracyUnit, self).__init__(params)
         self.acc = 0
         self.batch_size = 0
-    def forward(self, from_btm, to_top, phase = 'TRAIN'):
+    def forward(self, from_btm, to_top, phase):
         predict = from_btm[self.btm_names[0]].argmax(0)
         ground_truth = from_btm[self.btm_names[1]].argmax(0)   
-        #print predict.trans().to_numpy()
-        #print ground_truth.trans().to_numpy()
         self.batch_size = from_btm[self.btm_names[0]].shape[1]
         correct = (predict - ground_truth).count_zero()
         self.acc = 1 - (self.batch_size - correct) * 1.0 / self.batch_size 
 
-    def backward(self, from_top, to_btm):
+    def backward(self, from_top, to_btm, phase):
         pass
     def __str__(self):
         return 'accuracy'
@@ -227,14 +221,14 @@ class ConcatUnit(ComputeUnit):
         super(ConcatUnit, self).__init__(params)
         self.concat_dim_caffe = params.concat_param.concat_dim
         self.slice_count = []
-    def forward(self, from_btm, to_top, phase = 'TRAIN'):
+    def forward(self, from_btm, to_top, phase):
         narrays = []
         self.concat_dim = len(from_btm[self.btm_names[0]].shape) - 1 - self.concat_dim_caffe
         for i in range(len(self.btm_names)):
             narrays.append(from_btm[self.btm_names[i]])
             self.slice_count.append(from_btm[self.btm_names[i]].shape[self.concat_dim])
         to_top[self.top_names[0]] = owl.concat(narrays, self.concat_dim)
-    def backward(self, from_top, to_btm):
+    def backward(self, from_top, to_btm, phase):
         st_off = 0
         for i in range(len(self.btm_names)):
             to_btm[self.btm_names[i]]  = owl.slice(from_top[self.top_names[0]], self.concat_dim, st_off, self.slice_count[i])
@@ -349,29 +343,28 @@ class DataUnit(ComputeUnit):
         self.crop_size = params.transform_param.crop_size
         self.num_output = 3
         if params.include[0].phase == Phase.Value('TRAIN'):
-            self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.data_param.source, params.data_param.batch_size / num_gpu, params.transform_param.crop_size)
+            self.dp = ImageNetDataProvider(params.transform_param.mean_file,
+                    params.data_param.source,
+                    params.data_param.batch_size / num_gpu,
+                    params.transform_param.crop_size)
         else:
-            self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.data_param.source, params.data_param.batch_size, params.transform_param.crop_size)
+            self.dp = ImageNetDataProvider(params.transform_param.mean_file,
+                    params.data_param.source,
+                    params.data_param.batch_size,
+                    params.transform_param.crop_size)
         
         self.generator = None
         #(self.samples, self.labels) = next(self.generator)
 
-    def forward(self, from_btm, to_top, phase = 'TRAIN'):
+    def forward(self, from_btm, to_top, phase):
         if self.generator == None:
             self.generator = self.dp.get_train_mb(phase)
         
-        while True:
-            try:
-                (samples, labels) = next(self.generator)
-                #TODO: hack, don't know why the end of generator will produce a []
-                if len(labels) == 0:
-                    (samples, labels) = next(self.generator)
-
-            except StopIteration:
+        while len(samples) != 0:
+            (samples, labels) = next(self.generator)
+            if len(samples) == 0:
                 print 'Have scanned the whole dataset; start from the begginning agin'
                 self.generator = self.dp.get_train_mb(phase)
-                continue
-            break
 
         to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
         to_top[self.top_names[1]] = owl.from_numpy(labels)
@@ -380,7 +373,7 @@ class DataUnit(ComputeUnit):
         to_top[self.top_names[1]] = owl.from_numpy(self.labels)
         '''
 
-    def backward(self, from_top, to_btm):
+    def backward(self, from_top, to_btm, phase):
         pass
     def __str__(self):
         return 'data'
@@ -479,12 +472,10 @@ class Net:
             for top in self.adjacent[u]:
                 for keys in unit_to_btms[top]:
                     if keys in from_top:
-                        #print "has %s" % (keys)
                         from_top[keys] += unit_to_btms[top][keys]
                     else:
                         from_top[keys] = unit_to_btms[top][keys]
-                #from_top.update(unit_to_btms[top])
-            self.units[u].backward(from_top, unit_to_btms[u])
+            self.units[u].backward(from_top, unit_to_btms[u], phase)
     
     def weight_update(self, num_gpu = 1):
         for i in range(len(self.units)):

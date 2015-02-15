@@ -21,4 +21,3 @@ struct PhysicalOp {
 };
 
 }  // end of namespace minerva
-
