@@ -23,7 +23,7 @@ class CaffeNetBuilder:
             self.solverconfig = SolverParameter()
             text_format.Merge(str(f.read()), self.solverconfig)
 
-    def build_net(self, owl_net):
+    def build_net(self, owl_net, num_gpu):
         #set globle lr and wd
         owl_net.base_lr = self.solverconfig.base_lr
         owl_net.current_lr = self.solverconfig.base_lr
@@ -38,7 +38,7 @@ class CaffeNetBuilder:
         # 1. record name and its caffe.LayerParameter data in a map
         # 2. some layers is stacked into one in caffe's configure format
         for l in self.netconfig.layers:
-            owl_struct = self._convert_type(l)
+            owl_struct = self._convert_type(l, num_gpu)
             
             if owl_struct != None:
                 uid = owl_net.add_unit(owl_struct)
@@ -91,10 +91,10 @@ class CaffeNetBuilder:
         #self.top_name_to_layer = top_name_to_layer
         #print owl_net
 
-    def _convert_type(self, caffe_layer):
+    def _convert_type(self, caffe_layer, num_gpu):
         ty = caffe_layer.type
         if ty == LayerParameter.LayerType.Value('DATA'):
-            return net.DataUnit(caffe_layer)
+            return net.DataUnit(caffe_layer, num_gpu)
         elif ty == LayerParameter.LayerType.Value('INNER_PRODUCT'):
             return net.FullyConnection(caffe_layer)
         elif ty == LayerParameter.LayerType.Value('CONVOLUTION'):

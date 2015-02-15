@@ -344,11 +344,15 @@ class ConvConnection(WeightedComputeUnit):
         return 'conv'
 
 class DataUnit(ComputeUnit):
-    def __init__(self, params):
+    def __init__(self, params, num_gpu):
         super(DataUnit, self).__init__(params)
         self.crop_size = params.transform_param.crop_size
         self.num_output = 3
-        self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.data_param.source, params.data_param.batch_size, params.transform_param.crop_size)
+        if params.include[0].phase == Phase.Value('TRAIN'):
+            self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.data_param.source, params.data_param.batch_size / num_gpu, params.transform_param.crop_size)
+        else:
+            self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.data_param.source, params.data_param.batch_size, params.transform_param.crop_size)
+        
         self.generator = None
         #(self.samples, self.labels) = next(self.generator)
 
@@ -368,7 +372,6 @@ class DataUnit(ComputeUnit):
                 self.generator = self.dp.get_train_mb(phase)
                 continue
             break
-
 
         to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
         to_top[self.top_names[1]] = owl.from_numpy(labels)

@@ -21,11 +21,12 @@ if __name__ == "__main__":
     gpu[1] = owl.create_gpu_device(1)
     gpu[2] = owl.create_gpu_device(2)
     gpu[3] = owl.create_gpu_device(3)
-    
+    num_gpu = len(gpu)
+
     #prepare the net and solver
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])
     owl_net = net.Net()
-    builder.build_net(owl_net)
+    builder.build_net(owl_net, num_gpu)
     startsnapshot = int(sys.argv[4])
     builder.init_net_from_file(owl_net, sys.argv[3], startsnapshot)
     evallayername = sys.argv[5]
@@ -37,12 +38,12 @@ if __name__ == "__main__":
     bgrad = [[] for i in xrange(4)]
     
   
-    for iteridx in range(startsnapshot * owl_net.solver.snapshot, owl_net.solver.max_iter):
+    for iteridx in range(startsnapshot * owl_net.solver.snapshot * num_gpu, owl_net.solver.max_iter * num_gpu):
         #get the learning rate 
         if owl_net.solver.lr_policy == "poly":
-            owl_net.current_lr = owl_net.base_lr * pow(1 - float(iteridx / len(gpu)) / owl_net.solver.max_iter, owl_net.solver.power) 
+            owl_net.current_lr = owl_net.base_lr * pow(1 - float(iteridx / num_gpu) / owl_net.solver.max_iter, owl_net.solver.power) 
         elif owl_net.solver.lr_policy == "step":
-            owl_net.current_lr = owl_net.base_lr * pow(owl_net.solver.gamma, (iteridx / len(gpu)) / owl_net.solver.step)
+            owl_net.current_lr = owl_net.base_lr * pow(owl_net.solver.gamma, (iteridx / num_gpu) / owl_net.solver.step)
 
         gpuidx = iteridx % 4
         owl.set_device(gpu[gpuidx])
@@ -75,12 +76,12 @@ if __name__ == "__main__":
             print "time: %s" % (time.time() - last)
             last = time.time()       
         
-        if (iteridx + 1) % 100 == 0:
+        if (iteridx + 1) % owl_net.solver.display * num_gpu == 0:
             lossunit = owl_net.get_units_by_name(evallayername)[0]
             print "Training Loss: %f" % (lossunit.getloss())
         
         #decide whether to test
-        if (iteridx + 1) % owl_net.solver.test_interval == 0:
+        if (iteridx + 1) % (owl_net.solver.test_interval * num_gpu) == 0:
         #if True:
             acc_num = 0
             test_num = 0
@@ -93,7 +94,7 @@ if __name__ == "__main__":
                 sys.stdout.flush()
             print "Testing Accuracy: %f" % (float(acc_num)/test_num)
         
-        if (iteridx + 1) % owl_net.solver.snapshot == 0:
+        if (iteridx + 1) % (owl_net.solver.snapshot * num_gpu) == 0:
             builder.save_net_to_file(owl_net, sys.argv[3], (iteridx + 1) / owl_net.solver.snapshot + startsnapshot)
             #print owl_net.current_lr
         sys.stdout.flush()
