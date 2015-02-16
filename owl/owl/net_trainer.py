@@ -6,42 +6,86 @@ import owl
 import owl.net as net
 from net_helper import CaffeNetBuilder
 
+def get_weights_id(owl_net):
+    weights_id = []
+    for i in xrange(len(owl_net.units)):
+        if isinstance(owl_net.units[i], net.WeightedComputeUnit):
+            weights_id.append(i)
+    return weights_id
+
 if __name__ == "__main__":
+    beg_time = time.time()
     owl.initialize(sys.argv)
-    gpu = owl.create_gpu_device(0)
-    owl.set_device(gpu)
-    
+    gpu = [None] * 2
+    gpu[0] = owl.create_gpu_device(0)
+    gpu[1] = owl.create_gpu_device(1)
+    num_gpu = 2
+
     #prepare the net and solver
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])
     owl_net = net.Net()
-    builder.build_net(owl_net)
-    builder.init_net_from_file(owl_net, sys.argv[3])
-    accunitname = sys.argv[4]
+    builder.build_net(owl_net, num_gpu)
+    startsnapshot = int(sys.argv[4])
+    builder.init_net_from_file(owl_net, sys.argv[3], startsnapshot)
+    evallayername = sys.argv[5]
+    acclayername = sys.argv[6]
     last = time.time()
-    beg_time = last
-    
-    for iteridx in range(10):
-    #for iteridx in range(owl_net.solver.max_iter):
-        owl_net.forward('TRAIN')
-        owl_net.backward('TRAIN')
-        owl_net.weight_update()
-        
-        #print owl_net.get_units_by_name(accunitname)[0].acc
-        owl.print_dag_to_file('dag.txt')
-        sys.exit(0)
-        owl_net.get_units_by_name(accunitname)[0].ff_y.wait_for_eval()
-        print "Finished training 1 minibatch"
-        print "time: %s" % (time.time() - last)
-        last = time.time()
-        continue
 
-        #decide whether to test
-        if (iteridx + 1) % owl_net.solver.test_interval == 0:
+    wunits = get_weights_id(owl_net)
+    wgrad = []
+    bgrad = []
+    
+    for iteridx in range(startsnapshot * owl_net.solver.snapshot, owl_net.solver.max_iter):
+        # get the learning rate 
+        if owl_net.solver.lr_policy == "poly":
+            owl_net.current_lr = owl_net.base_lr * pow(1 - float(iteridx) / owl_net.solver.max_iter, owl_net.solver.power) 
+        elif owl_net.solver.lr_policy == "step":
+            owl_net.current_lr = owl_net.base_lr * pow(owl_net.solver.gamma, iteridx / owl_net.solver.step)
+
+        # train on multi-gpu
+        for gpuid in range(0, num_gpu):
+            owl.set_device(gpu[gpuid])
+            owl_net.forward('TRAIN')
+            owl_net.backward('TRAIN')
+            if gpuid == 0:
+                for wid in wunits:
+                    wgrad.append(owl_net.units[wid].weightgrad)
+                    bgrad.append(owl_net.units[wid].biasgrad)
+                owl_net.get_units_by_name(evallayername)[0].ff_y.start_eval()
+            else:
+                for i in range(len(wunits)):
+                    wid = wunits[i]
+                    owl_net.units[wid].weightgrad += wgrad[i]
+                    owl_net.units[wid].biasgrad += bgrad[i]
+                wgrad = []
+                bgrad = []
+                owl_net.weight_update(num_gpu = 2)
+                owl_net.get_units_by_name(evallayername)[0].ff_y.wait_for_eval()
+
+        print "Finished training %d minibatch" % (iteridx)
+        thistime = time.time() - last
+        print "time: %s" % (thistime)
+        last = time.time()
+        # decide whether to display loss
+        if (iteridx + 1) % (owl_net.solver.display) == 0:
+            lossunit = owl_net.get_units_by_name(evallayername)[0]
+            print "Training Loss: %f" % (lossunit.getloss())
+        
+        # decide whether to test
+        if (iteridx + 1) % (owl_net.solver.test_interval) == 0:
             acc_num = 0
             test_num = 0
-            for testiteridx in range(owl_net.solver.test_iter):
+            for testiteridx in range(owl_net.solver.test_iter[0]):
                 owl_net.forward('TEST')
-                accunit = owl_net.get_units_by_name('loss3/top-1')[0]
-                print "Accuracy this mb: %f" % (accunit.acc)
-    owl.print_profiler_result()
-    print time.time() - beg_time
+                accunit = owl_net.get_units_by_name(acclayername)[0]
+                test_num += accunit.batch_size
+                acc_num += (accunit.batch_size * accunit.acc)
+                print "Accuracy the %d mb: %f" % (testiteridx, accunit.acc)
+            print "Testing Accuracy: %f" % (float(acc_num)/test_num)
+        
+        # decide whether to save model
+        if (iteridx + 1) % (owl_net.solver.snapshot) == 0:
+            print "Save to snapshot %d, current lr %f" % ((iteridx + 1) / (owl_net.solver.snapshot) + startsnapshot, owl_net.current_lr)
+            builder.save_net_to_file(owl_net, sys.argv[3], (iteridx + 1) / (owl_net.solver.snapshot) + startsnapshot)
+            #print owl_net.current_lr
+        sys.stdout.flush()
