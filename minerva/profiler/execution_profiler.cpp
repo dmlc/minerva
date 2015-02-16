@@ -53,4 +53,3 @@ void ExecutionProfiler::PrintResult() {
 }
 
 }  // namespace minerva
-

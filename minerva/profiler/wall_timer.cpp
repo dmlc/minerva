@@ -35,9 +35,16 @@ void WallTimer::Stop() {
   }
 }
 
+double WallTimer::StartTimeMicrosecond() const {
+  return start_.tv_sec * 1000 + start_.tv_usec * .001;
+}
+
+double WallTimer::EndTimeMicrosecond() const {
+  return end_.tv_sec * 1000 + end_.tv_usec * .001;
+}
+
 double WallTimer::ReadMicrosecond() const {
   return (end_.tv_sec - start_.tv_sec) * 1000 + (end_.tv_usec - start_.tv_usec) * .001;
 }
 
 }  // namespace minerva
-

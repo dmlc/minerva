@@ -29,9 +29,16 @@ void CpuTimer::Stop() {
   end_ = clock();
 }
 
+double CpuTimer::StartTimeMicrosecond() const {
+  return ((double) start_) / CLOCKS_PER_SEC * 1000000;
+}
+
+double CpuTimer::EndTimeMicrosecond() const {
+  return ((double) end_) / CLOCKS_PER_SEC * 1000000;
+}
+
 double CpuTimer::ReadMicrosecond() const {
-  return ((double) end_ - start_) / CLOCKS_PER_SEC;
+  return ((double) end_ - start_) / CLOCKS_PER_SEC * 1000000;
 }
 
 }  // namespace minerva
-

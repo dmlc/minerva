@@ -10,4 +10,3 @@ Timer::~Timer() {
 }
 
 }  // namespace minerva
-
