@@ -387,6 +387,8 @@ class Net:
         self.base_weight_decay = 0
         self.momentum = 0
         self.name_to_uid = {}
+        self.loss_uids = []
+        self.accuracy_uids = []
 
     def add_unit(self, unit):
         uid = len(self.units)
@@ -400,6 +402,25 @@ class Net:
 
     def get_units_by_name(self, name):
         return [self.units[uid] for uid in self.name_to_uid[name]]
+
+    def get_loss_units(self, phase):
+        return [self.units[uid] for uid in self.loss_uids]
+
+    def get_accuracy_units(self, phase):
+        return [self.units[uid] for uid in self.accuracy_uids]
+
+    def get_data_unit(self, phase = 'TRAIN'):
+        data_units = self.name_to_uid['data']
+        for du in data_units:
+            if not self._is_excluded(du, phase):
+                return self.units[du]
+
+    def get_weighted_unit_ids(self):
+        weights_id = []
+        for i in xrange(len(owl_net.units)):
+            if isinstance(owl_net.units[i], net.WeightedComputeUnit):
+                weights_id.append(i)
+        return weights_id
 
     def connect(self, u1, u2):
         self.adjacent[u1].append(u2)
@@ -480,12 +501,6 @@ class Net:
     def weight_update(self, num_gpu = 1):
         for i in range(len(self.units)):
             self.units[i].weight_update(self.current_lr, self.base_weight_decay, self.momentum, self.batch_size * num_gpu)
-
-    def get_data_unit(self, phase = 'TRAIN'):
-        data_units = self.name_to_uid['data']
-        for du in data_units:
-            if not self._is_excluded(du, phase):
-                return self.units[du]
 
     def __str__(self):
         ret = 'digraph G {\n'

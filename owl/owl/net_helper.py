@@ -47,6 +47,10 @@ class CaffeNetBuilder:
                 ty = l.type
                 if ty == LayerParameter.LayerType.Value('DATA'):
                     owl_net.batch_size = l.data_param.batch_size
+                elif ty == LayerParameter.LayerType.Value('SOFTMAX_LOSS'):
+                    owl_net.loss_uids.append(uid)
+                elif ty == LayerParameter.LayerType.Value('ACCURACY'):
+                    owl_net.accuracy_uids.append(uid)
                 
                 # stack issues
                 #stacked_layers[l.name] = [uid]
@@ -87,8 +91,6 @@ class CaffeNetBuilder:
             for btm in owl_net.units[uid].btm_names:
                 for btm_uid in top_name_to_layer[btm]:
                     owl_net.connect(btm_uid, uid)
-        #may need outside
-        #self.top_name_to_layer = top_name_to_layer
         #print owl_net
 
     def _convert_type(self, caffe_layer, num_gpu):

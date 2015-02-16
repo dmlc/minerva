@@ -13,6 +13,28 @@ def get_weights_id(owl_net):
             weights_id.append(i)
     return weights_id
 
+class NetTrainer:
+    def __init__(self, net_file, solver_file, snapshot, snapshot_dir, num_gpu = 1):
+        self.net_file = net_file
+        self.solver_file = solver_file
+        self.snapshot = snapshot
+        self.snapshot_dir = snapshot_dir
+        self.num_gpu = num_gpu
+
+    def build_net(self):
+        self.owl_net = net.Net()
+        builder = CaffeNetBuilder(self.net_file, self.solver_file)
+        builder.build_net(self.owl_net, self.num_gpu)
+        builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
+
+    def run(self):
+        gpu = [None] * self.num_gpu
+        for i in range(0, self.num_gpu):
+            gpu[i] = owl.create_gpu_device(i)
+        evallayername = sys.argv[5]
+        acclayername = sys.argv[6]
+
+
 if __name__ == "__main__":
     beg_time = time.time()
     owl.initialize(sys.argv)
@@ -57,10 +79,10 @@ if __name__ == "__main__":
                     wid = wunits[i]
                     owl_net.units[wid].weightgrad += wgrad[i]
                     owl_net.units[wid].biasgrad += bgrad[i]
-                wgrad = []
-                bgrad = []
                 owl_net.weight_update(num_gpu = 2)
                 owl_net.get_units_by_name(evallayername)[0].ff_y.wait_for_eval()
+        wgrad = []
+        bgrad = []
 
         print "Finished training %d minibatch" % (iteridx)
         thistime = time.time() - last
