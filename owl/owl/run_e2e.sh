@@ -1,1 +1,0 @@
-python net_trainer.py /home/minjie/caffe/caffe/models/bvlc_googlenet/train_val_128mb.prototxt /home/minjie/caffe/caffe/models/bvlc_googlenet/quick_solver_128mb.prototxt /home/tianjun/models/Googmodel/ 0 loss3/loss3 loss3/top-1

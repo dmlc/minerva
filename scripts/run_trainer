@@ -1,0 +1,46 @@
+#!/bin/bash
+
+#python net_trainer.py /home/minjie/caffe/caffe/models/bvlc_googlenet/train_val_minerva.prototxt /home/minjie/caffe/caffe/models/bvlc_googlenet/solver.prototxt /home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/epoch0/ loss3/loss3
+#python gradient_checker.py /home/minjie/caffe/caffe/models/bvlc_googlenet/train_val_minerva.prototxt /home/minjie/caffe/caffe/models/bvlc_googlenet/solver.prototxt /home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/epoch0/ loss3/loss3 conv1/7x7_s2
+#python net_trainer.py /home/tianjun/caffe/caffe/models/bvlc_googlenet/train_val.prototxt /home/tianjun/caffe/caffe/models/bvlc_googlenet/solver.prototxt /home/tianjun/caffe/caffe/models/bvlc_googlenet/MinervaModel/epoch0/ loss3/loss3
+
+ALEXNET_NET=/home/tianjun/caffe/caffe/models/bvlc_alexnet/train_val_minerva.prototxt
+ALEXNET_SOLVER=/home/tianjun/caffe/caffe/models/bvlc_alexnet/solver.prototxt
+ALEXNET_SNAP_DIR=/home/tianjun/caffe/caffe/models/bvlc_alexnet/MinervaModel/
+
+GOOGNET_NET=/home/minjie/caffe/caffe/models/bvlc_googlenet/train_val_minerva.prototxt
+GOOGNET_SOLVER=/home/minjie/caffe/caffe/models/bvlc_googlenet/solver.prototxt
+GOOGNET_SNAP_DIR=/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/
+
+VGGNET_NET=/home/minjie/caffe/caffe/models/VGG/VGG_train_val.prototxt
+VGGNET_SOLVER=/home/minjie/caffe/caffe/models/VGG/solver.prototxt
+VGGNET_SNAP_DIR=/home/tianjun/caffe/caffe/models/VGG/MinervaModel/
+
+if [ $# -ne 3 ]; then
+  echo "Usage: ./run_trainer.sh <net-type> <snapshot> <num-gpu>"
+  echo "Available network type: alex, goognet, vggnet"
+  exit 1
+fi
+
+case $1 in
+  alex)
+    net_file=$ALEXNET_NET;
+    solver_file=$ALEXNET_SOLVER;
+    snap_dir=$ALEXNET_SNAP_DIR ;;
+  goognet)
+    net_file=$GOOGNET_NET;
+    solver_file=$GOOGNET_SOLVER;
+    snap_dir=$GOOGNET_SNAP_DIR ;;
+  vggnet)
+    net_file=$VGGNET_NET;
+    solver_file=$VGGNET_SOLVER;
+    snap_dir=$VGGNET_SNAP_DIR ;;
+esac
+
+snapshot=$2
+num_gpu=$3
+
+python net_trainer.py $net_file $solver_file \
+  --snapshot=$snapshot \
+  --snapshot-dir=$snap_dir \
+  --num-gpu=$num_gpu

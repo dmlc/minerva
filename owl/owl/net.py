@@ -166,7 +166,7 @@ class SoftmaxUnit(ComputeUnit):
 
         lossmat = ele.mult(ele.ln(self.ff_y), self.y)
         res = lossmat.sum(0).sum(1).to_numpy()
-        return -res[0][0]     
+        return -res[0][0]
         
         ''' 
         outputlist = self.ff_y.to_numpy()
@@ -360,11 +360,11 @@ class DataUnit(ComputeUnit):
         if self.generator == None:
             self.generator = self.dp.get_train_mb(phase)
         
-        while len(samples) != 0:
+        (samples, labels) = next(self.generator)
+        if len(samples) == 0:
+            print 'Have scanned the whole dataset; start from the begginning agin'
+            self.generator = self.dp.get_train_mb(phase)
             (samples, labels) = next(self.generator)
-            if len(samples) == 0:
-                print 'Have scanned the whole dataset; start from the begginning agin'
-                self.generator = self.dp.get_train_mb(phase)
 
         to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
         to_top[self.top_names[1]] = owl.from_numpy(labels)
@@ -418,7 +418,7 @@ class Net:
     def get_weighted_unit_ids(self):
         weights_id = []
         for i in xrange(len(self.units)):
-            if isinstance(self.units[i], net.WeightedComputeUnit):
+            if isinstance(self.units[i], WeightedComputeUnit):
                 weights_id.append(i)
         return weights_id
 
