@@ -12,6 +12,8 @@ class CpuTimer : public Timer {
   ~CpuTimer();
   void Start();
   void Stop();
+  double StartTimeMicrosecond() const;
+  double EndTimeMicrosecond() const;
   double ReadMicrosecond() const;
 
  private:

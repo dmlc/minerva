@@ -14,6 +14,7 @@
 #include <cudnn.h>
 #endif
 
+//#undef NDEBUG
 #define DEFAULT_POOL_SIZE ((size_t) 5.8 * 1024 * 1024 * 1024)
 
 using namespace std;
@@ -98,10 +99,12 @@ void ThreadedDevice::Execute(PhysicalOpNode* op_node, int thrid) {
   MinervaSystem::Instance().profiler().RecordTime(TimerType::kMemory, op_node->op_.compute_fn->Name(), memory_timer);
 #endif
   auto& op = op_node->op_;
+#ifndef NDEBUG
   CHECK_NOTNULL(op.compute_fn);
-  DLOG(INFO) << Name() << " execute node #" << op_node->node_id() << ": " << op.compute_fn->Name();
+  LOG(INFO) << Name() << " execute node #" << op_node->node_id() << ": " << op.compute_fn->Name();
   WallTimer calculate_timer;
   calculate_timer.Start();
+#endif
   DoExecute(input_shards, output_shards, op, thrid);
 #ifndef NDEBUG
   calculate_timer.Stop();
@@ -181,7 +184,7 @@ void GpuDevice::DoExecute(const DataList& in, const DataList& out, PhysicalOp& o
   ctx.cublas_handle = cublas_handle_[thrid];
   ctx.cudnn_handle = cudnn_handle_[thrid];
   op.compute_fn->Execute(in, out, ctx);
-  CUDA_CALL(cudaStreamSynchronize(stream_[thrid]));
+  CUDA_CALL_MSG(op.compute_fn->Name(), cudaStreamSynchronize(stream_[thrid]));
 }
 
 #endif

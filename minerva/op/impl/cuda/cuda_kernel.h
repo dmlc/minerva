@@ -239,13 +239,14 @@ __global__ static void CudaMaxPoolForward(const int nthreads, const float* botto
 		wstart = max(wstart, 0);
 		float maxval = -3.4E+38F;
 		int maxidx = -1;
-		bottom_data += (n * channels + c) * height * width;
+		const float* shifted_data = bottom_data + (n * channels + c) * height * width;
 		for (int h = hstart; h < hend; ++h) {
 		  for (int w = wstart; w < wend; ++w) {
-			if (bottom_data[h * width + w] > maxval) {
-			  maxidx = h * width + w;
-			  maxval = bottom_data[maxidx];
-			}
+        // TODO there should be a check here
+        if (shifted_data[h * width + w] > maxval) {
+          maxidx = h * width + w;
+          maxval = shifted_data[maxidx];
+        }
 		  }
 		}
 		top_data[index] = maxval;
@@ -270,17 +271,18 @@ __global__ void CudaMaxPoolBackward(const int nthreads, const float* bottom_data
 		wstart = max(wstart, 0);
 		float maxval = -3.4E+38F;
 		int maxidx = -1;
-		bottom_data += (n * channels + c) * height * width;
-		bottom_diff += (n * channels + c) * height * width;
+		const float* shifted_data = bottom_data + (n * channels + c) * height * width;
+		float* shifted_diff = bottom_diff + (n * channels + c) * height * width;
 		for (int h = hstart; h < hend; ++h) {
 		  for (int w = wstart; w < wend; ++w) {
-			if (bottom_data[h * width + w] > maxval) {
-			  maxidx = h * width + w;
-			  maxval = bottom_data[maxidx];
-			}
+        if (shifted_data[h * width + w] > maxval) {
+          // TODO there should be a check here
+          maxidx = h * width + w;
+          maxval = shifted_data[maxidx];
+        }
 		  }
 		}
-		bottom_diff[maxidx] += top_diff[index];
+		shifted_diff[maxidx] += top_diff[index];
   }
 }
 
@@ -295,8 +297,8 @@ __global__ static void LRNFillScale(const int nthreads, const float* in, const i
     int n = index / width / height;
     int offset = (n * channels * height + h) * width + w;
     int step = height * width;
-    in += offset;
-    scale += offset;
+    const float* shifted_in = in + offset;
+    float* shifted_scale = scale + offset;
     int head = 0;
     int pre_pad = (size - 1) / 2;
     int post_pad = size - pre_pad - 1;
@@ -304,26 +306,26 @@ __global__ static void LRNFillScale(const int nthreads, const float* in, const i
     // fill the scale at [n, :, h, w]
     // accumulate values
     while (head < post_pad) {
-      accum_scale += in[head * step] * in[head * step];
+      accum_scale += shifted_in[head * step] * shifted_in[head * step];
       ++head;
     }
     // until we reach size, nothing needs to be subtracted
     while (head < size) {
-      accum_scale += in[head * step] * in[head * step];
-      scale[(head - post_pad) * step] = 1. + accum_scale * alpha_over_size;
+      accum_scale += shifted_in[head * step] * shifted_in[head * step];
+      shifted_scale[(head - post_pad) * step] = 1. + accum_scale * alpha_over_size;
       ++head;
     }
     // both add and subtract
     while (head < channels) {
-      accum_scale += in[head * step] * in[head * step];
-      accum_scale -= in[(head - size) * step] * in[(head - size) * step];
-      scale[(head - post_pad) * step] = 1. + accum_scale * alpha_over_size;
+      accum_scale += shifted_in[head * step] * shifted_in[head * step];
+      accum_scale -= shifted_in[(head - size) * step] * shifted_in[(head - size) * step];
+      shifted_scale[(head - post_pad) * step] = 1. + accum_scale * alpha_over_size;
       ++head;
     }
     // subtract only
     while (head < channels + post_pad) {
-      accum_scale -= in[(head - size) * step] * in[(head - size) * step];
-      scale[(head - post_pad) * step] = 1. + accum_scale * alpha_over_size;
+      accum_scale -= shifted_in[(head - size) * step] * shifted_in[(head - size) * step];
+      shifted_scale[(head - post_pad) * step] = 1. + accum_scale * alpha_over_size;
       ++head;
     }
   }
@@ -351,56 +353,49 @@ __global__ static void LRNComputeDiff(const int nthreads, const float* bottom_da
 		int n = index / width / height;
 		int offset = (n * channels * height + h) * width + w;
 		int step = height * width;
-		bottom_data += offset;
-		top_data += offset;
-		scale += offset;
-		top_diff += offset;
-		bottom_diff += offset;
+		const float* shifted_btm_data = bottom_data + offset;
+		const float* shifted_top_data = top_data + offset;
+		const float* shifted_scale = scale + offset;
+		const float* shifted_top_diff = top_diff + offset;
+		float* shifted_btm_diff = bottom_diff + offset;
 		int head = 0;
 		int pre_pad = size - (size + 1) / 2;
 		int post_pad = size - pre_pad - 1;
 		float accum_ratio = 0;
 		// accumulate values
 		while (head < post_pad) {
-		  accum_ratio += top_diff[head * step] * top_data[head * step] /
-			  scale[head * step];
+		  accum_ratio += shifted_top_diff[head * step] * shifted_top_data[head * step] /
+			  shifted_scale[head * step];
 		  ++head;
 		}
 		// until we reach size, nothing needs to be subtracted
 		while (head < size) {
-		  accum_ratio += top_diff[head * step] * top_data[head * step] /
-			  scale[head * step];
-		  bottom_diff[(head - post_pad) * step] = top_diff[(head - post_pad) * step]
-			  * pow(scale[(head - post_pad) * step], negative_beta) - cache_ratio *
-			  bottom_data[(head - post_pad) * step] * accum_ratio;
+		  accum_ratio += shifted_top_diff[head * step] * shifted_top_data[head * step] /
+			  shifted_scale[head * step];
+		  shifted_btm_diff[(head - post_pad) * step] = shifted_top_diff[(head - post_pad) * step]
+			  * pow(shifted_scale[(head - post_pad) * step], negative_beta) - cache_ratio *
+			  shifted_btm_data[(head - post_pad) * step] * accum_ratio;
 		  ++head;
 		}
 		// both add and subtract
 		while (head < channels) {
-		  accum_ratio += top_diff[head * step] * top_data[head * step] /
-			  scale[head * step];
-		  accum_ratio -= top_diff[(head - size) * step] *
-			  top_data[(head - size) * step] / scale[(head - size) * step];
-		  bottom_diff[(head - post_pad) * step] = top_diff[(head - post_pad) * step]
-			  * pow(scale[(head - post_pad) * step], negative_beta) - cache_ratio *
-			  bottom_data[(head - post_pad) * step] * accum_ratio;
+		  accum_ratio += shifted_top_diff[head * step] * shifted_top_data[head * step] /
+			  shifted_scale[head * step];
+		  accum_ratio -= shifted_top_diff[(head - size) * step] *
+			  shifted_top_data[(head - size) * step] / shifted_scale[(head - size) * step];
+		  shifted_btm_diff[(head - post_pad) * step] = shifted_top_diff[(head - post_pad) * step]
+			  * pow(shifted_scale[(head - post_pad) * step], negative_beta) - cache_ratio *
+			  shifted_btm_data[(head - post_pad) * step] * accum_ratio;
 		  ++head;
 		}
 		// subtract only
 		while (head < channels + post_pad) {
-		  accum_ratio -= top_diff[(head - size) * step] *
-			  top_data[(head - size) * step] / scale[(head - size) * step];
-		  bottom_diff[(head - post_pad) * step] = top_diff[(head - post_pad) * step]
-			  * pow(scale[(head - post_pad) * step], negative_beta) - cache_ratio *
-			  bottom_data[(head - post_pad) * step] * accum_ratio;
+		  accum_ratio -= shifted_top_diff[(head - size) * step] *
+			  shifted_top_data[(head - size) * step] / shifted_scale[(head - size) * step];
+		  shifted_btm_diff[(head - post_pad) * step] = shifted_top_diff[(head - post_pad) * step]
+			  * pow(shifted_scale[(head - post_pad) * step], negative_beta) - cache_ratio *
+			  shifted_btm_data[(head - post_pad) * step] * accum_ratio;
 		  ++head;
 		}
   }
 }
-
-
-
-
-
-
-

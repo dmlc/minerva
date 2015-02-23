@@ -64,4 +64,3 @@ class OpNode : public DagNode {
 };
 
 }  // namespace minerva
-

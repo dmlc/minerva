@@ -150,13 +150,15 @@ class Pooler:
 
     :ivar libowl.PoolingInfo param: pooling parameters
     """
-    def __init__(self, h, w, stride_v, stride_h, pad_h, pad_w, op):
+    def __init__(self, h, w, stride_v, stride_h, pad_h = 0, pad_w = 0, op = pool_op.max):
         """ Constructor for Pooler class
 
         :param int h: pooling height
         :param int w: pooling width
         :param int stride_v: vertical stride length
         :param int stride_h: horizontal stride length
+        :param int pad_h: padding height
+        :param int pad_w: padding width
         :param owl.conv.pool_op op: pooling type
         """
         pi = _owl.PoolingInfo()

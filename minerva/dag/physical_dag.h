@@ -30,4 +30,3 @@ typedef PhysicalDag::DNode PhysicalDataNode;
 typedef PhysicalDag::ONode PhysicalOpNode;
 
 }  // namespace minerva
-

@@ -6,6 +6,7 @@
 #include <boost/numpy/ndarray.hpp>
 #include <glog/logging.h>
 #include <iostream>
+#include <fstream>
 #include "minerva.h"
 
 using namespace std;
@@ -78,17 +79,6 @@ m::NArray ReshapeWrapper(m::NArray narr, const bp::list& s) {
   return narr.Reshape(ToScale(s));
 }
 
-/*m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
-  std::vector<float> v = std::vector<float>(bp::stl_input_iterator<float>(val), bp::stl_input_iterator<float>());
-  size_t length = bp::len(val);
-  shared_ptr<float> data( new float[length], [] (float* ptr) { delete [] ptr; } );
-  memcpy(data.get(), v.data(), sizeof(float) * length);
-//  for(size_t i = 0; i < length; ++i) {
-//    valptr.get()[i] = bp::extract<float>(val[i] * 1.0);
-//  }
-  return m::NArray::MakeNArray(ToScale(s), data);
-}*/
-
 m::NArray FromNumpyWrapper(np::ndarray nparr) {
   CHECK(nparr.get_flags() & np::ndarray::C_CONTIGUOUS) << "MakeNArray needs c-contiguous numpy array";
   CHECK(np::equivalent(nparr.get_dtype(), np::dtype::get_builtin<float>())) << "MakeNArray needs float32 numpy array";
@@ -124,14 +114,25 @@ bp::list ShapeWrapper(m::NArray narr) {
   return ToPythonList(narr.Size());
 }
 
-/*bp::list NArrayToList(m::NArray narr) {
-  bp::list l;
-  std::shared_ptr<float> v = narr.Get();
-  for(int i = 0; i < narr.Size().Prod(); ++i)
-    l.append(v.get()[i]);
-  return l;
-}*/
+//////////////////////////////// profiler & debug
+void PrintProfilerResult() {
+  m::MinervaSystem::Instance().profiler().PrintResult();
+}
 
+void ResetProfilerResult() {
+  m::MinervaSystem::Instance().profiler().Reset();
+}
+
+void PrintDagToFile(bp::str filename) {
+  const std::string& dag_str = m::MinervaSystem::Instance().physical_dag().PrintDag<m::AllInfoPrinter>();
+  char* fname = bp::extract<char*>(filename);
+  std::ofstream fout(fname);
+  fout << dag_str << std::endl;
+  fout.flush();
+  fout.close();
+}
+
+////////////////////////////// cudnn
 m::NArray ConvForward(m::NArray src, m::NArray filter, m::NArray bias, m::ConvInfo info) {
   return m::Convolution::ConvForward(m::ImageBatch(src), m::Filter(filter), bias, info);
 }
@@ -170,14 +171,6 @@ m::NArray SoftmaxForward(m::NArray src, m::SoftmaxAlgorithm algo) {
 
 m::NArray SoftmaxBackward(m::NArray diff, m::NArray top, m::SoftmaxAlgorithm algo) {
   return m::Convolution::SoftmaxBackward(m::ImageBatch(diff), m::ImageBatch(top), algo);
-}
-
-void PrintProfilerResult() {
-  m::MinervaSystem::Instance().profiler().PrintResult();
-}
-
-void ResetProfilerResult() {
-  m::MinervaSystem::Instance().profiler().Reset();
 }
 
 m::NArray LRNForward(m::NArray src, m::NArray scale, int local_size, float alpha, float beta) {
@@ -285,6 +278,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("set_device", &owl::SetDevice);
   def("print_profiler_result", &owl::PrintProfilerResult);
   def("reset_profiler_result", &owl::ResetProfilerResult);
+  def("print_dag_to_file", &owl::PrintDagToFile);
 
   // elewise
   def("mult", &m::Elewise::Mult);

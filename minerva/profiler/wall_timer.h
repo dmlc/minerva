@@ -12,6 +12,8 @@ class WallTimer : public Timer {
   ~WallTimer();
   void Start();
   void Stop();
+  double StartTimeMicrosecond() const;
+  double EndTimeMicrosecond() const;
   double ReadMicrosecond() const;
 
  private:
@@ -20,4 +22,3 @@ class WallTimer : public Timer {
 };
 
 }  // namespace minerva
-

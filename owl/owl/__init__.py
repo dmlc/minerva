@@ -139,6 +139,36 @@ def from_numpy(nparr):
     """
     return _owl.from_numpy(np.require(nparr, dtype=np.float32, requirements=['C']))
 
+def concat(narrays, concat_dim): 
+    """  Concatenate NArrays according to concat_dim
+    
+    :param narrays: inputs for concatenation
+    :type narrays: owl.NArray
+    :param concat_dim: the dimension to concate
+    :type concat_dim: int
+
+    :return: result of concatenation
+    :rtype: owl.NArray
+    """
+    return _owl.concat(narrays, concat_dim)
+
+def slice(src, slice_dim, st_off, slice_count): 
+    """  Slice NArrays according to slice_dim
+    
+    :param src: inputs for slice
+    :type src: owl.NArray
+    :param slice_dim: the dimension to slice
+    :type slice_dim: int
+    :param st_off: where to start slice
+    :type st_off: int
+    :param slice_count: how many data_chunk on slice_dim
+    :slice_count: int
+
+    :return: result of slicer
+    :rtype: owl.NArray
+    """
+    return _owl.slice(src, slice_dim, st_off, slice_count)
+
 def print_profiler_result():
     """ Print result from execution profiler
 
@@ -153,28 +183,11 @@ def reset_profiler_result():
     """
     _owl.reset_profiler_result()
 
-def concat(narrays, concat_dim): 
-    """  Concatenate NArrays according to concat_dim
-    
-    Args:
-        narrays (owl.NArray): inputs for concatenation
-        concat_dim (int): the dimension to concate
+def print_dag_to_file(fname):
+    """ Print the current generated dag into the give filename
 
-    Returns:
-        owl.NArray: result of concatenator
+    :param fname: filename for printing the dag
+    :type fname: str
+    :return: None
     """
-    return _owl.concat(narrays, concat_dim)
-
-def slice(src, slice_dim, st_off, slice_count): 
-    """  Slice NArrays according to slice_dim
-    
-    Args:
-        src (owl.NArray): inputs for slice
-        slice_dim (int): the dimension to slice
-        st_off (int): where to start slice
-        slice_count (int): how many data_chunk on slice_dim
-
-    Returns:
-        owl.NArray: result of slicer
-    """
-    return _owl.slice(src, slice_dim, st_off, slice_count)
+    _owl.print_dag_to_file(fname)
