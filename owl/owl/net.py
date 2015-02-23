@@ -166,7 +166,7 @@ class SoftmaxUnit(ComputeUnit):
 
         lossmat = ele.mult(ele.ln(self.ff_y), self.y)
         res = lossmat.sum(0).sum(1).to_numpy()
-        return -res[0][0]     
+        return -res[0][0]
         
         ''' 
         outputlist = self.ff_y.to_numpy()
@@ -360,11 +360,11 @@ class DataUnit(ComputeUnit):
         if self.generator == None:
             self.generator = self.dp.get_train_mb(phase)
         
-        while len(samples) != 0:
+        (samples, labels) = next(self.generator)
+        if len(samples) == 0:
+            print 'Have scanned the whole dataset; start from the begginning agin'
+            self.generator = self.dp.get_train_mb(phase)
             (samples, labels) = next(self.generator)
-            if len(samples) == 0:
-                print 'Have scanned the whole dataset; start from the begginning agin'
-                self.generator = self.dp.get_train_mb(phase)
 
         to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
         to_top[self.top_names[1]] = owl.from_numpy(labels)
@@ -387,6 +387,8 @@ class Net:
         self.base_weight_decay = 0
         self.momentum = 0
         self.name_to_uid = {}
+        self.loss_uids = []
+        self.accuracy_uids = []
 
     def add_unit(self, unit):
         uid = len(self.units)
@@ -400,6 +402,25 @@ class Net:
 
     def get_units_by_name(self, name):
         return [self.units[uid] for uid in self.name_to_uid[name]]
+
+    def get_loss_units(self):
+        return [self.units[uid] for uid in self.loss_uids]
+
+    def get_accuracy_units(self):
+        return [self.units[uid] for uid in self.accuracy_uids]
+
+    def get_data_unit(self, phase = 'TRAIN'):
+        data_units = self.name_to_uid['data']
+        for du in data_units:
+            if not self._is_excluded(du, phase):
+                return self.units[du]
+
+    def get_weighted_unit_ids(self):
+        weights_id = []
+        for i in xrange(len(self.units)):
+            if isinstance(self.units[i], WeightedComputeUnit):
+                weights_id.append(i)
+        return weights_id
 
     def connect(self, u1, u2):
         self.adjacent[u1].append(u2)
@@ -481,11 +502,11 @@ class Net:
         for i in range(len(self.units)):
             self.units[i].weight_update(self.current_lr, self.base_weight_decay, self.momentum, self.batch_size * num_gpu)
 
-    def get_data_unit(self, phase = 'TRAIN'):
-        data_units = self.name_to_uid['data']
-        for du in data_units:
-            if not self._is_excluded(du, phase):
-                return self.units[du]
+    def start_eval_loss(self):
+        self.get_loss_units()[0].ff_y.start_eval()
+
+    def wait_for_eval_loss(self):
+        self.get_loss_units()[0].ff_y.wait_for_eval()
 
     def __str__(self):
         ret = 'digraph G {\n'
