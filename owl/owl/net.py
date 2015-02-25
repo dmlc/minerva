@@ -497,10 +497,13 @@ class Net:
                     else:
                         from_top[keys] = unit_to_btms[top][keys]
             self.units[u].backward(from_top, unit_to_btms[u], phase)
+
+    def update(self, uid, num_gpu):
+        self.units[uid].weight_update(self.current_lr, self.base_weight_decay, self.momentum, self.batch_size * num_gpu)
     
-    def weight_update(self, num_gpu = 1):
+    def weight_update(self, num_gpu):
         for i in range(len(self.units)):
-            self.units[i].weight_update(self.current_lr, self.base_weight_decay, self.momentum, self.batch_size * num_gpu)
+            update(i, num_gpu)
 
     def start_eval_loss(self):
         self.get_loss_units()[0].ff_y.start_eval()
