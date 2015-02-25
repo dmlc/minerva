@@ -23,13 +23,16 @@ class NetTrainer:
         builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
 
     def run(s):
-        gpu = [None] * s.num_gpu
+        gpu = [owl.create_gpu_device(i) for i in range(s.num_gpu)]
+        wgrad = [[] for i in range(s.num_gpu)]
+        bgrad = [[] for i in range(s.num_gpu)]
         for i in range(0, s.num_gpu):
-            gpu[i] = owl.create_gpu_device(i)
+            gpu.append(owl.create_gpu_device(i))
+            wgrad.append([])
+            bgrad.append([])
         last = time.time()
         wunits = s.owl_net.get_weighted_unit_ids()
-        wgrad = [[]] * s.num_gpu
-        bgrad = [[]] * s.num_gpu
+        last_start = time.time()
         
         for iteridx in range(s.snapshot * s.owl_net.solver.snapshot, s.owl_net.solver.max_iter):
             # get the learning rate 
@@ -49,16 +52,23 @@ class NetTrainer:
                 s.owl_net.start_eval_loss()
 
             # weight update
-            owl.set_device(gpu[-1]) #last gpu is for gradient accumulation
             for i in range(len(wunits)): 
                 wid = wunits[i]
-                for gid in range(s.num_gpu - 1): #last gpu is for gradient accumulation
-                    s.owl_net.units[wid].weightgrad += wgrad[gid][i]
-                    s.owl_net.units[wid].biasgrad += bgrad[gid][i]
-            s.owl_net.weight_update()
+                upd_gpu = i * num_gpu / len(wunits)
+                owl.set_device(gpu[upd_gpu])
+                for gid in range(s.num_gpu):
+                    if gid == upd_gpu:
+                        continue
+                    wgrad[upd_gpu][i] += wgrad[gid][i]
+                    bgrad[upd_gpu][i] += bgrad[gid][i]
+                s.owl_net.units[wid].weightgrad = wgrad[upd_gpu][i]
+                s.owl_net.units[wid].biasgrad = bgrad[upd_gpu][i]
+                s.owl_net.update(wid, s.num_gpu)
+            #s.owl_net.weight_update(num_gpu = s.num_gpu)
             s.owl_net.wait_for_eval_loss()
-            wgrad = [[]] * s.num_gpu # reset gradients
-            bgrad = [[]] * s.num_gpu
+            #s.owl_net.units[wunits[0]].weight.wait_for_eval()
+            wgrad = [[] for i in range(s.num_gpu)] # reset gradients
+            bgrad = [[] for i in range(s.num_gpu)]
 
             thistime = time.time() - last
             print "Finished training %d minibatch (time: %s)" % (iteridx, thistime)

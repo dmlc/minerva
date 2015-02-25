@@ -101,12 +101,13 @@ void ThreadedDevice::Execute(PhysicalOpNode* op_node, int thrid) {
   auto& op = op_node->op_;
 #ifndef NDEBUG
   CHECK_NOTNULL(op.compute_fn);
-  LOG(INFO) << Name() << " execute node #" << op_node->node_id() << ": " << op.compute_fn->Name();
   WallTimer calculate_timer;
   calculate_timer.Start();
+  LOG(INFO) << Name() << " execute node #" << op_node->node_id() << ": " << op.compute_fn->Name();
 #endif
   DoExecute(input_shards, output_shards, op, thrid);
 #ifndef NDEBUG
+  LOG(INFO) << Name() << " finished execute node #" << op_node->node_id() << ": " << op.compute_fn->Name();
   calculate_timer.Stop();
   MinervaSystem::Instance().profiler().RecordTime(TimerType::kCalculation, op_node->op_.compute_fn->Name(), calculate_timer);
 #endif
