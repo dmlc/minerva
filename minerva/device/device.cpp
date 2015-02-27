@@ -178,7 +178,7 @@ void GpuDevice::DoCopyRemoteData(float* dst, float* src, size_t size, int thrid)
 }
 
 void GpuDevice::DoExecute(const DataList& in, const DataList& out, PhysicalOp& op, int thrid) {
-  CudaRuntimeContext ctx;
+  Context ctx;
   ctx.impl_type = ImplType::kCuda;
   ctx.stream = stream_[thrid];
   ctx.cublas_handle = cublas_handle_[thrid];
