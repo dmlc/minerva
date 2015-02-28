@@ -343,12 +343,12 @@ class DataUnit(ComputeUnit):
         self.crop_size = params.transform_param.crop_size
         self.num_output = 3
         if params.include[0].phase == Phase.Value('TRAIN'):
-            self.dp = ImageNetDataProvider(params.transform_param.mean_file,
+            self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.transform_param.mean_value,
                     params.data_param.source,
                     params.data_param.batch_size / num_gpu,
                     params.transform_param.crop_size)
         else:
-            self.dp = ImageNetDataProvider(params.transform_param.mean_file,
+            self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.transform_param.mean_value,
                     params.data_param.source,
                     params.data_param.batch_size,
                     params.transform_param.crop_size)

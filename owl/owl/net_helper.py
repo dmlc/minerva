@@ -35,7 +35,7 @@ class CaffeNetBuilder:
         stacked_layers = {}
         rev_stacked_layers = {}
         top_name_to_layer = {}
-        # 1. record name and its caffe.LayerParameter data in a map
+        # 1. record name and its caffe.V1LayerParameter data in a map
         # 2. some layers is stacked into one in caffe's configure format
         for l in self.netconfig.layers:
             owl_struct = self._convert_type(l, num_gpu)
@@ -45,11 +45,11 @@ class CaffeNetBuilder:
                 
                 #handle IO, may need better         
                 ty = l.type
-                if ty == LayerParameter.LayerType.Value('DATA'):
+                if ty == V1LayerParameter.LayerType.Value('DATA'):
                     owl_net.batch_size = l.data_param.batch_size
-                elif ty == LayerParameter.LayerType.Value('SOFTMAX_LOSS'):
+                elif ty == V1LayerParameter.LayerType.Value('SOFTMAX_LOSS'):
                     owl_net.loss_uids.append(uid)
-                elif ty == LayerParameter.LayerType.Value('ACCURACY'):
+                elif ty == V1LayerParameter.LayerType.Value('ACCURACY'):
                     owl_net.accuracy_uids.append(uid)
                 
                 # stack issues
@@ -95,32 +95,32 @@ class CaffeNetBuilder:
 
     def _convert_type(self, caffe_layer, num_gpu):
         ty = caffe_layer.type
-        if ty == LayerParameter.LayerType.Value('DATA'):
+        if ty == V1LayerParameter.LayerType.Value('DATA'):
             return net.DataUnit(caffe_layer, num_gpu)
-        elif ty == LayerParameter.LayerType.Value('INNER_PRODUCT'):
+        elif ty == V1LayerParameter.LayerType.Value('INNER_PRODUCT'):
             return net.FullyConnection(caffe_layer)
-        elif ty == LayerParameter.LayerType.Value('CONVOLUTION'):
+        elif ty == V1LayerParameter.LayerType.Value('CONVOLUTION'):
             return net.ConvConnection(caffe_layer)
-        elif ty == LayerParameter.LayerType.Value('POOLING'):
+        elif ty == V1LayerParameter.LayerType.Value('POOLING'):
             return net.PoolingUnit(caffe_layer)
-        elif ty == LayerParameter.LayerType.Value('RELU'):
+        elif ty == V1LayerParameter.LayerType.Value('RELU'):
             return net.ReluUnit(caffe_layer)
-        elif ty == LayerParameter.LayerType.Value('SIGMOID'):
+        elif ty == V1LayerParameter.LayerType.Value('SIGMOID'):
             return net.SigmoidUnit(caffe_layer)
-        elif ty == LayerParameter.LayerType.Value('SOFTMAX_LOSS'):
+        elif ty == V1LayerParameter.LayerType.Value('SOFTMAX_LOSS'):
             return net.SoftmaxUnit(caffe_layer)
-        elif ty == LayerParameter.LayerType.Value('TANH'):
+        elif ty == V1LayerParameter.LayerType.Value('TANH'):
             return net.TanhUnit(caffe_layer)
-        elif ty == LayerParameter.LayerType.Value('DROPOUT'):
+        elif ty == V1LayerParameter.LayerType.Value('DROPOUT'):
             return net.DropoutUnit(caffe_layer)
-        elif ty == LayerParameter.LayerType.Value('LRN'):
+        elif ty == V1LayerParameter.LayerType.Value('LRN'):
             return net.LRNUnit(caffe_layer)
-        elif ty == LayerParameter.LayerType.Value('CONCAT'):
+        elif ty == V1LayerParameter.LayerType.Value('CONCAT'):
             return net.ConcatUnit(caffe_layer)
-        elif ty == LayerParameter.LayerType.Value('ACCURACY'):
+        elif ty == V1LayerParameter.LayerType.Value('ACCURACY'):
             return net.AccuracyUnit(caffe_layer)
         else:
-            print "Not implemented type:", LayerParameter.LayerType.Name(caffe_layer.type)
+            print "Not implemented type:", V1LayerParameter.LayerType.Name(caffe_layer.type)
             return None
     
     def init_net_from_file(self, owl_net, weightpath, epochidx):
@@ -210,7 +210,7 @@ class CaffeNetBuilder:
 class CaffeModelLoader:
     def __init__(self, model_file, status_file, weightdir, snapshot):
         netparam = NetParameter()
-        layerparam = LayerParameter()
+        layerparam = V1LayerParameter()
         with open(model_file, 'rb') as f:
             netparam.ParseFromString(f.read())
        
