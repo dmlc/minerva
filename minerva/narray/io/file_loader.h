@@ -19,7 +19,7 @@ struct FileLoaderClosure {
 };
 
 class FileLoaderOp :
-  public PhysicalComputeFn,
+  public ComputeFn,
   public ClosureTrait<FileLoaderClosure> {
  public:
   void Execute(const DataList&, const DataList&, const Context&);
