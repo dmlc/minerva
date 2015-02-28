@@ -1,9 +1,10 @@
 project(MinervaOwl)
 
 if (NOT HAS_PS)
+  find_package(PythonLibs)
   include_directories(
     ${MinervaLib_SOURCE_DIR}
-    /usr/include/python2.7 # Hacking for Python headers
+    ${PYTHON_INCLUDE_DIRS}
   )
 
   file(GLOB_RECURSE src_list "*.cpp")

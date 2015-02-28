@@ -6,16 +6,16 @@ include_directories(
 
 set(app_list "")
 
-if (NOT HAS_PS)
+if (NOT DISABLE_PS)
+  file(GLOB_RECURSE app_file_list "ps/*.cpp")
+else (NOT DISABLE_PS)
   if (CUDA_FOUND)
     file(GLOB app_file_list "*.cpp")
   else (CUDA_FOUND)
     #For CPU only.
     file(GLOB app_file_list "mnist_mlp.cpp")
   endif (CUDA_FOUND)
-else (NOT HAS_PS)
-  file(GLOB_RECURSE app_file_list "ps/*.cpp")
-endif (NOT HAS_PS)
+endif (NOT DISABLE_PS)
 
 foreach(app_src ${app_file_list})
   get_filename_component(app_name ${app_src} NAME_WE)

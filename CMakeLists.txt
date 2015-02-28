@@ -15,8 +15,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11")
 string(REPLACE "," ";" EXTERNAL_LIB_PATH "${EXTERN_LIB_PATH}")
 string(REPLACE "," ";" EXTERNAL_INCLUDE_PATH "${EXTERN_INCLUDE_PATH}")
 
-if (NOT DEFINED HAS_GPU OR HAS_GPU)
-  set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_ROOT})
+set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_ROOT})
+
+if (NOT DISABLE_CUDA)
   find_package(CUDA)
   if (CUDA_FOUND)
     message(STATUS "Compiling with CUDA support")
@@ -32,12 +33,16 @@ if (NOT DEFINED HAS_GPU OR HAS_GPU)
     set(CUDA_NVCC_FLAGS_RELEASE "-Xcompiler \\\"${CUDA_CONCAT_RELEASE}\\\"")
     set(CUDA_NVCC_FLAGS "-arch sm_35")
   endif (CUDA_FOUND)
-endif (NOT DEFINED HAS_GPU OR HAS_GPU)
+else ()
+  message(STATUS "CUDA disabled by user")
+endif()
 
-if (DEFINED HAS_PS AND HAS_PS)
+if (NOT DISABLE_PS)
   message(STATUS "Compiling with PS support")
   add_definitions(-DHAS_PS)
-endif (DEFINED HAS_PS AND HAS_PS)
+else (NOT DISABLE_PS)
+  message(STATUS "PS support disabled")
+endif (NOT DISABLE_PS)
 
 include_directories(
   SYSTEM ${EXTERNAL_INCLUDE_PATH}

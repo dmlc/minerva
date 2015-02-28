@@ -8,11 +8,13 @@
 #include "op/context.h"
 #include "common/cuda_utils.h"
 #include "device/pooled_data_store.h"
+#include "profiler/wall_timer.h"
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #include <cudnn.h>
 #endif
 
+//#undef NDEBUG
 #define DEFAULT_POOL_SIZE ((size_t) 5.8 * 1024 * 1024 * 1024)
 
 using namespace std;
@@ -62,6 +64,10 @@ void ThreadedDevice::FreeDataIfExist(uint64_t data_id) {
 void ThreadedDevice::Execute(PhysicalOpNode* op_node, int thrid) {
   PreExecute();
   DataList input_shards;
+#ifndef NDEBUG
+  WallTimer memory_timer;
+  memory_timer.Start();
+#endif
   for (auto i : op_node->inputs_) {
     auto& input_data = i->data_;
     if (input_data.device_id == device_id_) {  // Input is local
@@ -87,14 +93,30 @@ void ThreadedDevice::Execute(PhysicalOpNode* op_node, int thrid) {
     CHECK(local_data_.Insert(i->data_.data_id));
     output_shards.emplace_back(ptr, i->data_.size);
   }
+#ifndef NDEBUG
+  Barrier(thrid);
+  memory_timer.Stop();
+  MinervaSystem::Instance().profiler().RecordTime(TimerType::kMemory, op_node->op_.compute_fn->Name(), memory_timer);
+#endif
   auto& op = op_node->op_;
+#ifndef NDEBUG
   CHECK_NOTNULL(op.compute_fn);
-  DLOG(INFO) << Name() << " execute node #" << op_node->node_id() << ": " << op.compute_fn->Name();
+  LOG(INFO) << Name() << " execute node #" << op_node->node_id() << ": " << op.compute_fn->Name();
+  WallTimer calculate_timer;
+  calculate_timer.Start();
+#endif
   DoExecute(input_shards, output_shards, op, thrid);
+#ifndef NDEBUG
+  calculate_timer.Stop();
+  MinervaSystem::Instance().profiler().RecordTime(TimerType::kCalculation, op_node->op_.compute_fn->Name(), calculate_timer);
+#endif
   listener_->OnOperationComplete(op_node);
 }
 
 void ThreadedDevice::PreExecute() {
+}
+
+void ThreadedDevice::Barrier(int) {
 }
 
 #ifdef HAS_CUDA
@@ -146,6 +168,10 @@ void GpuDevice::PreExecute() {
   CUDA_CALL(cudaSetDevice(device_));
 }
 
+void GpuDevice::Barrier(int thrid) {
+  CUDA_CALL(cudaStreamSynchronize(stream_[thrid]));
+}
+
 void GpuDevice::DoCopyRemoteData(float* dst, float* src, size_t size, int thrid) {
   CUDA_CALL(cudaMemcpyAsync(dst, src, size, cudaMemcpyDefault, stream_[thrid]));
   CUDA_CALL(cudaStreamSynchronize(stream_[thrid]));
@@ -158,7 +184,7 @@ void GpuDevice::DoExecute(const DataList& in, const DataList& out, PhysicalOp& o
   ctx.cublas_handle = cublas_handle_[thrid];
   ctx.cudnn_handle = cudnn_handle_[thrid];
   op.compute_fn->Execute(in, out, ctx);
-  CUDA_CALL(cudaStreamSynchronize(stream_[thrid]));
+  CUDA_CALL_MSG(op.compute_fn->Name(), cudaStreamSynchronize(stream_[thrid]));
 }
 
 #endif

@@ -23,6 +23,9 @@ CXXFLAGS="$CXXFLAGS \
   -DEXTERN_LIB_PATH=$EXTERN_LIB_PATH \
   -DEXTERN_INCLUDE_PATH=$EXTERN_INCLUDE_PATH"
 
+DISABLE_PS=true
+DISABLE_CUDA=false
+
 while [ $# -gt 0 ]
 do
     case $1 in
@@ -30,10 +33,14 @@ do
             want_help=yes ;;
         -c | --clean)
             run_clean ;;
+        --disable-cuda)
+            DISABLE_CUDA=true; shift ;;
+        --enable-ps)
+            DISABLE_PS=false; shift ;;
         --prefix=*)
             CXXFLAGS="$CXXFLAGS -DCMAKE_INSTALL_PREFIX=`expr "x$1" : "x--prefix=\(.*\)"`"; shift ;;
         -D)
-            CXXFLAGS="$CXXFLAGS -D$2"; shift ;;
+            CXXFLAGS="$CXXFLAGS -D$2=ON"; shift ;;
         -D*)
             CXXFLAGS="$CXXFLAGS -D`expr "x$1" : "x-D\(.*\)"`" ;;
         *)
@@ -42,6 +49,19 @@ do
     shift
 done
 
+echo "DISABLE_PS=$DISABLE_PS"
+if $DISABLE_PS -e true; then
+  CXXFLAGS="$CXXFLAGS -DDISABLE_PS=ON"
+else
+  CXXFLAGS="$CXXFLAGS -DDISABLE_PS=OFF"
+fi
+
+if $DISABLE_CUDA -e true; then
+  CXXFLAGS="$CXXFLAGS -DDISABLE_CUDA=ON"
+else
+  CXXFLAGS="$CXXFLAGS -DDISABLE_CUDA=OFF"
+fi
+
 #================================ help description =============================
 if test "x$want_help" = xyes; then
     cat <<EOF
@@ -49,8 +69,10 @@ Usage: ./configure [OPTION]...
 Configurations:
     -h, --help              Display this help and exit
     -c, --clean             Clean up debug and release build
-    -Dvar=value             Specify definitions to be passed on to cmake
-	                    e.g: HAS_GPU, HAS_PS=1
+    --disable-cuda          Disable building with CUDA
+    --enable-pa             Enable building with PS
+    --prefix                Specify install path
+    -Dvar=value | -D value  Specify definitions to be passed on to cmake
 EOF
 exit 0;
 fi

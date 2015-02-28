@@ -62,8 +62,8 @@ void PrintTrainingAccuracy(NArray o, NArray t) {
 }
 
 int main(int argc, char** argv) {
+  MinervaSystem::Initialize(&argc, &argv);
   MinervaSystem& ms = MinervaSystem::Instance();
-  ms.Initialize(&argc, &argv);
   uint64_t cpuDevice = ms.CreateCpuDevice();
 #ifdef HAS_CUDA
   uint64_t gpuDevice = ms.CreateGpuDevice(0);

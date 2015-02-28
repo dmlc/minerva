@@ -156,6 +156,40 @@ NArray operator*(const NArray& lhs, const NArray& rhs) {
   return NArray::ComputeOne({lhs, rhs}, newsize, matmult_op);
 }
 
+NArray Concat(const std::vector<NArray>& arrays, int catdim) {
+	CHECK_GT(arrays[0].Size().NumDims(), catdim) << "can't concat on non-sense dim";
+	CHECK_GT(arrays.size(), 1) << "Concat more than one narray";
+	ConcatOp* op = new ConcatOp();
+	op->closure = {catdim}; 
+	int target_dim = 0;
+	for(size_t i = 0; i < arrays.size(); i++)
+		target_dim += arrays[i].Size()[catdim];
+	std::vector<int> sizevec(arrays[0].Size().NumDims(), 0);
+	for(size_t i = 0; i < sizevec.size(); i++) {
+		if(i == (size_t)catdim)
+			sizevec[i] = target_dim;
+		else
+			sizevec[i] = arrays[0].Size()[i]; 
+	}
+	return NArray::ComputeOne(arrays, Scale(sizevec), op);
+}
+
+NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count)
+{
+	CHECK_GT(src.Size().NumDims(), slice_dim) << "can't concat on non-sense dim";
+	std::vector<int> sizevec(src.Size().NumDims(), 0);
+	for(size_t i = 0; i < sizevec.size(); i++) {
+		if(i == (size_t)slice_dim)
+			sizevec[i] = slice_count;
+		else
+			sizevec[i] = src.Size()[i]; 
+	}
+	SliceOp* op = new SliceOp();
+	op->closure = {slice_dim, st_off, slice_count};
+	return NArray::ComputeOne({src}, Scale(sizevec), op);
+}
+
+
 NArray& NArray::operator*=(const NArray& rhs) {
   return *this = (*this * rhs);
 }
@@ -186,7 +220,7 @@ NArray NArray::NormArithmetic(const NArray& rhs, ArithmeticType type) const {
       LOG(FATAL) << "NormArithmetic cannot replicate a dimension that is not 1";
     } else {
       dims_to_replicate.push_back(i);
-    }
+	}
   }
   CHECK_GT(dims_to_replicate.size(), 0) << "nothing to replicate";
   NormArithmeticOp* op = new NormArithmeticOp();

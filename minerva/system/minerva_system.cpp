@@ -26,30 +26,13 @@ void MinervaSystem::UniversalMemcpy(pair<Device::MemType, float*> to, pair<Devic
 }
 
 MinervaSystem::~MinervaSystem() {
-}
-
-void MinervaSystem::Initialize(int* argc, char*** argv) {
-#ifndef HAS_PS
-  // workaround
-  // glog is initialized in PS::main, and also here, so we will hit a 
-  // double-initalize error when compiling with PS
-  google::InitGoogleLogging((*argv)[0]);
-#endif
-  physical_dag_ = new PhysicalDag();
-  dag_scheduler_ = new DagScheduler(physical_dag_);
-  device_manager_ = new DeviceManager(dag_scheduler_);
-  current_device_id_ = 0;
-  LoadBuiltinDagMonitors();
-}
-
-void MinervaSystem::Finalize() {
   dag_scheduler_->WaitForFinish();
   physical_dag_->ClearMonitor();
   delete device_manager_;
+  delete profiler_;
   delete dag_scheduler_;
   delete physical_dag_;
   google::ShutdownGoogleLogging();
-  ShutDown();
 }
 
 uint64_t MinervaSystem::CreateCpuDevice() {
@@ -60,6 +43,10 @@ uint64_t MinervaSystem::CreateCpuDevice() {
 
 uint64_t MinervaSystem::CreateGpuDevice(int gid) {
   return device_manager_->CreateGpuDevice(gid);
+}
+
+int MinervaSystem::GetGpuDeviceCount() {
+  return device_manager_->GetGpuDeviceCount();
 }
 
 #endif
@@ -115,7 +102,19 @@ uint64_t MinervaSystem::GenerateDataId() {
   return data_id++;
 }
 
-MinervaSystem::MinervaSystem() {
+MinervaSystem::MinervaSystem(int* argc, char*** argv) {
+#ifndef HAS_PS
+  // workaround
+  // glog is initialized in PS::main, and also here, so we will hit a 
+  // double-initalize error when compiling with PS
+  google::InitGoogleLogging((*argv)[0]);
+#endif
+  physical_dag_ = new PhysicalDag();
+  dag_scheduler_ = new DagScheduler(physical_dag_);
+  profiler_ = new ExecutionProfiler();
+  device_manager_ = new DeviceManager(dag_scheduler_);
+  current_device_id_ = 0;
+  LoadBuiltinDagMonitors();
 }
 
 void MinervaSystem::LoadBuiltinDagMonitors() {

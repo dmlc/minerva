@@ -42,4 +42,8 @@ INSTALL_DATAGEN_FN(ArrayLoaderClosure, basic::ArrayLoader, NO_IMPL, cuda::ArrayL
 INSTALL_DATAGEN_FN(RandnClosure, basic::Randn, NO_IMPL, cuda::Randn);
 INSTALL_DATAGEN_FN(RandBernoulliClosure, basic::RandBernoulli, NO_IMPL, cuda::RandBernoulli);
 INSTALL_DATAGEN_FN(FillClosure, basic::Fill, NO_IMPL, cuda::Fill);
+INSTALL_COMPUTE_FN(LRNForwardClosure, NO_IMPL, NO_IMPL, cuda::LRNForward);
+INSTALL_COMPUTE_FN(LRNBackwardClosure, NO_IMPL, NO_IMPL, cuda::LRNBackward);
+INSTALL_COMPUTE_FN(ConcatClosure, NO_IMPL, NO_IMPL, cuda::Concat);
+INSTALL_COMPUTE_FN(SliceClosure, NO_IMPL, NO_IMPL, cuda::Slice);
 }  // namespace minerva

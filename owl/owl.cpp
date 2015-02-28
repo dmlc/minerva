@@ -4,13 +4,12 @@
 #include <boost/python/args.hpp>
 #include <boost/numpy.hpp>
 #include <boost/numpy/ndarray.hpp>
-
 #include <glog/logging.h>
-
 #include <iostream>
-using namespace std;
-
+#include <fstream>
 #include "minerva.h"
+
+using namespace std;
 
 namespace m = minerva;
 namespace bp = boost::python;
@@ -24,17 +23,25 @@ void Initialize(bp::list args) {
   for (int i = 0; i < argc; i++) {
     argv[i] = bp::extract<char*>(args[i]);
   }
-  m::MinervaSystem::Instance().Initialize(&argc, &argv);
+  m::MinervaSystem::Initialize(&argc, &argv);
 }
 
 uint64_t CreateCpuDevice() {
-  return m::MinervaSystem::Instance().device_manager().CreateCpuDevice();
+  return m::MinervaSystem::Instance().CreateCpuDevice();
 }
+
 #ifdef HAS_CUDA
+
 uint64_t CreateGpuDevice(int id) {
-  return m::MinervaSystem::Instance().device_manager().CreateGpuDevice(id);
+  return m::MinervaSystem::Instance().CreateGpuDevice(id);
 }
+
+int GetGpuDeviceCount() {
+  return m::MinervaSystem::Instance().GetGpuDeviceCount();
+}
+
 #endif
+
 void SetDevice(uint64_t id) {
   m::MinervaSystem::Instance().current_device_id_ = id;
 }
@@ -72,18 +79,7 @@ m::NArray ReshapeWrapper(m::NArray narr, const bp::list& s) {
   return narr.Reshape(ToScale(s));
 }
 
-/*m::NArray MakeNArrayWrapper(const bp::list& s, bp::list& val) {
-  std::vector<float> v = std::vector<float>(bp::stl_input_iterator<float>(val), bp::stl_input_iterator<float>());
-  size_t length = bp::len(val);
-  shared_ptr<float> data( new float[length], [] (float* ptr) { delete [] ptr; } );
-  memcpy(data.get(), v.data(), sizeof(float) * length);
-//  for(size_t i = 0; i < length; ++i) {
-//    valptr.get()[i] = bp::extract<float>(val[i] * 1.0);
-//  }
-  return m::NArray::MakeNArray(ToScale(s), data);
-}*/
-
-m::NArray FromNPArrayWrapper(np::ndarray nparr) {
+m::NArray FromNumpyWrapper(np::ndarray nparr) {
   CHECK(nparr.get_flags() & np::ndarray::C_CONTIGUOUS) << "MakeNArray needs c-contiguous numpy array";
   CHECK(np::equivalent(nparr.get_dtype(), np::dtype::get_builtin<float>())) << "MakeNArray needs float32 numpy array";
   int nd = nparr.get_nd();
@@ -96,7 +92,7 @@ m::NArray FromNPArrayWrapper(np::ndarray nparr) {
   memcpy(data.get(), reinterpret_cast<float*>(nparr.get_data()), sizeof(float) * length);
   return m::NArray::MakeNArray(shape, data);
 }
-  
+
 np::ndarray NArrayToNPArray(m::NArray narr) {
   std::shared_ptr<float> v = narr.Get();
   m::Scale shape = narr.Size();
@@ -118,14 +114,25 @@ bp::list ShapeWrapper(m::NArray narr) {
   return ToPythonList(narr.Size());
 }
 
-bp::list NArrayToList(m::NArray narr) {
-  bp::list l;
-  std::shared_ptr<float> v = narr.Get();
-  for(int i = 0; i < narr.Size().Prod(); ++i)
-    l.append(v.get()[i]);
-  return l;
+//////////////////////////////// profiler & debug
+void PrintProfilerResult() {
+  m::MinervaSystem::Instance().profiler().PrintResult();
 }
 
+void ResetProfilerResult() {
+  m::MinervaSystem::Instance().profiler().Reset();
+}
+
+void PrintDagToFile(bp::str filename) {
+  const std::string& dag_str = m::MinervaSystem::Instance().physical_dag().PrintDag<m::AllInfoPrinter>();
+  char* fname = bp::extract<char*>(filename);
+  std::ofstream fout(fname);
+  fout << dag_str << std::endl;
+  fout.flush();
+  fout.close();
+}
+
+////////////////////////////// cudnn
 m::NArray ConvForward(m::NArray src, m::NArray filter, m::NArray bias, m::ConvInfo info) {
   return m::Convolution::ConvForward(m::ImageBatch(src), m::Filter(filter), bias, info);
 }
@@ -142,12 +149,12 @@ m::NArray PoolingBackward(m::NArray diff, m::NArray top, m::NArray bottom, m::Po
   return m::Convolution::PoolingBackward(m::ImageBatch(diff), m::ImageBatch(top), m::ImageBatch(bottom), info);
 }
 
-m::NArray ConvBackwardData(m::NArray diff, m::NArray filter, m::ConvInfo info) {
-  return m::Convolution::ConvBackwardData(m::ImageBatch(diff), m::Filter(filter), info);
+m::NArray ConvBackwardData(m::NArray diff, m::NArray bottom, m::NArray filter, m::ConvInfo info) {
+  return m::Convolution::ConvBackwardData(m::ImageBatch(diff), m::ImageBatch(bottom), m::Filter(filter), info);
 }
 
-m::NArray ConvBackwardFilter(m::NArray diff, m::NArray bottom, m::ConvInfo info) {
-  return m::Convolution::ConvBackwardFilter(m::ImageBatch(diff), m::ImageBatch(bottom), info);
+m::NArray ConvBackwardFilter(m::NArray diff, m::NArray bottom, m::NArray filter, m::ConvInfo info) {
+  return m::Convolution::ConvBackwardFilter(m::ImageBatch(diff), m::ImageBatch(bottom), m::Filter(filter), info);
 }
 
 m::NArray ConvBackwardBias(m::NArray diff) {
@@ -166,6 +173,26 @@ m::NArray SoftmaxBackward(m::NArray diff, m::NArray top, m::SoftmaxAlgorithm alg
   return m::Convolution::SoftmaxBackward(m::ImageBatch(diff), m::ImageBatch(top), algo);
 }
 
+m::NArray LRNForward(m::NArray src, m::NArray scale, int local_size, float alpha, float beta) {
+  return m::Convolution::LRNForward(m::ImageBatch(src), m::ImageBatch(scale), local_size, alpha, beta);
+}
+
+m::NArray LRNBackward(m::NArray bottom_data, m::NArray top_data, m::NArray scale, m::NArray top_diff, int local_size, float alpha, float beta) {
+  return m::Convolution::LRNBackward(m::ImageBatch(bottom_data), m::ImageBatch(top_data), m::ImageBatch(scale), m::ImageBatch(top_diff), local_size, alpha, beta);
+}
+
+
+m::NArray Concat(const bp::list& arrays, int concat_dim){
+	std::vector<m::NArray> Narrays;
+	for(int i = 0; i < len(arrays); i++)
+		Narrays.push_back(bp::extract<m::NArray>(arrays[i]));	
+	return m::Concat(Narrays, concat_dim);
+}
+
+m::NArray Slice(const m::NArray src, int slice_dim, int st_off, int slice_count){
+	return m::Slice(src, slice_dim, st_off, slice_count);
+}
+
 } // end of namespace owl
 
 // python module
@@ -173,12 +200,12 @@ BOOST_PYTHON_MODULE(libowl) {
   using namespace boost::python;
   np::initialize();
 
-  enum_<m::ArithmeticType>("arithmetic")
+  /*enum_<m::ArithmeticType>("arithmetic")
     .value("add", m::ArithmeticType::kAdd)
     .value("sub", m::ArithmeticType::kSub)
     .value("mul", m::ArithmeticType::kMult)
     .value("div", m::ArithmeticType::kDiv)
-  ;
+  ;*/
 
   //float (m::NArray::*sum0)() const = &m::NArray::Sum;
   m::NArray (m::NArray::*sum1)(int) const = &m::NArray::Sum;
@@ -220,13 +247,13 @@ BOOST_PYTHON_MODULE(libowl) {
     //.def("max", max0) TODO not implemented yet
     .def("max", max1)
     .def("max", max2)
-    .def("max_index", &m::NArray::MaxIndex)
+    .def("argmax", &m::NArray::MaxIndex)
     .def("count_zero", &m::NArray::CountZero)
     // normalize
-    .def("norm_arithmetic", &m::NArray::NormArithmetic)
+    //.def("norm_arithmetic", &m::NArray::NormArithmetic)
     // misc
     .def("trans", &m::NArray::Trans)
-    .def("tonparray", &owl::NArrayToNPArray)
+    .def("to_numpy", &owl::NArrayToNPArray)
     .def("reshape", &owl::ReshapeWrapper)
     .def("wait_for_eval", &m::NArray::WaitForEval)
     .def("start_eval", &m::NArray::StartEval)
@@ -238,15 +265,20 @@ BOOST_PYTHON_MODULE(libowl) {
   def("randn", &owl::RandnWrapper);
   //def("make_narray", &owl::MakeNArrayWrapper);
   def("randb", &owl::RandBernoulliWrapper);
-  def("from_nparray", &owl::FromNPArrayWrapper);
+  def("from_numpy", &owl::FromNumpyWrapper);
 
   // system
   def("initialize", &owl::Initialize);
+  def("finalize", &m::MinervaSystem::Finalize);
   def("create_cpu_device", &owl::CreateCpuDevice);
 #ifdef HAS_CUDA
   def("create_gpu_device", &owl::CreateGpuDevice);
+  def("get_gpu_device_count", &owl::GetGpuDeviceCount);
 #endif
   def("set_device", &owl::SetDevice);
+  def("print_profiler_result", &owl::PrintProfilerResult);
+  def("reset_profiler_result", &owl::ResetProfilerResult);
+  def("print_dag_to_file", &owl::PrintDagToFile);
 
   // elewise
   def("mult", &m::Elewise::Mult);
@@ -257,9 +289,9 @@ BOOST_PYTHON_MODULE(libowl) {
   def("sigm_back", &m::Elewise::SigmoidBackward);
   def("relu", &m::Elewise::ReluForward);
   def("relu_back", &m::Elewise::ReluBackward);
-  def("tahn", &m::Elewise::TanhForward);
-  def("tahn_back", &m::Elewise::TanhBackward);
-  
+  def("tanh", &m::Elewise::TanhForward);
+  def("tanh_back", &m::Elewise::TanhBackward);
+
   // convolution
   class_<m::ConvInfo>("ConvInfo")
     .def_readwrite("pad_height", &m::ConvInfo::pad_height)
@@ -272,6 +304,8 @@ BOOST_PYTHON_MODULE(libowl) {
     .def_readwrite("width", &m::PoolingInfo::width)
     .def_readwrite("stride_vertical", &m::PoolingInfo::stride_vertical)
     .def_readwrite("stride_horizontal", &m::PoolingInfo::stride_horizontal)
+    .def_readwrite("pad_height", &m::PoolingInfo::pad_height)
+    .def_readwrite("pad_width", &m::PoolingInfo::pad_width)
     .def_readwrite("algorithm", &m::PoolingInfo::algorithm)
     ;
   enum_<m::ActivationAlgorithm>("activation_algo")
@@ -298,5 +332,8 @@ BOOST_PYTHON_MODULE(libowl) {
   def("conv_backward_bias", &owl::ConvBackwardBias);
   def("activation_backward", &owl::ActivationBackward);
   def("softmax_backward", &owl::SoftmaxBackward);
+  def("lrn_forward", &owl::LRNForward);
+  def("lrn_backward", &owl::LRNBackward);
+  def("concat", &owl::Concat);
+  def("slice", &owl::Slice);
 }
-
