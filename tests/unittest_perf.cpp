@@ -27,7 +27,7 @@ TEST(PerfTest, LongChain) {
   a.WaitForEval();
 }
 
-class AddOneManyTimesOp : public PhysicalComputeFn {
+class AddOneManyTimesOp : public ComputeFn {
  public:
   void Execute(const DataList& inputs, const DataList& outputs, const Context&) {
     float* src = inputs[0].data();

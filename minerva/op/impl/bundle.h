@@ -1,7 +1,7 @@
 #pragma once
-#include "basic.h"
+#include "op/impl/basic.h"
 #include "op/impl/cuda.h"
-#include "impl.h"
+#include "op/impl/impl.h"
 #include <glog/logging.h>
 
 namespace minerva {

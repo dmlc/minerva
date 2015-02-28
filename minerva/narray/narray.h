@@ -26,14 +26,14 @@ class NArray {
   static std::vector<NArray> Compute(
       const std::vector<NArray>& params,
       const std::vector<Scale>& result_sizes,
-      PhysicalComputeFn* fn);
+      ComputeFn* fn);
   static NArray ComputeOne(
       const std::vector<NArray>& params,
       const Scale& size,
-      PhysicalComputeFn* fn);
+      ComputeFn* fn);
   static NArray GenerateOne(
       const Scale& size,
-      PhysicalComputeFn* fn);
+      ComputeFn* fn);
   // Constructors and destructors
   NArray();
   NArray(const NArray&);
