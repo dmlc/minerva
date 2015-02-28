@@ -21,13 +21,13 @@ class DataShard {
 
 typedef std::vector<DataShard> DataList;
 
-class PhysicalComputeFn : public BasicFn, public DeviceIdTrait {
+class ComputeFn : public BasicFn, public DeviceIdTrait {
  public:
   virtual void Execute(const DataList&, const DataList&, const Context&) = 0;
 };
 
 template<typename Closure>
-class PhyComputeFnWithClosure : public PhysicalComputeFn, public ClosureTrait<Closure> {
+class ComputeFnWithClosure : public ComputeFn, public ClosureTrait<Closure> {
  public:
   void Execute(const DataList& inputs, const DataList& outputs, const Context& context) {
     FnBundle<Closure>::Call(inputs, outputs, ClosureTrait<Closure>::closure, context);
@@ -35,7 +35,7 @@ class PhyComputeFnWithClosure : public PhysicalComputeFn, public ClosureTrait<Cl
 };
 
 template<typename Closure>
-class PhyDataGenFnWithClosure : public PhysicalComputeFn, public ClosureTrait<Closure> {
+class PhyDataGenFnWithClosure : public ComputeFn, public ClosureTrait<Closure> {
  public:
   void Execute(const DataList&, const DataList& outputs, const Context& context) {
     FnBundle<Closure>::Call(outputs, ClosureTrait<Closure>::closure, context);

@@ -56,7 +56,7 @@ NArray NArray::MakeNArray(const Scale& size, shared_ptr<float> array) {
 vector<NArray> NArray::Compute(
     const vector<NArray>& params,
     const vector<Scale>& result_sizes,
-    PhysicalComputeFn* fn) {
+    ComputeFn* fn) {
   auto& physical_dag = MinervaSystem::Instance().physical_dag();
   auto current_device_id = MinervaSystem::Instance().current_device_id_;
   auto rst = Map<NArray>(result_sizes, [&](const Scale& size) {
@@ -73,7 +73,7 @@ vector<NArray> NArray::Compute(
   return rst;
 }
 
-NArray NArray::ComputeOne(const vector<NArray>& params, const Scale& size, PhysicalComputeFn* fn) {
+NArray NArray::ComputeOne(const vector<NArray>& params, const Scale& size, ComputeFn* fn) {
   auto& physical_dag = MinervaSystem::Instance().physical_dag();
   auto current_device_id = MinervaSystem::Instance().current_device_id_;
   auto rst = NArray(physical_dag.NewDataNode(PhysicalData(size, current_device_id, MinervaSystem::Instance().GenerateDataId())));
@@ -85,7 +85,7 @@ NArray NArray::ComputeOne(const vector<NArray>& params, const Scale& size, Physi
   return rst;
 }
 
-NArray NArray::GenerateOne(const Scale& size, PhysicalComputeFn* fn) {
+NArray NArray::GenerateOne(const Scale& size, ComputeFn* fn) {
   return NArray::ComputeOne({}, size, fn);
 }
 

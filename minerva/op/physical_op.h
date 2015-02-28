@@ -42,21 +42,21 @@ class FillOp : public PhyDataGenFnWithClosure<FillClosure> {
 };
 
 // Compute functions
-class MatMultOp : public PhyComputeFnWithClosure<MatMultClosure> {
+class MatMultOp : public ComputeFnWithClosure<MatMultClosure> {
  public:
   std::string Name() const {
     return "*";
   }
 };
 
-class TransOp : public PhyComputeFnWithClosure<TransposeClosure> {
+class TransOp : public ComputeFnWithClosure<TransposeClosure> {
  public:
   std::string Name() const {
     return "trans";
   }
 };
 
-class ReductionOp : public PhyComputeFnWithClosure<ReductionClosure> {
+class ReductionOp : public ComputeFnWithClosure<ReductionClosure> {
  public:
   std::string Name() const {
    switch (closure.type) {
@@ -69,21 +69,21 @@ class ReductionOp : public PhyComputeFnWithClosure<ReductionClosure> {
   }
 };
 
-class MaxIndexOp : public PhyComputeFnWithClosure<MaxIndexClosure> {
+class MaxIndexOp : public ComputeFnWithClosure<MaxIndexClosure> {
  public:
   std::string Name() const {
     return "max index";
   }
 };
 
-class ReshapeOp : public PhyComputeFnWithClosure<ReshapeClosure> {
+class ReshapeOp : public ComputeFnWithClosure<ReshapeClosure> {
  public:
   std::string Name() const {
     return "reshape";
   }
 };
 
-class ElewiseOp : public PhyComputeFnWithClosure<ElewiseClosure> {
+class ElewiseOp : public ComputeFnWithClosure<ElewiseClosure> {
  public:
   std::string Name() const {
     switch(closure.type) {
@@ -95,7 +95,7 @@ class ElewiseOp : public PhyComputeFnWithClosure<ElewiseClosure> {
   }
 };
 
-class ArithmeticOp : public PhyComputeFnWithClosure<ArithmeticClosure> {
+class ArithmeticOp : public ComputeFnWithClosure<ArithmeticClosure> {
  public:
   std::string Name() const {
     switch(closure.type) {
@@ -108,7 +108,7 @@ class ArithmeticOp : public PhyComputeFnWithClosure<ArithmeticClosure> {
   }
 };
 
-class ArithmeticConstOp : public PhyComputeFnWithClosure<ArithmeticConstClosure> {
+class ArithmeticConstOp : public ComputeFnWithClosure<ArithmeticConstClosure> {
  public:
   std::string Name() const {
     std::stringstream ss;
@@ -128,7 +128,7 @@ class ArithmeticConstOp : public PhyComputeFnWithClosure<ArithmeticConstClosure>
   }
 };
 
-class NormArithmeticOp : public PhyComputeFnWithClosure<NormArithmeticClosure> {
+class NormArithmeticOp : public ComputeFnWithClosure<NormArithmeticClosure> {
  public:
   std::string Name() const {
     std::stringstream ss;
@@ -151,49 +151,49 @@ class NormArithmeticOp : public PhyComputeFnWithClosure<NormArithmeticClosure> {
   }
 };
 
-class SigmoidForwardOp : public PhyComputeFnWithClosure<SigmoidForwardClosure> {
+class SigmoidForwardOp : public ComputeFnWithClosure<SigmoidForwardClosure> {
  public:
   std::string Name() const {
     return "sigmoid forward";
   }
 };
 
-class SigmoidBackwardOp : public PhyComputeFnWithClosure<SigmoidBackwardClosure> {
+class SigmoidBackwardOp : public ComputeFnWithClosure<SigmoidBackwardClosure> {
  public:
   std::string Name() const {
     return "sigmoid backward";
   }
 };
 
-class ReluForwardOp : public PhyComputeFnWithClosure<ReluForwardClosure> {
+class ReluForwardOp : public ComputeFnWithClosure<ReluForwardClosure> {
  public:
   std::string Name() const {
     return "relu forward";
   }
 };
 
-class ReluBackwardOp : public PhyComputeFnWithClosure<ReluBackwardClosure> {
+class ReluBackwardOp : public ComputeFnWithClosure<ReluBackwardClosure> {
  public:
   std::string Name() const {
     return "relu backward";
   }
 };
 
-class TanhForwardOp : public PhyComputeFnWithClosure<TanhForwardClosure> {
+class TanhForwardOp : public ComputeFnWithClosure<TanhForwardClosure> {
  public:
   std::string Name() const {
     return "tanh forward";
   }
 };
 
-class TanhBackwardOp : public PhyComputeFnWithClosure<TanhBackwardClosure> {
+class TanhBackwardOp : public ComputeFnWithClosure<TanhBackwardClosure> {
  public:
   std::string Name() const {
     return "tanh backward";
   }
 };
 
-class ConvForwardOp : public PhyComputeFnWithClosure<ConvForwardClosure> {
+class ConvForwardOp : public ComputeFnWithClosure<ConvForwardClosure> {
  public:
   std::string Name() const {
     std::stringstream ss;
@@ -204,7 +204,7 @@ class ConvForwardOp : public PhyComputeFnWithClosure<ConvForwardClosure> {
   }
 };
 
-class ConvBackwardDataOp : public PhyComputeFnWithClosure<ConvBackwardDataClosure> {
+class ConvBackwardDataOp : public ComputeFnWithClosure<ConvBackwardDataClosure> {
  public:
   std::string Name() const {
     std::stringstream ss;
@@ -215,7 +215,7 @@ class ConvBackwardDataOp : public PhyComputeFnWithClosure<ConvBackwardDataClosur
   }
 };
 
-class ConvBackwardFilterOp : public PhyComputeFnWithClosure<ConvBackwardFilterClosure> {
+class ConvBackwardFilterOp : public ComputeFnWithClosure<ConvBackwardFilterClosure> {
  public:
   std::string Name() const {
     std::stringstream ss;
@@ -226,14 +226,14 @@ class ConvBackwardFilterOp : public PhyComputeFnWithClosure<ConvBackwardFilterCl
   }
 };
 
-class ConvBackwardBiasOp : public PhyComputeFnWithClosure<ConvBackwardBiasClosure> {
+class ConvBackwardBiasOp : public ComputeFnWithClosure<ConvBackwardBiasClosure> {
  public:
   std::string Name() const {
     return "conv bp bias";
   }
 };
 
-class SoftmaxForwardOp : public PhyComputeFnWithClosure<SoftmaxForwardClosure> {
+class SoftmaxForwardOp : public ComputeFnWithClosure<SoftmaxForwardClosure> {
  public:
   std::string Name() const {
     switch (closure.algorithm) {
@@ -246,7 +246,7 @@ class SoftmaxForwardOp : public PhyComputeFnWithClosure<SoftmaxForwardClosure> {
   }
 };
 
-class SoftmaxBackwardOp : public PhyComputeFnWithClosure<SoftmaxBackwardClosure> {
+class SoftmaxBackwardOp : public ComputeFnWithClosure<SoftmaxBackwardClosure> {
  public:
   std::string Name() const {
     switch (closure.algorithm) {
@@ -259,7 +259,7 @@ class SoftmaxBackwardOp : public PhyComputeFnWithClosure<SoftmaxBackwardClosure>
   }
 };
 
-class ActivationForwardOp : public PhyComputeFnWithClosure<ActivationForwardClosure> {
+class ActivationForwardOp : public ComputeFnWithClosure<ActivationForwardClosure> {
  public:
   std::string Name() const {
     switch (closure.algorithm) {
@@ -274,7 +274,7 @@ class ActivationForwardOp : public PhyComputeFnWithClosure<ActivationForwardClos
   }
 };
 
-class ActivationBackwardOp : public PhyComputeFnWithClosure<ActivationBackwardClosure> {
+class ActivationBackwardOp : public ComputeFnWithClosure<ActivationBackwardClosure> {
  public:
   std::string Name() const {
     switch (closure.algorithm) {
@@ -289,7 +289,7 @@ class ActivationBackwardOp : public PhyComputeFnWithClosure<ActivationBackwardCl
   }
 };
 
-class PoolingForwardOp : public PhyComputeFnWithClosure<PoolingForwardClosure> {
+class PoolingForwardOp : public ComputeFnWithClosure<PoolingForwardClosure> {
  public:
   std::string Name() const {
     std::stringstream ss;
@@ -307,7 +307,7 @@ class PoolingForwardOp : public PhyComputeFnWithClosure<PoolingForwardClosure> {
   }
 };
 
-class PoolingBackwardOp : public PhyComputeFnWithClosure<PoolingBackwardClosure> {
+class PoolingBackwardOp : public ComputeFnWithClosure<PoolingBackwardClosure> {
  public:
   std::string Name() const {
     std::stringstream ss;
@@ -325,28 +325,28 @@ class PoolingBackwardOp : public PhyComputeFnWithClosure<PoolingBackwardClosure>
   }
 };
 
-class LRNForwardOp : public PhyComputeFnWithClosure<LRNForwardClosure> {
+class LRNForwardOp : public ComputeFnWithClosure<LRNForwardClosure> {
  public:
   std::string Name() const {
     return "LRN Forward";
   }
 };
 
-class LRNBackwardOp : public PhyComputeFnWithClosure<LRNBackwardClosure> {
+class LRNBackwardOp : public ComputeFnWithClosure<LRNBackwardClosure> {
  public:
   std::string Name() const {
     return "LRN Backward";
   }
 };
 
-class ConcatOp : public PhyComputeFnWithClosure<ConcatClosure> {
+class ConcatOp : public ComputeFnWithClosure<ConcatClosure> {
  public:
   std::string Name() const {
     return "Concat";
   }
 };
 
-class SliceOp : public PhyComputeFnWithClosure<SliceClosure> {
+class SliceOp : public ComputeFnWithClosure<SliceClosure> {
  public:
   std::string Name() const {
     return "Slice";
