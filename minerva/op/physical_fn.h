@@ -4,15 +4,16 @@
 #include "op/physical.h"
 #include "op/device_id_trait.h"
 #include "op/context.h"
+#include "op/impl/impl.h"
 
 namespace minerva {
 
 class DataShard {
  public:
-  DataShard(float* data, const Scale& size);
+  DataShard(float* data, const Scale& size): data_(data), size_(size) {}
   // Getters
-  const Scale& size() const;
-  float* data() const;
+  const Scale& size() const { return size_; }
+  float* data() const { return data_; }
 
  private:
   float* data_;
