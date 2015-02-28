@@ -93,9 +93,8 @@ class NetTrainer:
             
             # decide whether to save model
             if (iteridx + 1) % (s.owl_net.solver.snapshot) == 0:
-                print "Save to snapshot %d, current lr %f" % ((iteridx + 1) / (s.owl_net.solver.snapshot) + s.snapshot, s.owl_net.current_lr)
-                builder.save_net_to_file(s.owl_net, s.snapshot_dir, (iteridx + 1) / (s.owl_net.solver.snapshot) + s.snapshot)
-                #print s.owl_net.current_lr
+                print "Save to snapshot %d, current lr %f" % ((iteridx + 1) / (s.owl_net.solver.snapshot), s.owl_net.current_lr)
+                builder.save_net_to_file(s.owl_net, s.snapshot_dir, (iteridx + 1) / (s.owl_net.solver.snapshot))
             sys.stdout.flush()
 
 def print_help_and_exit():
