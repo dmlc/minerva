@@ -18,6 +18,62 @@ DagScheduler::~DagScheduler() {
   dispatcher_.join();
 }
 
+/////////////////////////////////////////////// backend interfaces
+class MDataDag : public MData {
+ public:
+  MDataDag(PhysicalDataNode* n): data_node(n) {}
+  Scale shape() const override {
+    return data_node->data_.size;
+  }
+  PhysicalDataNode* data_node;
+};
+
+std::vector<MData*> DagScheduler::Create(const std::vector<MData*>& params, 
+    const std::vector<Scale>& result_sizes, ComputeFn* fn)  {
+  auto current_device_id = MinervaSystem::Instance().current_device_id_;
+  auto rst_data_nodes = Map<PhysicalDataNode*>(result_sizes, [&](const Scale& size) {
+    return dag_->NewDataNode(PhysicalData(size, current_device_id, MinervaSystem::Instance().GenerateDataId()));
+  });
+  auto param_data_nodes = Map<PhysicalDataNode*>(params, [](MData* i) {
+    return dynamic_cast<MDataDag*>(i)->data_node;
+  });
+  fn->device_id = current_device_id;
+  dag_->NewOpNode(param_data_nodes, rst_data_nodes, {fn});
+  return Map<MData*>(rst_data_nodes, [](PhysicalDataNode* n) { return new MDataDag(n); }); // TODO memory leak
+}
+//virtual MData* RecordCreateInplace(MData* param, ComputeFn* fn) = 0;
+void DagScheduler::ShallowCopy(MData*& to, MData* from)  {
+  if(to) {
+    Destroy(to);
+  }
+  to = from;
+  // TODO incr rc
+}
+void DagScheduler::Destroy(MData* data)  {
+  if (data) {
+    // decr rc TODO
+    // delete
+    delete data;
+  }
+}
+void DagScheduler::Issue(MData* data)  {
+}
+void DagScheduler::Wait(MData* data)  {
+  uint64_t node_id = dynamic_cast<MDataDag*>(data)->data_node->node_id();
+  unique_lock<mutex> lck(finish_mutex_);
+  target_ = node_id;
+  while (rt_info_.GetState(node_id) != NodeState::kCompleted) {
+    finish_cond_.wait(lck);
+  }
+  target_ = -1;
+}
+//void Wait(const std::vector<MData*>& ) = 0;
+void DagScheduler::WaitForAll()  {
+}
+std::shared_ptr<float> DagScheduler::GetValue(MData* )  {
+}
+///////////////////////////////////////////////////////////////
+
 void DagScheduler::WaitForFinish() {
   unique_lock<mutex> lck(finish_mutex_);
   while (num_nodes_yet_to_finish_) {
@@ -46,6 +102,9 @@ void DagScheduler::GCNodes() {
 void DagScheduler::OnExternRCUpdate(PhysicalDataNode* node) {
   switch (rt_info_.GetState(node->node_id())) {
     case NodeState::kCompleted: {
+      // If node is in kCompleted state, that means the node has already been concretely
+      // evaluated. If the node's reference count drops to zero, we could safely GC all
+      // its resources.
       auto& ri = rt_info_.At(node->node_id());
       if (ri.reference_count == 0 && node->data_.extern_rc == 0) {
         FreeDataNodeRes(node);
@@ -56,8 +115,13 @@ void DagScheduler::OnExternRCUpdate(PhysicalDataNode* node) {
       break;
     }
     case NodeState::kBirth: {
+      // If the node is in kBirth state and its reference count drops to zero, that means the
+      // node never needs to be concretely evaluated (situation happens when user write some
+      // dead codes). We also need to search backward from this node to all its predecessors
+      // to delete the possible useless nodes.
       auto& ri = rt_info_.At(node->node_id());
       if (ri.reference_count == 0 && node->data_.extern_rc == 0) {
+        // recursively search predecessors to find pobable unused nodes
         queue<PhysicalOpNode*> probably_unused_nodes;
         CHECK_EQ(node->predecessors_.size(), 1) << "data node have more than one predecessors";
         probably_unused_nodes.push(CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(*node->predecessors_.begin())));
@@ -81,6 +145,7 @@ void DagScheduler::OnExternRCUpdate(PhysicalDataNode* node) {
             }
           }
           if (not_used) {
+            // If the op_node is unused, delete all its succeeding data_nodes
             for (auto i : node->successors_) {
               auto dnode = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(i));
               auto& dnode_ri = rt_info_.At(dnode->node_id());
@@ -90,20 +155,26 @@ void DagScheduler::OnExternRCUpdate(PhysicalDataNode* node) {
               rt_info_.KillNode(dnode->node_id());
               DLOG(INFO) << "GC node #" << dnode->node_id() << " during extern reference count update";
             }
+            // Delete the op_node
             node_ri.state = NodeState::kDead;
             node_ri.num_triggers_needed = 0;
             node_ri.reference_count = 0;
             rt_info_.KillNode(node->node_id());
             DLOG(INFO) << "GC node #" << node->node_id() << " during extern reference count update";
+            // Check the preceding nodes (data_nodes) of the unused op_node
             for (auto i : node->predecessors_) {
               auto dnode = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(i));
               auto& dnode_ri = rt_info_.At(dnode->node_id());
               CHECK_NE(dnode_ri.state, NodeState::kDead);
               --dnode_ri.reference_count;
               if (dnode_ri.state == NodeState::kBirth && dnode_ri.reference_count == 0 && dnode->data_.extern_rc == 0) {
+                // If the data_node is in kBirth state, need to recursively check 
+                // the liveness of its op_node
                 CHECK_EQ(dnode->predecessors_.size(), 1) << "data node have more than one predecessors";
-                probably_unused_nodes.push(CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(*dnode->predecessors_.begin())));
+                probably_unused_nodes.push(CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(*dnode->predecessors_.begin()))); // check it later
               } else if (dnode_ri.state == NodeState::kCompleted && dnode_ri.reference_count == 0 && dnode->data_.extern_rc == 0) {
+                // If the data_node is in kCompleted state and its rc == 0, 
+                // the node could be safely deleted since it's no longer needed
                 FreeDataNodeRes(dnode);
                 dnode_ri.state = NodeState::kDead;
                 rt_info_.KillNode(dnode->node_id());

@@ -1,5 +1,4 @@
 #pragma once
-#include "procedures/dag_procedure.h"
 #include "procedures/runtime_info_map.h"
 #include "procedures/device_listener.h"
 #include "dag/dag.h"
@@ -7,6 +6,8 @@
 #include "dag/physical_dag.h"
 #include "common/common.h"
 #include "common/concurrent_blocking_queue.h"
+#include "system/backend.h"
+
 #include <unordered_set>
 #include <mutex>
 #include <condition_variable>
@@ -19,17 +20,32 @@ namespace minerva {
  * Public methods of DAG scheduler are thread safe,
  * in the sense of multiple devices and a single user thread.
  */
-class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<PhysicalDag>, public DeviceListener {
+class DagScheduler :
+  public IBackend,
+  public DagMonitor<PhysicalDag>,
+  public DeviceListener {
  public:
   enum class TaskType {
     kToRun,
     kToComplete
   };
   DagScheduler(PhysicalDag*);
-  virtual ~DagScheduler();
+  ~DagScheduler();
+  // backend interfaces
+  std::vector<MData*> Create(const std::vector<MData*>& params,
+      const std::vector<Scale>& result_sizes, ComputeFn* fn) override;
+  //virtual MData* RecordCreateInplace(MData* param, ComputeFn* fn) = 0;
+  void ShallowCopy(MData*&, MData* from) override;
+  void Destroy(MData* ) override;
+  void Issue(MData* ) override;
+  void Wait(MData* ) override;
+  //void Wait(const std::vector<MData*>& ) = 0;
+  void WaitForAll() override;
+  std::shared_ptr<float> GetValue(MData* ) override;
+  
   // Wait for evaluation to finish
-  virtual void WaitForFinish();
-  virtual void WaitForFinish(uint64_t);
+  void WaitForFinish();
+  void WaitForFinish(uint64_t);
   void GCNodes();
   // Monitor external reference changes
   void OnExternRCUpdate(PhysicalDataNode*);
@@ -38,12 +54,14 @@ class DagScheduler : public DagProcedure<PhysicalDag>, public DagMonitor<Physica
   void OnDeleteNode(DagNode*);
   void OnCreateEdge(DagNode*, DagNode*);
   // Device listener
-  virtual void OnOperationComplete(PhysicalOpNode*);
+  void OnOperationComplete(PhysicalOpNode*);
   // DAG procedure
-  virtual void Process(const std::vector<uint64_t>&);
+  void Process(const std::vector<uint64_t>&);
 
  protected:
   void FreeDataNodeRes(PhysicalDataNode*);
+  // Dag
+  PhysicalDag* dag_;
   // Runtime information
   RuntimeInfoMap rt_info_;
   // Scheduler dispatcher
