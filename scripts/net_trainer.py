@@ -18,9 +18,9 @@ class NetTrainer:
 
     def build_net(self):
         self.owl_net = net.Net()
-        builder = CaffeNetBuilder(self.net_file, self.solver_file)
-        builder.build_net(self.owl_net, self.num_gpu)
-        builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
+        self.builder = CaffeNetBuilder(self.net_file, self.solver_file)
+        self.builder.build_net(self.owl_net, self.num_gpu)
+        self.builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
 
     def run(s):
         gpu = [owl.create_gpu_device(i) for i in range(s.num_gpu)]
@@ -94,7 +94,7 @@ class NetTrainer:
             # decide whether to save model
             if (iteridx + 1) % (s.owl_net.solver.snapshot) == 0:
                 print "Save to snapshot %d, current lr %f" % ((iteridx + 1) / (s.owl_net.solver.snapshot), s.owl_net.current_lr)
-                builder.save_net_to_file(s.owl_net, s.snapshot_dir, (iteridx + 1) / (s.owl_net.solver.snapshot))
+                s.builder.save_net_to_file(s.owl_net, s.snapshot_dir, (iteridx + 1) / (s.owl_net.solver.snapshot))
             sys.stdout.flush()
 
 def print_help_and_exit():
