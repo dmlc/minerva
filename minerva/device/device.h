@@ -78,7 +78,7 @@ class GpuDevice : public ThreadedDevice {
   std::string Name() const;
 
  private:
-  static const size_t kParallelism = 16;
+  static const size_t kParallelism = 4;
   const int device_;
   cudaStream_t stream_[kParallelism];
   cublasHandle_t cublas_handle_[kParallelism];
