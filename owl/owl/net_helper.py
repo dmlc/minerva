@@ -46,7 +46,8 @@ class CaffeNetBuilder:
                 #handle IO, may need better         
                 ty = l.type
                 if ty == V1LayerParameter.LayerType.Value('DATA'):
-                    owl_net.batch_size = l.data_param.batch_size
+                    if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
+                        owl_net.batch_size = l.data_param.batch_size
                 elif ty == V1LayerParameter.LayerType.Value('SOFTMAX_LOSS'):
                     owl_net.loss_uids.append(uid)
                 elif ty == V1LayerParameter.LayerType.Value('ACCURACY'):

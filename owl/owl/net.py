@@ -166,7 +166,7 @@ class SoftmaxUnit(ComputeUnit):
 
         lossmat = ele.mult(ele.ln(self.ff_y), self.y)
         res = lossmat.sum(0).sum(1).to_numpy()
-        return -res[0][0]
+        return -res[0][0] / lossmat.shape[1]
         
         ''' 
         outputlist = self.ff_y.to_numpy()
@@ -503,8 +503,8 @@ class Net:
                         from_top[keys] = unit_to_btms[top][keys]
             self.units[u].backward(from_top, unit_to_btms[u], phase)
 
-    def update(self, uid, num_gpu):
-        self.units[uid].weight_update(self.current_lr, self.base_weight_decay, self.momentum, self.batch_size * num_gpu)
+    def update(self, uid):
+        self.units[uid].weight_update(self.current_lr, self.base_weight_decay, self.momentum, self.batch_size)
     
     def weight_update(self, num_gpu):
         for i in range(len(self.units)):

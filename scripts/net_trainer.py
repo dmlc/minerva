@@ -63,7 +63,7 @@ class NetTrainer:
                     bgrad[upd_gpu][i] += bgrad[gid][i]
                 s.owl_net.units[wid].weightgrad = wgrad[upd_gpu][i]
                 s.owl_net.units[wid].biasgrad = bgrad[upd_gpu][i]
-                s.owl_net.update(wid, s.num_gpu)
+                s.owl_net.update(wid)
             #s.owl_net.weight_update(num_gpu = s.num_gpu)
             s.owl_net.wait_for_eval_loss()
             #s.owl_net.units[wunits[0]].weight.wait_for_eval()
