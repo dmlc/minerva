@@ -343,12 +343,12 @@ class DataUnit(ComputeUnit):
         self.crop_size = params.transform_param.crop_size
         self.num_output = 3
         if params.include[0].phase == Phase.Value('TRAIN'):
-            self.dp = ImageNetDataProvider(params.transform_param.mean_file,
+            self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.transform_param.mean_value,
                     params.data_param.source,
                     params.data_param.batch_size / num_gpu,
                     params.transform_param.crop_size)
         else:
-            self.dp = ImageNetDataProvider(params.transform_param.mean_file,
+            self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.transform_param.mean_value,
                     params.data_param.source,
                     params.data_param.batch_size,
                     params.transform_param.crop_size)
@@ -359,12 +359,17 @@ class DataUnit(ComputeUnit):
     def forward(self, from_btm, to_top, phase):
         if self.generator == None:
             self.generator = self.dp.get_train_mb(phase)
-        
-        (samples, labels) = next(self.generator)
-        if len(samples) == 0:
-            print 'Have scanned the whole dataset; start from the begginning agin'
-            self.generator = self.dp.get_train_mb(phase)
-            (samples, labels) = next(self.generator)
+      
+        while True:
+            try:
+                (samples, labels) = next(self.generator)
+                if len(labels) == 0:
+                    (samples, labels) = next(self.generator)
+            except StopIteration:
+                print 'Have scanned the whole dataset; start from the begginning agin'
+                self.generator = self.dp.get_train_mb(phase)
+                continue
+            break
 
         to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
         to_top[self.top_names[1]] = owl.from_numpy(labels)
@@ -497,10 +502,13 @@ class Net:
                     else:
                         from_top[keys] = unit_to_btms[top][keys]
             self.units[u].backward(from_top, unit_to_btms[u], phase)
+
+    def update(self, uid, num_gpu):
+        self.units[uid].weight_update(self.current_lr, self.base_weight_decay, self.momentum, self.batch_size * num_gpu)
     
-    def weight_update(self, num_gpu = 1):
+    def weight_update(self, num_gpu):
         for i in range(len(self.units)):
-            self.units[i].weight_update(self.current_lr, self.base_weight_decay, self.momentum, self.batch_size * num_gpu)
+            update(i, num_gpu)
 
     def start_eval_loss(self):
         self.get_loss_units()[0].ff_y.start_eval()
