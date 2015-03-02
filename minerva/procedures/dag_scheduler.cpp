@@ -41,17 +41,18 @@ std::vector<MData*> DagScheduler::Create(const std::vector<MData*>& params,
   });
   fn->device_id = current_device_id;
   dag_->NewOpNode(param_data_nodes, rst_data_nodes, {fn});
-  return Map<MData*>(rst_data_nodes, [](PhysicalDataNode* n) { return new MDataDag(n); }); // TODO memory leak
+  return Map<MData*>(rst_data_nodes, [](PhysicalDataNode* n) { return new MDataDag(n); }); // TODO some creation overhead
 }
 //virtual MData* RecordCreateInplace(MData* param, ComputeFn* fn) = 0;
 void DagScheduler::ShallowCopy(MData*& to, MData* from)  {
   if(to) {
     Destroy(to);
   }
-  to = from;
+  auto from_cast = CHECK_NOTNULL(dynamic_cast<MDataDag*>(from));
+  auto node = from_cast->data_node;
+  to = new MDataDag(node);
   // incr rc
   lock_guard<recursive_mutex> lck(dag_->m_);
-  PhysicalDataNode* node = dynamic_cast<MDataDag*>(from)->data_node;
   ++(node->data_.extern_rc);
   OnExternRCUpdate(node);
 }
@@ -63,7 +64,7 @@ void DagScheduler::Destroy(MData* data)  {
     --(node->data_.extern_rc);
     OnExternRCUpdate(node);
     // delete
-    //delete data;
+    delete data;
   }
 }
 void DagScheduler::Issue(MData* data)  {
