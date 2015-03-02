@@ -2,7 +2,6 @@
 #include "op/physical_op.h"
 #include "common/common.h"
 #include "system/minerva_system.h"
-#include "io/file_loader.h"
 #include <fstream>
 #include <glog/logging.h>
 #include <iomanip>
@@ -32,11 +31,11 @@ NArray NArray::RandBernoulli(const Scale& size, float p) {
   return NArray::GenerateOne(size, op);
 }
 
-NArray NArray::LoadFromFile(const Scale& size, const string& fname, shared_ptr<IFileLoader> loader) {
+/*NArray NArray::LoadFromFile(const Scale& size, const string& fname, shared_ptr<IFileLoader> loader) {
   FileLoaderOp* loader_op = new FileLoaderOp();
   loader_op->closure = {fname, size, loader};
   return NArray::GenerateOne(size, loader_op);
-}
+}*/
 
 NArray NArray::Zeros(const Scale& size) {
   return NArray::Constant(size, 0.0);

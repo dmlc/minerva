@@ -1,8 +1,6 @@
 #pragma once
 #include "common/scale.h"
 #include "op/closure.h"
-#include "narray/io/file_format.h"
-#include "narray/io/file_loader.h"
 #include "system/backend.h"
 
 #include <glog/logging.h>
@@ -10,6 +8,10 @@
 #include <memory>
 
 namespace minerva {
+
+struct FileFormat {
+  bool binary;
+};
 
 class NArray {
   friend class Elewise;
@@ -20,7 +22,7 @@ class NArray {
   static NArray Constant(const Scale& size, float val);
   static NArray Randn(const Scale& size, float mu, float var);
   static NArray RandBernoulli(const Scale& size, float p);
-  static NArray LoadFromFile(const Scale& size, const std::string& fname, std::shared_ptr<IFileLoader> loader);
+  //static NArray LoadFromFile(const Scale& size, const std::string& fname, std::shared_ptr<IFileLoader> loader);
   static NArray Zeros(const Scale& size);
   static NArray Ones(const Scale& size);
   static NArray MakeNArray(const Scale& size, std::shared_ptr<float> array);
