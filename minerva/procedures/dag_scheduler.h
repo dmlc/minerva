@@ -32,7 +32,7 @@ class DagScheduler :
   };
   DagScheduler(PhysicalDag*, DeviceManager*);
   ~DagScheduler();
-  // backend interfaces
+  ////////////////////////// backend interfaces
   std::vector<MData*> Create(const std::vector<MData*>& params,
       const std::vector<Scale>& result_sizes, ComputeFn* fn) override;
   //virtual MData* RecordCreateInplace(MData* param, ComputeFn* fn) = 0;
@@ -43,24 +43,24 @@ class DagScheduler :
   //void Wait(const std::vector<MData*>& ) = 0;
   void WaitForAll() override;
   std::shared_ptr<float> GetValue(MData* ) override;
+  /////////////////////////
   
   // Wait for evaluation to finish
-  void WaitForFinish();
-  void WaitForFinish(uint64_t);
+  //void WaitForFinish();
+  //void WaitForFinish(uint64_t);
   void GCNodes();
   // Monitor external reference changes
-  void OnExternRCUpdate(PhysicalDataNode*);
   // DAG monitor
-  void OnCreateNode(DagNode*);
-  void OnDeleteNode(DagNode*);
-  void OnCreateEdge(DagNode*, DagNode*);
+  void OnCreateNode(DagNode*) override;
+  void OnDeleteNode(DagNode*) override;
+  void OnCreateEdge(DagNode*, DagNode*) override;
   // Device listener
-  void OnOperationComplete(PhysicalOpNode*);
-  // DAG procedure
-  void Process(const std::vector<uint64_t>&);
+  void OnOperationComplete(PhysicalOpNode*) override;
 
- protected:
+ private:
   void FreeDataNodeRes(PhysicalDataNode*);
+  void OnExternRCUpdate(PhysicalDataNode*);
+  void Process(const std::vector<uint64_t>&);
   // Dag
   PhysicalDag* dag_;
   // Runtime information

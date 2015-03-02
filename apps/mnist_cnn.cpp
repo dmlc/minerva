@@ -177,7 +177,7 @@ int main(int argc, char** argv) {
   }
   weights.clear();
   bias.clear();
-  ms.dag_scheduler().GCNodes();
+  //ms.dag_scheduler().GCNodes();
   cout << ms.device_manager().GetDevice(gpu_device[0])->GetMemUsage() << endl;
   cout << ms.device_manager().GetDevice(gpu_device[1])->GetMemUsage() << endl;
   cout << ms.device_manager().GetDevice(cpu_device)->GetMemUsage() << endl;

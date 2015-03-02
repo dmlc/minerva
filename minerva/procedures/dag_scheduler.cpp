@@ -15,7 +15,7 @@ DagScheduler::DagScheduler(PhysicalDag* d, DeviceManager* dm) : dispatcher_(&Dag
 }
 
 DagScheduler::~DagScheduler() {
-  WaitForFinish();
+  WaitForAll();
   dispatcher_queue_.SignalForKill();
   dispatcher_.join();
 }
@@ -84,7 +84,10 @@ void DagScheduler::Wait(MData* data)  {
 }
 //void Wait(const std::vector<MData*>& ) = 0;
 void DagScheduler::WaitForAll()  {
-  // TODO
+  unique_lock<mutex> lck(finish_mutex_);
+  while (num_nodes_yet_to_finish_) {
+    finish_cond_.wait(lck);
+  }
 }
 std::shared_ptr<float> DagScheduler::GetValue(MData* mdata)  {
   auto& data = dynamic_cast<MDataDag*>(mdata)->data_node->data_;
@@ -96,22 +99,6 @@ std::shared_ptr<float> DagScheduler::GetValue(MData* mdata)  {
   return ret;
 }
 ///////////////////////////////////////////////////////////////
-
-void DagScheduler::WaitForFinish() {
-  unique_lock<mutex> lck(finish_mutex_);
-  while (num_nodes_yet_to_finish_) {
-    finish_cond_.wait(lck);
-  }
-}
-
-void DagScheduler::WaitForFinish(uint64_t node_id) {
-  unique_lock<mutex> lck(finish_mutex_);
-  target_ = node_id;
-  while (rt_info_.GetState(node_id) != NodeState::kCompleted) {
-    finish_cond_.wait(lck);
-  }
-  target_ = -1;
-}
 
 void DagScheduler::GCNodes() {
   lock_guard<recursive_mutex> lck(dag_->m_);

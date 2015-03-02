@@ -28,10 +28,6 @@ class MinervaSystem :
   DeviceManager& device_manager() {
     return *device_manager_;
   }
-  DagScheduler& dag_scheduler() {
-    //return *dag_scheduler_;
-    return *((DagScheduler*)backend_);
-  }
   ExecutionProfiler& profiler() {
     return *profiler_;
   }
@@ -40,16 +36,11 @@ class MinervaSystem :
   uint64_t CreateGpuDevice(int gid);
   int GetGpuDeviceCount();
 #endif
-  //std::shared_ptr<float> GetValue(const NArray& narr);
   std::pair<Device::MemType, float*> GetPtr(uint64_t, uint64_t);
-  //void IncrExternRC(PhysicalDataNode*);
-  //void DecrExternRC(PhysicalDataNode*);
-  //void WaitForEval(const std::vector<NArray>& narrs);
-  //void StartEval(const std::vector<NArray>& narrs);
   uint64_t GenerateDataId();
   uint64_t current_device_id_;
 
-  ////// interfaces for calling backends
+  //////////////////////////////// interfaces for calling backends
   std::vector<MData*> Create(const std::vector<MData*>& params, const std::vector<Scale>& result_sizes, ComputeFn* fn);
   MData* CreateOne(MData* param, const Scale& result_size, ComputeFn* fn);
   //virtual MData* RecordCreateInplace(MData* param, ComputeFn* fn);
@@ -60,12 +51,11 @@ class MinervaSystem :
   //virtual void Wait(const std::vector<MData*>& );
   void WaitForAll();
   std::shared_ptr<float> GetValue(MData* );
+  /////////////////////////////////
 
  private:
   MinervaSystem(int*, char***);
-  //void ExecutePhysicalDag(const std::vector<uint64_t>& pids);
   PhysicalDag* physical_dag_;
-  //DagScheduler* dag_scheduler_;
   IBackend* backend_;
   ExecutionProfiler* profiler_;
   DeviceManager* device_manager_;

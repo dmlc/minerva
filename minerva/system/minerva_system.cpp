@@ -26,12 +26,11 @@ void MinervaSystem::UniversalMemcpy(pair<Device::MemType, float*> to, pair<Devic
 }
 
 MinervaSystem::~MinervaSystem() {
-  //dag_scheduler_->WaitForFinish();
+  backend_->WaitForAll();
   physical_dag_->ClearMonitor();
   delete backend_;
   delete device_manager_;
   delete profiler_;
-  //delete dag_scheduler_;
   delete physical_dag_;
   google::ShutdownGoogleLogging();
 }
@@ -52,51 +51,9 @@ int MinervaSystem::GetGpuDeviceCount() {
 
 #endif
 
-/*shared_ptr<float> MinervaSystem::GetValue(const NArray& narr) {
-  auto& data = narr.data_node_->data_;
-  shared_ptr<float> ret(new float[data.size.Prod()], [](float* p) {
-    delete[] p;
-  });
-  MinervaSystem::UniversalMemcpy(make_pair(Device::MemType::kCpu, ret.get()), GetPtr(data.device_id, data.data_id), data.size.Prod() * sizeof(float));
-  return ret;
-}*/
-
 pair<Device::MemType, float*> MinervaSystem::GetPtr(uint64_t device_id, uint64_t data_id) {
   return device_manager_->GetDevice(device_id)->GetPtr(data_id);
 }
-
-/*void MinervaSystem::IncrExternRC(PhysicalDataNode* node) {
-  lock_guard<recursive_mutex> lck(physical_dag_->m_);
-  ++(node->data_.extern_rc);
-  dag_scheduler_->OnExternRCUpdate(node);
-}
-
-void MinervaSystem::DecrExternRC(PhysicalDataNode* node) {
-  lock_guard<recursive_mutex> lck(physical_dag_->m_);
-  --(node->data_.extern_rc);
-  dag_scheduler_->OnExternRCUpdate(node);
-}
-
-void MinervaSystem::WaitForEval(const vector<NArray>& narrs) {
-  LOG(INFO) << "evaluation (synchronous) start...";
-  vector<uint64_t> pid_to_eval = Map<uint64_t>(narrs, [](const NArray& n) {
-    return n.data_node_->node_id();
-  });
-  ExecutePhysicalDag(pid_to_eval);
-  for (auto i : pid_to_eval) {
-    dag_scheduler_->WaitForFinish(i);
-  }
-  dag_scheduler_->GCNodes();
-  LOG(INFO) << "Evaluation completed!";
-}
-
-void MinervaSystem::StartEval(const vector<NArray>& narrs) {
-  LOG(INFO) << "evaluation (asynchronous) start...";
-  vector<uint64_t> pid_to_eval = Map<uint64_t>(narrs, [](const NArray& n) {
-    return n.data_node_->node_id();
-  });
-  ExecutePhysicalDag(pid_to_eval);
-}*/
 
 uint64_t MinervaSystem::GenerateDataId() {
   static uint64_t data_id = 0;
@@ -112,10 +69,6 @@ MinervaSystem::MinervaSystem(int* argc, char*** argv) {
   backend_ = new DagScheduler(physical_dag_, device_manager_);
   current_device_id_ = 0;
 }
-
-/*void MinervaSystem::ExecutePhysicalDag(const vector<uint64_t>& pids) {
-  dag_scheduler_->Process(pids);
-}*/
 
 //////////////////// interfaces for calling backends
 std::vector<MData*> MinervaSystem::Create(const std::vector<MData*>& params, const std::vector<Scale>& result_sizes, ComputeFn* fn) {
