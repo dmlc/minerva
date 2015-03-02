@@ -1,9 +1,11 @@
 #pragma once
 #include "common/scale.h"
 #include "op/closure.h"
-#include "dag/physical_dag.h"
 #include "narray/io/file_format.h"
 #include "narray/io/file_loader.h"
+#include "system/backend.h"
+
+#include <glog/logging.h>
 #include <initializer_list>
 #include <memory>
 
@@ -70,8 +72,8 @@ class NArray {
   friend NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count);	
 
   // Shape
-  const Scale& Size() const { return CHECK_NOTNULL(data_node_)->data_.size; }
-  int Size(int dim) const { return CHECK_NOTNULL(data_node_)->data_.size[dim]; }
+  const Scale& Size() const { return CHECK_NOTNULL(data_)->shape(); }
+  int Size(int dim) const { return CHECK_NOTNULL(data_)->shape()[dim]; }
   NArray Reshape(const Scale& dims) const;
   NArray Trans() const;
   // Lazy reductions
@@ -95,8 +97,8 @@ class NArray {
   void ToFile(const std::string& filename, const FileFormat& format) const;
 
  private:
-  NArray(PhysicalDataNode*);
-  PhysicalDataNode* data_node_;
+  NArray(MData*);
+  MData* data_;
 };
 
 // Matmult
