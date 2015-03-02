@@ -8,7 +8,7 @@ namespace minerva {
 
 class DeviceManager {
  public:
-  DeviceManager(DeviceListener*);
+  DeviceManager();
   ~DeviceManager();
   uint64_t CreateCpuDevice();
 #ifdef HAS_CUDA
@@ -17,6 +17,7 @@ class DeviceManager {
 #endif
   Device* GetDevice(uint64_t id);
   void FreeData(uint64_t id);
+  void RegisterListener(DeviceListener* l) { listener_ = l; }
 
  private:
   uint64_t GenerateDeviceId();

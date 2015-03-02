@@ -8,8 +8,10 @@ using namespace std;
 
 namespace minerva {
 
-DagScheduler::DagScheduler(PhysicalDag* d) : dispatcher_(&DagScheduler::DispatcherRoutine, this), num_nodes_yet_to_finish_(0) {
+DagScheduler::DagScheduler(PhysicalDag* d, DeviceManager* dm) : dispatcher_(&DagScheduler::DispatcherRoutine, this), num_nodes_yet_to_finish_(0) {
   dag_ = d;
+  d->RegisterMonitor(this);
+  dm->RegisterListener(this);
 }
 
 DagScheduler::~DagScheduler() {
@@ -22,7 +24,7 @@ DagScheduler::~DagScheduler() {
 class MDataDag : public MData {
  public:
   MDataDag(PhysicalDataNode* n): data_node(n) {}
-  Scale shape() const override {
+  const Scale& shape() const override {
     return data_node->data_.size;
   }
   PhysicalDataNode* data_node;
@@ -47,16 +49,27 @@ void DagScheduler::ShallowCopy(MData*& to, MData* from)  {
     Destroy(to);
   }
   to = from;
-  // TODO incr rc
+  // incr rc
+  lock_guard<recursive_mutex> lck(dag_->m_);
+  PhysicalDataNode* node = dynamic_cast<MDataDag*>(from)->data_node;
+  ++(node->data_.extern_rc);
+  OnExternRCUpdate(node);
 }
 void DagScheduler::Destroy(MData* data)  {
   if (data) {
     // decr rc TODO
+    lock_guard<recursive_mutex> lck(dag_->m_);
+    PhysicalDataNode* node = dynamic_cast<MDataDag*>(data)->data_node;
+    --(node->data_.extern_rc);
+    OnExternRCUpdate(node);
     // delete
-    delete data;
+    //delete data;
   }
 }
 void DagScheduler::Issue(MData* data)  {
+  vector<uint64_t> targets;
+  targets.push_back(dynamic_cast<MDataDag*>(data)->data_node->node_id());
+  Process(targets);
 }
 void DagScheduler::Wait(MData* data)  {
   uint64_t node_id = dynamic_cast<MDataDag*>(data)->data_node->node_id();
@@ -66,11 +79,20 @@ void DagScheduler::Wait(MData* data)  {
     finish_cond_.wait(lck);
   }
   target_ = -1;
+  GCNodes();
 }
 //void Wait(const std::vector<MData*>& ) = 0;
 void DagScheduler::WaitForAll()  {
+  // TODO
 }
-std::shared_ptr<float> DagScheduler::GetValue(MData* )  {
+std::shared_ptr<float> DagScheduler::GetValue(MData* mdata)  {
+  auto& data = dynamic_cast<MDataDag*>(mdata)->data_node->data_;
+  shared_ptr<float> ret(new float[data.size.Prod()], [](float* p) {
+    delete[] p;
+  });
+  auto dev_pair = MinervaSystem::Instance().GetPtr(data.device_id, data.data_id);
+  MinervaSystem::UniversalMemcpy(make_pair(Device::MemType::kCpu, ret.get()), dev_pair, data.size.Prod() * sizeof(float));
+  return ret;
 }
 ///////////////////////////////////////////////////////////////
 

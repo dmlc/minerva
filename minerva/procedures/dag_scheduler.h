@@ -16,6 +16,7 @@
 
 namespace minerva {
 
+class DeviceManager;
 /*
  * Public methods of DAG scheduler are thread safe,
  * in the sense of multiple devices and a single user thread.
@@ -29,7 +30,7 @@ class DagScheduler :
     kToRun,
     kToComplete
   };
-  DagScheduler(PhysicalDag*);
+  DagScheduler(PhysicalDag*, DeviceManager*);
   ~DagScheduler();
   // backend interfaces
   std::vector<MData*> Create(const std::vector<MData*>& params,

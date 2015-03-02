@@ -10,8 +10,7 @@ using namespace std;
 
 namespace minerva {
 
-DeviceManager::DeviceManager(DeviceListener* l) : listener_(l) {
-}
+DeviceManager::DeviceManager() { }
 
 DeviceManager::~DeviceManager() {
   for (auto i : device_storage_) {
