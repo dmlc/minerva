@@ -2,7 +2,6 @@
 #include "op/physical_op.h"
 #include "common/common.h"
 #include "system/minerva_system.h"
-#include "io/file_loader.h"
 #include <fstream>
 #include <glog/logging.h>
 #include <iomanip>
@@ -32,11 +31,11 @@ NArray NArray::RandBernoulli(const Scale& size, float p) {
   return NArray::GenerateOne(size, op);
 }
 
-NArray NArray::LoadFromFile(const Scale& size, const string& fname, shared_ptr<IFileLoader> loader) {
+/*NArray NArray::LoadFromFile(const Scale& size, const string& fname, shared_ptr<IFileLoader> loader) {
   FileLoaderOp* loader_op = new FileLoaderOp();
   loader_op->closure = {fname, size, loader};
   return NArray::GenerateOne(size, loader_op);
-}
+}*/
 
 NArray NArray::Zeros(const Scale& size) {
   return NArray::Constant(size, 0.0);
@@ -68,63 +67,37 @@ NArray& NArray::Pull(const std::string & layer_name) {
 vector<NArray> NArray::Compute(
     const vector<NArray>& params,
     const vector<Scale>& result_sizes,
-    PhysicalComputeFn* fn) {
-  auto& physical_dag = MinervaSystem::Instance().physical_dag();
-  auto current_device_id = MinervaSystem::Instance().current_device_id_;
-  auto rst = Map<NArray>(result_sizes, [&](const Scale& size) {
-    return NArray(physical_dag.NewDataNode(PhysicalData(size, current_device_id, MinervaSystem::Instance().GenerateDataId())));
-  });
-  auto rst_data_nodes = Map<PhysicalDataNode*>(rst, [](const NArray& i) {
-    return CHECK_NOTNULL(i.data_node_);
-  });
-  auto param_data_nodes = Map<PhysicalDataNode*>(params, [](const NArray& i) {
-    return CHECK_NOTNULL(i.data_node_);
-  });
-  fn->device_id = current_device_id;
-  MinervaSystem::Instance().physical_dag().NewOpNode(param_data_nodes, rst_data_nodes, {fn});
-  return rst;
+    ComputeFn* fn) {
+  auto& ms = MinervaSystem::Instance();
+  auto param_mdata = Map<MData*>(params, [](const NArray& a) { return a.data_; });
+  auto result_mdata = ms.Create(param_mdata, result_sizes, fn);
+  return Map<NArray>(result_mdata, [](MData* md) { return NArray(md); });
 }
 
-NArray NArray::ComputeOne(const vector<NArray>& params, const Scale& size, PhysicalComputeFn* fn) {
-  auto& physical_dag = MinervaSystem::Instance().physical_dag();
-  auto current_device_id = MinervaSystem::Instance().current_device_id_;
-  auto rst = NArray(physical_dag.NewDataNode(PhysicalData(size, current_device_id, MinervaSystem::Instance().GenerateDataId())));
-  auto param_data_nodes = Map<PhysicalDataNode*>(params, [](const NArray& i) {
-    return CHECK_NOTNULL(i.data_node_);
-  });
-  fn->device_id = current_device_id;
-  MinervaSystem::Instance().physical_dag().NewOpNode(param_data_nodes, {CHECK_NOTNULL(rst.data_node_)}, {fn});
-  return rst;
+NArray NArray::ComputeOne(const vector<NArray>& params, const Scale& size, ComputeFn* fn) {
+  return Compute(params, {size}, fn)[0];
 }
 
-NArray NArray::GenerateOne(const Scale& size, PhysicalComputeFn* fn) {
+NArray NArray::GenerateOne(const Scale& size, ComputeFn* fn) {
   return NArray::ComputeOne({}, size, fn);
 }
 
 // Constructors and destructors
-NArray::NArray() : data_node_(nullptr) {}
+NArray::NArray() : data_(nullptr) {}
 
-NArray::NArray(const NArray& other) : data_node_(other.data_node_) {
-  if (data_node_ != nullptr) {
-    MinervaSystem::Instance().IncrExternRC(data_node_);
-  }
+NArray::NArray(const NArray& other) : data_(nullptr) {
+  MinervaSystem::Instance().ShallowCopy(data_, other.data_);
 }
 
-NArray::NArray(NArray&& other) : data_node_(other.data_node_) {
-  other.data_node_ = nullptr;
+NArray::NArray(NArray&& other) : data_(other.data_) {
+  other.data_ = nullptr;
 }
 
 NArray& NArray::operator=(const NArray& other) {
   if (this == &other) {
     return *this;
   }
-  if (data_node_ != nullptr) {
-    MinervaSystem::Instance().DecrExternRC(data_node_);
-  }
-  data_node_ = other.data_node_;
-  if (data_node_ != nullptr) {
-    MinervaSystem::Instance().IncrExternRC(data_node_);
-  }
+  MinervaSystem::Instance().ShallowCopy(data_, other.data_);
   return *this;
 }
 
@@ -132,17 +105,17 @@ NArray& NArray::operator=(NArray&& other) {
   if (this == &other) {
     return *this;
   }
-  if (data_node_ != nullptr) {
-    MinervaSystem::Instance().DecrExternRC(data_node_);
+  if (data_ != nullptr) {
+    MinervaSystem::Instance().Destroy(data_);
   }
-  data_node_ = other.data_node_;
-  other.data_node_ = nullptr;
+  data_ = other.data_;
+  other.data_ = nullptr;
   return *this;
 }
 
 NArray::~NArray() {
-  if (data_node_ != nullptr && MinervaSystem::IsAlive()) {
-    MinervaSystem::Instance().DecrExternRC(data_node_);
+  if (data_ != nullptr && MinervaSystem::IsAlive()) {
+    MinervaSystem::Instance().Destroy(data_);
   }
 }
 
@@ -231,16 +204,17 @@ NArray NArray::NormArithmetic(const NArray& rhs, ArithmeticType type) const {
 
 // System
 void NArray::WaitForEval() const {
-  MinervaSystem::Instance().WaitForEval({*this});
+  MinervaSystem::Instance().Issue(data_);
+  MinervaSystem::Instance().Wait(data_);
 }
 
 void NArray::StartEval() const {
-  MinervaSystem::Instance().StartEval({*this});
+  MinervaSystem::Instance().Issue(data_);
 }
 
 shared_ptr<float> NArray::Get() const {
   WaitForEval();
-  return MinervaSystem::Instance().GetValue(*this);
+  return MinervaSystem::Instance().GetValue(data_);
 }
 
 void NArray::ToStream(ostream& out, const FileFormat& format) const {
@@ -263,11 +237,8 @@ void NArray::ToFile(const std::string& filename, const FileFormat& format) const
   fout.close();
 }
 
-NArray::NArray(PhysicalDataNode* node) : data_node_(node) {
-  if (data_node_ != nullptr) {
-    MinervaSystem::Instance().IncrExternRC(data_node_);
-  }
+NArray::NArray(MData* data) : data_(nullptr) {
+  MinervaSystem::Instance().ShallowCopy(data_, data);
 }
 
 }  // namespace minerva
-

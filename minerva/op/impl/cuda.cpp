@@ -19,7 +19,7 @@ namespace minerva {
 #ifdef HAS_CUDA
 namespace cuda {
 
-void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosure& closure, const CudaRuntimeContext& context) {
+void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 2) << "Arithmetic takes 2 inputs";
   CHECK_EQ(outputs.size(), 1) << "Arithmetic takes 1 output";
   float* left = inputs[0].data();
@@ -42,7 +42,7 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
   }
 }
 
-void LRNForward(const DataList& inputs, const DataList& outputs, LRNForwardClosure& closure, const CudaRuntimeContext & context) {
+void LRNForward(const DataList& inputs, const DataList& outputs, LRNForwardClosure& closure, const Context & context) {
   CHECK_EQ(inputs.size(), 2) << "(LRNForward) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(LRNForward) #outputs is wrong!";
   float* bottom_data = inputs[0].data();
@@ -58,7 +58,7 @@ void LRNForward(const DataList& inputs, const DataList& outputs, LRNForwardClosu
   CudaPerformLRNForward(bottom_data, scale_data, res_data, local_size, alpha, beta, num_img, channel, weight, height, context.stream);
 }
 
-void LRNBackward(const DataList& inputs, const DataList& outputs, LRNBackwardClosure& closure, const CudaRuntimeContext & context) {
+void LRNBackward(const DataList& inputs, const DataList& outputs, LRNBackwardClosure& closure, const Context & context) {
   CHECK_EQ(inputs.size(), 4) << "(LRNBackward) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(LRNBackward) #outputs is wrong!";
   float* bottom_data = inputs[0].data();
@@ -77,7 +77,7 @@ void LRNBackward(const DataList& inputs, const DataList& outputs, LRNBackwardClo
 }
 
 
-void Concat(const DataList& inputs, const DataList& outputs, ConcatClosure& closure, const CudaRuntimeContext & context) {
+void Concat(const DataList& inputs, const DataList& outputs, ConcatClosure& closure, const Context & context) {
   CHECK_GT(inputs.size(), 1) << "(Concat) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(Concat) #outputs is wrong!";
   CHECK_LE(inputs[0].size().NumDims() - closure.catdim, 3) << "(Concat) #Currently only support concat on the last two dims!";
@@ -117,7 +117,7 @@ void Concat(const DataList& inputs, const DataList& outputs, ConcatClosure& clos
   }
 }
 
-void Slice(const DataList& inputs, const DataList& outputs, SliceClosure& closure, const CudaRuntimeContext & context)
+void Slice(const DataList& inputs, const DataList& outputs, SliceClosure& closure, const Context & context)
 {
   CHECK_EQ(inputs.size(), 1) << "(Slice) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(Slice) #outputs is wrong!";
@@ -155,7 +155,7 @@ void Slice(const DataList& inputs, const DataList& outputs, SliceClosure& closur
 }
 
 
-void MatMult(const DataList& inputs, const DataList& outputs, MatMultClosure& closure, const CudaRuntimeContext & context) {
+void MatMult(const DataList& inputs, const DataList& outputs, MatMultClosure& closure, const Context & context) {
   CHECK_EQ(inputs.size(), 2) << "(matmult) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(matmult) #outputs is wrong!";
   float* left_data = inputs[0].data();
@@ -168,7 +168,7 @@ void MatMult(const DataList& inputs, const DataList& outputs, MatMultClosure& cl
 }
 
 void ArithmeticConst(const DataList& inputs, const DataList& outputs,
-  ArithmeticConstClosure& closure, const CudaRuntimeContext& context) {
+  ArithmeticConstClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "(arithmetic const) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(arithmetic const) #outputs is wrong!";
   float val = closure.val;
@@ -200,7 +200,7 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs,
 }
 
 void Transpose(const DataList& inputs, const DataList& outputs,
-  TransposeClosure& closure, const CudaRuntimeContext& context) {
+  TransposeClosure& closure, const Context& context) {
   float* in_data = inputs[0].data();
   float* res_data = outputs[0].data();
   int m = inputs[0].size()[0];
@@ -209,7 +209,7 @@ void Transpose(const DataList& inputs, const DataList& outputs,
 }
 
 void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithmeticClosure& closure,
-  const CudaRuntimeContext & context) {
+  const Context & context) {
   CHECK_EQ(inputs.size(), 2) << "NormArithmetic kernel wrong #input";
   CHECK_EQ(outputs.size(), 1) << "NormArithmetic kernel wrong #output";
   // Normalizee is the chunk with full size, normalizer is the chunk with reduced dimensions
@@ -257,7 +257,7 @@ void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithme
 }
 
 void Reduction(const DataList& inputs, const DataList& outputs,
-  ReductionClosure& closure, const CudaRuntimeContext& context) {
+  ReductionClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "Reduction kernel wrong #input";
   CHECK_EQ(outputs.size(), 1) << "Reduction kernel wrong #output";
   auto in_size = inputs[0].size();
@@ -291,7 +291,7 @@ void Reduction(const DataList& inputs, const DataList& outputs,
 }
 
 void MaxIndex(const DataList& inputs, const DataList& outputs,
-  MaxIndexClosure& closure, const CudaRuntimeContext& context) {
+  MaxIndexClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "MaxIndex kernel wrong #input";
   CHECK_EQ(outputs.size(), 1) << "MaxIndex kernel wrong #output";
   auto in_size = inputs[0].size();
@@ -309,14 +309,14 @@ void MaxIndex(const DataList& inputs, const DataList& outputs,
   }
 }
 
-void Reshape(const DataList& inputs, const DataList& outputs, ReshapeClosure&, const CudaRuntimeContext& context) {
+void Reshape(const DataList& inputs, const DataList& outputs, ReshapeClosure&, const Context& context) {
   CHECK_EQ(inputs.size(), 1);
   CHECK_EQ(outputs.size(), 1);
   CudaPerformReshape(inputs[0].data(), outputs[0].data(), inputs[0].size().Prod() * sizeof(float), context.stream);
 }
 
 
-void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& closure, const CudaRuntimeContext& context) {
+void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "(elewise) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(elewise) #outputs is wrong!";
   float* in_data = inputs[0].data();
@@ -337,7 +337,7 @@ void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& cl
   }
 }
 
-void SigmoidForward(const DataList& inputs, const DataList& outputs, SigmoidForwardClosure&, const CudaRuntimeContext& context) {
+void SigmoidForward(const DataList& inputs, const DataList& outputs, SigmoidForwardClosure&, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "sigmoid forward #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "sigmoid forward #outputs wrong";
   auto& bottom = inputs[0];
@@ -345,7 +345,7 @@ void SigmoidForward(const DataList& inputs, const DataList& outputs, SigmoidForw
   CudaPerformSigmoidForward(bottom.data(), top.data(), 1, 1, 1, bottom.size().Prod(), context.stream, context.cudnn_handle);
 }
 
-void SigmoidBackward(const DataList& inputs, const DataList& outputs, SigmoidBackwardClosure&, const CudaRuntimeContext& context) {
+void SigmoidBackward(const DataList& inputs, const DataList& outputs, SigmoidBackwardClosure&, const Context& context) {
   CHECK_EQ(inputs.size(), 3) << "sigmoid backward #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "sigmoid backward #outputs wrong";
   auto& top_diff = inputs[0];
@@ -355,7 +355,7 @@ void SigmoidBackward(const DataList& inputs, const DataList& outputs, SigmoidBac
   CudaPerformSigmoidBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), 1, 1, 1, top_diff.size().Prod(), context.stream, context.cudnn_handle);
 }
 
-void ReluForward(const DataList& inputs, const DataList& outputs, ReluForwardClosure&, const CudaRuntimeContext& context) {
+void ReluForward(const DataList& inputs, const DataList& outputs, ReluForwardClosure&, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "relu forward #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "relu forward #outputs wrong";
   auto& bottom = inputs[0];
@@ -363,7 +363,7 @@ void ReluForward(const DataList& inputs, const DataList& outputs, ReluForwardClo
   CudaPerformReluForward(bottom.data(), top.data(), 1, 1, 1, bottom.size().Prod(), context.stream, context.cudnn_handle);
 }
 
-void ReluBackward(const DataList& inputs, const DataList& outputs, ReluBackwardClosure&, const CudaRuntimeContext& context) {
+void ReluBackward(const DataList& inputs, const DataList& outputs, ReluBackwardClosure&, const Context& context) {
   CHECK_EQ(inputs.size(), 3) << "relu backward #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "relu backward #outputs wrong";
   auto& top_diff = inputs[0];
@@ -373,7 +373,7 @@ void ReluBackward(const DataList& inputs, const DataList& outputs, ReluBackwardC
   CudaPerformReluBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), 1, 1, 1, top_diff.size().Prod(), context.stream, context.cudnn_handle);
 }
 
-void TanhForward(const DataList& inputs, const DataList& outputs, TanhForwardClosure&, const CudaRuntimeContext& context) {
+void TanhForward(const DataList& inputs, const DataList& outputs, TanhForwardClosure&, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "tanh forward #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "tanh forward #outputs wrong";
   auto& bottom = inputs[0];
@@ -381,7 +381,7 @@ void TanhForward(const DataList& inputs, const DataList& outputs, TanhForwardClo
   CudaPerformTanhForward(bottom.data(), top.data(), 1, 1, 1, bottom.size().Prod(), context.stream, context.cudnn_handle);
 }
 
-void TanhBackward(const DataList& inputs, const DataList& outputs, TanhBackwardClosure&, const CudaRuntimeContext& context) {
+void TanhBackward(const DataList& inputs, const DataList& outputs, TanhBackwardClosure&, const Context& context) {
   CHECK_EQ(inputs.size(), 3) << "tanh backward #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "tanh backward #outputs wrong";
   auto& top_diff = inputs[0];
@@ -391,7 +391,7 @@ void TanhBackward(const DataList& inputs, const DataList& outputs, TanhBackwardC
   CudaPerformTanhBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), 1, 1, 1, top_diff.size().Prod(), context.stream, context.cudnn_handle);
 }
 
-void ConvForward(const DataList& inputs, const DataList& outputs, ConvForwardClosure& closure, const CudaRuntimeContext& context) {
+void ConvForward(const DataList& inputs, const DataList& outputs, ConvForwardClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 3) << "(conv forward) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(conv forward) #outputs wrong";
   auto& bottom = inputs[0];
@@ -408,7 +408,7 @@ void ConvForward(const DataList& inputs, const DataList& outputs, ConvForwardClo
   CudaPerformConvForward(bottom.data(), filter.data(), bias.data(), top.data(), num_images, bottom_num_channels, top_num_channels, bottom_height, bottom_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
 }
 
-void ConvBackwardData(const DataList& inputs, const DataList& outputs, ConvBackwardDataClosure& closure, const CudaRuntimeContext& context) {
+void ConvBackwardData(const DataList& inputs, const DataList& outputs, ConvBackwardDataClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 2) << "(conv backward data) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(conv backward data) #outputs wrong";
   auto& top_diff = inputs[0];
@@ -424,7 +424,7 @@ void ConvBackwardData(const DataList& inputs, const DataList& outputs, ConvBackw
   CudaPerformConvBackwardData(top_diff.data(), filter.data(), bottom_diff.data(), num_images, bottom_num_channels, top_num_channels, top_height, top_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
 }
 
-void ConvBackwardFilter(const DataList& inputs, const DataList& outputs, ConvBackwardFilterClosure& closure, const CudaRuntimeContext& context) {
+void ConvBackwardFilter(const DataList& inputs, const DataList& outputs, ConvBackwardFilterClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 2) << "(conv backward filter) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(conv backward filter) #outputs wrong";
   auto& top_diff = inputs[0];
@@ -440,7 +440,7 @@ void ConvBackwardFilter(const DataList& inputs, const DataList& outputs, ConvBac
   CudaPerformConvBackwardFilter(bottom.data(), top_diff.data(), filter_diff.data(), num_images, bottom_num_channels, top_num_channels, bottom_height, bottom_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
 }
 
-void ConvBackwardBias(const DataList& inputs, const DataList& outputs, ConvBackwardBiasClosure& closure, const CudaRuntimeContext& context) {
+void ConvBackwardBias(const DataList& inputs, const DataList& outputs, ConvBackwardBiasClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "(conv backward bias) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(conv backward bias) #outputs wrong";
   auto& top_diff = inputs[0];
@@ -452,7 +452,7 @@ void ConvBackwardBias(const DataList& inputs, const DataList& outputs, ConvBackw
   CudaPerformConvBackwardBias(top_diff.data(), bias_diff.data(), num_images, top_num_channels, top_height, top_width, context.stream, context.cudnn_handle);
 }
 
-void SoftmaxForward(const DataList& inputs, const DataList& outputs, SoftmaxForwardClosure& closure, const CudaRuntimeContext& context) {
+void SoftmaxForward(const DataList& inputs, const DataList& outputs, SoftmaxForwardClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "(softmax forward) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(softmax forward) #outputs wrong";
   auto& bottom = inputs[0];
@@ -473,7 +473,7 @@ void SoftmaxForward(const DataList& inputs, const DataList& outputs, SoftmaxForw
   }
 }
 
-void SoftmaxBackward(const DataList& inputs, const DataList& outputs, SoftmaxBackwardClosure& closure, const CudaRuntimeContext& context) {
+void SoftmaxBackward(const DataList& inputs, const DataList& outputs, SoftmaxBackwardClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 2) << "(softmax backward) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(softmax backward) #outputs wrong";
   auto& top_diff = inputs[0];
@@ -495,7 +495,7 @@ void SoftmaxBackward(const DataList& inputs, const DataList& outputs, SoftmaxBac
   }
 }
 
-void ActivationForward(const DataList& inputs, const DataList& outputs, ActivationForwardClosure& closure, const CudaRuntimeContext& context) {
+void ActivationForward(const DataList& inputs, const DataList& outputs, ActivationForwardClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "(activation forward) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(activation forward) #outputs wrong";
   auto& bottom = inputs[0];
@@ -519,7 +519,7 @@ void ActivationForward(const DataList& inputs, const DataList& outputs, Activati
   }
 }
 
-void ActivationBackward(const DataList& inputs, const DataList& outputs, ActivationBackwardClosure& closure, const CudaRuntimeContext& context) {
+void ActivationBackward(const DataList& inputs, const DataList& outputs, ActivationBackwardClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 3) << "(activation backward) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(activation backward) #outputs wrong";
   auto& top_diff = inputs[0];
@@ -545,7 +545,7 @@ void ActivationBackward(const DataList& inputs, const DataList& outputs, Activat
   }
 }
 
-void PoolingForward(const DataList& inputs, const DataList& outputs, PoolingForwardClosure& closure, const CudaRuntimeContext& context) {
+void PoolingForward(const DataList& inputs, const DataList& outputs, PoolingForwardClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "(pooling forward) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(pooling forward) #outputs wrong";
   auto& bottom = inputs[0];
@@ -566,7 +566,7 @@ void PoolingForward(const DataList& inputs, const DataList& outputs, PoolingForw
   }
 }
 
-void PoolingBackward(const DataList& inputs, const DataList& outputs, PoolingBackwardClosure& closure, const CudaRuntimeContext& context) {
+void PoolingBackward(const DataList& inputs, const DataList& outputs, PoolingBackwardClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 3) << "(pooling backward) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(pooling backward) #inputs wrong";
   auto& top_diff = inputs[0];
@@ -589,29 +589,29 @@ void PoolingBackward(const DataList& inputs, const DataList& outputs, PoolingBac
   }
 }
 
-void ArrayLoader(const DataList& outputs, ArrayLoaderClosure& closure, const CudaRuntimeContext& context) {
+void ArrayLoader(const DataList& outputs, ArrayLoaderClosure& closure, const Context& context) {
   CHECK_EQ(outputs.size(), 1) << "(array loader) #outputs wrong";
   CHECK(closure.data) << "probably already executed";
   CUDA_CALL(cudaMemcpyAsync(outputs[0].data(), closure.data.get(), outputs[0].size().Prod() * sizeof(float), cudaMemcpyDefault));
   closure.data.reset();
 }
 
-void Randn(const DataList& outputs, RandnClosure& closure, const CudaRuntimeContext&) {
+void Randn(const DataList& outputs, RandnClosure& closure, const Context&) {
   CHECK_EQ(outputs.size(), 1) << "(normal) #outputs wrong";
   CudaPerformRandn(outputs[0].data(), outputs[0].size().Prod(), chrono::system_clock::now().time_since_epoch().count(), closure.mu, closure.var);
 }
 
-void RandBernoulli(const DataList& outputs, RandBernoulliClosure& closure, const CudaRuntimeContext& context) {
+void RandBernoulli(const DataList& outputs, RandBernoulliClosure& closure, const Context& context) {
   CHECK_EQ(outputs.size(), 1) << "(bernoulli) #outputs wrong";
   CudaPerformRandBernoulli(outputs[0].data(), outputs[0].size().Prod(), chrono::system_clock::now().time_since_epoch().count(), closure.p, context.stream);
 }
 
-void Fill(const DataList& outputs, FillClosure& closure, const CudaRuntimeContext& context) {
+void Fill(const DataList& outputs, FillClosure& closure, const Context& context) {
   CHECK_EQ(outputs.size(), 1) << "(fill) #outputs wrong";
   CudaPerformFill(outputs[0].data(), outputs[0].size().Prod(), closure.val, context.stream);
 }
 
-void SyncWithPS(const DataList& inputs, const DataList& outputs, SyncWithPSClosure& closure, const CudaRuntimeContext& context) {
+void SyncWithPS(const DataList& inputs, const DataList& outputs, SyncWithPSClosure& closure, const Context& context) {
   CHECK_EQ(outputs.size(), 1);
 #ifdef HAS_PS
   // TODO: use memory allocator, or directly pass CPU pointer in

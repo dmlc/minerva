@@ -27,17 +27,14 @@ inline std::ostream& operator<<(std::ostream& os, ImplType t) {
 
 struct Context {
   ImplType impl_type;
-  virtual ~Context() {
-  };
-};
-
 #ifdef HAS_CUDA
-struct CudaRuntimeContext : public Context {
   cudaStream_t stream;
   cublasHandle_t cublas_handle;
   cudnnHandle_t cudnn_handle;
-};
 #endif
+  virtual ~Context() {
+  };
+};
 
 }
 

@@ -8,11 +8,18 @@ from owl.caffe.caffe_pb2 import BlobProto
 from PIL import Image
 
 class ImageNetDataProvider:
-    def __init__(self, mean_file, train_db, mb_size, cropped_size):
+    def __init__(self, mean_file, mean_val, train_db, mb_size, cropped_size):
         bp = BlobProto()
-        with open(mean_file, 'rb') as f:
-            bp.ParseFromString(f.read())
-        self.mean_data = np.array(bp.data, dtype=np.float32).reshape([3, 256, 256])
+        if len(mean_file) == 0:
+            self.mean_data = np.ones([3, 256, 256], dtype=np.float32)
+            assert(len(mean_val) == 3)
+            self.mean_data[0] = mean_val[0]
+            self.mean_data[1] = mean_val[1]
+            self.mean_data[2] = mean_val[2]
+        else:    
+            with open(mean_file, 'rb') as f:
+                bp.ParseFromString(f.read())
+            self.mean_data = np.array(bp.data, dtype=np.float32).reshape([3, 256, 256])
         self.train_db = train_db
         self.mb_size = mb_size
         self.cropped_size = cropped_size

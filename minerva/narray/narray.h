@@ -1,13 +1,17 @@
 #pragma once
 #include "common/scale.h"
 #include "op/closure.h"
-#include "dag/physical_dag.h"
-#include "narray/io/file_format.h"
-#include "narray/io/file_loader.h"
+#include "system/backend.h"
+
+#include <glog/logging.h>
 #include <initializer_list>
 #include <memory>
 
 namespace minerva {
+
+struct FileFormat {
+  bool binary;
+};
 
 class NArray {
   friend class Elewise;
@@ -18,7 +22,7 @@ class NArray {
   static NArray Constant(const Scale& size, float val);
   static NArray Randn(const Scale& size, float mu, float var);
   static NArray RandBernoulli(const Scale& size, float p);
-  static NArray LoadFromFile(const Scale& size, const std::string& fname, std::shared_ptr<IFileLoader> loader);
+  //static NArray LoadFromFile(const Scale& size, const std::string& fname, std::shared_ptr<IFileLoader> loader);
   static NArray Zeros(const Scale& size);
   static NArray Ones(const Scale& size);
   static NArray MakeNArray(const Scale& size, std::shared_ptr<float> array);
@@ -26,14 +30,14 @@ class NArray {
   static std::vector<NArray> Compute(
       const std::vector<NArray>& params,
       const std::vector<Scale>& result_sizes,
-      PhysicalComputeFn* fn);
+      ComputeFn* fn);
   static NArray ComputeOne(
       const std::vector<NArray>& params,
       const Scale& size,
-      PhysicalComputeFn* fn);
+      ComputeFn* fn);
   static NArray GenerateOne(
       const Scale& size,
-      PhysicalComputeFn* fn);
+      ComputeFn* fn);
   // Constructors and destructors
   NArray();
   NArray(const NArray&);
@@ -70,8 +74,8 @@ class NArray {
   friend NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count);	
 
   // Shape
-  const Scale& Size() const { return CHECK_NOTNULL(data_node_)->data_.size; }
-  int Size(int dim) const { return CHECK_NOTNULL(data_node_)->data_.size[dim]; }
+  const Scale& Size() const { return CHECK_NOTNULL(data_)->shape(); }
+  int Size(int dim) const { return CHECK_NOTNULL(data_)->shape()[dim]; }
   NArray Reshape(const Scale& dims) const;
   NArray Trans() const;
   // Lazy reductions
@@ -97,8 +101,8 @@ class NArray {
   static NArray PushGradAndPullWeight(const NArray & grad, const std::string & layer_name);
   NArray& Pull(const std::string & layer_name);
  private:
-  NArray(PhysicalDataNode*);
-  PhysicalDataNode* data_node_;
+  NArray(MData*);
+  MData* data_;
 };
 
 // Matmult

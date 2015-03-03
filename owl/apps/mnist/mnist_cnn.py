@@ -127,7 +127,7 @@ if __name__ == '__main__':
     owl.initialize(sys.argv)
     parser = argparse.ArgumentParser(description='MNIST CNN')
     parser.add_argument('-n', '--num', help='number of GPUs to use', action='store', type=int, default=1)
-    args = parser.parse_args()
+    (args, remain) = parser.parse_known_args()
     assert(1 <= args.num)
     print 'Using %d GPU(s)' % args.num
     gpu = [owl.create_gpu_device(i) for i in range(args.num)]

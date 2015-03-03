@@ -65,3 +65,19 @@ pushd glog-0.3.3 > /dev/null
 make install
 popd > /dev/null
 
+PRINT_INFO "Resolving protobuf"
+wget https://github.com/google/protobuf/releases/download/v3.0.0-alpha-1/protobuf-cpp-3.0.0-alpha-1.tar.gz
+tar -xf protobuf-cpp-3.0.0-alpha-1.tar.gz
+mv protobuf-3.0.0-alpha-1 protobuf-cpp-3.0.0-alpha-1
+pushd  protobuf-cpp-3.0.0-alpha-1 > /dev/null
+./configure --prefix=${INSTALL_DIR}
+make install
+popd > /dev/null
+
+PRINT_INFO "Resolving python protobuf"
+wget https://pypi.python.org/packages/source/p/protobuf/protobuf-3.0.0-alpha-1.tar.gz
+tar -xf protobuf-3.0.0-alpha-1.tar.gz
+pushd  protobuf-3.0.0-alpha-1 > /dev/null
+./setup.py install --user
+popd > /dev/null
+
