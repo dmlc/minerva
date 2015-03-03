@@ -1,7 +1,7 @@
 #!/env/python
 
 import math
-import sys, getopt
+import sys, argparse
 import time
 import numpy as np
 import owl
@@ -15,6 +15,7 @@ class NetTrainer:
         self.snapshot = snapshot
         self.snapshot_dir = snapshot_dir
         self.num_gpu = num_gpu
+        self.gpu = [owl.create_gpu_device(i) for i in range(num_gpu)]
 
     def build_net(self):
         self.owl_net = net.Net()
@@ -23,13 +24,8 @@ class NetTrainer:
         self.builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
 
     def run(s):
-        gpu = [owl.create_gpu_device(i) for i in range(s.num_gpu)]
         wgrad = [[] for i in range(s.num_gpu)]
         bgrad = [[] for i in range(s.num_gpu)]
-        for i in range(0, s.num_gpu):
-            gpu.append(owl.create_gpu_device(i))
-            wgrad.append([])
-            bgrad.append([])
         last = time.time()
         wunits = s.owl_net.get_weighted_unit_ids()
         last_start = time.time()
@@ -43,7 +39,7 @@ class NetTrainer:
 
             # train on multi-gpu
             for gpuid in range(s.num_gpu):
-                owl.set_device(gpu[gpuid])
+                owl.set_device(s.gpu[gpuid])
                 s.owl_net.forward('TRAIN')
                 s.owl_net.backward('TRAIN')
                 for wid in wunits:
@@ -55,7 +51,7 @@ class NetTrainer:
             for i in range(len(wunits)): 
                 wid = wunits[i]
                 upd_gpu = i * num_gpu / len(wunits)
-                owl.set_device(gpu[upd_gpu])
+                owl.set_device(s.gpu[upd_gpu])
                 for gid in range(s.num_gpu):
                     if gid == upd_gpu:
                         continue
@@ -97,43 +93,25 @@ class NetTrainer:
                 s.builder.save_net_to_file(s.owl_net, s.snapshot_dir, (iteridx + 1) / (s.owl_net.solver.snapshot))
             sys.stdout.flush()
 
-def print_help_and_exit():
-    print """
-    Usage: net_trainer.py <net_file> <solver_file> [options]\n
-    Options:\n
-            -h,--help        print this help
-            --snapshot       start training from given snapshot
-            --snapshot-dir   the root directory of snapshot
-            -n,--num-gpu     number of gpus to use
-    """
-    sys.exit(2)
-
-
-
 if __name__ == "__main__":
     # parse command line arguments
-    if len(sys.argv) < 3:
-        print_help_and_exit()
-    net_file = sys.argv[1]
-    solver_file = sys.argv[2]
-        
-    try:
-        opts, args = getopt.getopt(sys.argv[3:], 'hn:', ["help", "snapshot=", "snapshot-dir=", "num-gpu="])
-    except getopt.GetoptError:
-        print_help_and_exit()
-    for opt, arg in opts:
-        if opt in ("-h", "--help"):
-            print_help_and_exit()
-        elif opt in ("-n", "--num-gpu"):
-            num_gpu = int(arg)
-        elif opt == "--snapshot":
-            snapshot = int(arg)
-        elif opt == "--snapshot-dir":
-            snapshot_dir = arg
-
+    parser = argparse.ArgumentParser()
+    parser.add_argument('net_file', help='caffe network configure file')
+    parser.add_argument('solver_file', help='caffe solver configure file')
+    parser.add_argument('-n', '--num_gpu', help='number of gpus to use', action='store', type=int, default=1)
+    parser.add_argument('--snapshot', help='the snapshot idx to start from', action='store', type=int)
+    parser.add_argument('--snapshot_dir', help='the root directory of snapshot', action='store', type=str)
+    (args, remain) = parser.parse_known_args()
+    net_file = args.net_file
+    solver_file = args.solver_file
+    num_gpu = args.num_gpu
+    snapshot = args.snapshot
+    snapshot_dir = args.snapshot_dir
+    
     print ' === Using %d gpus, start from snapshot %d === ' % (num_gpu, snapshot)
 
-    owl.initialize(sys.argv)
+    sys_args = [sys.argv[0]] + remain
+    owl.initialize(sys_args)
     trainer = NetTrainer(net_file, solver_file, snapshot, snapshot_dir, num_gpu)
     trainer.build_net()
     trainer.run()

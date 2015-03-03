@@ -65,6 +65,7 @@ uint64_t MinervaSystem::GenerateDataId() {
 }
 
 MinervaSystem::MinervaSystem(int* argc, char*** argv) {
+  gflags::ParseCommandLineFlags(argc, argv, true);
   google::InitGoogleLogging((*argv)[0]);
   physical_dag_ = new PhysicalDag();
   profiler_ = new ExecutionProfiler();

@@ -8,9 +8,12 @@ ALEXNET_NET=/home/tianjun/caffe/caffe/models/bvlc_alexnet/train_val_minerva.prot
 ALEXNET_SOLVER=/home/tianjun/caffe/caffe/models/bvlc_alexnet/solver.prototxt
 ALEXNET_SNAP_DIR=/home/tianjun/caffe/caffe/models/bvlc_alexnet/MinervaModel/
 
-GOOGNET_NET=/home/tianjun/configfile/Googmodel/train_val_128mb.prototxt
-GOOGNET_SOLVER=/home/tianjun/configfile/Googmodel/quick_solver_128mb.prototxt
-GOOGNET_SNAP_DIR=/home/tianjun/models/Googmodel/
+#GOOGNET_NET=/home/tianjun/configfile/Googmodel/train_val_128mb.prototxt
+#GOOGNET_SOLVER=/home/tianjun/configfile/Googmodel/quick_solver_128mb.prototxt
+#GOOGNET_SNAP_DIR=/home/tianjun/models/Googmodel/
+GOOGNET_NET=/home/minjie/caffe/caffe/models/bvlc_googlenet/train_val_minerva.prototxt
+GOOGNET_SOLVER=/home/minjie/caffe/caffe/models/bvlc_googlenet/solver.prototxt
+GOOGNET_SNAP_DIR=/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/
 
 VGGNET_NET=/home/minjie/caffe/caffe/models/VGG/VGG_train_val.prototxt
 VGGNET_SOLVER=/home/minjie/caffe/caffe/models/VGG/solver.prototxt
@@ -40,7 +43,7 @@ esac
 snapshot=$2
 num_gpu=$3
 
-python net_trainer.py $net_file $solver_file \
+echo python net_trainer.py $net_file $solver_file \
   --snapshot=$snapshot \
   --snapshot-dir=$snap_dir \
   --num-gpu=$num_gpu

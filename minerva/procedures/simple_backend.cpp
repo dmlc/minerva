@@ -1,6 +1,6 @@
 #include <memory>
 
-#include "glog/logging.h"
+#include <glog/logging.h>
 #include "procedures/simple_backend.h"
 #include "device/device_manager.h"
 #include "op/physical.h"
@@ -40,7 +40,7 @@ vector<MData*> SimpleBackend::Create(const vector<MData*>& params, const vector<
     op_node->outputs_.push_back(new PhysicalDataNode(0/*fake id*/, rst_phy_data[i]));
   }
   // call device to execute
-  LOG(INFO) << "Executing function: " << fn->Name();
+  DLOG(INFO) << "Executing function: " << fn->Name();
   device_manager_.GetDevice(current_device_id)->PushTask(op_node);
   // wait for finish
   {
