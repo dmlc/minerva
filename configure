@@ -49,7 +49,6 @@ do
     shift
 done
 
-echo "DISABLE_PS=$DISABLE_PS"
 if $DISABLE_PS -e true; then
   CXXFLAGS="$CXXFLAGS -DDISABLE_PS=ON"
 else
@@ -79,7 +78,7 @@ fi
 #===============================================================================
 
 #================================ main configuration =============================
-echo -e "\n\n\n========================== Release =========================="
+echo -e "========================== Release =========================="
 if [ ! -d $RELEASE_DIR ]; then
     mkdir $RELEASE_DIR
 fi
@@ -87,7 +86,7 @@ cd $RELEASE_DIR
 CC=$C_COMPILER CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Release $CXXFLAGS ..
 cd ..
 
-echo -e "\n\n\n========================== Debug =========================="
+echo -e "\n========================== Debug =========================="
 if [ ! -d $DEBUG_DIR ]; then
     mkdir $DEBUG_DIR
 fi
