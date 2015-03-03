@@ -61,14 +61,18 @@ class NetTrainer:
                 s.owl_net.units[wid].biasgrad = bgrad[upd_gpu][i]
                 s.owl_net.update(wid)
             #s.owl_net.weight_update(num_gpu = s.num_gpu)
-            s.owl_net.wait_for_eval_loss()
+            if iteridx % 2 == 0:
+                s.owl_net.wait_for_eval_loss()
+                thistime = time.time() - last
+                print "Finished training %d minibatch (time: %s)" % (iteridx, thistime)
+                last = time.time()
+            else:
+                s.owl_net.start_eval_loss()
+
             #s.owl_net.units[wunits[0]].weight.wait_for_eval()
             wgrad = [[] for i in range(s.num_gpu)] # reset gradients
             bgrad = [[] for i in range(s.num_gpu)]
 
-            thistime = time.time() - last
-            print "Finished training %d minibatch (time: %s)" % (iteridx, thistime)
-            last = time.time()
             # decide whether to display loss
             if (iteridx + 1) % (s.owl_net.solver.display) == 0:
                 lossunits = s.owl_net.get_loss_units()

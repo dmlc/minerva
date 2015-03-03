@@ -43,7 +43,7 @@ esac
 snapshot=$2
 num_gpu=$3
 
-echo python net_trainer.py $net_file $solver_file \
+python net_trainer.py $net_file $solver_file \
   --snapshot=$snapshot \
-  --snapshot-dir=$snap_dir \
-  --num-gpu=$num_gpu
+  --snapshot_dir=$snap_dir \
+  --num_gpu=$num_gpu
