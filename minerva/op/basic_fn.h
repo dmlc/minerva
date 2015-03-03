@@ -9,5 +9,10 @@ class BasicFn {
   virtual ~BasicFn() {}
 };
 
-}
+template<class T>
+struct ClosureTrait {
+ public:
+  T closure;
+};
 
+}

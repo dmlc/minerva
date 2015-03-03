@@ -39,8 +39,8 @@ std::vector<MData*> DagScheduler::Create(const std::vector<MData*>& params,
   auto param_data_nodes = Map<PhysicalDataNode*>(params, [](MData* i) {
     return dynamic_cast<MDataDag*>(i)->data_node;
   });
-  fn->device_id = current_device_id;
-  dag_->NewOpNode(param_data_nodes, rst_data_nodes, {fn});
+  auto op_node = dag_->NewOpNode(param_data_nodes, rst_data_nodes, {fn});
+  op_node->op_.device_id = current_device_id;
   return Map<MData*>(rst_data_nodes, [](PhysicalDataNode* n) { return new MDataDag(n); }); // TODO some creation overhead
 }
 //virtual MData* RecordCreateInplace(MData* param, ComputeFn* fn) = 0;
@@ -58,7 +58,7 @@ void DagScheduler::ShallowCopy(MData*& to, MData* from)  {
 }
 void DagScheduler::Destroy(MData* data)  {
   if (data) {
-    // decr rc TODO
+    // decr rc
     lock_guard<recursive_mutex> lck(dag_->m_);
     PhysicalDataNode* node = dynamic_cast<MDataDag*>(data)->data_node;
     --(node->data_.extern_rc);
@@ -296,7 +296,7 @@ void DagScheduler::DispatcherRoutine() {
     if (task.first == TaskType::kToRun) {  // New task to dispatch
       uint64_t device_id;
       if (node->Type() == DagNode::NodeType::kOpNode) {
-        device_id = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node))->op_.compute_fn->device_id;
+        device_id = CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node))->op_.device_id;
         DLOG(INFO) << "dispatching node #" << node_id << " to device " << device_id;
         MinervaSystem::Instance().device_manager().GetDevice(device_id)->PushTask(CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(node)));
       } else {

@@ -9,6 +9,7 @@
 #include "op/impl/basic.h"
 #include "dag/dag_printer.h"
 #include "procedures/dag_scheduler.h"
+#include "procedures/simple_backend.h"
 #include "common/cuda_utils.h"
 
 using namespace std;
@@ -63,10 +64,10 @@ uint64_t MinervaSystem::GenerateDataId() {
 MinervaSystem::MinervaSystem(int* argc, char*** argv) {
   google::InitGoogleLogging((*argv)[0]);
   physical_dag_ = new PhysicalDag();
-  //dag_scheduler_ = nullptr;//new DagScheduler(physical_dag_);
   profiler_ = new ExecutionProfiler();
   device_manager_ = new DeviceManager();
-  backend_ = new DagScheduler(physical_dag_, device_manager_);
+  //backend_ = new DagScheduler(physical_dag_, device_manager_);
+  backend_ = new SimpleBackend(*device_manager_);
   current_device_id_ = 0;
 }
 

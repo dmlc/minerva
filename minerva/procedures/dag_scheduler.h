@@ -45,11 +45,6 @@ class DagScheduler :
   std::shared_ptr<float> GetValue(MData* ) override;
   /////////////////////////
   
-  // Wait for evaluation to finish
-  //void WaitForFinish();
-  //void WaitForFinish(uint64_t);
-  void GCNodes();
-  // Monitor external reference changes
   // DAG monitor
   void OnCreateNode(DagNode*) override;
   void OnDeleteNode(DagNode*) override;
@@ -61,6 +56,7 @@ class DagScheduler :
   void FreeDataNodeRes(PhysicalDataNode*);
   void OnExternRCUpdate(PhysicalDataNode*);
   void Process(const std::vector<uint64_t>&);
+  void GCNodes();
   // Dag
   PhysicalDag* dag_;
   // Runtime information

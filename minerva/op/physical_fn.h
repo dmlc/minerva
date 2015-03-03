@@ -1,8 +1,6 @@
 #pragma once
 #include "op/basic_fn.h"
-#include "op/closure_trait.h"
 #include "op/physical.h"
-#include "op/device_id_trait.h"
 #include "op/context.h"
 #include "op/impl/impl.h"
 
@@ -22,7 +20,7 @@ class DataShard {
 
 typedef std::vector<DataShard> DataList;
 
-class ComputeFn : public BasicFn, public DeviceIdTrait {
+class ComputeFn : public BasicFn {
  public:
   virtual void Execute(const DataList&, const DataList&, const Context&) = 0;
 };
@@ -44,4 +42,3 @@ class PhyDataGenFnWithClosure : public ComputeFn, public ClosureTrait<Closure> {
 };
 
 }
-

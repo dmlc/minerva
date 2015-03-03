@@ -1,7 +1,5 @@
 #pragma once
 #include "common/scale.h"
-//#include "impl/impl.h"
-//#include "context.h"
 
 namespace minerva {
 
@@ -17,6 +15,7 @@ struct PhysicalData {
 
 struct PhysicalOp {
   ComputeFn* compute_fn;
+  uint64_t device_id;
 };
 
 }  // end of namespace minerva
