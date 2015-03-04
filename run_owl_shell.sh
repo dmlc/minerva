@@ -1,3 +1,3 @@
 #!/bin/sh
 
-python -i owl/minerva-start.py
+python -i owl/minerva_start.py
