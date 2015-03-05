@@ -48,7 +48,7 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-CXXFLAGS="$CSSFLAGS -DDISABLE_PS=${DISABLE_PS} -DDISABLE_CUDA=${DISABLE_CUDA}"
+CXXFLAGS="${CXXFLAGS} -DDISABLE_PS=${DISABLE_PS} -DDISABLE_CUDA=${DISABLE_CUDA}"
 
 #================================ help description =============================
 if test "x$want_help" = xyes; then

@@ -15,5 +15,6 @@ CXXFLAGS=
 # CUDA_ROOT=
 
 # Semicolon seperated list of external dependencies, e.g. cuDNN
-EXTERN_INCLUDE_PATH=$(pwd)/deps/include;/home/cs_user/Libs/cudnn-6.5-linux-R1
-EXTERN_LIB_PATH=$(pwd)/deps/lib;/home/cs_user/Libs/cudnn-6.5-linux-R1
+# Double quote paths to make it a single string
+EXTERN_INCLUDE_PATH="$(pwd)/deps/include;/home/cs_user/Libs/cudnn-6.5-linux-R1"
+EXTERN_LIB_PATH="$(pwd)/deps/lib;/home/cs_user/Libs/cudnn-6.5-linux-R1"

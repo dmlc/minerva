@@ -43,13 +43,14 @@ else (NOT DISABLE_PS)
   message(STATUS "PS support disabled")
 endif (NOT DISABLE_PS)
 
+message(STATUS "${EXTERN_LIB_PATH}")
 include_directories(
-  SYSTEM ${EXTERNAL_INCLUDE_PATH}
+  SYSTEM ${EXTERN_INCLUDE_PATH}
 )
 
 link_directories(
   ${LIBRARY_OUTPUT_PATH}
-  ${EXTERNAL_LIB_PATH}
+  ${EXTERN_LIB_PATH}
 )
 
 include(ExternalProject)
