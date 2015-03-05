@@ -31,6 +31,7 @@
 import os
 import inspect
 import ycm_core
+import re
 
 # These are the compilation flags that will be used in case there's no
 # compilation database set (by default, one is not set).
@@ -145,7 +146,7 @@ def FlagsForFile(filename):
     with open(config_file_path) as config_file:
       for line in config_file.readlines():
         if line.find('INCLUDE') >= 0:
-          ex_in_path_list = line.split('=')[-1].replace(r'$(pwd)/', '').split(';')
+          ex_in_path_list = re.sub(r'(^")|("$)', '', line.split('=')[-1]).replace(r'$(pwd)/', '').split(';')
           for ex_in_path in ex_in_path_list:
               if (len(ex_in_path)):
                 flags.append('-I')
