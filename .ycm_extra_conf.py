@@ -145,7 +145,7 @@ def FlagsForFile(filename):
     with open(config_file_path) as config_file:
       for line in config_file.readlines():
         if line.find('INCLUDE') >= 0:
-          ex_in_path_list = line.split('=')[-1].replace(r'$(pwd)/', '').split(',')
+          ex_in_path_list = line.split('=')[-1].replace(r'$(pwd)/', '').split(';')
           for ex_in_path in ex_in_path_list:
               if (len(ex_in_path)):
                 flags.append('-I')
