@@ -7,7 +7,7 @@
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&) = delete; \
-  void operator=(const TypeName&) = delete
+  TypeName& operator=(const TypeName&) = delete
 
 namespace minerva {
 
@@ -42,8 +42,18 @@ template<typename U, typename T, typename Fn>
 std::vector<U> Map(const std::vector<T>& original, Fn fn) {
   std::vector<U> res;
   res.resize(original.size());
-  transform(original.begin(), original.end(), res.begin(), fn);
+  std::transform(original.begin(), original.end(), res.begin(), fn);
   return res;
+}
+
+template<typename T, typename Fn>
+void Iter(const std::vector<T>& original, Fn fn) {
+  std::for_each(original.begin(), original.end(), fn);
+}
+
+template<typename T, typename Fn>
+void Iter(const std::set<T>& original, Fn fn) {
+  std::for_each(original.begin(), original.end(), fn);
 }
 
 }  // namespace minerva
