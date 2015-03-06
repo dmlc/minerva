@@ -20,9 +20,9 @@ class Dag {
   typedef DataNode<Data, Op> DNode;
   typedef OpNode<Data, Op> ONode;
   typedef std::unordered_map<uint64_t, DagNode*> ContainerType;
-  Dag();
+  Dag() = default ;
   DISALLOW_COPY_AND_ASSIGN(Dag);
-  ~Dag();
+  virtual ~Dag();
   DNode* NewDataNode(const Data& data);
   ONode* NewOpNode(
       const std::vector<DNode*>&,
@@ -32,23 +32,19 @@ class Dag {
   ONode* GetOpNode(uint64_t) const;
   DNode* GetDataNode(uint64_t) const;
   size_t NumNodes() const;
-  std::string ToDotString(
+  virtual std::string ToDotString(
       std::function<std::string(const Data&)>,
       std::function<std::string(const Op&)>) const;
-  std::string ToDotString() const;
-  std::string ToString(
+  virtual std::string ToDotString() const;
+  virtual std::string ToString(
       std::function<std::string(const Data&)>,
       std::function<std::string(const Op&)>) const;
-  std::string ToString() const;
+  virtual std::string ToString() const;
 
  private:
   uint64_t NewIndex();
   ContainerType index_to_node_;
 };
-
-template<typename D, typename O>
-Dag<D, O>::Dag() {
-}
 
 template<typename D, typename O>
 Dag<D, O>::~Dag() {
@@ -145,7 +141,7 @@ std::string Dag<D, O>::ToDotString(
 
 template<typename D, typename O>
 std::string Dag<D, O>::ToDotString() const {
-  ToDotString([](const D&) { return ""; }, [](const O&) { return ""; });
+  return ToDotString([](const D&) { return ""; }, [](const O&) { return ""; });
 }
 
 template<typename D, typename O>
@@ -173,7 +169,7 @@ std::string Dag<D, O>::ToString(
 
 template<typename D, typename O>
 std::string Dag<D, O>::ToString() const {
-  ToString([](const D&) { return ""; }, [](const O&) { return ""; });
+  return ToString([](const D&) { return ""; }, [](const O&) { return ""; });
 }
 
 template<typename D, typename O>
