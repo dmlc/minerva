@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include "common/scale.h"
 
 namespace minerva {
@@ -14,7 +15,7 @@ struct PhysicalData {
 };
 
 struct PhysicalOp {
-  ComputeFn* compute_fn;
+  std::shared_ptr<ComputeFn*> compute_fn;
   uint64_t device_id;
 };
 
