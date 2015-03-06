@@ -24,7 +24,7 @@ class ImageNetDataProvider:
         self.mb_size = mb_size
         self.cropped_size = cropped_size
 
-    def get_train_mb(self, phase = 'TRAIN'):
+    def get_train_mb(self, mirror, phase = 'TRAIN'):
         mb_size = self.mb_size
         cropped_size = self.cropped_size
         env = lmdb.open(self.train_db, readonly=True)
@@ -45,6 +45,9 @@ class ImageNetDataProvider:
                     crop_w = (256 - cropped_size) / 2
                 
                 im_cropped = im[:, crop_h:crop_h+cropped_size, crop_w:crop_w+cropped_size]
+                if mirror == True and numpy.random.rand() > 0.5:
+                    im_cropped = im_cropped[:,:,::-1]
+                
                 samples[count, :] = im_cropped.reshape(cropped_size ** 2 * 3).astype(np.float32)
                 labels[count, d.label] = 1
                 count = count + 1

@@ -342,6 +342,7 @@ class DataUnit(ComputeUnit):
         super(DataUnit, self).__init__(params)
         self.crop_size = params.transform_param.crop_size
         self.num_output = 3
+        self.mirror = params.transform_param.mirror
         if params.include[0].phase == Phase.Value('TRAIN'):
             self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.transform_param.mean_value,
                     params.data_param.source,
@@ -358,7 +359,7 @@ class DataUnit(ComputeUnit):
 
     def forward(self, from_btm, to_top, phase):
         if self.generator == None:
-            self.generator = self.dp.get_train_mb(phase)
+            self.generator = self.dp.get_train_mb(self.mirror, phase)
       
         while True:
             try:
@@ -367,7 +368,7 @@ class DataUnit(ComputeUnit):
                     (samples, labels) = next(self.generator)
             except StopIteration:
                 print 'Have scanned the whole dataset; start from the begginning agin'
-                self.generator = self.dp.get_train_mb(phase)
+                self.generator = self.dp.get_train_mb(self.mirror, phase)
                 continue
             break
 
