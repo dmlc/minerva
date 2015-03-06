@@ -33,12 +33,12 @@ class Dag {
   DNode* GetDataNode(uint64_t) const;
   size_t NumNodes() const;
   std::string ToDotString(
-      std::function<std::string(const DNode&)>,
-      std::function<std::string(const ONode&)>) const;
+      std::function<std::string(const Data&)>,
+      std::function<std::string(const Op&)>) const;
   std::string ToDotString() const;
   std::string ToString(
-      std::function<std::string(const DNode&)>,
-      std::function<std::string(const ONode&)>) const;
+      std::function<std::string(const Data&)>,
+      std::function<std::string(const Op&)>) const;
   std::string ToString() const;
 
  private:
@@ -118,19 +118,19 @@ size_t Dag<D, O>::NumNodes() const {
 
 template<typename D, typename O>
 std::string Dag<D, O>::ToDotString(
-    std::function<std::string(const DNode& data_to_string)>,
-    std::function<std::string(const ONode& op_to_string)>) const {
+    std::function<std::string(const D& data_to_string)>,
+    std::function<std::string(const O& op_to_string)>) const {
   std::ostringstream out;
   out << "digraph G {" << std::endl;
   for (auto i : index_to_node_) {
     out << "  " << i.first << " [shape=";
     if (i.second->Type() == DagNode::NodeType::kOpNode) {
       out << "ellipse";
-      const ONode& onode = dynamic_cast<const ONode&>(*i.second);
+      ONode* onode = CHECK_NOTNULL(dynamic_cast<ONode*>(i.second));
       out << " label=\"#" << i.first << "|" << op_to_string(onode->op_) << "\"";
     } else {
       out << "box";
-      const DNode& dnode = dynamic_cast<const DNode&>(*i.second);
+      DNode* dnode = CHECK_NOTNULL(dynamic_cast<DNode*>(i.second));
       out << " label=\"#" << i.first << "|" << data_to_string(dnode->data_)
         << "\"";
     }
@@ -145,23 +145,23 @@ std::string Dag<D, O>::ToDotString(
 
 template<typename D, typename O>
 std::string Dag<D, O>::ToDotString() const {
-  ToDotString([](const DNode&) { return ""; }, [](const ONode&) { return ""; });
+  ToDotString([](const D&) { return ""; }, [](const O&) { return ""; });
 }
 
 template<typename D, typename O>
 std::string Dag<D, O>::ToString(
-    std::function<std::string(const DNode& data_to_string)>,
-    std::function<std::string(const ONode& op_to_string)>) const {
+    std::function<std::string(const D& data_to_string)>,
+    std::function<std::string(const O& op_to_string)>) const {
   std::ostringstream ns, es;
   ns << "Nodes:" << std::endl;
   es << "Edges:" << std::endl;
   for (auto i : index_to_node_) {
     ns << i.first << ">>>>";
     if (i.second->Type() == DagNode::NodeType::kOpNode) {
-      const ONode& onode = dynamic_cast<const ONode&>(*i.second);
+      ONode* onode = CHECK_NOTNULL(dynamic_cast<ONode*>(i.second));
       ns << "type===o;;;" << op_to_string(onode->op_) << std::endl;
     } else {
-      const DNode& dnode = dynamic_cast<const DNode&>(*i.second);
+      DNode* dnode = CHECK_NOTNULL(dynamic_cast<DNode*>(i.second));
       ns << "type===d;;;" << data_to_string(dnode->data_) << std::endl;
     }
     for (auto j : i.second->successors_) {
@@ -169,6 +169,11 @@ std::string Dag<D, O>::ToString(
     }
   }
   return ns.str() + es.str();
+}
+
+template<typename D, typename O>
+std::string Dag<D, O>::ToString() const {
+  ToString([](const D&) { return ""; }, [](const O&) { return ""; });
 }
 
 template<typename D, typename O>
