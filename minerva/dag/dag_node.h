@@ -42,7 +42,7 @@ class OpNode : public DagNode {
  public:
   OpNode(uint64_t);
   DISALLOW_COPY_AND_ASSIGN(OpNode);
-  ~OpNode() = default;  // TODO autodeletion
+  ~OpNode() = default;
   NodeType Type() const;
   Op op_;
   std::vector<DataNode<Data, Op>*> inputs_;
