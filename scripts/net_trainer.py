@@ -45,7 +45,7 @@ class NetTrainer:
                 for wid in wunits:
                     wgrad[gpuid].append(s.owl_net.units[wid].weightgrad)
                     bgrad[gpuid].append(s.owl_net.units[wid].biasgrad)
-                s.owl_net.start_eval_loss()
+                # s.owl_net.start_eval_loss()
 
             # weight update
             for i in range(len(wunits)): 

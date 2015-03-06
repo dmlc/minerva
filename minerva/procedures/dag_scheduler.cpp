@@ -30,7 +30,7 @@ class MDataDag : public MData {
   PhysicalDataNode* data_node;
 };
 
-std::vector<MData*> DagScheduler::Create(const std::vector<MData*>& params, 
+std::vector<MData*> DagScheduler::Create(const std::vector<MData*>& params,
     const std::vector<Scale>& result_sizes, ComputeFn* fn)  {
   auto current_device_id = MinervaSystem::Instance().current_device_id_;
   auto rst_data_nodes = Map<PhysicalDataNode*>(result_sizes, [&](const Scale& size) {
@@ -41,6 +41,7 @@ std::vector<MData*> DagScheduler::Create(const std::vector<MData*>& params,
   });
   auto op_node = dag_->NewOpNode(param_data_nodes, rst_data_nodes, {fn});
   op_node->op_.device_id = current_device_id;
+  DLOG(INFO) << "create new nodes on device #" << current_device_id;
   return Map<MData*>(rst_data_nodes, [](PhysicalDataNode* n) { return new MDataDag(n); }); // TODO some creation overhead
 }
 //virtual MData* RecordCreateInplace(MData* param, ComputeFn* fn) = 0;
@@ -178,12 +179,12 @@ void DagScheduler::OnExternRCUpdate(PhysicalDataNode* node) {
               CHECK_NE(dnode_ri.state, NodeState::kDead);
               --dnode_ri.reference_count;
               if (dnode_ri.state == NodeState::kBirth && dnode_ri.reference_count == 0 && dnode->data_.extern_rc == 0) {
-                // If the data_node is in kBirth state, need to recursively check 
+                // If the data_node is in kBirth state, need to recursively check
                 // the liveness of its op_node
                 CHECK_EQ(dnode->predecessors_.size(), 1) << "data node have more than one predecessors";
                 probably_unused_nodes.push(CHECK_NOTNULL(dynamic_cast<PhysicalOpNode*>(*dnode->predecessors_.begin()))); // check it later
               } else if (dnode_ri.state == NodeState::kCompleted && dnode_ri.reference_count == 0 && dnode->data_.extern_rc == 0) {
-                // If the data_node is in kCompleted state and its rc == 0, 
+                // If the data_node is in kCompleted state and its rc == 0,
                 // the node could be safely deleted since it's no longer needed
                 FreeDataNodeRes(dnode);
                 dnode_ri.state = NodeState::kDead;
