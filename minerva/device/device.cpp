@@ -1,9 +1,10 @@
-#include "device/device.h"
+#include "device.h"
 #include <utility>
 #include <cstdlib>
 #include <mutex>
-#include <glog/logging.h>
 #include <sstream>
+#include <glog/logging.h>
+#include "device/task.h"
 #include "system/minerva_system.h"
 #include "op/context.h"
 #include "common/cuda_utils.h"
@@ -52,8 +53,8 @@ ThreadedDevice::ThreadedDevice(uint64_t device_id, DeviceListener* l, size_t par
 ThreadedDevice::~ThreadedDevice() {
 }
 
-void ThreadedDevice::PushTask(PhysicalOpNode* node) {
-  pool_.Push(bind(&ThreadedDevice::Execute, this, node, placeholders::_1));
+void ThreadedDevice::PushTask(Task* task) {
+  pool_.Push(bind(&ThreadedDevice::Execute, this, task, placeholders::_1));
 }
 
 void ThreadedDevice::FreeDataIfExist(uint64_t data_id) {
@@ -61,7 +62,7 @@ void ThreadedDevice::FreeDataIfExist(uint64_t data_id) {
   Device::FreeDataIfExist(data_id);
 }
 
-void ThreadedDevice::Execute(PhysicalOpNode* op_node, int thrid) {
+void ThreadedDevice::Execute(Task* task, int thrid) {
   PreExecute();
   DataList input_shards;
 #ifndef NDEBUG
