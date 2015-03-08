@@ -1,14 +1,12 @@
 #pragma once
-#include <cstdint>
-#include "dag/physical_dag.h"
+#include "device/task.h"
 
 namespace minerva {
 
 class DeviceListener {
  public:
-  virtual void OnOperationComplete(PhysicalOpNode*) = 0;
   virtual ~DeviceListener() = default;
+  virtual void OnOperationComplete(Task*) = 0;
 };
 
 }  // namespace minerva
-
