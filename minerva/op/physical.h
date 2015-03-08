@@ -16,7 +16,7 @@ struct PhysicalData {
 };
 
 struct PhysicalOp {
-  std::shared_ptr<ComputeFn*> compute_fn;
+  std::shared_ptr<ComputeFn> compute_fn;
   uint64_t device_id;
 };
 

@@ -2,9 +2,10 @@
 #include <string>
 #include <utility>
 #include <mutex>
+#include "device/task.h"
 #include "device/data_store.h"
-#include "op/physical_fn.h"
 #include "device/device_listener.h"
+#include "op/physical_fn.h"
 #include "common/common.h"
 #include "common/concurrent_blocking_queue.h"
 #include "common/thread_pool.h"
@@ -27,13 +28,13 @@ class Device {
   Device() = delete;
   DISALLOW_COPY_AND_ASSIGN(Device);
   Device(uint64_t device_id, DeviceListener*);
-  virtual ~Device();
+  virtual ~Device() = default;
   virtual void PushTask(Task*) = 0;
   virtual std::pair<MemType, float*> GetPtr(uint64_t data_id);
-  virtual std::string Name() const = 0;
-  virtual MemType GetMemType() const = 0;
   virtual void FreeDataIfExist(uint64_t data_id);
   virtual std::string GetMemUsage() const;
+  virtual std::string Name() const = 0;
+  virtual MemType GetMemType() const = 0;
 
  protected:
   ConcurrentUnorderedSet<uint64_t> local_data_;
@@ -45,9 +46,10 @@ class Device {
 
 class ThreadedDevice : public Device {
  public:
+  ThreadedDevice() = delete;
   ThreadedDevice(uint64_t device_id, DeviceListener*, size_t parallelism);
   DISALLOW_COPY_AND_ASSIGN(ThreadedDevice);
-  ~ThreadedDevice();
+  ~ThreadedDevice() = default;
   void PushTask(Task*);
   void FreeDataIfExist(uint64_t data_id);
 

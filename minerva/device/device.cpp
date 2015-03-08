@@ -15,7 +15,6 @@
 #include <cudnn.h>
 #endif
 
-//#undef NDEBUG
 #define DEFAULT_POOL_SIZE ((size_t) 5.8 * 1024 * 1024 * 1024)
 
 using namespace std;
@@ -23,9 +22,6 @@ using namespace std;
 namespace minerva {
 
 Device::Device(uint64_t device_id, DeviceListener* l) : device_id_(device_id), data_store_(0), listener_(l) {
-}
-
-Device::~Device() {
 }
 
 pair<Device::MemType, float*> Device::GetPtr(uint64_t data_id) {
@@ -50,9 +46,6 @@ string Device::GetMemUsage() const {
 ThreadedDevice::ThreadedDevice(uint64_t device_id, DeviceListener* l, size_t parallelism) : Device(device_id, l), pool_(parallelism) {
 }
 
-ThreadedDevice::~ThreadedDevice() {
-}
-
 void ThreadedDevice::PushTask(Task* task) {
   pool_.Push(bind(&ThreadedDevice::Execute, this, task, placeholders::_1));
 }
@@ -69,50 +62,48 @@ void ThreadedDevice::Execute(Task* task, int thrid) {
   WallTimer memory_timer;
   memory_timer.Start();
 #endif
-  for (auto i : op_node->inputs_) {
-    auto& input_data = i->data_;
+  for (auto& i : task->inputs) {
+    auto& input_data = i.physical_data;
     if (input_data.device_id == device_id_) {  // Input is local
-      DLOG(INFO) << Name() << " input node #" << i->node_id() << " data #" << input_data.data_id << " is local";
+      DLOG(INFO) << Name() << " input task data #" << i.id << " is local";
       CHECK_EQ(local_data_.Count(input_data.data_id), 1);
     } else {
       lock_guard<mutex> lck(copy_locks_[input_data.data_id]);
       if (!remote_data_.Count(input_data.data_id)) {  // Input is remote and not copied
-        DLOG(INFO) << Name() << " input node #" << i->node_id() << " is remote and not copied";
+        DLOG(INFO) << Name() << " input task data #" << i.id << " is remote and not copied";
         size_t size = input_data.size.Prod() * sizeof(float);
         auto ptr = data_store_->CreateData(input_data.data_id, size);
         DoCopyRemoteData(ptr, MinervaSystem::Instance().GetPtr(input_data.device_id, input_data.data_id).second, size, thrid);
         CHECK(remote_data_.Insert(input_data.data_id));
       }
     }
-    input_shards.emplace_back(data_store_->GetData(i->data_.data_id), i->data_.size);
+    input_shards.emplace_back(data_store_->GetData(input_data.data_id), input_data.size);
   }
   DataList output_shards;
-  for (auto i : op_node->outputs_) {
-    size_t size = i->data_.size.Prod() * sizeof(float);
-    DLOG(INFO) << "create output data node #" << i->node_id();
-    auto ptr = data_store_->CreateData(i->data_.data_id, size);
-    CHECK(local_data_.Insert(i->data_.data_id));
-    output_shards.emplace_back(ptr, i->data_.size);
+  for (auto& i : task->outputs) {
+    size_t size = i.physical_data.size.Prod() * sizeof(float);
+    DLOG(INFO) << Name() << " create output for task data #" << i.id;
+    auto ptr = data_store_->CreateData(i.physical_data.data_id, size);
+    CHECK(local_data_.Insert(i.physical_data.data_id));
+    output_shards.emplace_back(ptr, i.physical_data.size);
   }
+  auto& op = task->op;
+  CHECK(op.compute_fn);
 #ifndef NDEBUG
   Barrier(thrid);
   memory_timer.Stop();
-  MinervaSystem::Instance().profiler().RecordTime(TimerType::kMemory, op_node->op_.compute_fn->Name(), memory_timer);
-#endif
-  auto& op = op_node->op_;
-#ifndef NDEBUG
-  CHECK_NOTNULL(op.compute_fn);
+  MinervaSystem::Instance().profiler().RecordTime(TimerType::kMemory, op.compute_fn->Name(), memory_timer);
   WallTimer calculate_timer;
   calculate_timer.Start();
-  LOG(INFO) << Name() << " execute node #" << op_node->node_id() << ": " << op.compute_fn->Name();
 #endif
+  DLOG(INFO) << Name() << " execute task #" << task->id << ": " << op.compute_fn->Name();
   DoExecute(input_shards, output_shards, op, thrid);
+  DLOG(INFO) << Name() << " finished execute task #" << task->id << ": " << op.compute_fn->Name();
 #ifndef NDEBUG
-  LOG(INFO) << Name() << " finished execute node #" << op_node->node_id() << ": " << op.compute_fn->Name();
   calculate_timer.Stop();
-  MinervaSystem::Instance().profiler().RecordTime(TimerType::kCalculation, op_node->op_.compute_fn->Name(), calculate_timer);
+  MinervaSystem::Instance().profiler().RecordTime(TimerType::kCalculation, op.compute_fn->Name(), calculate_timer);
 #endif
-  listener_->OnOperationComplete(op_node);
+  listener_->OnOperationComplete(task);
 }
 
 void ThreadedDevice::PreExecute() {
