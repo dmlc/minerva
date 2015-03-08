@@ -1,29 +1,22 @@
 #pragma once
-#include "procedures/runtime_info_map.h"
-#include "procedures/device_listener.h"
+#include <mutex>
+#include <condition_variable>
+#include <thread>
+#include <atomic>
+#include "backend/dag/runtime_info_map.h"
+#include "backend/device_listener.h"
 #include "dag/dag.h"
-#include "dag/dag_monitor.h"
 #include "dag/physical_dag.h"
 #include "common/common.h"
 #include "common/concurrent_blocking_queue.h"
 #include "system/backend.h"
 
-#include <unordered_set>
-#include <mutex>
-#include <condition_variable>
-#include <thread>
-#include <atomic>
-
 namespace minerva {
 
 class DeviceManager;
-/*
- * Public methods of DAG scheduler are thread safe,
- * in the sense of multiple devices and a single user thread.
- */
+
 class DagScheduler :
-  public IBackend,
-  public DagMonitor<PhysicalDag>,
+  public Backend,
   public DeviceListener {
  public:
   enum class TaskType {
@@ -44,7 +37,7 @@ class DagScheduler :
   void WaitForAll() override;
   std::shared_ptr<float> GetValue(MData* ) override;
   /////////////////////////
-  
+
   // DAG monitor
   void OnCreateNode(DagNode*) override;
   void OnDeleteNode(DagNode*) override;
