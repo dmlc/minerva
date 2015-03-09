@@ -7,8 +7,8 @@
 #include "device/device_listener.h"
 #include "op/physical_fn.h"
 #include "common/common.h"
-#include "common/concurrent_blocking_queue.h"
 #include "common/thread_pool.h"
+#include "common/concurrent_blocking_queue.h"
 #include "common/concurrent_unordered_set.h"
 #include "common/concurrent_unordered_map.h"
 #ifdef HAS_CUDA

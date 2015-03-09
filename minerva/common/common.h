@@ -13,7 +13,7 @@ namespace minerva {
 
 template<typename T>
 std::ostream& operator<<(std::ostream& os, const std::set<T>& s) {
-  os << "{";
+  os << "{ ";
   for (const T& t: s) {
     os << t << " ";
   }
@@ -22,7 +22,7 @@ std::ostream& operator<<(std::ostream& os, const std::set<T>& s) {
 
 template<typename T>
 std::ostream& operator<<(std::ostream& os, const std::unordered_set<T>& s) {
-  os << "{";
+  os << "{ ";
   for (const T& t: s) {
     os << t << " ";
   }
@@ -31,7 +31,7 @@ std::ostream& operator<<(std::ostream& os, const std::unordered_set<T>& s) {
 
 template<typename T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
-  os << "[";
+  os << "[ ";
   for (const T& t: v) {
     os << t << " ";
   }

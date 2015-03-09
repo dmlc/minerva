@@ -1,13 +1,12 @@
 #pragma once
 #include <vector>
 #include <memory>
+#include "op/physical_fn.h"
 #include "backend/backend_chunk.h"
 #include "common/scale.h"
 #include "common/common.h"
 
 namespace minerva {
-
-class ComputeFn;
 
 class Backend {
  public:
