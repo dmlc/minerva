@@ -12,8 +12,6 @@
 
 namespace minerva {
 
-/* The DAG here is lock-free. To manipulate locks, put it into nodes.
- */
 template<typename Data, typename Op>
 class Dag {
  public:

@@ -4,12 +4,12 @@
 #include <thread>
 #include <atomic>
 #include "backend/dag/runtime_info_map.h"
-#include "backend/device_listener.h"
+#include "backend/backend.h"
+#include "device/device_listener.h"
 #include "dag/dag.h"
 #include "dag/physical_dag.h"
 #include "common/common.h"
 #include "common/concurrent_blocking_queue.h"
-#include "system/backend.h"
 
 namespace minerva {
 
@@ -23,35 +23,28 @@ class DagScheduler :
     kToRun,
     kToComplete
   };
+  DagScheduler() = delete;
   DagScheduler(PhysicalDag*, DeviceManager*);
+  DISALLOW_COPY_AND_ASSIGN(DagScheduler);
   ~DagScheduler();
-  ////////////////////////// backend interfaces
-  std::vector<MData*> Create(const std::vector<MData*>& params,
-      const std::vector<Scale>& result_sizes, ComputeFn* fn) override;
-  //virtual MData* RecordCreateInplace(MData* param, ComputeFn* fn) = 0;
-  void ShallowCopy(MData*&, MData* from) override;
-  void Destroy(MData* ) override;
-  void Issue(MData* ) override;
-  void Wait(MData* ) override;
-  //void Wait(const std::vector<MData*>& ) = 0;
+  // Backend
+  std::vector<BackendChunk*> Create(const std::vector<BackendChunk*>&,
+      const std::vector<Scale>&, ComputeFn*) override;
+  void Wait(BackendChunk*) override;
   void WaitForAll() override;
-  std::shared_ptr<float> GetValue(MData* ) override;
-  /////////////////////////
-
-  // DAG monitor
-  void OnCreateNode(DagNode*) override;
-  void OnDeleteNode(DagNode*) override;
-  void OnCreateEdge(DagNode*, DagNode*) override;
+  std::shared_ptr<float> GetValue(BackendChunk*) override;
   // Device listener
-  void OnOperationComplete(PhysicalOpNode*) override;
+  void OnOperationComplete(Task*) override;
 
  private:
   void FreeDataNodeRes(PhysicalDataNode*);
   void OnExternRCUpdate(PhysicalDataNode*);
   void Process(const std::vector<uint64_t>&);
-  void GCNodes();
+  std::mutex m_;
   // Dag
   PhysicalDag* dag_;
+  // Device manager
+  DeviceManager* dm_;
   // Runtime information
   RuntimeInfoMap rt_info_;
   // Scheduler dispatcher
@@ -61,9 +54,7 @@ class DagScheduler :
   // Evaluation finishing signal
   std::atomic<int> num_nodes_yet_to_finish_;
   uint64_t target_ = -1;
-  std::mutex finish_mutex_;
   std::condition_variable finish_cond_;
-  DISALLOW_COPY_AND_ASSIGN(DagScheduler);
 };
 
 }  // namespace minerva

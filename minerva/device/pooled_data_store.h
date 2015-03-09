@@ -9,9 +9,9 @@ class PooledDataStore : public DataStore {
   PooledDataStore(size_t threshold, std::function<void*(size_t)> a, std::function<void(void*)> d);
   DISALLOW_COPY_AND_ASSIGN(PooledDataStore);
   virtual ~PooledDataStore();
-  virtual float* CreateData(uint64_t, size_t);
-  virtual void FreeData(uint64_t);
-  virtual size_t GetTotalBytes() const;
+  float* CreateData(uint64_t, size_t) override;
+  void FreeData(uint64_t) override;
+  size_t GetTotalBytes() const override;
 
  private:
   size_t threshold_;

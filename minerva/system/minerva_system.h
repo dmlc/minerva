@@ -31,27 +31,12 @@ class MinervaSystem :
   ExecutionProfiler& profiler() {
     return *profiler_;
   }
-  uint64_t CreateCpuDevice();
 #ifdef HAS_CUDA
-  uint64_t CreateGpuDevice(int gid);
   int GetGpuDeviceCount();
 #endif
   std::pair<Device::MemType, float*> GetPtr(uint64_t, uint64_t);
   uint64_t GenerateDataId();
   uint64_t current_device_id_;
-
-  //////////////////////////////// interfaces for calling backends
-  std::vector<MData*> Create(const std::vector<MData*>& params, const std::vector<Scale>& result_sizes, ComputeFn* fn);
-  MData* CreateOne(MData* param, const Scale& result_size, ComputeFn* fn);
-  //virtual MData* RecordCreateInplace(MData* param, ComputeFn* fn);
-  void ShallowCopy(MData*& to, MData* from);
-  void Destroy(MData* );
-  void Issue(MData* );
-  void Wait(MData* );
-  //virtual void Wait(const std::vector<MData*>& );
-  void WaitForAll();
-  std::shared_ptr<float> GetValue(MData* );
-  /////////////////////////////////
 
  private:
   MinervaSystem(int*, char***);

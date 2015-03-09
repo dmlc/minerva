@@ -50,8 +50,8 @@ class ThreadedDevice : public Device {
   ThreadedDevice(uint64_t device_id, DeviceListener*, size_t parallelism);
   DISALLOW_COPY_AND_ASSIGN(ThreadedDevice);
   ~ThreadedDevice() = default;
-  void PushTask(Task*);
-  void FreeDataIfExist(uint64_t data_id);
+  void PushTask(Task*) override;
+  void FreeDataIfExist(uint64_t data_id) override;
 
  protected:
   virtual void Execute(Task*, int thrid);
@@ -69,8 +69,8 @@ class GpuDevice : public ThreadedDevice {
   GpuDevice(uint64_t device_id, DeviceListener*, int gpu_id);
   DISALLOW_COPY_AND_ASSIGN(GpuDevice);
   ~GpuDevice();
-  MemType GetMemType() const;
-  std::string Name() const;
+  MemType GetMemType() const override;
+  std::string Name() const override;
 
  private:
   static const size_t kParallelism = 4;
@@ -78,10 +78,10 @@ class GpuDevice : public ThreadedDevice {
   cudaStream_t stream_[kParallelism];
   cublasHandle_t cublas_handle_[kParallelism];
   cudnnHandle_t cudnn_handle_[kParallelism];
-  void PreExecute();
-  void Barrier(int);
-  void DoCopyRemoteData(float*, float*, size_t, int);
-  void DoExecute(const DataList&, const DataList&, PhysicalOp&, int);
+  void PreExecute() override;
+  void Barrier(int) override;
+  void DoCopyRemoteData(float*, float*, size_t, int) override;
+  void DoExecute(const DataList&, const DataList&, PhysicalOp&, int) override;
 };
 #endif
 
@@ -90,13 +90,13 @@ class CpuDevice : public ThreadedDevice {
   CpuDevice(uint64_t device_id, DeviceListener*);
   DISALLOW_COPY_AND_ASSIGN(CpuDevice);
   ~CpuDevice();
-  MemType GetMemType() const;
-  std::string Name() const;
+  MemType GetMemType() const override;
+  std::string Name() const override;
 
  private:
   static const size_t kDefaultThreadNum = 4;
-  void DoCopyRemoteData(float*, float*, size_t, int);
-  void DoExecute(const DataList&, const DataList&, PhysicalOp&, int);
+  void DoCopyRemoteData(float*, float*, size_t, int) override;
+  void DoExecute(const DataList&, const DataList&, PhysicalOp&, int) override;
 };
 
 }  // namespace minerva

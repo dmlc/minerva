@@ -10,7 +10,7 @@ class DagChunk : public BackendChunk {
   DagChunk(const DagChunk&);
   DagChunk& operator=(const DagChunk&);
   ~DagChunk();
-  const Scale& shape() const;
+  const Scale& shape() const override;
 
  private:
   PhysicalDataNode* node_;

@@ -11,8 +11,8 @@ class PhysicalDag : public Dag<PhysicalData, PhysicalOp> {
  public:
   using Dag<PhysicalData, PhysicalOp>::ToDotString;
   using Dag<PhysicalData, PhysicalOp>::ToString;
-  std::string ToDotString() const;
-  std::string ToString() const;
+  std::string ToDotString() const override;
+  std::string ToString() const override;
 
  private:
   static std::string DataToString(const PhysicalData&);

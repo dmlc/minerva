@@ -1,6 +1,5 @@
-#include "procedures/dag_scheduler.h"
-#include <queue>
-#include <list>
+#include "dag_scheduler.h"
+#include <vector>
 #include <glog/logging.h>
 #include "system/minerva_system.h"
 
@@ -8,9 +7,7 @@ using namespace std;
 
 namespace minerva {
 
-DagScheduler::DagScheduler(PhysicalDag* d, DeviceManager* dm) : dispatcher_(&DagScheduler::DispatcherRoutine, this), num_nodes_yet_to_finish_(0) {
-  dag_ = d;
-  d->RegisterMonitor(this);
+DagScheduler::DagScheduler(PhysicalDag* d, DeviceManager* dm) : dag_(d), dm_(dm), dispatcher_(&DagScheduler::DispatcherRoutine, this), num_nodes_yet_to_finish_(0) {
   dm->RegisterListener(this);
 }
 
@@ -20,17 +17,7 @@ DagScheduler::~DagScheduler() {
   dispatcher_.join();
 }
 
-/////////////////////////////////////////////// backend interfaces
-class MDataDag : public MData {
- public:
-  MDataDag(PhysicalDataNode* n): data_node(n) {}
-  const Scale& shape() const override {
-    return data_node->data_.size;
-  }
-  PhysicalDataNode* data_node;
-};
-
-std::vector<MData*> DagScheduler::Create(const std::vector<MData*>& params,
+vector<BackendChunk*> DagScheduler::Create(const vector<BackendChunk*>& params,
     const std::vector<Scale>& result_sizes, ComputeFn* fn)  {
   auto current_device_id = MinervaSystem::Instance().current_device_id_;
   auto rst_data_nodes = Map<PhysicalDataNode*>(result_sizes, [&](const Scale& size) {

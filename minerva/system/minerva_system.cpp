@@ -59,7 +59,7 @@ pair<Device::MemType, float*> MinervaSystem::GetPtr(uint64_t device_id, uint64_t
   return device_manager_->GetDevice(device_id)->GetPtr(data_id);
 }
 
-uint64_t MinervaSystem::GenerateDataId() {
+uint64_t MinervaSystem::GenerateDataId() {  // TODO contention
   static uint64_t data_id = 0;
   return data_id++;
 }
@@ -83,34 +83,6 @@ MinervaSystem::MinervaSystem(int* argc, char*** argv) {
     backend_ = new SimpleBackend(*device_manager_);
   }
   current_device_id_ = 0;
-}
-
-//////////////////// interfaces for calling backends
-std::vector<MData*> MinervaSystem::Create(const std::vector<MData*>& params, const std::vector<Scale>& result_sizes, ComputeFn* fn) {
-  return backend_->Create(params, result_sizes, fn);
-}
-MData* MinervaSystem::CreateOne(MData* param, const Scale& result_size, ComputeFn* fn) {
-  return backend_->CreateOne(param, result_size, fn);
-}
-//virtual MData* RecordCreateInplace(MData* param, ComputeFn* fn);
-void MinervaSystem::ShallowCopy(MData*& to, MData* from) {
-  backend_->ShallowCopy(to, from);
-}
-void MinervaSystem::Destroy(MData* data) {
-  backend_->Destroy(data);
-}
-void MinervaSystem::Issue(MData* data) {
-  backend_->Issue(data);
-}
-void MinervaSystem::Wait(MData* data) {
-  backend_->Wait(data);
-}
-//virtual void Wait(const std::vector<MData*>& );
-void MinervaSystem::WaitForAll() {
-  backend_->WaitForAll();
-}
-std::shared_ptr<float> MinervaSystem::GetValue(MData* data) {
-  return backend_->GetValue(data);
 }
 
 }  // end of namespace minerva

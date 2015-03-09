@@ -6,18 +6,15 @@ DagChunk::DagChunk() : node_(0) {
 }
 
 DagChunk::DagChunk(const DagChunk& d) : node_(d.node_) {
-  if (node_) {
-    // incr extern rf
-  }
+  CHECK_NOTNULL(node_);
+  // incr extern rf
 }
 
 DagChunk& DagChunk::operator=(const DagChunk& d) {
   if (this == &d) {
     return *this;
   }
-  if (node_) {
-    // decr extern rf
-  }
+  // decr extern rf
   node_ = d.node_;
   if (node_) {
     // incr extern rf

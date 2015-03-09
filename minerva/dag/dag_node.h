@@ -1,6 +1,7 @@
 #pragma once
 #include <unordered_set>
 #include <vector>
+#include <mutex>
 #include "common/common.h"
 
 namespace minerva {
@@ -19,6 +20,7 @@ class DagNode {
   uint64_t node_id() const;
   std::unordered_set<DagNode*> successors_;
   std::unordered_set<DagNode*> predecessors_;
+  std::mutex m_;
 
  protected:
   DagNode(uint64_t);
@@ -33,7 +35,7 @@ class DataNode : public DagNode {
   DataNode(uint64_t, const Data&);
   DISALLOW_COPY_AND_ASSIGN(DataNode);
   ~DataNode() = default;
-  NodeType Type() const;
+  NodeType Type() const override;
   Data data_;
 };
 
@@ -43,7 +45,7 @@ class OpNode : public DagNode {
   OpNode(uint64_t);
   DISALLOW_COPY_AND_ASSIGN(OpNode);
   ~OpNode() = default;
-  NodeType Type() const;
+  NodeType Type() const override;
   Op op_;
   std::vector<DataNode<Data, Op>*> inputs_;
   std::vector<DataNode<Data, Op>*> outputs_;
