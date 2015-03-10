@@ -1,5 +1,6 @@
 #pragma once
 #include <unordered_set>
+#include <atomic>
 #include <memory>
 #include "common/singleton.h"
 #include "common/inspector.h"
@@ -21,6 +22,8 @@ class MinervaSystem :
 
  public:
   static void UniversalMemcpy(std::pair<Device::MemType, float*>, std::pair<Device::MemType, float*>, size_t);
+  MinervaSystem() = delete;
+  DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
   ~MinervaSystem();
   PhysicalDag& physical_dag() {
     return *physical_dag_;
@@ -44,7 +47,7 @@ class MinervaSystem :
   IBackend* backend_;
   ExecutionProfiler* profiler_;
   DeviceManager* device_manager_;
-  DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
+  std::atomic<uint64_t> data_id_counter_;
 };
 
 }  // end of namespace minerva

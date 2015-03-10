@@ -60,15 +60,14 @@ pair<Device::MemType, float*> MinervaSystem::GetPtr(uint64_t device_id, uint64_t
 }
 
 uint64_t MinervaSystem::GenerateDataId() {  // TODO contention
-  static uint64_t data_id = 0;
-  return data_id++;
+  return data_id_counter_++;
 }
 
-MinervaSystem::MinervaSystem(int* argc, char*** argv) {
+MinervaSystem::MinervaSystem(int* argc, char*** argv) : current_device_id_(0), data_id_counter_(0) {
   gflags::ParseCommandLineFlags(argc, argv, true);
 #ifndef HAS_PS
   // XXX workaround
-  // glog is initialized in PS::main, and also here, so we will hit a 
+  // glog is initialized in PS::main, and also here, so we will hit a
   // double-initalize error when compiling with PS
   google::InitGoogleLogging((*argv)[0]);
 #endif
@@ -82,7 +81,6 @@ MinervaSystem::MinervaSystem(int* argc, char*** argv) {
     LOG(INFO) << "Disable dag engine";
     backend_ = new SimpleBackend(*device_manager_);
   }
-  current_device_id_ = 0;
 }
 
 }  // end of namespace minerva
