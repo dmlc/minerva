@@ -37,17 +37,19 @@ vector<BackendChunk*> DagScheduler::Create(const vector<BackendChunk*>& params,
   auto ret = Map<BackendChunk*>(rst_data_nodes, [](PhysicalDataNode* n) {
     return new DagChunk(n);
   });
-  MultiNodeLock lock(dag_, param_data_nodes);
-  auto op_node = dag_->NewOpNode(param_data_nodes, rst_data_nodes, {fn, current_device_id});
-  DLOG(INFO) << "create new nodes on device #" << current_device_id;
-  OnCreateNode(op_node);
-  Iter(param_data_nodes, [&](PhysicalDataNode* n) {
-    OnCreateEdge(n, op_node);
-  });
-  Iter(rst_data_nodes, [&](PhysicalDataNode* n) {
-    OnCreateEdge(op_node, n);
-  });
-  ProcessIfReady(op_node);
+  {
+    MultiNodeLock lock(dag_, param_data_nodes);
+    auto op_node = dag_->NewOpNode(param_data_nodes, rst_data_nodes, {fn, current_device_id});
+    DLOG(INFO) << "create new nodes on device #" << current_device_id;
+    OnCreateNode(op_node);
+    Iter(param_data_nodes, [&](PhysicalDataNode* n) {
+      OnCreateEdge(n, op_node);
+    });
+    Iter(rst_data_nodes, [&](PhysicalDataNode* n) {
+      OnCreateEdge(op_node, n);
+    });
+    ProcessIfReady(op_node);
+  }
   return ret;
 }
 
@@ -85,13 +87,15 @@ shared_ptr<float> DagScheduler::GetValue(BackendChunk* chunk) {
 
 // Device listener
 void DagScheduler::OnOperationComplete(Task* task) {
+  auto id = task->id;
   delete task;
-  dispatcher_queue_.Push({TaskType::kToComplete, task->id});
+  dispatcher_queue_.Push({TaskType::kToComplete, id});
 }
 
 void DagScheduler::ExternRCUpdate(PhysicalDataNode* node, int delta) {
   DagNode* to_delete = 0;
   {
+    // TODO shabi
     MultiNodeLock lock(dag_, node);
     auto node_id = node->node_id_;
     auto& ri = rt_info_.At(node_id);
@@ -165,10 +169,10 @@ void DagScheduler::DispatcherRoutine() {
         Task* task = new Task();
         // The following is necessary because aggregate initialization does not use move constructors.
         Iter(op_node->inputs_, [&](PhysicalDataNode* data_node) {
-          task->inputs.push_back({data_node->data_, data_node->node_id_});
+          task->inputs.emplace_back(data_node->data_, data_node->node_id_);
         });
         Iter(op_node->outputs_, [&](PhysicalDataNode* data_node) {
-          task->outputs.push_back({data_node->data_, data_node->node_id_});
+          task->outputs.emplace_back(data_node->data_, data_node->node_id_);
         });
         task->op = op_node->op_;
         task->id = node_id;
