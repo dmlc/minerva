@@ -32,7 +32,7 @@ vector<BackendChunk*> DagScheduler::Create(const vector<BackendChunk*>& params,
     OnCreateNode(n);
   });
   auto param_data_nodes = Map<PhysicalDataNode*>(params, [](BackendChunk* i) {
-    return CHECK_NOTNULL(dynamic_cast<DagChunk*>(i))->node_;
+    return CHECK_NOTNULL(dynamic_cast<DagChunk*>(i))->node();
   });
   auto ret = Map<BackendChunk*>(rst_data_nodes, [](PhysicalDataNode* n) {
     return new DagChunk(n);
@@ -53,7 +53,7 @@ vector<BackendChunk*> DagScheduler::Create(const vector<BackendChunk*>& params,
 
 void DagScheduler::Wait(BackendChunk* data) {
   unique_lock<mutex> lck(finish_mutex_);
-  auto node_id = CHECK_NOTNULL(dynamic_cast<DagChunk*>(data))->node_->node_id_;
+  auto node_id = CHECK_NOTNULL(dynamic_cast<DagChunk*>(data))->node()->node_id_;
   target_ = node_id;
   while (rt_info_.GetState(node_id) != NodeState::kCompleted) {
     finish_cond_.wait(lck);
@@ -74,7 +74,7 @@ void DagScheduler::WaitForAll() {
 }
 
 shared_ptr<float> DagScheduler::GetValue(BackendChunk* chunk) {
-  auto& data = CHECK_NOTNULL(dynamic_cast<DagChunk*>(chunk))->node_->data_;
+  auto& data = CHECK_NOTNULL(dynamic_cast<DagChunk*>(chunk))->node()->data_;
   shared_ptr<float> ret(new float[data.size.Prod()], [](float* p) {
     delete[] p;
   });
@@ -89,17 +89,18 @@ void DagScheduler::OnOperationComplete(Task* task) {
   dispatcher_queue_.Push({TaskType::kToComplete, task->id});
 }
 
-void DagScheduler::OnExternRCUpdate(PhysicalDataNode* node) {
+void DagScheduler::ExternRCUpdate(PhysicalDataNode* node, int delta) {
   DagNode* to_delete = 0;
   {
     MultiNodeLock lock(dag_, node);
     auto node_id = node->node_id_;
+    auto& ri = rt_info_.At(node_id);
+    ri.reference_count += delta;
     switch (rt_info_.GetState(node_id)) {
       case NodeState::kCompleted: {
         // If node is in kCompleted state, that means the node has already been concretely
         // evaluated. If the node's reference count drops to zero, we could safely GC all
         // its resources.
-        auto& ri = rt_info_.At(node_id);
         if (ri.reference_count == 0 && node->data_.extern_rc == 0) {
           FreeDataNodeRes(node);
           DLOG(INFO) << "delete node #" << node->node_id_ << " during extern reference count update";

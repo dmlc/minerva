@@ -36,7 +36,7 @@ class DagScheduler :
   // Device listener
   void OnOperationComplete(Task*) override;
   // Interface for `DagChunk`
-  void OnExternRCUpdate(PhysicalDataNode*);
+  void ExternRCUpdate(PhysicalDataNode*, int);
 
  private:
   void FreeDataNodeRes(PhysicalDataNode*);

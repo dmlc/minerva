@@ -3,7 +3,6 @@
 #include <atomic>
 #include <memory>
 #include "common/singleton.h"
-#include "common/inspector.h"
 #include "dag/physical_dag.h"
 #include "procedures/dag_scheduler.h"
 #include "narray/narray.h"
@@ -18,7 +17,6 @@ class MinervaSystem :
   public EverlastingSingleton<MinervaSystem> {
   friend class NArray;
   friend class EverlastingSingleton<MinervaSystem>;
-  friend class Inspector<MinervaSystem>;
 
  public:
   static void UniversalMemcpy(std::pair<Device::MemType, float*>, std::pair<Device::MemType, float*>, size_t);
