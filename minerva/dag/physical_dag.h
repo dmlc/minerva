@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <sstream>
+#include <mutex>
 #include "dag/dag.h"
 #include "op/physical.h"
 #include "op/physical_fn.h"
@@ -13,6 +14,7 @@ class PhysicalDag : public Dag<PhysicalData, PhysicalOp> {
   using Dag<PhysicalData, PhysicalOp>::ToString;
   std::string ToDotString() const override;
   std::string ToString() const override;
+  std::mutex m_;
 
  private:
   static std::string DataToString(const PhysicalData&);

@@ -52,7 +52,7 @@ void Iter(const std::vector<T>& original, Fn fn) {
 }
 
 template<typename T, typename Fn>
-void Iter(const std::set<T>& original, Fn fn) {
+void Iter(const std::unordered_set<T>& original, Fn fn) {
   std::for_each(original.begin(), original.end(), fn);
 }
 

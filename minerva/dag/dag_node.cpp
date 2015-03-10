@@ -21,23 +21,5 @@ int DagNode::AddParent(DagNode* p) {
   return pred_insert_success;
 }
 
-template<typename Data, typename Op>
-DataNode::DataNode(uint64_t id, const Data& data) : DagNode(id), data_(data) {
-}
-
-template<typename Data, typename Op>
-DagNode::NodeType DataNode::Type() const {
-  return DagNode::NodeType::kDataNode;
-}
-
-template<typename Data, typename Op>
-OpNode::OpNode(uint64_t id) : DagNode(id) {
-}
-
-template<typename Data, typename Op>
-DagNode::NodeType OpNode::Type() const {
-  return DagNode::NodeType::kOpNode;
-}
-
 }  // namespace minerva
 

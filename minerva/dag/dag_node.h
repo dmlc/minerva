@@ -32,20 +32,26 @@ class DagNode {
 template<typename Data, typename Op>
 class DataNode : public DagNode {
  public:
-  DataNode(uint64_t, const Data&);
+  DataNode(uint64_t id, const Data& data) : DagNode(id), data_(data) {
+  }
   DISALLOW_COPY_AND_ASSIGN(DataNode);
   ~DataNode() = default;
-  NodeType Type() const override;
+  NodeType Type() const override {
+    return DagNode::NodeType::kDataNode;
+  }
   Data data_;
 };
 
 template<typename Data, typename Op>
 class OpNode : public DagNode {
  public:
-  OpNode(uint64_t);
+  OpNode(uint64_t id) : DagNode(id) {
+  }
   DISALLOW_COPY_AND_ASSIGN(OpNode);
   ~OpNode() = default;
-  NodeType Type() const override;
+  NodeType Type() const override {
+    return DagNode::NodeType::kOpNode;
+  }
   Op op_;
   std::vector<DataNode<Data, Op>*> inputs_;
   std::vector<DataNode<Data, Op>*> outputs_;

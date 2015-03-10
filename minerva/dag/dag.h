@@ -9,6 +9,7 @@
 #include <string>
 #include "dag/dag_node.h"
 #include "common/common.h"
+#include "common/concurrent_unordered_map.h"
 
 namespace minerva {
 
@@ -17,7 +18,7 @@ class Dag {
  public:
   typedef DataNode<Data, Op> DNode;
   typedef OpNode<Data, Op> ONode;
-  typedef std::unordered_map<uint64_t, DagNode*> ContainerType;
+  typedef ConcurrentUnorderedMap<uint64_t, DagNode*> ContainerType;
   Dag() = default ;
   DISALLOW_COPY_AND_ASSIGN(Dag);
   virtual ~Dag();
@@ -46,16 +47,17 @@ class Dag {
 
 template<typename D, typename O>
 Dag<D, O>::~Dag() {
-  auto index_to_node = index_to_node_;
-  for (auto i : index_to_node) {
+  index_to_node_.LockRead();
+  for (auto i : index_to_node_.VolatilePayload()) {
     DeleteNode(i.first);
   }
+  index_to_node_.UnlockRead();
 }
 
 template<typename D, typename O>
 typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
   DNode* ret = new DNode(NewIndex(), data);
-  CHECK(index_to_node_.insert(std::make_pair(ret->node_id(), ret)).second);
+  CHECK(index_to_node_.Insert(std::make_pair(ret->node_id(), ret)).second);
   return ret;
 }
 
@@ -66,7 +68,7 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
     const O& op) {
   ONode* ret = new ONode(NewIndex());
   ret->op_ = op;
-  CHECK(index_to_node_.insert(std::make_pair(ret->node_id(), ret)).second);
+  CHECK(index_to_node_.Insert(std::make_pair(ret->node_id(), ret)).second);
   Iter(inputs, ret->AddParent);
   Iter(outputs, [&](DNode* output) {
     CHECK(output->AddParent(ret));
@@ -84,15 +86,15 @@ void Dag<D, O>::DeleteNode(uint64_t id) {
     CHECK_EQ(succ->predecessors_.erase(node), 1);
   });
   Iter(node->predecessors_, [&](DagNode* pred) {
-    CHECK_CQ(pred->successors_.erase(node), 1);
+    CHECK_EQ(pred->successors_.erase(node), 1);
   });
-  CHECK_EQ(index_to_node_.erase(id), 1);
+  CHECK_EQ(index_to_node_.Erase(id), 1);
   delete node;
 }
 
 template<typename D, typename O>
 DagNode* Dag<D, O>::GetNode(uint64_t nid) const {
-  return index_to_node_.at(nid);
+  return index_to_node_.At(nid);
 }
 
 template<typename D, typename O>
@@ -107,16 +109,17 @@ typename Dag<D, O>::DNode* Dag<D, O>::GetDataNode(uint64_t nid) const {
 
 template<typename D, typename O>
 size_t Dag<D, O>::NumNodes() const {
-  return index_to_node_.size();
+  return index_to_node_.Size();
 }
 
 template<typename D, typename O>
 std::string Dag<D, O>::ToDotString(
-    std::function<std::string(const D& data_to_string)>,
-    std::function<std::string(const O& op_to_string)>) const {
+    std::function<std::string(const D&)> data_to_string,
+    std::function<std::string(const O&)> op_to_string) const {
   std::ostringstream out;
   out << "digraph G {" << std::endl;
-  for (auto i : index_to_node_) {
+  index_to_node_.LockRead();
+  for (auto i : index_to_node_.VolatilePayload()) {
     out << "  " << i.first << " [shape=";
     if (i.second->Type() == DagNode::NodeType::kOpNode) {
       out << "ellipse";
@@ -133,6 +136,7 @@ std::string Dag<D, O>::ToDotString(
       out << "  " << i.first << " -> " << j->node_id() << ";" << std::endl;
     }
   }
+  index_to_node_.UnlockRead();
   out << "}";
   return out.str();
 }
@@ -144,12 +148,13 @@ std::string Dag<D, O>::ToDotString() const {
 
 template<typename D, typename O>
 std::string Dag<D, O>::ToString(
-    std::function<std::string(const D& data_to_string)>,
-    std::function<std::string(const O& op_to_string)>) const {
+    std::function<std::string(const D&)> data_to_string,
+    std::function<std::string(const O&)> op_to_string) const {
   std::ostringstream ns, es;
   ns << "Nodes:" << std::endl;
   es << "Edges:" << std::endl;
-  for (auto i : index_to_node_) {
+  index_to_node_.LockRead();
+  for (auto i : index_to_node_.VolatilePayload()) {
     ns << i.first << ">>>>";
     if (i.second->Type() == DagNode::NodeType::kOpNode) {
       ONode* onode = CHECK_NOTNULL(dynamic_cast<ONode*>(i.second));
@@ -162,6 +167,7 @@ std::string Dag<D, O>::ToString(
       es << i.first << " -> " << j->node_id() << std::endl;
     }
   }
+  index_to_node_.UnlockRead();
   return ns.str() + es.str();
 }
 
