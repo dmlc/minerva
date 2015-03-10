@@ -23,7 +23,7 @@ class DataShard {
   }
 
  private:
-  float* data_;
+  float* data_;  // TODO Making those public will make it faster???
   const Scale& size_;
 };
 

@@ -23,7 +23,7 @@ DagScheduler::~DagScheduler() {
 }
 
 vector<BackendChunk*> DagScheduler::Create(const vector<BackendChunk*>& params,
-    const std::vector<Scale>& result_sizes, shared_ptr<ComputeFn> fn)  {
+    const std::vector<Scale>& result_sizes, shared_ptr<ComputeFn> fn) {
   auto current_device_id = MinervaSystem::Instance().current_device_id_;
   auto rst_data_nodes = Map<PhysicalDataNode*>(result_sizes, [&](const Scale& size) {
     return dag_->NewDataNode(PhysicalData(size, current_device_id, MinervaSystem::Instance().GenerateDataId()));
@@ -38,8 +38,7 @@ vector<BackendChunk*> DagScheduler::Create(const vector<BackendChunk*>& params,
     return new DagChunk(n);
   });
   MultiNodeLock lock(dag_, param_data_nodes);
-  auto op_node = dag_->NewOpNode(param_data_nodes, rst_data_nodes, {fn});
-  op_node->op_.device_id = current_device_id;
+  auto op_node = dag_->NewOpNode(param_data_nodes, rst_data_nodes, {fn, current_device_id});
   DLOG(INFO) << "create new nodes on device #" << current_device_id;
   OnCreateNode(op_node);
   Iter(param_data_nodes, [&](PhysicalDataNode* n) {
@@ -54,7 +53,7 @@ vector<BackendChunk*> DagScheduler::Create(const vector<BackendChunk*>& params,
 
 void DagScheduler::Wait(BackendChunk* data) {
   unique_lock<mutex> lck(finish_mutex_);
-  auto node_id = CHECK_NOTNULL(dynamic_cast<DagChunk*>(data))->node_->node_id();
+  auto node_id = CHECK_NOTNULL(dynamic_cast<DagChunk*>(data))->node_->node_id_;
   target_ = node_id;
   while (rt_info_.GetState(node_id) != NodeState::kCompleted) {
     finish_cond_.wait(lck);
@@ -86,7 +85,7 @@ shared_ptr<float> DagScheduler::GetValue(BackendChunk* chunk) {
 
 // Device listener
 void DagScheduler::OnOperationComplete(Task* task) {
-  // TODO delete task?
+  delete task;
   dispatcher_queue_.Push({TaskType::kToComplete, task->id});
 }
 
@@ -94,7 +93,7 @@ void DagScheduler::OnExternRCUpdate(PhysicalDataNode* node) {
   DagNode* to_delete = 0;
   {
     MultiNodeLock lock(dag_, node);
-    auto node_id = node->node_id();
+    auto node_id = node->node_id_;
     switch (rt_info_.GetState(node_id)) {
       case NodeState::kCompleted: {
         // If node is in kCompleted state, that means the node has already been concretely
@@ -103,7 +102,7 @@ void DagScheduler::OnExternRCUpdate(PhysicalDataNode* node) {
         auto& ri = rt_info_.At(node_id);
         if (ri.reference_count == 0 && node->data_.extern_rc == 0) {
           FreeDataNodeRes(node);
-          DLOG(INFO) << "delete node #" << node->node_id() << " during extern reference count update";
+          DLOG(INFO) << "delete node #" << node->node_id_ << " during extern reference count update";
           to_delete = dag_->RemoveNodeFromDag(node_id);
           OnDeleteNode(node);
         }
@@ -119,28 +118,28 @@ void DagScheduler::OnExternRCUpdate(PhysicalDataNode* node) {
 }
 
 void DagScheduler::FreeDataNodeRes(PhysicalDataNode* node) {
-  DLOG(INFO) << "free data node resource for node #" << node->node_id() << " data #" << node->data_.data_id;
+  DLOG(INFO) << "free data node resource for node #" << node->node_id_ << " data #" << node->data_.data_id;
   dm_->FreeData(node->data_.data_id);
 }
 
 void DagScheduler::OnCreateNode(DagNode* node) {
-  rt_info_.AddNode(node->node_id());
+  rt_info_.AddNode(node->node_id_);
 }
 
 void DagScheduler::OnDeleteNode(DagNode* node) {
-  rt_info_.RemoveNode(node->node_id());
+  rt_info_.RemoveNode(node->node_id_);
 }
 
 void DagScheduler::OnCreateEdge(DagNode* from, DagNode* to) {
-  CHECK_EQ(rt_info_.GetState(to->node_id()), NodeState::kReady) << "invalid state of node #" << to->node_id();
-  ++(rt_info_.At(from->node_id()).reference_count);
-  if (rt_info_.GetState(from->node_id()) != NodeState::kCompleted) {
-    ++(rt_info_.At(to->node_id()).num_triggers_needed);
+  CHECK_EQ(rt_info_.GetState(to->node_id_), NodeState::kReady) << "invalid state of node #" << to->node_id_;
+  ++(rt_info_.At(from->node_id_).reference_count);
+  if (rt_info_.GetState(from->node_id_) != NodeState::kCompleted) {
+    ++(rt_info_.At(to->node_id_).num_triggers_needed);
   }
 }
 
 void DagScheduler::ProcessIfReady(PhysicalOpNode* target) {
-  auto node_id = target->node_id();
+  auto node_id = target->node_id_;
   CHECK_EQ(rt_info_.GetState(node_id), NodeState::kReady) << "invalid state of node #" << node_id;
   if (rt_info_.At(node_id).num_triggers_needed == 0) {
     ++num_nodes_yet_to_finish_;
@@ -165,11 +164,11 @@ void DagScheduler::DispatcherRoutine() {
         Task* task = new Task();
         // The following is necessary because aggregate initialization does not use move constructors.
         Iter(op_node->inputs_, [&](PhysicalDataNode* data_node) {
-            task->inputs.push_back({data_node->data_, data_node->node_id()});
-            });
+          task->inputs.push_back({data_node->data_, data_node->node_id_});
+        });
         Iter(op_node->outputs_, [&](PhysicalDataNode* data_node) {
-            task->outputs.push_back({data_node->data_, data_node->node_id()});
-            });
+          task->outputs.push_back({data_node->data_, data_node->node_id_});
+        });
         task->op = op_node->op_;
         task->id = node_id;
         DLOG(INFO) << "dispatching node #" << node_id << " to device #" << device_id;
@@ -183,14 +182,15 @@ void DagScheduler::DispatcherRoutine() {
         if (node->Type() == DagNode::NodeType::kOpNode) {  // Op node
           CHECK_NE(ri.reference_count, 0) << "op node #" << node_id << " generated but not needed";
           for (auto pred : node->predecessors_) {
-            auto& pred_ri = rt_info_.At(pred->node_id());
+            auto& pred_ri = rt_info_.At(pred->node_id_);
             auto pred_node = CHECK_NOTNULL(dynamic_cast<PhysicalDataNode*>(pred));
             // Reference count decreasing to zero, not able to recover access anymore
             CHECK_EQ(pred_ri.num_triggers_needed, 0) << "#triggers incorrect for a completed data node";
             if (--pred_ri.reference_count == 0 && pred_node->data_.extern_rc == 0) {
               FreeDataNodeRes(pred_node);
-              DLOG(INFO) << "delete node #" << pred_node->node_id() << " during dispatcher routine";
-              to_delete.push_back(dag_->RemoveNodeFromDag(pred_node->node_id()));
+              DLOG(INFO) << "delete node #" << pred_node->node_id_ << " during dispatcher routine";
+              MultiNodeLock(dag_, pred_node->predecessors_);
+              to_delete.push_back(dag_->RemoveNodeFromDag(pred_node->node_id_));
               OnDeleteNode(pred_node);
             }
           }
@@ -199,29 +199,30 @@ void DagScheduler::DispatcherRoutine() {
           // Data node generated but not needed
           if (ri.reference_count == 0 && data_node->data_.extern_rc == 0) {
             FreeDataNodeRes(data_node);
-            DLOG(INFO) << "delete node #" << data_node->node_id() << " during dispatcher routine";
-            to_delete.push_back(dag_->RemoveNodeFromDag(data_node->node_id()));
+            DLOG(INFO) << "delete node #" << data_node->node_id_ << " during dispatcher routine";
+            to_delete.push_back(dag_->RemoveNodeFromDag(data_node->node_id_));
             OnDeleteNode(data_node);
           }
           CHECK_EQ(node->predecessors_.size(), 1) << "data node should have no more than one predecessor";
           auto pred_node = *node->predecessors_.begin();
-          auto& pred_ri = rt_info_.At(pred_node->node_id());
+          auto& pred_ri = rt_info_.At(pred_node->node_id_);
           CHECK_EQ(pred_ri.num_triggers_needed, 0) << "#triggers incorrect for a completed op node";
           if (--pred_ri.reference_count == 0) {
-            DLOG(INFO) << "delete node #" << pred_node->node_id() << " during dispatcher routine";
-            to_delete.push_back(dag_->RemoveNodeFromDag(pred_node->node_id()));
+            DLOG(INFO) << "delete node #" << pred_node->node_id_ << " during dispatcher routine";
+            MultiNodeLock(dag_, pred_node->predecessors_);
+            to_delete.push_back(dag_->RemoveNodeFromDag(pred_node->node_id_));
             OnDeleteNode(pred_node);
           }
         }
         // Trigger successors
         {
           for (auto succ : node->successors_) {
-            auto& ri = rt_info_.At(succ->node_id());
+            auto& ri = rt_info_.At(succ->node_id_);
             --ri.num_triggers_needed;
             if (ri.state == NodeState::kReady && ri.num_triggers_needed == 0) {
-              DLOG(INFO) << "trigger node #" << succ->node_id();
+              DLOG(INFO) << "trigger node #" << succ->node_id_;
               ++num_nodes_yet_to_finish_;
-              dispatcher_queue_.Push({TaskType::kToRun, succ->node_id()});
+              dispatcher_queue_.Push({TaskType::kToRun, succ->node_id_});
             }
           }
         }

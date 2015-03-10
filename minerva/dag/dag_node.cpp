@@ -6,10 +6,6 @@ using namespace std;
 
 namespace minerva {
 
-uint64_t DagNode::node_id() const {
-  return node_id_;
-}
-
 DagNode::DagNode(uint64_t id) : node_id_(id) {
 }
 

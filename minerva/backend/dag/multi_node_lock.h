@@ -1,6 +1,7 @@
 #pragma once
 #include <list>
 #include <mutex>
+#include <unordered_set>
 #include "common/common.h"
 #include "dag/physical_dag.h"
 
@@ -10,6 +11,7 @@ class MultiNodeLock {
  public:
   MultiNodeLock() = default;
   template<typename T> MultiNodeLock(PhysicalDag*, const std::vector<T*>&);
+  template<typename T> MultiNodeLock(PhysicalDag*, const std::unordered_set<T*>&);
   template<typename T> MultiNodeLock(PhysicalDag*, T*);
   DISALLOW_COPY_AND_ASSIGN(MultiNodeLock);
   ~MultiNodeLock() = default;
@@ -20,6 +22,14 @@ class MultiNodeLock {
 
 template<typename T>
 MultiNodeLock::MultiNodeLock(PhysicalDag* dag, const std::vector<T*>& nodes) {
+  std::lock_guard<std::mutex> l(dag->m_);
+  Iter(nodes, [this](PhysicalDataNode* node) {
+    locks_.emplace_front(node->m_);
+  });
+}
+
+template<typename T>
+MultiNodeLock::MultiNodeLock(PhysicalDag* dag, const std::unordered_set<T*>& nodes) {
   std::lock_guard<std::mutex> l(dag->m_);
   Iter(nodes, [this](PhysicalDataNode* node) {
     locks_.emplace_front(node->m_);

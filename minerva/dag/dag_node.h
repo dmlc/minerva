@@ -17,16 +17,13 @@ class DagNode {
   virtual ~DagNode() = default;
   int AddParent(DagNode*);
   virtual NodeType Type() const = 0;
-  uint64_t node_id() const;
   std::unordered_set<DagNode*> successors_;
   std::unordered_set<DagNode*> predecessors_;
   std::mutex m_;
+  const uint64_t node_id_;
 
  protected:
   DagNode(uint64_t);
-
- private:
-  uint64_t node_id_;
 };
 
 template<typename Data, typename Op>
