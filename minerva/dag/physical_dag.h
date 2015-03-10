@@ -14,7 +14,6 @@ class PhysicalDag : public Dag<PhysicalData, PhysicalOp> {
   using Dag<PhysicalData, PhysicalOp>::ToString;
   std::string ToDotString() const override;
   std::string ToString() const override;
-  std::mutex m_;
 
  private:
   static std::string DataToString(const PhysicalData&);

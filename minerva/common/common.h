@@ -46,13 +46,8 @@ std::vector<U> Map(const std::vector<T>& original, Fn fn) {
   return res;
 }
 
-template<typename T, typename Fn>
-void Iter(const std::vector<T>& original, Fn fn) {
-  std::for_each(original.begin(), original.end(), fn);
-}
-
-template<typename T, typename Fn>
-void Iter(const std::unordered_set<T>& original, Fn fn) {
+template<typename Iterable, typename Fn>
+void Iter(const Iterable& original, Fn fn) {
   std::for_each(original.begin(), original.end(), fn);
 }
 

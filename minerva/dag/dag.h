@@ -26,7 +26,7 @@ class Dag {
   ONode* NewOpNode(
       const std::vector<DNode*>&,
       const std::vector<DNode*>&, const Op&);
-  void DeleteNode(uint64_t);
+  DagNode* RemoveNodeFromDag(uint64_t);
   DagNode* GetNode(uint64_t) const;
   ONode* GetOpNode(uint64_t) const;
   DNode* GetDataNode(uint64_t) const;
@@ -39,6 +39,7 @@ class Dag {
       std::function<std::string(const Data&)>,
       std::function<std::string(const Op&)>) const;
   virtual std::string ToString() const;
+  std::mutex m_;
 
  private:
   uint64_t NewIndex();
@@ -49,7 +50,7 @@ template<typename D, typename O>
 Dag<D, O>::~Dag() {
   index_to_node_.LockRead();
   for (auto i : index_to_node_.VolatilePayload()) {
-    DeleteNode(i.first);
+    delete RemoveNodeFromDag(i.first);
   }
   index_to_node_.UnlockRead();
 }
@@ -79,7 +80,7 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
 }
 
 template<typename D, typename O>
-void Dag<D, O>::DeleteNode(uint64_t id) {
+DagNode* Dag<D, O>::RemoveNodeFromDag(uint64_t id) {
   DLOG(INFO) << "delete node #" << id;
   auto node = GetNode(id);
   Iter(node->successors_, [&](DagNode* succ) {
@@ -89,7 +90,7 @@ void Dag<D, O>::DeleteNode(uint64_t id) {
     CHECK_EQ(pred->successors_.erase(node), 1);
   });
   CHECK_EQ(index_to_node_.Erase(id), 1);
-  delete node;
+  return node;
 }
 
 template<typename D, typename O>

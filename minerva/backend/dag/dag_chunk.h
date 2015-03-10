@@ -6,14 +6,13 @@ namespace minerva {
 
 class DagChunk : public BackendChunk {
  public:
-  DagChunk();
+  DagChunk() = delete;
   DagChunk(const DagChunk&);
+  DagChunk(PhysicalDataNode*);
   DagChunk& operator=(const DagChunk&);
   ~DagChunk();
   const Scale& shape() const override;
-
- private:
-  PhysicalDataNode* node_;
+  PhysicalDataNode const* node_;
 };
 
 }  // namespace minerva

@@ -2,12 +2,13 @@
 
 namespace minerva {
 
-DagChunk::DagChunk() : node_(0) {
+DagChunk::DagChunk(const DagChunk& d) : node_(d.node_) {
+  // incr extern rf
 }
 
-DagChunk::DagChunk(const DagChunk& d) : node_(d.node_) {
+DagChunk::DagChunk(PhysicalDataNode* node) : node_(node) {
   CHECK_NOTNULL(node_);
-  // incr extern rf
+  // extern rf
 }
 
 DagChunk& DagChunk::operator=(const DagChunk& d) {
@@ -16,16 +17,12 @@ DagChunk& DagChunk::operator=(const DagChunk& d) {
   }
   // decr extern rf
   node_ = d.node_;
-  if (node_) {
-    // incr extern rf
-  }
+  // incr extern rf
   return *this;
 }
 
 DagChunk::~DagChunk() {
-  if (node_) {
-    // decr extern rf
-  }
+  // decr extern rf
 }
 
 const Scale& DagChunk::shape() const {
