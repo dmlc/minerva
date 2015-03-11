@@ -10,7 +10,6 @@ namespace minerva {
 class DataShard {
  public:
   DataShard() = delete;
-  DISALLOW_COPY_AND_ASSIGN(DataShard);
   DataShard(float* data, const Scale& size): data_(data), size_(size) {
   }
   ~DataShard() = default;

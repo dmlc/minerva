@@ -1,12 +1,13 @@
 #include "dag_chunk.h"
 #include "system/minerva_system.h"
+#include "backend/dag/dag_scheduler.h"
 
 namespace minerva {
 
-static ExternRCUpdate(PhysicalDataNode* node, int delta) {
+static void ExternRCUpdate(PhysicalDataNode* node, int delta) {
   auto& ms = MinervaSystem::Instance();
   if (ms.IsAlive()) {
-    CHECK_NOTNULL(dynamic_cast<DagScheduler*>(ms.backend()))->ExternRCUpdate(node, delta);
+    dynamic_cast<DagScheduler&>(ms.backend()).ExternRCUpdate(node, delta);
   }
 }
 

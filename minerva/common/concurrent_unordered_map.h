@@ -19,7 +19,7 @@ template<typename K, typename V> class ConcurrentUnorderedMap {
   }
   size_t Insert(const typename std::unordered_map<K, V>::value_type& v) {
     WriteLock lock(l_);
-    return map_.insert(v);
+    return map_.insert(v).second;
   }
   V& At(const K& k) {
     ReadLock lock(l_);

@@ -58,7 +58,7 @@ Dag<D, O>::~Dag() {
 template<typename D, typename O>
 typename Dag<D, O>::DNode* Dag<D, O>::NewDataNode(const D& data) {
   DNode* ret = new DNode(NewIndex(), data);
-  CHECK(index_to_node_.Insert(std::make_pair(ret->node_id_, ret)).second);
+  CHECK(index_to_node_.Insert(std::make_pair(ret->node_id_, ret)));
   return ret;
 }
 
@@ -69,8 +69,10 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
     const O& op) {
   ONode* ret = new ONode(NewIndex());
   ret->op_ = op;
-  CHECK(index_to_node_.Insert(std::make_pair(ret->node_id_, ret)).second);
-  Iter(inputs, ret->AddParent);
+  CHECK(index_to_node_.Insert(std::make_pair(ret->node_id_, ret)));
+  Iter(inputs, [&](DNode* input) {
+    ret->AddParent(input);
+  });
   Iter(outputs, [&](DNode* output) {
     CHECK(output->AddParent(ret));
   });
