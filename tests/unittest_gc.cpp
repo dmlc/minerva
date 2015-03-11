@@ -9,43 +9,42 @@ TEST(GCCorrectness, EvalInLoop) {
   NArray narr = NArray::Constant({10, 8}, 0.0);
   for(int i = 0; i < 10; ++i) {
     narr += 1;
-    //cout << ms.physical_dag().PrintDag() << endl;
-    narr.Wait();
+    ms.backend().WaitForAll();
     EXPECT_EQ(ms.physical_dag().NumNodes(), 1) << "wrong #physical_nodes in iter#" << i;
-    //EXPECT_EQ(ms.data_store().GetTotalBytes(DataStore::CPU), 320) << "wrong memory usage in iter#" << i;
-    cout << "iter #" << i << " succeed!" << endl;
   }
   shared_ptr<float> val = narr.Get();
-  for(int i = 0; i < 80; ++i)
+  for (int i = 0; i < 80; ++i) {
     ASSERT_EQ(val.get()[i], 10) << "value mismatch at i=" << i;
+  }
 }
 
 TEST(GCCorrectness, EvalPartial) {
   MinervaSystem& ms = MinervaSystem::Instance();
   NArray a = NArray::Constant({10, 8}, 0.0);
   vector<NArray> arr;
-  for(int i = 0; i < 10; ++i)
+  for (int i = 0; i < 10; ++i) {
     arr.push_back(a + 1);
-  for(size_t i = 0; i < arr.size(); ++i) {
-    arr[i].Wait();
-    ASSERT_EQ(ms.physical_dag().NumNodes(), 20 - i);
-    cout << "Eval #" << i << " succeed!" << endl;
   }
-  //EXPECT_EQ(ms.data_store().GetTotalBytes(DataStore::CPU), 3520);
+  ms.backend().WaitForAll();
+  for(size_t i = 0; i < arr.size(); ++i) {
+    ASSERT_EQ(ms.physical_dag().NumNodes(), arr.size() + 1 - i);
+    arr[i] = NArray();
+    ms.backend().WaitForAll();
+  }
 }
 
 TEST(GCCorrectness, ChangeInternRCAfterEval) {
   MinervaSystem& ms = MinervaSystem::Instance();
   NArray a = NArray::Constant({10, 8}, 0.0);
-  a.Wait();
+  ms.backend().WaitForAll();
   EXPECT_EQ(ms.physical_dag().NumNodes(), 1);
-  //EXPECT_EQ(ms.data_store().GetTotalBytes(DataStore::CPU), 320);
   NArray b = a + 1;
   NArray c = a + 1;
-  b.Wait();
-  EXPECT_EQ(ms.physical_dag().NumNodes(), 4);
-  c.Wait();
+  ms.backend().WaitForAll();
   EXPECT_EQ(ms.physical_dag().NumNodes(), 3);
+  b = NArray();
+  ms.backend().WaitForAll();
+  EXPECT_EQ(ms.physical_dag().NumNodes(), 2);
 }
 
 TEST(GCCorrectness, ChangeExternRCAfterEval) {
@@ -53,10 +52,10 @@ TEST(GCCorrectness, ChangeExternRCAfterEval) {
   NArray a = NArray::Constant({10, 8}, 0.0);
   {
     NArray b = NArray::Constant({10, 8}, 0.0);
-    b.Wait();
-    EXPECT_EQ(ms.physical_dag().NumNodes(), 3);
+    ms.backend().WaitForAll();
+    EXPECT_EQ(ms.physical_dag().NumNodes(), 2);
   }
-  a.Wait();
+  ms.backend().WaitForAll();
   EXPECT_EQ(ms.physical_dag().NumNodes(), 1);
 }
 
@@ -65,20 +64,18 @@ TEST(GCCorrectness, ChangeBothRCAfterEval) {
   NArray a, b;
   {
     NArray c = NArray::Constant({10, 8}, 0.0);
-    c.Wait();
     a = c + 1;
     b = c + 2;
   }
-  a.Wait();
-  //cout << ms.logical_dag().PrintDag() << endl;
-  EXPECT_EQ(ms.physical_dag().NumNodes(), 4);
-  b.Wait();
+  ms.backend().WaitForAll();
   EXPECT_EQ(ms.physical_dag().NumNodes(), 2);
-  // check correctness
+  // Check correctness
   shared_ptr<float> aptr = a.Get();
-  for(int i = 0; i < 80; ++i)
+  for (int i = 0; i < 80; ++i) {
     ASSERT_EQ(aptr.get()[i], 1);
+  }
   shared_ptr<float> bptr = b.Get();
-  for(int i = 0; i < 80; ++i)
+  for (int i = 0; i < 80; ++i) {
     ASSERT_EQ(bptr.get()[i], 2);
+  }
 }

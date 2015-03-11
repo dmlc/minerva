@@ -51,6 +51,7 @@ class DagScheduler :
   // Scheduler dispatcher
   PriorityDispatcherQueue dispatcher_queue_;
   void DispatcherRoutine();
+  void DecrNumNodesYetToFinish(uint64_t);
   std::thread dispatcher_;
   // Evaluation finishing signal
   std::atomic<int> num_nodes_yet_to_finish_;

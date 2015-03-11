@@ -104,6 +104,7 @@ void DagScheduler::ExternRCUpdate(PhysicalDataNode* node, int delta) {
       if (ri.reference_count == 0 && node->data_.extern_rc == 0) {
         DLOG(INFO) << "kill node #" << node->node_id_ << " during extern reference count update";
         FreeDataNodeRes(node);
+        ++num_nodes_yet_to_finish_;
         dispatcher_queue_.Push({TaskType::kToDelete, node_id});
       }
       break;
@@ -186,6 +187,7 @@ void DagScheduler::DispatcherRoutine() {
             CHECK_EQ(pred_ri.num_triggers_needed, 0) << "#triggers incorrect for a completed data node";
             if (--pred_ri.reference_count == 0 && pred_node->data_.extern_rc == 0) {
               FreeDataNodeRes(pred_node);
+              ++num_nodes_yet_to_finish_;
               dispatcher_queue_.Push({TaskType::kToDelete, pred_node->node_id_});
             }
           }
@@ -194,6 +196,7 @@ void DagScheduler::DispatcherRoutine() {
           // Data node generated but not needed
           if (ri.reference_count == 0 && data_node->data_.extern_rc == 0) {
             FreeDataNodeRes(data_node);
+            ++num_nodes_yet_to_finish_;
             dispatcher_queue_.Push({TaskType::kToDelete, data_node->node_id_});
           }
           CHECK_EQ(node->predecessors_.size(), 1) << "data node should have no more than one predecessor";
@@ -201,6 +204,7 @@ void DagScheduler::DispatcherRoutine() {
           auto& pred_ri = rt_info_.At(pred_node->node_id_);
           CHECK_EQ(pred_ri.num_triggers_needed, 0) << "#triggers incorrect for a completed op node";
           if (--pred_ri.reference_count == 0) {
+            ++num_nodes_yet_to_finish_;
             dispatcher_queue_.Push({TaskType::kToDelete, pred_node->node_id_});
           }
         }
@@ -214,22 +218,27 @@ void DagScheduler::DispatcherRoutine() {
             dispatcher_queue_.Push({TaskType::kToRun, succ->node_id_});
           }
         }
-        --num_nodes_yet_to_finish_;
-        {
-          unique_lock<mutex> lck(finish_mutex_);
-          if (num_nodes_yet_to_finish_ == 0 || node_id == target_) {
-            finish_cond_.notify_all();
-          }
-        }
+        DecrNumNodesYetToFinish(node_id);
       } else if (task.first == TaskType::kToDelete) {
         DLOG(INFO) << "dispatcher ready to delete node #" << node_id;
         OnDeleteNode(node);
         to_delete = dag_->RemoveNodeFromDag(node_id);
+        DecrNumNodesYetToFinish(node_id);
       } else {
         LOG(FATAL) << "illegal task state";
       }
     }
     delete to_delete;
+  }
+}
+
+void DagScheduler::DecrNumNodesYetToFinish(uint64_t node_id) {
+  --num_nodes_yet_to_finish_;
+  {
+    unique_lock<mutex> lck(finish_mutex_);
+    if (num_nodes_yet_to_finish_ == 0 || node_id == target_) {
+      finish_cond_.notify_all();
+    }
   }
 }
 
