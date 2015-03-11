@@ -10,7 +10,7 @@ set(COMPILER_FLAGS "-Wall -g -pthread -m64 -fPIC")
 set(GENERAL_FLAGS_DEBUG "${COMPILER_FLAGS} -O0 -march=native")
 set(GENERAL_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -march=native -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "${GENERAL_FLAGS_DEBUG} -std=c++11")
-set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11")
+set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11 -flto")
 
 set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_ROOT})
 

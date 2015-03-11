@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <sstream>
 #include <functional>
+#include <atomic>
 #include <glog/logging.h>
 #include <string>
 #include "dag/dag_node.h"
@@ -19,7 +20,7 @@ class Dag {
   typedef DataNode<Data, Op> DNode;
   typedef OpNode<Data, Op> ONode;
   typedef ConcurrentUnorderedMap<uint64_t, DagNode*> ContainerType;
-  Dag() = default ;
+  Dag();
   DISALLOW_COPY_AND_ASSIGN(Dag);
   virtual ~Dag();
   DNode* NewDataNode(const Data& data);
@@ -42,13 +43,20 @@ class Dag {
   std::mutex m_;
 
  private:
+  std::atomic<uint64_t> index_counter_;
   uint64_t NewIndex();
   ContainerType index_to_node_;
 };
 
 template<typename D, typename O>
+Dag<D, O>::Dag() : index_counter_(0) {
+}
+
+template<typename D, typename O>
 Dag<D, O>::~Dag() {
+  index_to_node_.LockRead();
   auto index_to_node_cp = index_to_node_.VolatilePayload();
+  index_to_node_.UnlockRead();
   for (auto i : index_to_node_cp) {
     delete RemoveNodeFromDag(i.first);
   }
@@ -82,7 +90,7 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
 
 template<typename D, typename O>
 DagNode* Dag<D, O>::RemoveNodeFromDag(uint64_t id) {
-  DLOG(INFO) << "delete node #" << id;
+  LOG(INFO) << "delete node #" << id;
   auto node = GetNode(id);
   Iter(node->successors_, [&](DagNode* succ) {
     CHECK_EQ(succ->predecessors_.erase(node), 1);
@@ -180,8 +188,7 @@ std::string Dag<D, O>::ToString() const {
 
 template<typename D, typename O>
 uint64_t Dag<D, O>::NewIndex() {
-  static uint64_t index_counter = 0;
-  return index_counter++;
+  return index_counter_++;
 }
 
 }  // end of namespace minerva

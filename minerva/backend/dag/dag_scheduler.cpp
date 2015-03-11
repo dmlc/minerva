@@ -12,14 +12,15 @@ using namespace std;
 
 namespace minerva {
 
-DagScheduler::DagScheduler(PhysicalDag* d, DeviceManager* dm) : dag_(d), dm_(dm), dispatcher_(&DagScheduler::DispatcherRoutine, this), num_nodes_yet_to_finish_(0) {
+DagScheduler::DagScheduler(PhysicalDag* d, DeviceManager* dm) : dag_(d), dm_(dm), dispatcher_0(&DagScheduler::DispatcherRoutine, this), dispatcher_1(&DagScheduler::DispatcherRoutine, this), num_nodes_yet_to_finish_(0) {
   dm->RegisterListener(this);
 }
 
 DagScheduler::~DagScheduler() {
   WaitForAll();
   dispatcher_queue_.SignalForKill();
-  dispatcher_.join();
+  dispatcher_0.join();
+  dispatcher_1.join();
 }
 
 vector<BackendChunk*> DagScheduler::Create(const vector<BackendChunk*>& params,
@@ -92,7 +93,7 @@ void DagScheduler::OnOperationComplete(Task* task) {
 }
 
 void DagScheduler::ExternRCUpdate(PhysicalDataNode* node, int delta) {
-  MultiNodeLock(dag_, node);
+  MultiNodeLock lock(dag_, node);
   auto node_id = node->node_id_;
   auto& ri = rt_info_.At(node_id);
   node->data_.extern_rc += delta;
@@ -102,7 +103,7 @@ void DagScheduler::ExternRCUpdate(PhysicalDataNode* node, int delta) {
       // evaluated. If the node's reference count drops to zero, we could safely GC all
       // its resources.
       if (ri.reference_count == 0 && node->data_.extern_rc == 0) {
-        DLOG(INFO) << "kill node #" << node->node_id_ << " during extern reference count update";
+        LOG(INFO) << "kill node #" << node->node_id_ << " during extern reference count update";
         FreeDataNodeRes(node);
         ++num_nodes_yet_to_finish_;
         dispatcher_queue_.Push({TaskType::kToDelete, node_id});
@@ -154,7 +155,13 @@ void DagScheduler::DispatcherRoutine() {
     DagNode* to_delete = 0;
     {
       auto node_id = task.second;
-      auto node = dag_->GetNode(node_id);
+      DagNode* node;
+      try {
+        node = dag_->GetNode(node_id);
+      } catch (...) {
+        LOG(INFO) << static_cast<int>(task.first) << ' ' << task.second << endl;
+        throw;
+      }
       MultiNodeLock lock(dag_, node);
       auto& ri = rt_info_.At(node_id);
       if (task.first == TaskType::kToRun && node->Type() == DagNode::NodeType::kOpNode) {  // New task to dispatch
@@ -188,6 +195,7 @@ void DagScheduler::DispatcherRoutine() {
             if (--pred_ri.reference_count == 0 && pred_node->data_.extern_rc == 0) {
               FreeDataNodeRes(pred_node);
               ++num_nodes_yet_to_finish_;
+              LOG(INFO) << "haha #" << pred_node->node_id_;
               dispatcher_queue_.Push({TaskType::kToDelete, pred_node->node_id_});
             }
           }
@@ -220,6 +228,7 @@ void DagScheduler::DispatcherRoutine() {
         }
         DecrNumNodesYetToFinish(node_id);
       } else if (task.first == TaskType::kToDelete) {
+        CHECK_EQ(ri.state, NodeState::kCompleted);
         DLOG(INFO) << "dispatcher ready to delete node #" << node_id;
         OnDeleteNode(node);
         to_delete = dag_->RemoveNodeFromDag(node_id);

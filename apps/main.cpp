@@ -11,15 +11,18 @@ int main(int argc, char** argv) {
   auto gpu_device = ms.device_manager().CreateGpuDevice(0);
   ms.current_device_id_ = gpu_device;
   vector<NArray> narrs;
-  for (int i = 0; i < 1000; ++i) {
-    narrs.push_back(NArray::Constant({10, 10}, i));
+  for (int i = 0; i < 10000; ++i) {
+    narrs.push_back(NArray::Constant({1, 1}, i));
   }
+  cout << "a" << endl;
   for (int i = 0; i < narrs.size(); ++i) {
-    narrs[i] = narrs[i] * 100 + 1;
+    narrs[i] = narrs[i] + 1;
   }
+  cout << "b" << endl;
   for (int i = 0; i < narrs.size(); ++i) {
     narrs[i].Wait();
   }
-  cout << ms.physical_dag().ToDotString() << endl;
+  cout << "c" << endl;
+  ms.backend().WaitForAll();
   MinervaSystem::Finalize();
 }

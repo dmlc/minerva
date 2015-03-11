@@ -23,9 +23,9 @@ DagChunk& DagChunk::operator=(const DagChunk& d) {
   if (this == &d) {
     return *this;
   }
+  ExternRCUpdate(d.node_, 1);
   ExternRCUpdate(node_, -1);
   node_ = d.node_;
-  ExternRCUpdate(node_, 1);
   return *this;
 }
 
