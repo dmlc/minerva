@@ -90,7 +90,7 @@ typename Dag<D, O>::ONode* Dag<D, O>::NewOpNode(
 
 template<typename D, typename O>
 DagNode* Dag<D, O>::RemoveNodeFromDag(uint64_t id) {
-  LOG(INFO) << "delete node #" << id;
+  DLOG(INFO) << "delete node #" << id;
   auto node = GetNode(id);
   Iter(node->successors_, [&](DagNode* succ) {
     CHECK_EQ(succ->predecessors_.erase(node), 1);

@@ -103,7 +103,7 @@ void DagScheduler::ExternRCUpdate(PhysicalDataNode* node, int delta) {
       // evaluated. If the node's reference count drops to zero, we could safely GC all
       // its resources.
       if (ri.reference_count == 0 && node->data_.extern_rc == 0) {
-        LOG(INFO) << "kill node #" << node->node_id_ << " during extern reference count update";
+        DLOG(INFO) << "kill node #" << node->node_id_ << " during extern reference count update";
         FreeDataNodeRes(node);
         ++num_nodes_yet_to_finish_;
         dispatcher_queue_.Push({TaskType::kToDelete, node_id});
@@ -155,13 +155,7 @@ void DagScheduler::DispatcherRoutine() {
     DagNode* to_delete = 0;
     {
       auto node_id = task.second;
-      DagNode* node;
-      try {
-        node = dag_->GetNode(node_id);
-      } catch (...) {
-        LOG(INFO) << static_cast<int>(task.first) << ' ' << task.second << endl;
-        throw;
-      }
+      auto node = dag_->GetNode(node_id);
       MultiNodeLock lock(dag_, node);
       auto& ri = rt_info_.At(node_id);
       if (task.first == TaskType::kToRun && node->Type() == DagNode::NodeType::kOpNode) {  // New task to dispatch
@@ -195,7 +189,6 @@ void DagScheduler::DispatcherRoutine() {
             if (--pred_ri.reference_count == 0 && pred_node->data_.extern_rc == 0) {
               FreeDataNodeRes(pred_node);
               ++num_nodes_yet_to_finish_;
-              LOG(INFO) << "haha #" << pred_node->node_id_;
               dispatcher_queue_.Push({TaskType::kToDelete, pred_node->node_id_});
             }
           }
