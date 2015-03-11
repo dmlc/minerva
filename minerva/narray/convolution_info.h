@@ -3,6 +3,8 @@
 namespace minerva {
 
 struct ConvInfo {
+  ConvInfo(): pad_height(0), pad_width(0),
+    stride_vertical(1), stride_horizontal(1) {}
   int pad_height;
   int pad_width;
   int stride_vertical;
@@ -14,6 +16,10 @@ struct PoolingInfo {
     kMax,
     kAverage
   };
+  PoolingInfo(): algorithm(kMax),
+    height(0), width(0), 
+    stride_vertical(1), stride_horizontal(1), 
+    pad_height(0), pad_width(0) {}
   Algorithm algorithm;
   int height;
   int width;
