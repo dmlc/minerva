@@ -33,6 +33,10 @@ DagChunk::~DagChunk() {
   ExternRCUpdate(node_, -1);
 }
 
+DagChunk* DagChunk::ShallowCopy() const {
+  return new DagChunk(*this);
+}
+
 const Scale& DagChunk::shape() const {
   return node_->data_.size;
 }

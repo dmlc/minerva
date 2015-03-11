@@ -11,6 +11,7 @@ class DagChunk : public BackendChunk {
   DagChunk(const DagChunk&);
   DagChunk& operator=(const DagChunk&);
   ~DagChunk();
+  DagChunk* ShallowCopy() const override;
   const Scale& shape() const override;
   PhysicalDataNode* node() const;
 

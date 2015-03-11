@@ -1,21 +1,17 @@
 #pragma once
-#include <unordered_set>
 #include <atomic>
 #include <memory>
 #include "common/singleton.h"
 #include "dag/physical_dag.h"
-#include "procedures/dag_scheduler.h"
-#include "narray/narray.h"
+#include "backend/backend.h"
 #include "device/device_manager.h"
 #include "device/device.h"
 #include "profiler/execution_profiler.h"
-#include "system/backend.h"
 
 namespace minerva {
 
 class MinervaSystem :
   public EverlastingSingleton<MinervaSystem> {
-  friend class NArray;
   friend class EverlastingSingleton<MinervaSystem>;
 
  public:
@@ -26,11 +22,14 @@ class MinervaSystem :
   PhysicalDag& physical_dag() {
     return *physical_dag_;
   }
-  DeviceManager& device_manager() {
-    return *device_manager_;
+  Backend& backend() {
+    return *backend_;
   }
   ExecutionProfiler& profiler() {
     return *profiler_;
+  }
+  DeviceManager& device_manager() {
+    return *device_manager_;
   }
 #ifdef HAS_CUDA
   int GetGpuDeviceCount();
@@ -42,7 +41,7 @@ class MinervaSystem :
  private:
   MinervaSystem(int*, char***);
   PhysicalDag* physical_dag_;
-  IBackend* backend_;
+  Backend* backend_;
   ExecutionProfiler* profiler_;
   DeviceManager* device_manager_;
   std::atomic<uint64_t> data_id_counter_;

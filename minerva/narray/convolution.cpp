@@ -110,16 +110,14 @@ ImageBatch Convolution::PoolingForward(ImageBatch src, PoolingInfo info) {
   int pooled_height = static_cast<int>(ceil(static_cast<float>((src.GetHeight() + 2 * info.pad_height - info.height)) / info.stride_vertical)) + 1;
   int pooled_width = static_cast<int>(ceil(static_cast<float>((src.GetWidth() + 2 * info.pad_width - info.width)) / info.stride_horizontal)) + 1;
 
-  if (info.pad_height > 0 || info.pad_width > 0)
-  {
-	if((pooled_height - 1) * info.stride_vertical >= src.GetHeight() + info.pad_height)
-		--pooled_height;
-	if((pooled_width - 1) * info.stride_horizontal >= src.GetWidth() + info.pad_width)
-		--pooled_width;
+  if (info.pad_height > 0 || info.pad_width > 0) {
+	if ((pooled_height - 1) * info.stride_vertical >= src.GetHeight() + info.pad_height) {
+      --pooled_height;
+    }
+	if ((pooled_width - 1) * info.stride_horizontal >= src.GetWidth() + info.pad_width) {
+      --pooled_width;
+    }
   }
-
-	//std::cout << "Pooled " << pooled_height << " " << pooled_width << " " << info.pad_height << " " << info.stride_vertical << std::endl; 
-	
   Scale new_size {
     pooled_height,
     pooled_width,
@@ -143,7 +141,7 @@ ImageBatch Convolution::PoolingBackward(ImageBatch diff, ImageBatch top, ImageBa
   CHECK_EQ(diff.Size(), top.Size()) << "inputs sizes mismatch";
   CHECK_EQ(diff.GetNumImages(), bottom.GetNumImages()) << "#images mismatch";
   CHECK_EQ(diff.GetNumFeatureMaps(), bottom.GetNumFeatureMaps()) << "#channels mismatch";
-  
+
   int pooled_height = static_cast<int>(ceil(static_cast<float>((bottom.GetHeight() + 2 * info.pad_height - info.height)) / info.stride_vertical)) + 1;
   int pooled_width = static_cast<int>(ceil(static_cast<float>((bottom.GetWidth() + 2 * info.pad_width - info.width)) / info.stride_horizontal)) + 1;
 
@@ -157,7 +155,7 @@ ImageBatch Convolution::PoolingBackward(ImageBatch diff, ImageBatch top, ImageBa
 
   CHECK_EQ(top.GetHeight(), pooled_height) << "height mismatch";
   CHECK_EQ(top.GetWidth(), pooled_width) << "width mismatch";
-  
+
   PoolingBackwardOp* op = new PoolingBackwardOp();
   op->closure = {
     info.algorithm,
@@ -172,20 +170,17 @@ ImageBatch Convolution::PoolingBackward(ImageBatch diff, ImageBatch top, ImageBa
 }
 
 
-ImageBatch Convolution::LRNForward(ImageBatch src, ImageBatch scale, int local_size, float alpha, float beta)
-{
+ImageBatch Convolution::LRNForward(ImageBatch src, ImageBatch scale, int local_size, float alpha, float beta) {
   LRNForwardOp* op = new LRNForwardOp();
   op->closure = {local_size, alpha, beta, src.Size()};
   return NArray::ComputeOne({src, scale}, src.Size(), op);
 }
 
-ImageBatch Convolution::LRNBackward(ImageBatch bottom_data, ImageBatch top_data, ImageBatch scale, ImageBatch top_diff , int local_size, float alpha, float beta)
-{
+ImageBatch Convolution::LRNBackward(ImageBatch bottom_data, ImageBatch top_data, ImageBatch scale, ImageBatch top_diff , int local_size, float alpha, float beta) {
   LRNBackwardOp* op = new LRNBackwardOp();
   op->closure = {local_size, alpha, beta, bottom_data.Size()};
   return NArray::ComputeOne({bottom_data, top_data, scale, top_diff}, bottom_data.Size(), op);
 }
-
 
 }  // namespace minerva
 

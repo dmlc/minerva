@@ -1,16 +1,12 @@
-#include "system/minerva_system.h"
-#include <glog/logging.h>
-#include <gflags/gflags.h>
+#include "minerva_system.h"
 #include <cstdlib>
 #include <mutex>
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #endif
-#include "common/thread_pool.h"
-#include "op/impl/basic.h"
-#include "dag/dag_printer.h"
-#include "procedures/dag_scheduler.h"
-#include "procedures/simple_backend.h"
+#include <glog/logging.h>
+#include <gflags/gflags.h>
+#include "backend/dag/dag_scheduler.h"
 #include "common/cuda_utils.h"
 
 DEFINE_bool(use_dag, true, "Use dag engine");
@@ -30,8 +26,6 @@ void MinervaSystem::UniversalMemcpy(pair<Device::MemType, float*> to, pair<Devic
 }
 
 MinervaSystem::~MinervaSystem() {
-  backend_->WaitForAll();
-  physical_dag_->ClearMonitor();
   delete backend_;
   delete device_manager_;
   delete profiler_;
@@ -39,15 +33,7 @@ MinervaSystem::~MinervaSystem() {
   google::ShutdownGoogleLogging();
 }
 
-uint64_t MinervaSystem::CreateCpuDevice() {
-  return device_manager_->CreateCpuDevice();
-}
-
 #ifdef HAS_CUDA
-
-uint64_t MinervaSystem::CreateGpuDevice(int gid) {
-  return device_manager_->CreateGpuDevice(gid);
-}
 
 int MinervaSystem::GetGpuDeviceCount() {
   return device_manager_->GetGpuDeviceCount();
@@ -59,14 +45,13 @@ pair<Device::MemType, float*> MinervaSystem::GetPtr(uint64_t device_id, uint64_t
   return device_manager_->GetDevice(device_id)->GetPtr(data_id);
 }
 
-uint64_t MinervaSystem::GenerateDataId() {  // TODO contention
+uint64_t MinervaSystem::GenerateDataId() {
   return data_id_counter_++;
 }
 
 MinervaSystem::MinervaSystem(int* argc, char*** argv) : current_device_id_(0), data_id_counter_(0) {
   gflags::ParseCommandLineFlags(argc, argv, true);
 #ifndef HAS_PS
-  // XXX workaround
   // glog is initialized in PS::main, and also here, so we will hit a
   // double-initalize error when compiling with PS
   google::InitGoogleLogging((*argv)[0]);
@@ -75,12 +60,12 @@ MinervaSystem::MinervaSystem(int* argc, char*** argv) : current_device_id_(0), d
   profiler_ = new ExecutionProfiler();
   device_manager_ = new DeviceManager();
   if (FLAGS_use_dag) {
-    LOG(INFO) << "Enable dag engine";
+    DLOG(INFO) << "enable dag engine";
     backend_ = new DagScheduler(physical_dag_, device_manager_);
   } else {
-    LOG(INFO) << "Disable dag engine";
-    backend_ = new SimpleBackend(*device_manager_);
+    LOG(FATAL) << "simple dag engine not implemented";
   }
 }
 
 }  // end of namespace minerva
+
