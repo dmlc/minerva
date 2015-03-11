@@ -16,8 +16,8 @@ std::ostream& operator<<(std::ostream&, NodeState);
 
 struct RuntimeInfo {
   RuntimeInfo();
-  std::atomic<int> num_triggers_needed;
-  std::atomic<int> reference_count;
+  int num_triggers_needed;
+  int reference_count;
   NodeState state;
 };
 

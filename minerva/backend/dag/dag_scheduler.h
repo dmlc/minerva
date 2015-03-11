@@ -12,6 +12,8 @@
 #include "common/common.h"
 #include "common/concurrent_blocking_queue.h"
 #include "device/device_manager.h"
+#include "backend/dag/task_type.h"
+#include "backend/dag/priority_dispatcher_queue.h"
 
 namespace minerva {
 
@@ -19,10 +21,6 @@ class DagScheduler :
   public Backend,
   public DeviceListener {
  public:
-  enum class TaskType {
-    kToRun,
-    kToComplete
-  };
   DagScheduler() = delete;
   DagScheduler(PhysicalDag*, DeviceManager*);
   DISALLOW_COPY_AND_ASSIGN(DagScheduler);
@@ -51,7 +49,7 @@ class DagScheduler :
   // Runtime information
   RuntimeInfoMap rt_info_;
   // Scheduler dispatcher
-  ConcurrentBlockingQueue<std::pair<TaskType, uint64_t>> dispatcher_queue_;
+  PriorityDispatcherQueue dispatcher_queue_;
   void DispatcherRoutine();
   std::thread dispatcher_;
   // Evaluation finishing signal

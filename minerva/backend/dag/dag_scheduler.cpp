@@ -87,39 +87,32 @@ shared_ptr<float> DagScheduler::GetValue(BackendChunk* chunk) {
 
 // Device listener
 void DagScheduler::OnOperationComplete(Task* task) {
-  auto id = task->id;
+  dispatcher_queue_.Push({TaskType::kToComplete, task->id});
   delete task;
-  dispatcher_queue_.Push({TaskType::kToComplete, id});
 }
 
 void DagScheduler::ExternRCUpdate(PhysicalDataNode* node, int delta) {
-  DagNode* to_delete = 0;
-  {
-    // TODO shabi
-    MultiNodeLock lock(dag_, node);
-    auto node_id = node->node_id_;
-    auto& ri = rt_info_.At(node_id);
-    ri.reference_count += delta;
-    switch (rt_info_.GetState(node_id)) {
-      case NodeState::kCompleted: {
-        // If node is in kCompleted state, that means the node has already been concretely
-        // evaluated. If the node's reference count drops to zero, we could safely GC all
-        // its resources.
-        if (ri.reference_count == 0 && node->data_.extern_rc == 0) {
-          FreeDataNodeRes(node);
-          DLOG(INFO) << "delete node #" << node->node_id_ << " during extern reference count update";
-          to_delete = dag_->RemoveNodeFromDag(node_id);
-          OnDeleteNode(node);
-        }
-        break;
+  MultiNodeLock(dag_, node);
+  auto node_id = node->node_id_;
+  auto& ri = rt_info_.At(node_id);
+  node->data_.extern_rc += delta;
+  switch (rt_info_.GetState(node_id)) {
+    case NodeState::kCompleted: {
+      // If node is in kCompleted state, that means the node has already been concretely
+      // evaluated. If the node's reference count drops to zero, we could safely GC all
+      // its resources.
+      if (ri.reference_count == 0 && node->data_.extern_rc == 0) {
+        DLOG(INFO) << "kill node #" << node->node_id_ << " during extern reference count update";
+        FreeDataNodeRes(node);
+        dispatcher_queue_.Push({TaskType::kToDelete, node_id});
       }
-      case NodeState::kReady:
-        break;
-      default:
-        LOG(FATAL) << "incorrect state for node #" << node_id;
+      break;
     }
+    case NodeState::kReady:
+      break;
+    default:
+      LOG(FATAL) << "incorrect state for node #" << node_id;
   }
-  delete to_delete;
 }
 
 void DagScheduler::FreeDataNodeRes(PhysicalDataNode* node) {
@@ -157,10 +150,10 @@ void DagScheduler::DispatcherRoutine() {
   pair<TaskType, uint64_t> task;
   // Pop queue while not exiting
   while (!dispatcher_queue_.Pop(task)) {
-    auto node_id = task.second;
-    auto node = dag_->GetNode(node_id);
-    vector<DagNode*> to_delete;
+    DagNode* to_delete = 0;
     {
+      auto node_id = task.second;
+      auto node = dag_->GetNode(node_id);
       MultiNodeLock lock(dag_, node);
       auto& ri = rt_info_.At(node_id);
       if (task.first == TaskType::kToRun && node->Type() == DagNode::NodeType::kOpNode) {  // New task to dispatch
@@ -193,10 +186,7 @@ void DagScheduler::DispatcherRoutine() {
             CHECK_EQ(pred_ri.num_triggers_needed, 0) << "#triggers incorrect for a completed data node";
             if (--pred_ri.reference_count == 0 && pred_node->data_.extern_rc == 0) {
               FreeDataNodeRes(pred_node);
-              DLOG(INFO) << "delete node #" << pred_node->node_id_ << " during dispatcher routine";
-              MultiNodeLock(dag_, pred_node->predecessors_);
-              to_delete.push_back(dag_->RemoveNodeFromDag(pred_node->node_id_));
-              OnDeleteNode(pred_node);
+              dispatcher_queue_.Push({TaskType::kToDelete, pred_node->node_id_});
             }
           }
         } else {  // Data node
@@ -204,31 +194,24 @@ void DagScheduler::DispatcherRoutine() {
           // Data node generated but not needed
           if (ri.reference_count == 0 && data_node->data_.extern_rc == 0) {
             FreeDataNodeRes(data_node);
-            DLOG(INFO) << "delete node #" << data_node->node_id_ << " during dispatcher routine";
-            to_delete.push_back(dag_->RemoveNodeFromDag(data_node->node_id_));
-            OnDeleteNode(data_node);
+            dispatcher_queue_.Push({TaskType::kToDelete, data_node->node_id_});
           }
           CHECK_EQ(node->predecessors_.size(), 1) << "data node should have no more than one predecessor";
           auto pred_node = *node->predecessors_.begin();
           auto& pred_ri = rt_info_.At(pred_node->node_id_);
           CHECK_EQ(pred_ri.num_triggers_needed, 0) << "#triggers incorrect for a completed op node";
           if (--pred_ri.reference_count == 0) {
-            DLOG(INFO) << "delete node #" << pred_node->node_id_ << " during dispatcher routine";
-            MultiNodeLock(dag_, pred_node->predecessors_);
-            to_delete.push_back(dag_->RemoveNodeFromDag(pred_node->node_id_));
-            OnDeleteNode(pred_node);
+            dispatcher_queue_.Push({TaskType::kToDelete, pred_node->node_id_});
           }
         }
         // Trigger successors
-        {
-          for (auto succ : node->successors_) {
-            auto& ri = rt_info_.At(succ->node_id_);
-            --ri.num_triggers_needed;
-            if (ri.state == NodeState::kReady && ri.num_triggers_needed == 0) {
-              DLOG(INFO) << "trigger node #" << succ->node_id_;
-              ++num_nodes_yet_to_finish_;
-              dispatcher_queue_.Push({TaskType::kToRun, succ->node_id_});
-            }
+        for (auto succ : node->successors_) {
+          auto& ri = rt_info_.At(succ->node_id_);
+          --ri.num_triggers_needed;
+          if (ri.state == NodeState::kReady && ri.num_triggers_needed == 0) {
+            DLOG(INFO) << "trigger node #" << succ->node_id_;
+            ++num_nodes_yet_to_finish_;
+            dispatcher_queue_.Push({TaskType::kToRun, succ->node_id_});
           }
         }
         --num_nodes_yet_to_finish_;
@@ -238,11 +221,15 @@ void DagScheduler::DispatcherRoutine() {
             finish_cond_.notify_all();
           }
         }
+      } else if (task.first == TaskType::kToDelete) {
+        DLOG(INFO) << "delete node #" << node_id;
+        to_delete = dag_->RemoveNodeFromDag(node_id);
+        OnDeleteNode(to_delete);
+      } else {
+        LOG(FATAL) << "illegal task state";
       }
     }
-    Iter(to_delete, [](DagNode* node) {
-      delete node;
-    });
+    delete to_delete;
   }
 }
 
