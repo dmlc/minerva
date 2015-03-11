@@ -22,10 +22,10 @@ namespace cuda {
 void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 2) << "Arithmetic takes 2 inputs";
   CHECK_EQ(outputs.size(), 1) << "Arithmetic takes 1 output";
-  float* left = inputs[0].data();
-  float* right = inputs[1].data();
-  float* res = outputs[0].data();
-  size_t size = outputs[0].size().Prod();
+  float* left = inputs[0].data_;
+  float* right = inputs[1].data_;
+  float* res = outputs[0].data_;
+  size_t size = outputs[0].size_.Prod();
   switch (closure.type) {
     case ArithmeticType::kAdd:
       CudaPerformAdd(left, right, res, size, context.stream);
@@ -45,9 +45,9 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
 void LRNForward(const DataList& inputs, const DataList& outputs, LRNForwardClosure& closure, const Context & context) {
   CHECK_EQ(inputs.size(), 2) << "(LRNForward) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(LRNForward) #outputs is wrong!";
-  float* bottom_data = inputs[0].data();
-  float* scale_data = inputs[1].data();
-  float* res_data = outputs[0].data();
+  float* bottom_data = inputs[0].data_;
+  float* scale_data = inputs[1].data_;
+  float* res_data = outputs[0].data_;
   int local_size = closure.local_size;
   float alpha = closure.alpha;
   float beta = closure.beta;
@@ -61,11 +61,11 @@ void LRNForward(const DataList& inputs, const DataList& outputs, LRNForwardClosu
 void LRNBackward(const DataList& inputs, const DataList& outputs, LRNBackwardClosure& closure, const Context & context) {
   CHECK_EQ(inputs.size(), 4) << "(LRNBackward) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(LRNBackward) #outputs is wrong!";
-  float* bottom_data = inputs[0].data();
-  float* top_data = inputs[1].data();
-  float* scale_data = inputs[2].data();
-  float* top_diff = inputs[3].data();
-  float* bottom_diff = outputs[0].data();
+  float* bottom_data = inputs[0].data_;
+  float* top_data = inputs[1].data_;
+  float* scale_data = inputs[2].data_;
+  float* top_diff = inputs[3].data_;
+  float* bottom_diff = outputs[0].data_;
   int local_size = closure.local_size;
   float alpha = closure.alpha;
   float beta = closure.beta;
@@ -80,35 +80,35 @@ void LRNBackward(const DataList& inputs, const DataList& outputs, LRNBackwardClo
 void Concat(const DataList& inputs, const DataList& outputs, ConcatClosure& closure, const Context & context) {
   CHECK_GT(inputs.size(), 1) << "(Concat) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(Concat) #outputs is wrong!";
-  CHECK_LE(inputs[0].size().NumDims() - closure.catdim, 3) << "(Concat) #Currently only support concat on the last two dims!";
-  
+  CHECK_LE(inputs[0].size_.NumDims() - closure.catdim, 3) << "(Concat) #Currently only support concat on the last two dims!";
+
   size_t concat_dim = closure.catdim;
-  float* top_data = outputs[0].data();
-  if (concat_dim == inputs[0].size().NumDims() - 1) {
+  float* top_data = outputs[0].data_;
+  if (concat_dim == inputs[0].size_.NumDims() - 1) {
     int offset_num = 0;
     for (size_t i = 0; i < inputs.size(); ++i) {
-      float* bottom_data = inputs[i].data();
-      CudaPerformCopy(bottom_data, top_data + offset_num, inputs[i].size().Prod(), context.cublas_handle);
-      offset_num += inputs[i].size().Prod();
+      float* bottom_data = inputs[i].data_;
+      CudaPerformCopy(bottom_data, top_data + offset_num, inputs[i].size_.Prod(), context.cublas_handle);
+      offset_num += inputs[i].size_.Prod();
     }
   }
   else {
     int offset_channel = 0;
     for (size_t i = 0; i < inputs.size(); ++i) {
-      float* bottom_data = inputs[i].data();
+      float* bottom_data = inputs[i].data_;
       int bot_num_elem = 1;
       int top_num_elem = 1;
       int img_size = 1;
       int bot_channel = 1;
-      for (size_t idx = 0; idx < inputs[i].size().NumDims() - 1; idx++){
-        bot_num_elem *= inputs[i].size()[idx];
-        top_num_elem *= outputs[0].size()[idx];
-        if(idx < inputs[i].size().NumDims() - 2) 
-          img_size *= inputs[i].size()[idx]; 
+      for (size_t idx = 0; idx < inputs[i].size_.NumDims() - 1; idx++){
+        bot_num_elem *= inputs[i].size_[idx];
+        top_num_elem *= outputs[0].size_[idx];
+        if(idx < inputs[i].size_.NumDims() - 2)
+          img_size *= inputs[i].size_[idx];
         else
-          bot_channel = inputs[i].size()[idx];
+          bot_channel = inputs[i].size_[idx];
       }
-      int imgnum = inputs[i].size()[inputs[i].size().NumDims()-1];
+      int imgnum = inputs[i].size_[inputs[i].size_.NumDims()-1];
       for (int n = 0; n < imgnum; ++n) {
         CudaPerformCopy(bottom_data + n * bot_num_elem, top_data + n * top_num_elem + offset_channel * img_size, bot_num_elem, context.cublas_handle);
       }
@@ -121,33 +121,33 @@ void Slice(const DataList& inputs, const DataList& outputs, SliceClosure& closur
 {
   CHECK_EQ(inputs.size(), 1) << "(Slice) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(Slice) #outputs is wrong!";
-  CHECK_LE(inputs[0].size().NumDims() - closure.slice_dim, 3) << "(Slice) #Currently only support concat on the last two dims!";
-  
+  CHECK_LE(inputs[0].size_.NumDims() - closure.slice_dim, 3) << "(Slice) #Currently only support concat on the last two dims!";
+
   size_t slice_dim = closure.slice_dim;
-  float* input_data = inputs[0].data();
-  if (slice_dim == inputs[0].size().NumDims() - 1){
+  float* input_data = inputs[0].data_;
+  if (slice_dim == inputs[0].size_.NumDims() - 1){
     int offset_num = 0;
-    float* output_data = outputs[0].data();
+    float* output_data = outputs[0].data_;
     int img_size = 1;
-    for (size_t i = 0; i < inputs[0].size().NumDims() - 1; i++) {
-      img_size *= inputs[0].size()[i];
+    for (size_t i = 0; i < inputs[0].size_.NumDims() - 1; i++) {
+      img_size *= inputs[0].size_[i];
     }
     offset_num = closure.st_off * img_size;
-    CudaPerformCopy(input_data + offset_num, output_data, outputs[0].size().Prod(), context.cublas_handle);
+    CudaPerformCopy(input_data + offset_num, output_data, outputs[0].size_.Prod(), context.cublas_handle);
   }
   else{
     int offset_channel = closure.st_off;
-    float* output_data = outputs[0].data();
+    float* output_data = outputs[0].data_;
     int output_num_elem = 1;
     int input_num_elem = 1;
     int img_size = 1;
-    for (size_t idx = 0; idx < outputs[0].size().NumDims() - 1; idx++){
-      output_num_elem *= outputs[0].size()[idx];
-      input_num_elem *= inputs[0].size()[idx];
-      if(idx < inputs[0].size().NumDims() - 2) 
-        img_size *= outputs[0].size()[idx]; 
+    for (size_t idx = 0; idx < outputs[0].size_.NumDims() - 1; idx++){
+      output_num_elem *= outputs[0].size_[idx];
+      input_num_elem *= inputs[0].size_[idx];
+      if(idx < inputs[0].size_.NumDims() - 2)
+        img_size *= outputs[0].size_[idx];
     }
-    int imgnum = inputs[0].size()[inputs[0].size().NumDims()-1];
+    int imgnum = inputs[0].size_[inputs[0].size_.NumDims()-1];
     for (int n = 0; n < imgnum; ++n) {
       CudaPerformCopy(input_data + n * input_num_elem + offset_channel * img_size, output_data + n * output_num_elem, output_num_elem, context.cublas_handle);
     }
@@ -158,12 +158,12 @@ void Slice(const DataList& inputs, const DataList& outputs, SliceClosure& closur
 void MatMult(const DataList& inputs, const DataList& outputs, MatMultClosure& closure, const Context & context) {
   CHECK_EQ(inputs.size(), 2) << "(matmult) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(matmult) #outputs is wrong!";
-  float* left_data = inputs[0].data();
-  float* right_data = inputs[1].data();
-  float* res_data = outputs[0].data();
-  int m = inputs[0].size()[0];
-  int k = inputs[0].size()[1];
-  int n = outputs[0].size()[1];
+  float* left_data = inputs[0].data_;
+  float* right_data = inputs[1].data_;
+  float* res_data = outputs[0].data_;
+  int m = inputs[0].size_[0];
+  int k = inputs[0].size_[1];
+  int n = outputs[0].size_[1];
   CudaPerformMatMult(left_data, right_data, res_data, m, n, k, context.cublas_handle);
 }
 
@@ -172,9 +172,9 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs,
   CHECK_EQ(inputs.size(), 1) << "(arithmetic const) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(arithmetic const) #outputs is wrong!";
   float val = closure.val;
-  float* in_data = inputs[0].data();
-  float* res_data = outputs[0].data();
-  size_t size = inputs[0].size().Prod();
+  float* in_data = inputs[0].data_;
+  float* res_data = outputs[0].data_;
+  size_t size = inputs[0].size_.Prod();
   switch (closure.type) {
     case ArithmeticType::kAdd:
       CudaPerformConstAdd(in_data, res_data, val, size, context.stream);
@@ -201,10 +201,10 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs,
 
 void Transpose(const DataList& inputs, const DataList& outputs,
   TransposeClosure& closure, const Context& context) {
-  float* in_data = inputs[0].data();
-  float* res_data = outputs[0].data();
-  int m = inputs[0].size()[0];
-  int n = inputs[0].size()[1];
+  float* in_data = inputs[0].data_;
+  float* res_data = outputs[0].data_;
+  int m = inputs[0].size_[0];
+  int n = inputs[0].size_[1];
   CudaPerformTranspose(in_data, res_data, m, n, context.cublas_handle);
 }
 
@@ -213,11 +213,11 @@ void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithme
   CHECK_EQ(inputs.size(), 2) << "NormArithmetic kernel wrong #input";
   CHECK_EQ(outputs.size(), 1) << "NormArithmetic kernel wrong #output";
   // Normalizee is the chunk with full size, normalizer is the chunk with reduced dimensions
-  auto normalizee_size = inputs[0].size();
-  auto normalizer_size = inputs[1].size();
-  auto normalizee_data = inputs[0].data();
-  auto normalizer_data = inputs[1].data();
-  auto res_data = outputs[0].data();
+  auto normalizee_size = inputs[0].size_;
+  auto normalizer_size = inputs[1].size_;
+  auto normalizee_data = inputs[0].data_;
+  auto normalizer_data = inputs[1].data_;
+  auto res_data = outputs[0].data_;
   // TODO: support other types of norm op
   CHECK_EQ(normalizee_size.NumDims(), 2) << "currently support 2D normalizee matrix only";
   CHECK_EQ(closure.dims_to_replicate.NumDims(), 1) << "currently do norm on one dimension only";
@@ -260,10 +260,10 @@ void Reduction(const DataList& inputs, const DataList& outputs,
   ReductionClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "Reduction kernel wrong #input";
   CHECK_EQ(outputs.size(), 1) << "Reduction kernel wrong #output";
-  auto in_size = inputs[0].size();
-  auto out_size = outputs[0].size();
-  auto in_data = inputs[0].data();
-  auto out_data = outputs[0].data();
+  auto in_size = inputs[0].size_;
+  auto out_size = outputs[0].size_;
+  auto in_data = inputs[0].data_;
+  auto out_data = outputs[0].data_;
   // TODO: support other types of reduction op
   CHECK_EQ(in_size.NumDims(), 2) << "currently support 2D reduction matrix only";
   CHECK_EQ(closure.dims_to_reduce.NumDims(), 1) << "currently do reduction on one dimension only";
@@ -294,10 +294,10 @@ void MaxIndex(const DataList& inputs, const DataList& outputs,
   MaxIndexClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "MaxIndex kernel wrong #input";
   CHECK_EQ(outputs.size(), 1) << "MaxIndex kernel wrong #output";
-  auto in_size = inputs[0].size();
-  auto out_size = outputs[0].size();
-  auto in_data = inputs[0].data();
-  auto out_data = outputs[0].data();
+  auto in_size = inputs[0].size_;
+  auto out_size = outputs[0].size_;
+  auto in_data = inputs[0].data_;
+  auto out_data = outputs[0].data_;
   // TODO: support other types of max index op
   CHECK_EQ(in_size.NumDims(), 2) << "currently support 2D MaxIndex matrix only";
   int m = in_size[0];
@@ -312,16 +312,16 @@ void MaxIndex(const DataList& inputs, const DataList& outputs,
 void Reshape(const DataList& inputs, const DataList& outputs, ReshapeClosure&, const Context& context) {
   CHECK_EQ(inputs.size(), 1);
   CHECK_EQ(outputs.size(), 1);
-  CudaPerformReshape(inputs[0].data(), outputs[0].data(), inputs[0].size().Prod() * sizeof(float), context.stream);
+  CudaPerformReshape(inputs[0].data_, outputs[0].data_, inputs[0].size_.Prod() * sizeof(float), context.stream);
 }
 
 
 void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "(elewise) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(elewise) #outputs is wrong!";
-  float* in_data = inputs[0].data();
-  float* res_data = outputs[0].data();
-  int length = outputs[0].size().Prod();
+  float* in_data = inputs[0].data_;
+  float* res_data = outputs[0].data_;
+  int length = outputs[0].size_.Prod();
   switch (closure.type) {
     case ElewiseType::kExp:
       CudaPerformElewiseExp(in_data, res_data, length, context.stream);
@@ -342,7 +342,7 @@ void SigmoidForward(const DataList& inputs, const DataList& outputs, SigmoidForw
   CHECK_EQ(outputs.size(), 1) << "sigmoid forward #outputs wrong";
   auto& bottom = inputs[0];
   auto& top = outputs[0];
-  CudaPerformSigmoidForward(bottom.data(), top.data(), 1, 1, 1, bottom.size().Prod(), context.stream, context.cudnn_handle);
+  CudaPerformSigmoidForward(bottom.data_, top.data_, 1, 1, 1, bottom.size_.Prod(), context.stream, context.cudnn_handle);
 }
 
 void SigmoidBackward(const DataList& inputs, const DataList& outputs, SigmoidBackwardClosure&, const Context& context) {
@@ -352,7 +352,7 @@ void SigmoidBackward(const DataList& inputs, const DataList& outputs, SigmoidBac
   auto& top = inputs[1];
   auto& bottom = inputs[2];
   auto& bottom_diff = outputs[0];
-  CudaPerformSigmoidBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), 1, 1, 1, top_diff.size().Prod(), context.stream, context.cudnn_handle);
+  CudaPerformSigmoidBackward(bottom.data_, top.data_, top_diff.data_, bottom_diff.data_, 1, 1, 1, top_diff.size_.Prod(), context.stream, context.cudnn_handle);
 }
 
 void ReluForward(const DataList& inputs, const DataList& outputs, ReluForwardClosure&, const Context& context) {
@@ -360,7 +360,7 @@ void ReluForward(const DataList& inputs, const DataList& outputs, ReluForwardClo
   CHECK_EQ(outputs.size(), 1) << "relu forward #outputs wrong";
   auto& bottom = inputs[0];
   auto& top = outputs[0];
-  CudaPerformReluForward(bottom.data(), top.data(), 1, 1, 1, bottom.size().Prod(), context.stream, context.cudnn_handle);
+  CudaPerformReluForward(bottom.data_, top.data_, 1, 1, 1, bottom.size_.Prod(), context.stream, context.cudnn_handle);
 }
 
 void ReluBackward(const DataList& inputs, const DataList& outputs, ReluBackwardClosure&, const Context& context) {
@@ -370,7 +370,7 @@ void ReluBackward(const DataList& inputs, const DataList& outputs, ReluBackwardC
   auto& top = inputs[1];
   auto& bottom = inputs[2];
   auto& bottom_diff = outputs[0];
-  CudaPerformReluBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), 1, 1, 1, top_diff.size().Prod(), context.stream, context.cudnn_handle);
+  CudaPerformReluBackward(bottom.data_, top.data_, top_diff.data_, bottom_diff.data_, 1, 1, 1, top_diff.size_.Prod(), context.stream, context.cudnn_handle);
 }
 
 void TanhForward(const DataList& inputs, const DataList& outputs, TanhForwardClosure&, const Context& context) {
@@ -378,7 +378,7 @@ void TanhForward(const DataList& inputs, const DataList& outputs, TanhForwardClo
   CHECK_EQ(outputs.size(), 1) << "tanh forward #outputs wrong";
   auto& bottom = inputs[0];
   auto& top = outputs[0];
-  CudaPerformTanhForward(bottom.data(), top.data(), 1, 1, 1, bottom.size().Prod(), context.stream, context.cudnn_handle);
+  CudaPerformTanhForward(bottom.data_, top.data_, 1, 1, 1, bottom.size_.Prod(), context.stream, context.cudnn_handle);
 }
 
 void TanhBackward(const DataList& inputs, const DataList& outputs, TanhBackwardClosure&, const Context& context) {
@@ -388,7 +388,7 @@ void TanhBackward(const DataList& inputs, const DataList& outputs, TanhBackwardC
   auto& top = inputs[1];
   auto& bottom = inputs[2];
   auto& bottom_diff = outputs[0];
-  CudaPerformTanhBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), 1, 1, 1, top_diff.size().Prod(), context.stream, context.cudnn_handle);
+  CudaPerformTanhBackward(bottom.data_, top.data_, top_diff.data_, bottom_diff.data_, 1, 1, 1, top_diff.size_.Prod(), context.stream, context.cudnn_handle);
 }
 
 void ConvForward(const DataList& inputs, const DataList& outputs, ConvForwardClosure& closure, const Context& context) {
@@ -398,14 +398,14 @@ void ConvForward(const DataList& inputs, const DataList& outputs, ConvForwardClo
   auto& filter = inputs[1];
   auto& bias = inputs[2];
   auto& top = outputs[0];
-  int num_images = bottom.size()[3];
-  int bottom_num_channels = bottom.size()[2];
-  int top_num_channels = top.size()[2];
-  int bottom_height = bottom.size()[1];
-  int bottom_width = bottom.size()[0];
-  int filter_height = filter.size()[1];
-  int filter_width = filter.size()[0];
-  CudaPerformConvForward(bottom.data(), filter.data(), bias.data(), top.data(), num_images, bottom_num_channels, top_num_channels, bottom_height, bottom_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
+  int num_images = bottom.size_[3];
+  int bottom_num_channels = bottom.size_[2];
+  int top_num_channels = top.size_[2];
+  int bottom_height = bottom.size_[1];
+  int bottom_width = bottom.size_[0];
+  int filter_height = filter.size_[1];
+  int filter_width = filter.size_[0];
+  CudaPerformConvForward(bottom.data_, filter.data_, bias.data_, top.data_, num_images, bottom_num_channels, top_num_channels, bottom_height, bottom_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
 }
 
 void ConvBackwardData(const DataList& inputs, const DataList& outputs, ConvBackwardDataClosure& closure, const Context& context) {
@@ -414,14 +414,14 @@ void ConvBackwardData(const DataList& inputs, const DataList& outputs, ConvBackw
   auto& top_diff = inputs[0];
   auto& filter = inputs[1];
   auto& bottom_diff = outputs[0];
-  int num_images = top_diff.size()[3];
-  int bottom_num_channels = bottom_diff.size()[2];
-  int top_num_channels = top_diff.size()[2];
-  int top_height = top_diff.size()[1];
-  int top_width = top_diff.size()[0];
-  int filter_height = filter.size()[1];
-  int filter_width = filter.size()[0];
-  CudaPerformConvBackwardData(top_diff.data(), filter.data(), bottom_diff.data(), num_images, bottom_num_channels, top_num_channels, top_height, top_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
+  int num_images = top_diff.size_[3];
+  int bottom_num_channels = bottom_diff.size_[2];
+  int top_num_channels = top_diff.size_[2];
+  int top_height = top_diff.size_[1];
+  int top_width = top_diff.size_[0];
+  int filter_height = filter.size_[1];
+  int filter_width = filter.size_[0];
+  CudaPerformConvBackwardData(top_diff.data_, filter.data_, bottom_diff.data_, num_images, bottom_num_channels, top_num_channels, top_height, top_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
 }
 
 void ConvBackwardFilter(const DataList& inputs, const DataList& outputs, ConvBackwardFilterClosure& closure, const Context& context) {
@@ -430,14 +430,14 @@ void ConvBackwardFilter(const DataList& inputs, const DataList& outputs, ConvBac
   auto& top_diff = inputs[0];
   auto& bottom = inputs[1];
   auto& filter_diff = outputs[0];
-  int num_images = top_diff.size()[3];
-  int bottom_num_channels = bottom.size()[2];
-  int top_num_channels = top_diff.size()[2];
-  int bottom_height = bottom.size()[1];
-  int bottom_width = bottom.size()[0];
-  int filter_height = filter_diff.size()[1];
-  int filter_width = filter_diff.size()[0];
-  CudaPerformConvBackwardFilter(bottom.data(), top_diff.data(), filter_diff.data(), num_images, bottom_num_channels, top_num_channels, bottom_height, bottom_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
+  int num_images = top_diff.size_[3];
+  int bottom_num_channels = bottom.size_[2];
+  int top_num_channels = top_diff.size_[2];
+  int bottom_height = bottom.size_[1];
+  int bottom_width = bottom.size_[0];
+  int filter_height = filter_diff.size_[1];
+  int filter_width = filter_diff.size_[0];
+  CudaPerformConvBackwardFilter(bottom.data_, top_diff.data_, filter_diff.data_, num_images, bottom_num_channels, top_num_channels, bottom_height, bottom_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
 }
 
 void ConvBackwardBias(const DataList& inputs, const DataList& outputs, ConvBackwardBiasClosure& closure, const Context& context) {
@@ -445,11 +445,11 @@ void ConvBackwardBias(const DataList& inputs, const DataList& outputs, ConvBackw
   CHECK_EQ(outputs.size(), 1) << "(conv backward bias) #outputs wrong";
   auto& top_diff = inputs[0];
   auto& bias_diff = outputs[0];
-  int num_images = top_diff.size()[3];
-  int top_num_channels = top_diff.size()[2];
-  int top_height = top_diff.size()[1];
-  int top_width = top_diff.size()[0];
-  CudaPerformConvBackwardBias(top_diff.data(), bias_diff.data(), num_images, top_num_channels, top_height, top_width, context.stream, context.cudnn_handle);
+  int num_images = top_diff.size_[3];
+  int top_num_channels = top_diff.size_[2];
+  int top_height = top_diff.size_[1];
+  int top_width = top_diff.size_[0];
+  CudaPerformConvBackwardBias(top_diff.data_, bias_diff.data_, num_images, top_num_channels, top_height, top_width, context.stream, context.cudnn_handle);
 }
 
 void SoftmaxForward(const DataList& inputs, const DataList& outputs, SoftmaxForwardClosure& closure, const Context& context) {
@@ -457,16 +457,16 @@ void SoftmaxForward(const DataList& inputs, const DataList& outputs, SoftmaxForw
   CHECK_EQ(outputs.size(), 1) << "(softmax forward) #outputs wrong";
   auto& bottom = inputs[0];
   auto& top = outputs[0];
-  int num_images = bottom.size()[3];
-  int num_channels = bottom.size()[2];
-  int height = bottom.size()[1];
-  int width = bottom.size()[0];
+  int num_images = bottom.size_[3];
+  int num_channels = bottom.size_[2];
+  int height = bottom.size_[1];
+  int width = bottom.size_[0];
   switch (closure.algorithm) {
     case SoftmaxAlgorithm::kInstance:
-      CudaPerformInstanceSoftmaxForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      CudaPerformInstanceSoftmaxForward(bottom.data_, top.data_, num_images, num_channels, height, width, context.stream, context.cudnn_handle);
       break;
     case SoftmaxAlgorithm::kChannel:
-      CudaPerformChannelSoftmaxForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      CudaPerformChannelSoftmaxForward(bottom.data_, top.data_, num_images, num_channels, height, width, context.stream, context.cudnn_handle);
       break;
     default:
       LOG(FATAL) << "softmax algorithm not supported";
@@ -479,16 +479,16 @@ void SoftmaxBackward(const DataList& inputs, const DataList& outputs, SoftmaxBac
   auto& top_diff = inputs[0];
   auto& top = inputs[1];
   auto& bottom_diff = outputs[0];
-  int num_images = top_diff.size()[3];
-  int num_channels = top_diff.size()[2];
-  int height = top_diff.size()[1];
-  int width = top_diff.size()[0];
+  int num_images = top_diff.size_[3];
+  int num_channels = top_diff.size_[2];
+  int height = top_diff.size_[1];
+  int width = top_diff.size_[0];
   switch (closure.algorithm) {
     case SoftmaxAlgorithm::kInstance:
-      CudaPerformInstanceSoftmaxBackward(top_diff.data(), top.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      CudaPerformInstanceSoftmaxBackward(top_diff.data_, top.data_, bottom_diff.data_, num_images, num_channels, height, width, context.stream, context.cudnn_handle);
       break;
     case SoftmaxAlgorithm::kChannel:
-      CudaPerformChannelSoftmaxBackward(top_diff.data(), top.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      CudaPerformChannelSoftmaxBackward(top_diff.data_, top.data_, bottom_diff.data_, num_images, num_channels, height, width, context.stream, context.cudnn_handle);
       break;
     default:
       LOG(FATAL) << "softmax algorithm not supported";
@@ -500,19 +500,19 @@ void ActivationForward(const DataList& inputs, const DataList& outputs, Activati
   CHECK_EQ(outputs.size(), 1) << "(activation forward) #outputs wrong";
   auto& bottom = inputs[0];
   auto& top = outputs[0];
-  int num_images = bottom.size()[3];
-  int num_channels = bottom.size()[2];
-  int height = bottom.size()[1];
-  int width = bottom.size()[0];
+  int num_images = bottom.size_[3];
+  int num_channels = bottom.size_[2];
+  int height = bottom.size_[1];
+  int width = bottom.size_[0];
   switch (closure.algorithm) {
     case ActivationAlgorithm::kSigmoid:
-      CudaPerformSigmoidForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      CudaPerformSigmoidForward(bottom.data_, top.data_, num_images, num_channels, height, width, context.stream, context.cudnn_handle);
       break;
     case ActivationAlgorithm::kRelu:
-      CudaPerformReluForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      CudaPerformReluForward(bottom.data_, top.data_, num_images, num_channels, height, width, context.stream, context.cudnn_handle);
       break;
     case ActivationAlgorithm::kTanh:
-      CudaPerformTanhForward(bottom.data(), top.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      CudaPerformTanhForward(bottom.data_, top.data_, num_images, num_channels, height, width, context.stream, context.cudnn_handle);
       break;
     default:
       LOG(FATAL) << "activation algorithm not supported";
@@ -526,19 +526,19 @@ void ActivationBackward(const DataList& inputs, const DataList& outputs, Activat
   auto& top = inputs[1];
   auto& bottom = inputs[2];
   auto& bottom_diff = outputs[0];
-  int num_images = top_diff.size()[3];
-  int num_channels = top_diff.size()[2];
-  int height = top_diff.size()[1];
-  int width = top_diff.size()[0];
+  int num_images = top_diff.size_[3];
+  int num_channels = top_diff.size_[2];
+  int height = top_diff.size_[1];
+  int width = top_diff.size_[0];
   switch (closure.algorithm) {
     case ActivationAlgorithm::kSigmoid:
-      CudaPerformSigmoidBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      CudaPerformSigmoidBackward(bottom.data_, top.data_, top_diff.data_, bottom_diff.data_, num_images, num_channels, height, width, context.stream, context.cudnn_handle);
       break;
     case ActivationAlgorithm::kRelu:
-      CudaPerformReluBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      CudaPerformReluBackward(bottom.data_, top.data_, top_diff.data_, bottom_diff.data_, num_images, num_channels, height, width, context.stream, context.cudnn_handle);
       break;
     case ActivationAlgorithm::kTanh:
-      CudaPerformTanhBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, height, width, context.stream, context.cudnn_handle);
+      CudaPerformTanhBackward(bottom.data_, top.data_, top_diff.data_, bottom_diff.data_, num_images, num_channels, height, width, context.stream, context.cudnn_handle);
       break;
     default:
       LOG(FATAL) << "activation algorithm not supported";
@@ -550,16 +550,16 @@ void PoolingForward(const DataList& inputs, const DataList& outputs, PoolingForw
   CHECK_EQ(outputs.size(), 1) << "(pooling forward) #outputs wrong";
   auto& bottom = inputs[0];
   auto& top = outputs[0];
-  int num_images = bottom.size()[3];
-  int num_channels = bottom.size()[2];
-  int bottom_height = bottom.size()[1];
-  int bottom_width = bottom.size()[0];
+  int num_images = bottom.size_[3];
+  int num_channels = bottom.size_[2];
+  int bottom_height = bottom.size_[1];
+  int bottom_width = bottom.size_[0];
   switch (closure.algorithm) {
     case PoolingInfo::Algorithm::kMax:
-      CudaPerformMaxPoolingForward(bottom.data(), top.data(), num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, closure.pad_height, closure.pad_width, context.stream, context.cudnn_handle);
+      CudaPerformMaxPoolingForward(bottom.data_, top.data_, num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, closure.pad_height, closure.pad_width, context.stream, context.cudnn_handle);
       break;
     case PoolingInfo::Algorithm::kAverage:
-      CudaPerformAveragePoolingForward(bottom.data(), top.data(), num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, closure.pad_height, closure.pad_width, context.stream, context.cudnn_handle);
+      CudaPerformAveragePoolingForward(bottom.data_, top.data_, num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, closure.pad_height, closure.pad_width, context.stream, context.cudnn_handle);
       break;
     default:
       LOG(FATAL) << "pooling algorithm not supported";
@@ -573,16 +573,16 @@ void PoolingBackward(const DataList& inputs, const DataList& outputs, PoolingBac
   auto& top = inputs[1];
   auto& bottom = inputs[2];
   auto& bottom_diff = outputs[0];
-  int num_images = top_diff.size()[3];
-  int num_channels = top_diff.size()[2];
-  int bottom_height = bottom.size()[1];
-  int bottom_width = bottom.size()[0];
+  int num_images = top_diff.size_[3];
+  int num_channels = top_diff.size_[2];
+  int bottom_height = bottom.size_[1];
+  int bottom_width = bottom.size_[0];
   switch (closure.algorithm) {
     case PoolingInfo::Algorithm::kMax:
-      CudaPerformMaxPoolingBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, closure.pad_height, closure.pad_width, context.stream, context.cudnn_handle);
+      CudaPerformMaxPoolingBackward(bottom.data_, top.data_, top_diff.data_, bottom_diff.data_, num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, closure.pad_height, closure.pad_width, context.stream, context.cudnn_handle);
       break;
     case PoolingInfo::Algorithm::kAverage:
-      CudaPerformAveragePoolingBackward(bottom.data(), top.data(), top_diff.data(), bottom_diff.data(), num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, closure.pad_height, closure.pad_width, context.stream, context.cudnn_handle);
+      CudaPerformAveragePoolingBackward(bottom.data_, top.data_, top_diff.data_, bottom_diff.data_, num_images, num_channels, bottom_height, bottom_width, closure.stride_vertical, closure.stride_horizontal, closure.height, closure.width, closure.pad_height, closure.pad_width, context.stream, context.cudnn_handle);
       break;
     default:
       LOG(FATAL) << "pooling algorithm not supported";
@@ -592,23 +592,23 @@ void PoolingBackward(const DataList& inputs, const DataList& outputs, PoolingBac
 void ArrayLoader(const DataList& outputs, ArrayLoaderClosure& closure, const Context& context) {
   CHECK_EQ(outputs.size(), 1) << "(array loader) #outputs wrong";
   CHECK(closure.data) << "probably already executed";
-  CUDA_CALL(cudaMemcpyAsync(outputs[0].data(), closure.data.get(), outputs[0].size().Prod() * sizeof(float), cudaMemcpyDefault));
+  CUDA_CALL(cudaMemcpyAsync(outputs[0].data_, closure.data.get(), outputs[0].size_.Prod() * sizeof(float), cudaMemcpyDefault));
   closure.data.reset();
 }
 
 void Randn(const DataList& outputs, RandnClosure& closure, const Context&) {
   CHECK_EQ(outputs.size(), 1) << "(normal) #outputs wrong";
-  CudaPerformRandn(outputs[0].data(), outputs[0].size().Prod(), chrono::system_clock::now().time_since_epoch().count(), closure.mu, closure.var);
+  CudaPerformRandn(outputs[0].data_, outputs[0].size_.Prod(), chrono::system_clock::now().time_since_epoch().count(), closure.mu, closure.var);
 }
 
 void RandBernoulli(const DataList& outputs, RandBernoulliClosure& closure, const Context& context) {
   CHECK_EQ(outputs.size(), 1) << "(bernoulli) #outputs wrong";
-  CudaPerformRandBernoulli(outputs[0].data(), outputs[0].size().Prod(), chrono::system_clock::now().time_since_epoch().count(), closure.p, context.stream);
+  CudaPerformRandBernoulli(outputs[0].data_, outputs[0].size_.Prod(), chrono::system_clock::now().time_since_epoch().count(), closure.p, context.stream);
 }
 
 void Fill(const DataList& outputs, FillClosure& closure, const Context& context) {
   CHECK_EQ(outputs.size(), 1) << "(fill) #outputs wrong";
-  CudaPerformFill(outputs[0].data(), outputs[0].size().Prod(), closure.val, context.stream);
+  CudaPerformFill(outputs[0].data_, outputs[0].size_.Prod(), closure.val, context.stream);
 }
 
 void SyncWithPS(const DataList& inputs, const DataList& outputs, SyncWithPSClosure& closure, const Context& context) {
@@ -616,7 +616,7 @@ void SyncWithPS(const DataList& inputs, const DataList& outputs, SyncWithPSClosu
 #ifdef HAS_PS
   // TODO: use memory allocator, or directly pass CPU pointer in
   // we are creating temp space on CPU for now, should use memory allocator
-  size_t size = outputs[0].size().Prod();
+  size_t size = outputs[0].size_.Prod();
   vector<float> weight(size);
   if (inputs.empty())
   {
@@ -625,13 +625,13 @@ void SyncWithPS(const DataList& inputs, const DataList& outputs, SyncWithPSClosu
   else
   {
     CHECK_EQ(inputs.size(), 1);
-    CHECK_EQ(inputs[0].size().Prod(), outputs[0].size().Prod()) << "Pushed and pulled matrix must be of same dim";
+    CHECK_EQ(inputs[0].size_.Prod(), outputs[0].size_.Prod()) << "Pushed and pulled matrix must be of same dim";
     vector<float> grad(size);
-    CUDA_CALL(cudaMemcpyAsync(&grad[0], inputs[0].data(), size, cudaMemcpyDefault, context.stream));
-    CUDA_CALL(cudaStreamSynchronize(context.stream));    
+    CUDA_CALL(cudaMemcpyAsync(&grad[0], inputs[0].data_, size, cudaMemcpyDefault, context.stream));
+    CUDA_CALL(cudaStreamSynchronize(context.stream));
     PushGradAndPullWeight(&grad[0], &weight[0], size, closure.layer_name);
   }
-  CUDA_CALL(cudaMemcpyAsync(outputs[0].data(), &weight[0], size, cudaMemcpyDefault, context.stream));    
+  CUDA_CALL(cudaMemcpyAsync(outputs[0].data_, &weight[0], size, cudaMemcpyDefault, context.stream));
 #else
   LOG_ASSERT(0) << "HAS_PS is not enabled when you compile minerva, please enable it";
 #endif

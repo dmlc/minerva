@@ -7,22 +7,10 @@
 
 namespace minerva {
 
-class DataShard {
- public:
-  DataShard() = delete;
-  DataShard(float* data, const Scale& size): data_(data), size_(size) {
+struct DataShard {
+  DataShard(float* data, const Scale& size) : data_(data), size_(size) {
   }
-  ~DataShard() = default;
-  // Getters
-  const Scale& size() const {
-    return size_;
-  }
-  float* data() const {
-    return data_;
-  }
-
- private:
-  float* data_;  // TODO Making those public will make it faster???
+  float *const data_;
   const Scale& size_;
 };
 
