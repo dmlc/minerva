@@ -40,7 +40,7 @@ vector<BackendChunk*> DagScheduler::Create(const vector<BackendChunk*>& params,
   {
     MultiNodeLock lock(dag_, param_data_nodes);
     auto op_node = dag_->NewOpNode(param_data_nodes, rst_data_nodes, {fn, current_device_id});
-    DLOG(INFO) << "create new nodes on device #" << current_device_id;
+    DLOG(INFO) << "create new node #" << op_node->node_id_ << " on device #" << current_device_id;
     OnCreateNode(op_node);
     Iter(param_data_nodes, [&](PhysicalDataNode* n) {
       OnCreateEdge(n, op_node);
@@ -222,9 +222,9 @@ void DagScheduler::DispatcherRoutine() {
           }
         }
       } else if (task.first == TaskType::kToDelete) {
-        DLOG(INFO) << "delete node #" << node_id;
+        DLOG(INFO) << "dispatcher ready to delete node #" << node_id;
+        OnDeleteNode(node);
         to_delete = dag_->RemoveNodeFromDag(node_id);
-        OnDeleteNode(to_delete);
       } else {
         LOG(FATAL) << "illegal task state";
       }

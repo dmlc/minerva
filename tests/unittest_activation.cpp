@@ -3,6 +3,7 @@
 
 using namespace std;
 using namespace minerva;
+
 #ifdef HAS_CUDA
 TEST(Activation, GpuSigmoidForward) {
   auto& ms = MinervaSystem::Instance();

@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <atomic>
 #include "common/common.h"
+#include "common/concurrent_unordered_map.h"
 
 namespace minerva {
 
@@ -32,7 +33,7 @@ class RuntimeInfoMap {
   void KillNode(uint64_t);
 
  private:
-  std::unordered_map<uint64_t, RuntimeInfo> info_;
+  ConcurrentUnorderedMap<uint64_t, RuntimeInfo> info_;
 };
 
 }  // namespace minerva

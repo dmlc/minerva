@@ -48,11 +48,10 @@ class Dag {
 
 template<typename D, typename O>
 Dag<D, O>::~Dag() {
-  index_to_node_.LockRead();
-  for (auto i : index_to_node_.VolatilePayload()) {
+  auto index_to_node_cp = index_to_node_.VolatilePayload();
+  for (auto i : index_to_node_cp) {
     delete RemoveNodeFromDag(i.first);
   }
-  index_to_node_.UnlockRead();
 }
 
 template<typename D, typename O>

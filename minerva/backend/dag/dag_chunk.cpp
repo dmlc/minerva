@@ -5,9 +5,8 @@
 namespace minerva {
 
 static void ExternRCUpdate(PhysicalDataNode* node, int delta) {
-  auto& ms = MinervaSystem::Instance();
-  if (ms.IsAlive()) {
-    dynamic_cast<DagScheduler&>(ms.backend()).ExternRCUpdate(node, delta);
+  if (MinervaSystem::IsAlive()) {
+    dynamic_cast<DagScheduler&>(MinervaSystem::Instance().backend()).ExternRCUpdate(node, delta);
   }
 }
 

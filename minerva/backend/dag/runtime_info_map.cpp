@@ -21,22 +21,19 @@ RuntimeInfo::RuntimeInfo() : num_triggers_needed(0), reference_count(0), state(N
 }
 
 void RuntimeInfoMap::AddNode(uint64_t id) {
-  if (info_.find(id) != info_.end()) {
-    LOG(FATAL) << "node #" << id << " already existed in runtime info map";
-  }
-  info_[id];
+  CHECK(info_.Insert(make_pair(id, RuntimeInfo()))) << "node #" << id << " already existed in runtime info map";
 }
 
 void RuntimeInfoMap::RemoveNode(uint64_t id) {
-  CHECK_EQ(info_.erase(id), 1);
+  CHECK_EQ(info_.Erase(id), 1);
 }
 
 RuntimeInfo& RuntimeInfoMap::At(uint64_t id) {
-  return info_.at(id);
+  return info_.At(id);
 }
 
 NodeState RuntimeInfoMap::GetState(uint64_t id) {
-  return info_.at(id).state;
+  return info_.At(id).state;
 }
 
 }  // namespace minerva

@@ -25,6 +25,7 @@ class PriorityDispatcherQueue {
   std::condition_variable cv_;
   BoolFlag exit_now_;
   std::vector<std::list<uint64_t>> tasks_;
+  int total_;
 };
 
 }  // namespace minerva

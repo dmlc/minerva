@@ -11,8 +11,7 @@ class MultiNodeLock {
  public:
   MultiNodeLock() = default;
   template<typename T> MultiNodeLock(PhysicalDag*, const std::vector<T*>&);
-  template<typename T> MultiNodeLock(PhysicalDag*, const std::unordered_set<T*>&);
-  template<typename T> MultiNodeLock(PhysicalDag*, T*);
+  MultiNodeLock(PhysicalDag*, DagNode*);
   DISALLOW_COPY_AND_ASSIGN(MultiNodeLock);
   ~MultiNodeLock() = default;
 
@@ -28,24 +27,15 @@ MultiNodeLock::MultiNodeLock(PhysicalDag* dag, const std::vector<T*>& nodes) {
   });
 }
 
-template<typename T>
-MultiNodeLock::MultiNodeLock(PhysicalDag* dag, const std::unordered_set<T*>& nodes) {
+MultiNodeLock::MultiNodeLock(PhysicalDag* dag, DagNode* node) {
   std::lock_guard<std::mutex> l(dag->m_);
-  Iter(nodes, [this](PhysicalDataNode* node) {
-    locks_.emplace_front(node->m_);
-  });
-}
-
-template<typename T>
-MultiNodeLock::MultiNodeLock(PhysicalDag* dag, T* node) {
-  std::lock_guard<std::mutex> l(dag->m_);
+  locks_.emplace_front(node->m_);
   Iter(node->successors_, [this](DagNode* n) {
     locks_.emplace_front(n->m_);
   });
   Iter(node->predecessors_, [this](DagNode* n) {
     locks_.emplace_front(n->m_);
   });
-  locks_.emplace_front(node->m_);
 }
 
 }  // namespace minerva
