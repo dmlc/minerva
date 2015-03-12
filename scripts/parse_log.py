@@ -18,6 +18,13 @@ def getDeviceIdFromCreation(s):
     else:
         return int(words[7][1:])
 
+def getDeviceIdFromDeletion(s):
+    words = s.split()
+    if len(words) < 6 or words[0] != 'dispatcher' or words[1] != 'ready':
+        return None
+    else:
+        return 0
+
 def parseSecond(s):
     hour, minute, second = s.split(':')
     return int(hour) * 3600 + int(minute) * 60 + float(second)
@@ -53,7 +60,8 @@ def main():
     filename = sys.argv[1]
     execution = parseFile(filename, getDeviceIdFromExecution)
     creation = parseFile(filename, getDeviceIdFromCreation)
-    outputBuckets([execution, creation])
+    deletion = parseFile(filename, getDeviceIdFromDeletion)
+    outputBuckets([execution, creation, deletion])
 
 if __name__ == '__main__':
     main()
