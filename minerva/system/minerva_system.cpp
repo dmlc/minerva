@@ -33,14 +33,6 @@ MinervaSystem::~MinervaSystem() {
   google::ShutdownGoogleLogging();
 }
 
-#ifdef HAS_CUDA
-
-int MinervaSystem::GetGpuDeviceCount() {
-  return device_manager_->GetGpuDeviceCount();
-}
-
-#endif
-
 pair<Device::MemType, float*> MinervaSystem::GetPtr(uint64_t device_id, uint64_t data_id) {
   return device_manager_->GetDevice(device_id)->GetPtr(data_id);
 }

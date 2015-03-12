@@ -31,9 +31,6 @@ class MinervaSystem :
   DeviceManager& device_manager() {
     return *device_manager_;
   }
-#ifdef HAS_CUDA
-  int GetGpuDeviceCount();
-#endif
   std::pair<Device::MemType, float*> GetPtr(uint64_t, uint64_t);
   uint64_t GenerateDataId();
   uint64_t current_device_id_;

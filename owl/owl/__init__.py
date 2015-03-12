@@ -39,6 +39,13 @@ def finalize():
     """
     _owl.finalize()
 
+def wait_for_all():
+    """ Wait for all evaluation to complete
+
+    :neturn: None
+    """
+    _owl.wait_for_all()
+
 def create_cpu_device():
     """ Create device for running on CPU cores
 
