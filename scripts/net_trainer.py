@@ -60,7 +60,7 @@ class NetTrainer:
                 s.owl_net.units[wid].biasgrad = bgrad[upd_gpu][i]
                 s.owl_net.update(wid)
             #s.owl_net.weight_update(num_gpu = s.num_gpu)
-            if iteridx % 6 == 0:
+            if iteridx % 2 == 0:
                 s.owl_net.wait_for_eval_loss()
                 thistime = time.time() - last
                 print "Finished training %d minibatch (time: %s)" % (iteridx, thistime)

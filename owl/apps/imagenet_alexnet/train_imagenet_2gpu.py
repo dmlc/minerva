@@ -39,10 +39,10 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
     count = 0
     last = time.time()
 
-    dp = ImageNetDataProvider(mean_file='/home/minjie/data/imagenet/imagenet_mean.binaryproto',
-            train_db='/home/minjie/data/imagenet/ilsvrc12_train_lmdb',
-            val_db='/home/minjie/data/imagenet/ilsvrc12_val_lmdb',
-            test_db='/home/minjie/data/imagenet/ilsvrc12_test_lmdb')
+    dp = ImageNetDataProvider(mean_file='/home/yutian/data/config_file/google_model/imagenet_mean.binaryproto',
+            train_db='/home/yutian/data/imagenet/ilsvrc12_train_lmdb',
+            val_db='/home/yutian/data/imagenet/ilsvrc12_val_lmdb',
+            test_db='/home/yutian/data/imagenet/ilsvrc12_test_lmdb')
 
     minibatch_size = minibatch_size / 2
 
@@ -64,7 +64,6 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             #label = owl.randn([1000, 128], 0.0, 0.01)
             num_samples += data.shape[-1]
             (out, wgrad[gpuid], bgrad[gpuid]) = model.train_one_mb(data, label, dropout_rate)
-            out.start_eval()
 
             if count % 2 != 0:
                 continue
