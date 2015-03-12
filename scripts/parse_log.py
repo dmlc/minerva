@@ -13,10 +13,10 @@ def getDeviceIdFromExecution(s):
 
 def getDeviceIdFromCreation(s):
     words = s.split()
-    if len(words) < 6 or words[0] != 'create' or words[1] != 'new' or words[2] != 'nodes':
+    if len(words) < 6 or words[0] != 'create' or words[1] != 'new' or words[2] != 'op':
         return None
     else:
-        return int(words[5][1:])
+        return int(words[7][1:])
 
 def parseSecond(s):
     hour, minute, second = s.split(':')
