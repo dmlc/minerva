@@ -155,8 +155,11 @@ class SoftmaxUnit(ComputeUnit):
         self.ff_y = to_top[self.top_names[0]]
         self.y = from_btm[self.btm_names[1]]
     def backward(self, from_top, to_btm, phase):
-        assert(len(self.loss_weight) == 1)
-        to_btm[self.btm_names[0]] = (self.ff_y - self.y)*self.loss_weight[0]
+        if len(self.loss_weight) == 1:
+            to_btm[self.btm_names[0]] = (self.ff_y - self.y)*self.loss_weight[0]
+        else:
+            to_btm[self.btm_names[0]] = (self.ff_y - self.y)
+
 
     def getloss(self):
         #get accuracy

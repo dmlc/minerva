@@ -36,7 +36,6 @@ class NetTrainer:
                 s.owl_net.current_lr = s.owl_net.base_lr * pow(1 - float(iteridx) / s.owl_net.solver.max_iter, s.owl_net.solver.power) 
             elif s.owl_net.solver.lr_policy == "step":
                 s.owl_net.current_lr = s.owl_net.base_lr * pow(s.owl_net.solver.gamma, iteridx / s.owl_net.solver.stepsize)
-
             # train on multi-gpu
             for gpuid in range(s.num_gpu):
                 owl.set_device(s.gpu[gpuid])
