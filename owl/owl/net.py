@@ -57,16 +57,16 @@ class WeightedComputeUnit(ComputeUnitSimple):
         #TODO: need recheck with caffe with what's the multiplier for weight decay
         if self.weightdelta == None:
             self.weightdelta = owl.zeros(self.weightgrad.shape)
-        
+
         self.weightdelta = momentum * self.weightdelta - (base_lr * self.blobs_lr[0] / batch_size) * self.weightgrad  - (base_lr * self.blobs_lr[0] * base_weight_decay * self.weight_decay[0]) * self.weight
-        self.weight = self.weight + self.weightdelta 
+        self.weight = self.weight + self.weightdelta
         self.weightgrad = None
-        
+
         if self.biasdelta == None:
             self.biasdelta = owl.zeros(self.biasgrad.shape)
-        
+
         self.biasdelta = momentum * self.biasdelta - (base_lr * self.blobs_lr[1] / batch_size) * self.biasgrad - (base_lr * self.blobs_lr[1] * base_weight_decay * self.weight_decay[1]) * self.bias
-        self.bias = self.bias + self.biasdelta 
+        self.bias = self.bias + self.biasdelta
         self.biasgrad = None
 
 class LinearUnit(ComputeUnitSimple):
@@ -129,7 +129,7 @@ class DropoutUnit(ComputeUnitSimple):
             return ele.mult(x, self.dropmask)
         else:
             return x * (1 - self.params.dropout_param.dropout_ratio)
-        
+
         '''
         #for gradient test
         return x
@@ -160,15 +160,15 @@ class SoftmaxUnit(ComputeUnit):
         predict = self.ff_y.argmax(0)
         ground_truth = self.y.argmax(0)
         correct = (predict - ground_truth).count_zero()
-        acc = 1 - (batch_size - correct) * 1.0 / batch_size 
-        print acc 
+        acc = 1 - (batch_size - correct) * 1.0 / batch_size
+        print acc
         '''
 
         lossmat = ele.mult(ele.ln(self.ff_y), self.y)
         res = lossmat.sum(0).sum(1).to_numpy()
         return -res[0][0] / lossmat.shape[1]
-        
-        ''' 
+
+        '''
         outputlist = self.ff_y.to_numpy()
         outputshape = np.shape(outputlist)
         outputlist = outputlist.reshape(np.prod(outputshape[0:len(outputshape)]))
@@ -180,7 +180,7 @@ class SoftmaxUnit(ComputeUnit):
         #print res
         return res
         '''
-    
+
     def __str__(self):
         return 'softmax'
 
@@ -191,10 +191,10 @@ class AccuracyUnit(ComputeUnit):
         self.batch_size = 0
     def forward(self, from_btm, to_top, phase):
         predict = from_btm[self.btm_names[0]].argmax(0)
-        ground_truth = from_btm[self.btm_names[1]].argmax(0)   
+        ground_truth = from_btm[self.btm_names[1]].argmax(0)
         self.batch_size = from_btm[self.btm_names[0]].shape[1]
         correct = (predict - ground_truth).count_zero()
-        self.acc = 1 - (self.batch_size - correct) * 1.0 / self.batch_size 
+        self.acc = 1 - (self.batch_size - correct) * 1.0 / self.batch_size
 
     def backward(self, from_top, to_btm, phase):
         pass
@@ -240,7 +240,7 @@ class FullyConnection(WeightedComputeUnit):
     def __init__(self, params):
         super(FullyConnection, self).__init__(params)
         self.inner_product_param = params.inner_product_param
-        
+
     def ff(self, act, phase):
         shp = act.shape
         if len(shp) > 2:
@@ -255,10 +255,10 @@ class FullyConnection(WeightedComputeUnit):
             a = self.ff_act.reshape([np.prod(shp[0:-1], dtype=np.int32), shp[-1]])
         else:
             a = self.ff_act
-        
+
         self.weightgrad = sen * a.trans()
         self.biasgrad = sen.sum(1)
-        s = self.weight.trans() * sen 
+        s = self.weight.trans() * sen
         if len(shp) > 2:
             s = s.reshape(shp)
         return s
@@ -269,11 +269,11 @@ class ConvConnection(WeightedComputeUnit):
     def __init__(self, params):
         super(ConvConnection, self).__init__(params)
         self.conv_params = params.convolution_param
-        self.convolver = co.Convolver(self.conv_params.pad, 
+        self.convolver = co.Convolver(self.conv_params.pad,
                 self.conv_params.pad, self.conv_params.stride, self.conv_params.stride)
         self.convolution_param = params.convolution_param
         self.num_output = params.convolution_param.num_output
-        self.group = params.convolution_param.group 
+        self.group = params.convolution_param.group
         #TODO: hack, we don't want to slice agian to use it into bp as a parameter
         self.group_data = []
         self.group_filter = []
@@ -288,7 +288,7 @@ class ConvConnection(WeightedComputeUnit):
             group_result = []
             self.group_filter = []
             self.group_bias = []
-            
+
             data_concat_dim = 2
             filter_concat_dim = 3
             bias_concat_dim = 0
@@ -313,7 +313,7 @@ class ConvConnection(WeightedComputeUnit):
             group_wgrad = []
             group_bgrad = []
             group_result = []
-            
+
             data_concat_dim = 2
             filter_concat_dim = 3
             bias_concat_dim = 0
@@ -327,7 +327,7 @@ class ConvConnection(WeightedComputeUnit):
             #concat
             self.weightgrad = owl.concat(group_wgrad, filter_concat_dim)
             self.biasgrad = owl.concat(group_bgrad, bias_concat_dim)
-            
+
             #free space
             self.group_data = []
             self.group_filter = []
@@ -352,14 +352,14 @@ class DataUnit(ComputeUnit):
                     params.data_param.source,
                     params.data_param.batch_size,
                     params.transform_param.crop_size)
-        
+
         self.generator = None
         #(self.samples, self.labels) = next(self.generator)
 
     def forward(self, from_btm, to_top, phase):
         if self.generator == None:
             self.generator = self.dp.get_train_mb(phase)
-      
+
         while True:
             try:
                 (samples, labels) = next(self.generator)
@@ -505,13 +505,10 @@ class Net:
 
     def update(self, uid):
         self.units[uid].weight_update(self.current_lr, self.base_weight_decay, self.momentum, self.batch_size)
-    
+
     def weight_update(self, num_gpu):
         for i in range(len(self.units)):
             update(i, num_gpu)
-
-    def start_eval_loss(self):
-        self.get_loss_units()[0].ff_y.start_eval()
 
     def wait_for_eval_loss(self):
         self.get_loss_units()[0].ff_y.wait_for_eval()

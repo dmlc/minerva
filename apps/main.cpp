@@ -15,11 +15,11 @@ int main(int argc, char** argv) {
     narrs.push_back(NArray::Constant({1, 1}, i));
   }
   cout << "a" << endl;
-  for (int i = 0; i < narrs.size(); ++i) {
+  for (int i = 0; i < static_cast<int>(narrs.size()); ++i) {
     narrs[i] = narrs[i] + 1;
   }
   cout << "b" << endl;
-  for (int i = 0; i < narrs.size(); ++i) {
+  for (int i = 0; i < static_cast<int>(narrs.size()); ++i) {
     narrs[i].Wait();
   }
   cout << "c" << endl;

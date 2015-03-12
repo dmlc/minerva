@@ -1,5 +1,6 @@
 #include "dag_scheduler.h"
 #include <vector>
+#include <set>
 #include <memory>
 #include <glog/logging.h>
 #include "system/minerva_system.h"
@@ -35,15 +36,16 @@ vector<BackendChunk*> DagScheduler::Create(const vector<BackendChunk*>& params,
   auto param_data_nodes = Map<PhysicalDataNode*>(params, [](BackendChunk* i) {
     return CHECK_NOTNULL(dynamic_cast<DagChunk*>(i))->node();
   });
+  set<PhysicalDataNode*> unique_predecessors(param_data_nodes.begin(), param_data_nodes.end());
   auto ret = Map<BackendChunk*>(rst_data_nodes, [](PhysicalDataNode* n) {
     return new DagChunk(n);
   });
   {
-    MultiNodeLock lock(dag_, param_data_nodes);
+    MultiNodeLock lock(dag_, unique_predecessors);
     auto op_node = dag_->NewOpNode(param_data_nodes, rst_data_nodes, {fn, current_device_id});
-    DLOG(INFO) << "create new node #" << op_node->node_id_ << " on device #" << current_device_id;
+    DLOG(INFO) << "create new op node #" << op_node->node_id_ << " on device #" << current_device_id;
     OnCreateNode(op_node);
-    Iter(param_data_nodes, [&](PhysicalDataNode* n) {
+    Iter(unique_predecessors, [&](PhysicalDataNode* n) {
       OnCreateEdge(n, op_node);
     });
     Iter(rst_data_nodes, [&](PhysicalDataNode* n) {

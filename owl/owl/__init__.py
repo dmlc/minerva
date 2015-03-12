@@ -130,7 +130,7 @@ def from_numpy(nparr):
     .. note::
 
         The content will be directly copied to Minerva's memory system. However, due to
-        the different priority when treating dimensions between numpy and Minerva. The 
+        the different priority when treating dimensions between numpy and Minerva. The
         result ``owl.NArray``'s dimension will be *reversed*.
 
         >>> a = numpy.zeros([200, 300, 50])
@@ -146,9 +146,9 @@ def from_numpy(nparr):
     """
     return _owl.from_numpy(np.require(nparr, dtype=np.float32, requirements=['C']))
 
-def concat(narrays, concat_dim): 
+def concat(narrays, concat_dim):
     """  Concatenate NArrays according to concat_dim
-    
+
     :param narrays: inputs for concatenation
     :type narrays: owl.NArray
     :param concat_dim: the dimension to concate
@@ -159,9 +159,9 @@ def concat(narrays, concat_dim):
     """
     return _owl.concat(narrays, concat_dim)
 
-def slice(src, slice_dim, st_off, slice_count): 
+def slice(src, slice_dim, st_off, slice_count):
     """  Slice NArrays according to slice_dim
-    
+
     :param src: inputs for slice
     :type src: owl.NArray
     :param slice_dim: the dimension to slice
@@ -198,3 +198,12 @@ def print_dag_to_file(fname):
     :return: None
     """
     _owl.print_dag_to_file(fname)
+
+def print_dot_dag_to_file(fname):
+    """ Print the current generated dag into the give filename in dot format
+
+    :param fname: filename for printing the dag
+    :type fname: str
+    :return: None
+    """
+    _owl.print_dot_dag_to_file(fname)

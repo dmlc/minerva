@@ -6,9 +6,9 @@ message(STATUS "cmake generator: ${CMAKE_GENERATOR}")
 message(STATUS "cmake build tool: ${CMAKE_BUILD_TOOL}")
 message(STATUS "cmake build type: ${CMAKE_BUILD_TYPE}")
 
-set(COMPILER_FLAGS "-Wall -g -pthread -m64 -fPIC")
-set(GENERAL_FLAGS_DEBUG "${COMPILER_FLAGS} -O0 -march=native")
-set(GENERAL_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -march=native -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0 -DNDEBUG")
+set(COMPILER_FLAGS "-Wall -pthread -m64 -fPIC -march=native")
+set(GENERAL_FLAGS_DEBUG "${COMPILER_FLAGS} -O0 -g")
+set(GENERAL_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "${GENERAL_FLAGS_DEBUG} -std=c++11")
 set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11 -flto")
 
@@ -43,7 +43,6 @@ else (NOT DISABLE_PS)
   message(STATUS "PS support disabled")
 endif (NOT DISABLE_PS)
 
-message(STATUS "${EXTERN_LIB_PATH}")
 include_directories(
   SYSTEM ${EXTERN_INCLUDE_PATH}
 )

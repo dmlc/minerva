@@ -29,11 +29,11 @@ class NetTrainer:
         last = time.time()
         wunits = s.owl_net.get_weighted_unit_ids()
         last_start = time.time()
-        
+
         for iteridx in range(s.snapshot * s.owl_net.solver.snapshot, s.owl_net.solver.max_iter):
-            # get the learning rate 
+            # get the learning rate
             if s.owl_net.solver.lr_policy == "poly":
-                s.owl_net.current_lr = s.owl_net.base_lr * pow(1 - float(iteridx) / s.owl_net.solver.max_iter, s.owl_net.solver.power) 
+                s.owl_net.current_lr = s.owl_net.base_lr * pow(1 - float(iteridx) / s.owl_net.solver.max_iter, s.owl_net.solver.power)
             elif s.owl_net.solver.lr_policy == "step":
                 s.owl_net.current_lr = s.owl_net.base_lr * pow(s.owl_net.solver.gamma, iteridx / s.owl_net.solver.stepsize)
 
@@ -45,10 +45,9 @@ class NetTrainer:
                 for wid in wunits:
                     wgrad[gpuid].append(s.owl_net.units[wid].weightgrad)
                     bgrad[gpuid].append(s.owl_net.units[wid].biasgrad)
-                # s.owl_net.start_eval_loss()
 
             # weight update
-            for i in range(len(wunits)): 
+            for i in range(len(wunits)):
                 wid = wunits[i]
                 upd_gpu = i * num_gpu / len(wunits)
                 owl.set_device(s.gpu[upd_gpu])
@@ -66,8 +65,6 @@ class NetTrainer:
                 thistime = time.time() - last
                 print "Finished training %d minibatch (time: %s)" % (iteridx, thistime)
                 last = time.time()
-            else:
-                s.owl_net.start_eval_loss()
 
             #s.owl_net.units[wunits[0]].weight.wait_for_eval()
             wgrad = [[] for i in range(s.num_gpu)] # reset gradients
@@ -78,7 +75,7 @@ class NetTrainer:
                 lossunits = s.owl_net.get_loss_units()
                 for lu in lossunits:
                     print "Training Loss %s: %f" % (lu.name, lu.getloss())
-            
+
             # decide whether to test
             if (iteridx + 1) % (s.owl_net.solver.test_interval) == 0:
                 acc_num = 0
@@ -90,7 +87,7 @@ class NetTrainer:
                     acc_num += (accunit.batch_size * accunit.acc)
                     print "Accuracy the %d mb: %f" % (testiteridx, accunit.acc)
                 print "Testing Accuracy: %f" % (float(acc_num)/test_num)
-            
+
             # decide whether to save model
             if (iteridx + 1) % (s.owl_net.solver.snapshot) == 0:
                 print "Save to snapshot %d, current lr %f" % ((iteridx + 1) / (s.owl_net.solver.snapshot), s.owl_net.current_lr)
@@ -111,7 +108,7 @@ if __name__ == "__main__":
     num_gpu = args.num_gpu
     snapshot = args.snapshot
     snapshot_dir = args.snapshot_dir
-    
+
     print ' === Using %d gpus, start from snapshot %d === ' % (num_gpu, snapshot)
 
     sys_args = [sys.argv[0]] + remain

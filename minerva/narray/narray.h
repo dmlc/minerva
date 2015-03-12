@@ -44,7 +44,7 @@ class NArray {
   NArray(NArray&&);
   NArray& operator=(const NArray&);
   NArray& operator=(NArray&&);
-  ~NArray();
+  virtual ~NArray();
   // Element-wise operations
   friend NArray operator+(const NArray&, const NArray&);
   friend NArray operator-(const NArray&, const NArray&);

@@ -140,6 +140,15 @@ void PrintDagToFile(bp::str filename) {
   fout.close();
 }
 
+void PrintDotDagToFile(bp::str filename) {
+  const std::string& dag_str = m::MinervaSystem::Instance().physical_dag().ToDotString(m::AllInfoPrinter::DataToString, m::AllInfoPrinter::OpToString);
+  char* fname = bp::extract<char*>(filename);
+  std::ofstream fout(fname);
+  fout << dag_str << std::endl;
+  fout.flush();
+  fout.close();
+}
+
 ////////////////////////////// cudnn
 m::NArray ConvForward(m::NArray src, m::NArray filter, m::NArray bias, m::ConvInfo info) {
   return m::Convolution::ConvForward(m::ImageBatch(src), m::Filter(filter), bias, info);
@@ -287,6 +296,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("print_profiler_result", &owl::PrintProfilerResult);
   def("reset_profiler_result", &owl::ResetProfilerResult);
   def("print_dag_to_file", &owl::PrintDagToFile);
+  def("print_dot_dag_to_file", &owl::PrintDotDagToFile);
 
   // elewise
   def("mult", &m::Elewise::Mult);
