@@ -123,19 +123,22 @@ class PoolingUnit(ComputeUnitSimple):
 class DropoutUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(DropoutUnit, self).__init__(params)
+        self.scale = 1.0 / (1.0 - self.params.dropout_param.dropout_ratio)
+        self.keep_ratio = 1 - self.params.dropout_param.dropout_ratio
     def ff(self, x, phase):
-        self.dropmask = owl.randb(x.shape, self.params.dropout_param.dropout_ratio)
+        self.dropmask = owl.randb(x.shape, self.keep_ratio)
         if phase == "TRAIN":
-            return ele.mult(x, self.dropmask)
+            return ele.mult(x, self.dropmask)*self.scale
         else:
-            return x * (1 - self.params.dropout_param.dropout_ratio)
+            #return x * (1 - self.params.dropout_param.dropout_ratio)
+            return x
 
         '''
         #for gradient test
         return x
         '''
     def bp(self, y):
-        return ele.mult(y, self.dropmask)
+        return ele.mult(y, self.dropmask)*self.scale
         '''
         #for gradient test
         return y
@@ -146,12 +149,17 @@ class DropoutUnit(ComputeUnitSimple):
 class SoftmaxUnit(ComputeUnit):
     def __init__(self, params):
         super(SoftmaxUnit, self).__init__(params)
+        self.loss_weight = params.loss_weight
     def forward(self, from_btm, to_top, phase):
         to_top[self.top_names[0]] = co.softmax(from_btm[self.btm_names[0]], co.soft_op.instance)
         self.ff_y = to_top[self.top_names[0]]
         self.y = from_btm[self.btm_names[1]]
     def backward(self, from_top, to_btm, phase):
-        to_btm[self.btm_names[0]] = self.ff_y - self.y
+        if len(self.loss_weight) == 1:
+            to_btm[self.btm_names[0]] = (self.ff_y - self.y)*self.loss_weight[0]
+        else:
+            to_btm[self.btm_names[0]] = (self.ff_y - self.y)
+
 
     def getloss(self):
         #get accuracy
@@ -342,6 +350,7 @@ class DataUnit(ComputeUnit):
         super(DataUnit, self).__init__(params)
         self.crop_size = params.transform_param.crop_size
         self.num_output = 3
+        self.mirror = params.transform_param.mirror
         if params.include[0].phase == Phase.Value('TRAIN'):
             self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.transform_param.mean_value,
                     params.data_param.source,
@@ -358,7 +367,7 @@ class DataUnit(ComputeUnit):
 
     def forward(self, from_btm, to_top, phase):
         if self.generator == None:
-            self.generator = self.dp.get_train_mb(phase)
+            self.generator = self.dp.get_train_mb(self.mirror, phase)
 
         while True:
             try:
@@ -367,7 +376,7 @@ class DataUnit(ComputeUnit):
                     (samples, labels) = next(self.generator)
             except StopIteration:
                 print 'Have scanned the whole dataset; start from the begginning agin'
-                self.generator = self.dp.get_train_mb(phase)
+                self.generator = self.dp.get_train_mb(self.mirror, phase)
                 continue
             break
 

@@ -86,13 +86,6 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
   shared_ptr<float> data_ptr(new float[data_size.Prod()], [](float* ptr) { delete[] ptr; });
   shared_ptr<float> label_ptr(new float[label_size.Prod()], [](float* ptr) { delete[] ptr; });
   data_file_in.read(reinterpret_cast<char*>(data_ptr.get()), data_size.Prod() * sizeof(float));
-  for(int i = 0; i < 784; ++i) {
-    cout << setw(5) << (int)(data_ptr.get()[i] * 256);
-    if(i % 28 == 0)
-      cout << endl;
-  }
-  cout << endl;
-  exit(1);
   label_file_in.read(reinterpret_cast<char*>(label_ptr.get()), label_size.Prod() * sizeof(float));
   acts[0] = NArray::MakeNArray(data_size, data_ptr);
   label = NArray::MakeNArray(label_size, label_ptr);
@@ -106,10 +99,10 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
   auto re_acts6 = acts[6].Reshape({acts[6].Size().Prod() / mb_size, mb_size});
   acts[7] = (weights[2] * re_acts6).NormArithmetic(bias[2], ArithmeticType::kAdd);
   acts[8] = Convolution::SoftmaxForward(acts[7].Reshape({10, 1, 1, mb_size}), SoftmaxAlgorithm::kInstance);
+  acts[8].StartEval();
 
   sens[8] = acts[8] - label;
 
-  // sens[7] = Convolution::SoftmaxBackward(sens[8], acts[8], SoftmaxAlgorithm::kInstance).Reshape({10, mb_size});
   sens[7] = sens[8].Reshape({10, mb_size});
   sens[6] = (weights[2].Trans() * sens[7]).Reshape(acts[6].Size());
   sens[5] = Convolution::PoolingBackward(sens[6], acts[6], acts[5], pool_info[1]);
@@ -119,18 +112,13 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
   sens[1] = Convolution::ActivationBackward(sens[2], acts[2], acts[1], ActivationAlgorithm::kRelu);
 
   if (print) {
-    //acts[8].EvalAsync();
-    shared_ptr<float> x = bias[0].Get();
-    for(int i = 0; i < 16; ++i)
-      cout << x.get()[i] << " ";
-    cout << endl;
     PrintTrainingAccuracy(acts[8], label);
   }
 
   vector<NArray> ret;
-  ret.push_back(Convolution::ConvBackwardFilter(sens[1], weights[0], acts[0], conv_info[0]));
+  ret.push_back(Convolution::ConvBackwardFilter(sens[1], acts[0], weights[0], conv_info[0]));
   ret.push_back(Convolution::ConvBackwardBias(sens[1]));
-  ret.push_back(Convolution::ConvBackwardFilter(sens[4], weights[1], acts[3], conv_info[1]));
+  ret.push_back(Convolution::ConvBackwardFilter(sens[4], acts[3], weights[1], conv_info[1]));
   ret.push_back(Convolution::ConvBackwardBias(sens[4]));
   ret.push_back(sens[7] * re_acts6.Trans());
   ret.push_back(sens[7].Sum(1));
@@ -177,7 +165,6 @@ int main(int argc, char** argv) {
   }
   weights.clear();
   bias.clear();
-  //ms.dag_scheduler().GCNodes();
   cout << ms.device_manager().GetDevice(gpu_device[0])->GetMemUsage() << endl;
   cout << ms.device_manager().GetDevice(gpu_device[1])->GetMemUsage() << endl;
   cout << ms.device_manager().GetDevice(cpu_device)->GetMemUsage() << endl;

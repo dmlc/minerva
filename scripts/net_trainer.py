@@ -36,7 +36,6 @@ class NetTrainer:
                 s.owl_net.current_lr = s.owl_net.base_lr * pow(1 - float(iteridx) / s.owl_net.solver.max_iter, s.owl_net.solver.power)
             elif s.owl_net.solver.lr_policy == "step":
                 s.owl_net.current_lr = s.owl_net.base_lr * pow(s.owl_net.solver.gamma, iteridx / s.owl_net.solver.stepsize)
-
             # train on multi-gpu
             for gpuid in range(s.num_gpu):
                 owl.set_device(s.gpu[gpuid])
@@ -77,15 +76,20 @@ class NetTrainer:
                     print "Training Loss %s: %f" % (lu.name, lu.getloss())
 
             # decide whether to test
+            #if True:
             if (iteridx + 1) % (s.owl_net.solver.test_interval) == 0:
                 acc_num = 0
                 test_num = 0
                 for testiteridx in range(s.owl_net.solver.test_iter[0]):
                     s.owl_net.forward('TEST')
-                    accunit = s.owl_net.get_accuracy_units()[0]
+                    all_accunits = s.owl_net.get_accuracy_units()
+                    accunit = all_accunits[len(all_accunits)-1]
+                    #accunit = all_accunits[0]
+                    print accunit.name
                     test_num += accunit.batch_size
                     acc_num += (accunit.batch_size * accunit.acc)
                     print "Accuracy the %d mb: %f" % (testiteridx, accunit.acc)
+                    sys.stdout.flush()
                 print "Testing Accuracy: %f" % (float(acc_num)/test_num)
 
             # decide whether to save model

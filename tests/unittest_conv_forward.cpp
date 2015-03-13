@@ -24,7 +24,7 @@ TEST(ConvForward, GpuWithoutPadding) {
   ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
   Filter weight = NArray::MakeNArray(weight_size, weight_ptr);
   NArray bias = NArray::Zeros({5});
-  ConvInfo conv_info{0, 0, 1, 1};
+  ConvInfo conv_info(0, 0, 1, 1);
   ms.current_device_id_ = gpu_device;
   ImageBatch output = Convolution::ConvForward(input, weight, bias, conv_info);
   auto output_ptr = output.Get();
@@ -58,7 +58,7 @@ TEST(ConvForward, GpuWithPadding) {
   ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
   Filter weight = NArray::MakeNArray(weight_size, weight_ptr);
   NArray bias = NArray::MakeNArray(bias_size, bias_ptr);
-  ConvInfo conv_info{3, 2, 3, 2};
+  ConvInfo conv_info(3, 2, 3, 2);
   ms.current_device_id_ = gpu_device;
   ImageBatch output = Convolution::ConvForward(input, weight, bias, conv_info);
   auto output_ptr = output.Get();
@@ -88,7 +88,7 @@ TEST(ConvForward, DISABLED_CpuWithoutPadding) {
   ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
   Filter weight = NArray::MakeNArray(weight_size, weight_ptr);
   NArray bias = NArray::Zeros({5});
-  ConvInfo conv_info{0, 0, 1, 1};
+  ConvInfo conv_info(0, 0, 1, 1);
   ImageBatch output = Convolution::ConvForward(input, weight, bias, conv_info);
   auto output_ptr = output.Get();
   for (int i = 0; i < correct_size.Prod(); ++i) {
@@ -121,7 +121,7 @@ TEST(ConvForward, DISABLED_CpuWithPadding) {
   ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
   Filter weight = NArray::MakeNArray(weight_size, weight_ptr);
   NArray bias = NArray::MakeNArray(bias_size, bias_ptr);
-  ConvInfo conv_info{3, 2, 3, 2};
+  ConvInfo conv_info(3, 2, 3, 2);
   ImageBatch output = Convolution::ConvForward(input, weight, bias, conv_info);
   auto output_ptr = output.Get();
   for (int i = 0; i < correct_size.Prod(); ++i) {
