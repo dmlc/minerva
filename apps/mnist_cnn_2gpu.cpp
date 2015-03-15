@@ -12,8 +12,8 @@ const int numepochs = 10;
 int mb_size = 256;
 float alpha = 0.01;
 
-const string train_data_file = "/home/cs_user/data/mnist/traindata.dat";
-const string train_label_file = "/home/cs_user/data/mnist/trainlabel.dat";
+const string train_data_file = "/home/yutian/data/mnist/traindata.dat";
+const string train_label_file = "/home/yutian/data/mnist/trainlabel.dat";
 
 vector<NArray> weights;
 vector<NArray> bias;
@@ -111,14 +111,13 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
   sens[1] = Convolution::ActivationBackward(sens[2], acts[2], acts[1], ActivationAlgorithm::kRelu);
 
   if (print) {
-    acts[8].StartEval();
-    // PrintTrainingAccuracy(acts[8], label);
+    PrintTrainingAccuracy(acts[8], label);
   }
 
   vector<NArray> ret;
-  ret.push_back(Convolution::ConvBackwardFilter(sens[1], weights[0], acts[0], conv_info[0]));
+  ret.push_back(Convolution::ConvBackwardFilter(sens[1], acts[0], weights[0], conv_info[0]));
   ret.push_back(Convolution::ConvBackwardBias(sens[1]));
-  ret.push_back(Convolution::ConvBackwardFilter(sens[4], weights[0], acts[3], conv_info[1]));
+  ret.push_back(Convolution::ConvBackwardFilter(sens[4], acts[3], weights[1], conv_info[1]));
   ret.push_back(Convolution::ConvBackwardBias(sens[4]));
   ret.push_back(sens[7] * re_acts6.Trans());
   ret.push_back(sens[7].Sum(1));
@@ -130,8 +129,8 @@ int main(int argc, char** argv) {
   FLAGS_alsologtostderr = 1;
   MinervaSystem::Initialize(&argc, &argv);
   MinervaSystem& ms = MinervaSystem::Instance();
-  uint64_t cpu_device = ms.CreateCpuDevice();
-  uint64_t gpu_device[2] = {ms.CreateGpuDevice(0), ms.CreateGpuDevice(1)};
+  uint64_t cpu_device = ms.device_manager().CreateCpuDevice();
+  uint64_t gpu_device[2] = {ms.device_manager().CreateGpuDevice(0), ms.device_manager().CreateGpuDevice(1)};
   ms.current_device_id_ = gpu_device[0];
   if (0 < FLAGS_mb && FLAGS_mb <= 512) {
     mb_size = FLAGS_mb;
@@ -174,7 +173,7 @@ int main(int argc, char** argv) {
         bias[2] -= alpha / mb_size / 2 * res2[5];
       }
     }
-    weights[0].WaitForEval();
+    weights[0].Wait();
     data_file_in.close();
     label_file_in.close();
   }
