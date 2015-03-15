@@ -13,8 +13,8 @@ const int numepochs = 3;
 int mb_size = 256;
 float alpha = 0.01;
 
-const string train_data_file = "/home/jermaine/data/traindata.dat";
-const string train_label_file = "/home/jermaine/data/trainlabel.dat";
+const string train_data_file = "/home/yutian/data/mnist/traindata.dat";
+const string train_label_file = "/home/yutian/data/mnist/trainlabel.dat";
 
 vector<NArray> weights;
 vector<NArray> bias;
@@ -99,7 +99,6 @@ vector<NArray> TrainMB(ifstream& data_file_in, ifstream& label_file_in, bool pri
   auto re_acts6 = acts[6].Reshape({acts[6].Size().Prod() / mb_size, mb_size});
   acts[7] = (weights[2] * re_acts6).NormArithmetic(bias[2], ArithmeticType::kAdd);
   acts[8] = Convolution::SoftmaxForward(acts[7].Reshape({10, 1, 1, mb_size}), SoftmaxAlgorithm::kInstance);
-  acts[8].StartEval();
 
   sens[8] = acts[8] - label;
 
@@ -130,9 +129,9 @@ int main(int argc, char** argv) {
   FLAGS_alsologtostderr = 1;
   MinervaSystem::Initialize(&argc, &argv);
   MinervaSystem& ms = MinervaSystem::Instance();
-  uint64_t cpu_device = ms.CreateCpuDevice();
-  uint64_t gpu_device[2] = {ms.CreateGpuDevice(0), ms.CreateGpuDevice(1)};
-  ms.current_device_id_ = gpu_device[1];
+  uint64_t cpu_device = ms.device_manager().CreateCpuDevice();
+  uint64_t gpu_device[2] = {ms.device_manager().CreateGpuDevice(0), ms.device_manager().CreateGpuDevice(1)};
+  ms.current_device_id_ = gpu_device[0];
   if (0 < FLAGS_mb && FLAGS_mb <= 512) {
     mb_size = FLAGS_mb;
   }
@@ -159,7 +158,7 @@ int main(int argc, char** argv) {
       weights[2] -= alpha / mb_size * res[4];
       bias[2] -= alpha / mb_size * res[5];
     }
-    weights[0].WaitForEval();
+    weights[0].Wait();
     data_file_in.close();
     label_file_in.close();
   }

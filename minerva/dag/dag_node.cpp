@@ -6,6 +6,9 @@ using namespace std;
 
 namespace minerva {
 
+DagNode::DagNode(uint64_t id) : node_id_(id) {
+}
+
 int DagNode::AddParent(DagNode* p) {
   auto pred_insert_success = p->successors_.insert(this).second;
   auto this_insert_success = predecessors_.insert(p).second;

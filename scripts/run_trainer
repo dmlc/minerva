@@ -1,23 +1,7 @@
 #!/bin/bash
 
-#python net_trainer.py /home/minjie/caffe/caffe/models/bvlc_googlenet/train_val_minerva.prototxt /home/minjie/caffe/caffe/models/bvlc_googlenet/solver.prototxt /home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/epoch0/ loss3/loss3
-#python gradient_checker.py /home/minjie/caffe/caffe/models/bvlc_googlenet/train_val_minerva.prototxt /home/minjie/caffe/caffe/models/bvlc_googlenet/solver.prototxt /home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/epoch0/ loss3/loss3 conv1/7x7_s2
-#python net_trainer.py /home/tianjun/caffe/caffe/models/bvlc_googlenet/train_val.prototxt /home/tianjun/caffe/caffe/models/bvlc_googlenet/solver.prototxt /home/tianjun/caffe/caffe/models/bvlc_googlenet/MinervaModel/epoch0/ loss3/loss3
-
-ALEXNET_NET=/home/tianjun/configfile/Alexmodel/train_val.prototxt
-ALEXNET_SOLVER=/home/tianjun/configfile/Alexmodel/solver.prototxt
-ALEXNET_SNAP_DIR=/home/tianjun/models/Alexmodel/
-
-GOOGNET_NET=/home/tianjun/configfile/Googmodel/train_val_128mb.prototxt
-GOOGNET_SOLVER=/home/tianjun/configfile/Googmodel/quick_solver_128mb.prototxt
-GOOGNET_SNAP_DIR=/home/tianjun/models/Googmodel/
-#GOOGNET_NET=/home/minjie/caffe/caffe/models/bvlc_googlenet/train_val_minerva.prototxt
-#GOOGNET_SOLVER=/home/minjie/caffe/caffe/models/bvlc_googlenet/solver.prototxt
-#GOOGNET_SNAP_DIR=/home/tianjun/releaseversion/minerva/owl/apps/imagenet_googlenet/Googmodel/
-
-VGGNET_NET=/home/minjie/caffe/caffe/models/VGG/VGG_train_val.prototxt
-VGGNET_SOLVER=/home/minjie/caffe/caffe/models/VGG/solver.prototxt
-VGGNET_SNAP_DIR=/home/tianjun/caffe/caffe/models/VGG/MinervaModel/
+# Provide file paths in this external file
+source ./external_path.sh
 
 if [ $# -ne 3 ]; then
   echo "Usage: ./run_trainer.sh <net-type> <snapshot> <num-gpu>"

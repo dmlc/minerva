@@ -1,4 +1,4 @@
-#include "device/device_manager.h"
+#include "device_manager.h"
 #include <glog/logging.h>
 #include "device/device.h"
 #include "common/cuda_utils.h"

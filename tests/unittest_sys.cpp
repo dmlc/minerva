@@ -9,7 +9,6 @@ TEST(EvalTest, SyncEval) {
   NArray a = NArray::Randn({250, 500}, 0.0, 1.0);
   NArray b = NArray::Randn({500, 400}, 0.0, 1.0);
   NArray c = a * b;
-  c.WaitForEval();
   float* x = new float[250 * 500];
   float* y = new float[500 * 400];
   float* z = new float[250 * 400];
@@ -30,7 +29,6 @@ TEST(EvalTest, AsyncEval) {
   NArray a = NArray::Randn({250, 500}, 0.0, 1.0);
   NArray b = NArray::Randn({500, 400}, 0.0, 1.0);
   NArray c = a * b;
-  c.StartEval();
   float* x = new float[250 * 500];
   float* y = new float[500 * 400];
   float* z = new float[250 * 400];
@@ -45,17 +43,16 @@ TEST(EvalTest, AsyncEval) {
   delete [] x;
   delete [] y;
   delete [] z;
-  MinervaSystem::Instance().WaitForAll();
+  MinervaSystem::Instance().backend().WaitForAll();
 }
 
 TEST(EvalTest, AsyncEvalWithChangedDag) {
   NArray a = NArray::Zeros({250, 500});
   NArray b = NArray::Zeros({500, 400});
   NArray c = a * b;
-  c.StartEval();
   NArray d = c + 1;
   NArray e = b * d.Trans(); // 500x250
-  MinervaSystem::Instance().WaitForAll();
+  MinervaSystem::Instance().backend().WaitForAll();
   shared_ptr<float> eptr = e.Get();
   for (int i = 0; i < 500 * 250; ++i) {
     ASSERT_EQ(eptr.get()[i], 0.0);
@@ -63,6 +60,6 @@ TEST(EvalTest, AsyncEvalWithChangedDag) {
 }
 
 TEST(WaitFinishTest, OnlyWait) {
-  MinervaSystem::Instance().WaitForAll();
+  MinervaSystem::Instance().backend().WaitForAll();
 }
 

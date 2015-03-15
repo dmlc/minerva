@@ -15,7 +15,7 @@ DataStore::~DataStore() {
 
 float* DataStore::CreateData(uint64_t id, size_t length) {
   lock_guard<mutex> lck(access_mutex_);
-  DLOG(INFO) << "create data id=" << id << " length=" << length;
+  DLOG(INFO) << "create data #" << id << " length " << length;
   auto it = data_states_.emplace(id, DataState());
   CHECK(it.second) << "data already existed";
   auto& ds = it.first->second;

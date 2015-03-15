@@ -3,19 +3,15 @@
 #include "op/physical.h"
 #include "op/context.h"
 #include "op/impl/impl.h"
+#include "common/common.h"
 
 namespace minerva {
 
-class DataShard {
- public:
-  DataShard(float* data, const Scale& size): data_(data), size_(size) {}
-  // Getters
-  const Scale& size() const { return size_; }
-  float* data() const { return data_; }
-
- private:
-  float* data_;
-  Scale size_;
+struct DataShard {
+  DataShard(float* data, const Scale& size) : data_(data), size_(size) {
+  }
+  float *const data_;
+  const Scale& size_;
 };
 
 typedef std::vector<DataShard> DataList;

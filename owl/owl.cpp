@@ -1,3 +1,5 @@
+#include <iostream>
+#include <fstream>
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
 #include <boost/python/implicit.hpp>
@@ -5,8 +7,6 @@
 #include <boost/numpy.hpp>
 #include <boost/numpy/ndarray.hpp>
 #include <glog/logging.h>
-#include <iostream>
-#include <fstream>
 #include "minerva.h"
 
 using namespace std;
@@ -26,18 +26,26 @@ void Initialize(bp::list args) {
   m::MinervaSystem::Initialize(&argc, &argv);
 }
 
+void Finalize() {
+  m::MinervaSystem::Finalize();
+}
+
 uint64_t CreateCpuDevice() {
-  return m::MinervaSystem::Instance().CreateCpuDevice();
+  return m::MinervaSystem::Instance().device_manager().CreateCpuDevice();
+}
+
+void WaitForAll() {
+  m::MinervaSystem::Instance().backend().WaitForAll();
 }
 
 #ifdef HAS_CUDA
 
 uint64_t CreateGpuDevice(int id) {
-  return m::MinervaSystem::Instance().CreateGpuDevice(id);
+  return m::MinervaSystem::Instance().device_manager().CreateGpuDevice(id);
 }
 
 int GetGpuDeviceCount() {
-  return m::MinervaSystem::Instance().GetGpuDeviceCount();
+  return m::MinervaSystem::Instance().device_manager().GetGpuDeviceCount();
 }
 
 #endif
@@ -53,7 +61,7 @@ m::Scale ToScale(const bp::list& l) {
 
 bp::list ToPythonList(const m::Scale& s) {
   bp::list l;
-  for(int i : s) {
+  for (int i : s) {
     l.append(i);
   }
   return l;
@@ -84,7 +92,7 @@ m::NArray FromNumpyWrapper(np::ndarray nparr) {
   CHECK(np::equivalent(nparr.get_dtype(), np::dtype::get_builtin<float>())) << "MakeNArray needs float32 numpy array";
   int nd = nparr.get_nd();
   m::Scale shape = m::Scale::Origin(nd);
-  for(int i = 0; i < nd; ++i) {
+  for (int i = 0; i < nd; ++i) {
     shape[i] = nparr.shape(nd - 1 - i);
   }
   size_t length = shape.Prod();
@@ -99,13 +107,13 @@ np::ndarray NArrayToNPArray(m::NArray narr) {
   size_t nd = shape.NumDims();
   std::vector<int> np_shape(nd, 0), np_stride(nd, 0);
   int mult = 4;
-  for(size_t i = 0; i < nd; ++i) {
+  for (size_t i = 0; i < nd; ++i) {
     np_shape[nd - i - 1] = shape[i];
     np_stride[nd - i - 1] = mult;
     mult *= shape[i];
   }
   size_t length = shape.Prod();
-  float * np_ptr = new float[length];
+  float* np_ptr = new float[length];
   memcpy(np_ptr, v.get(), sizeof(float) * length);
   return np::from_data(np_ptr, np::dtype::get_builtin<float>(), np_shape, np_stride, bp::object());
 }
@@ -124,7 +132,16 @@ void ResetProfilerResult() {
 }
 
 void PrintDagToFile(bp::str filename) {
-  const std::string& dag_str = m::MinervaSystem::Instance().physical_dag().PrintDag<m::AllInfoPrinter>();
+  const std::string& dag_str = m::MinervaSystem::Instance().physical_dag().ToString(m::AllInfoPrinter::DataToString, m::AllInfoPrinter::OpToString);
+  char* fname = bp::extract<char*>(filename);
+  std::ofstream fout(fname);
+  fout << dag_str << std::endl;
+  fout.flush();
+  fout.close();
+}
+
+void PrintDotDagToFile(bp::str filename) {
+  const std::string& dag_str = m::MinervaSystem::Instance().physical_dag().ToDotString(m::AllInfoPrinter::DataToString, m::AllInfoPrinter::OpToString);
   char* fname = bp::extract<char*>(filename);
   std::ofstream fout(fname);
   fout << dag_str << std::endl;
@@ -181,19 +198,19 @@ m::NArray LRNBackward(m::NArray bottom_data, m::NArray top_data, m::NArray scale
   return m::Convolution::LRNBackward(m::ImageBatch(bottom_data), m::ImageBatch(top_data), m::ImageBatch(scale), m::ImageBatch(top_diff), local_size, alpha, beta);
 }
 
-
-m::NArray Concat(const bp::list& arrays, int concat_dim){
-	std::vector<m::NArray> Narrays;
-	for(int i = 0; i < len(arrays); i++)
-		Narrays.push_back(bp::extract<m::NArray>(arrays[i]));	
-	return m::Concat(Narrays, concat_dim);
+m::NArray Concat(const bp::list& arrays, int concat_dim) {
+  std::vector<m::NArray> Narrays;
+  for (int i = 0; i < len(arrays); i++) {
+    Narrays.push_back(bp::extract<m::NArray>(arrays[i]));
+  }
+  return m::Concat(Narrays, concat_dim);
 }
 
-m::NArray Slice(const m::NArray src, int slice_dim, int st_off, int slice_count){
-	return m::Slice(src, slice_dim, st_off, slice_count);
+m::NArray Slice(const m::NArray src, int slice_dim, int st_off, int slice_count) {
+  return m::Slice(src, slice_dim, st_off, slice_count);
 }
 
-} // end of namespace owl
+}  // end of namespace owl
 
 // python module
 BOOST_PYTHON_MODULE(libowl) {
@@ -255,8 +272,7 @@ BOOST_PYTHON_MODULE(libowl) {
     .def("trans", &m::NArray::Trans)
     .def("to_numpy", &owl::NArrayToNPArray)
     .def("reshape", &owl::ReshapeWrapper)
-    .def("wait_for_eval", &m::NArray::WaitForEval)
-    .def("start_eval", &m::NArray::StartEval)
+    .def("wait_for_eval", &m::NArray::Wait)
     .add_property("shape", &owl::ShapeWrapper)
   ;
   // creators
@@ -269,7 +285,8 @@ BOOST_PYTHON_MODULE(libowl) {
 
   // system
   def("initialize", &owl::Initialize);
-  def("finalize", &m::MinervaSystem::Finalize);
+  def("finalize", &owl::Finalize);
+  def("wait_for_all", &owl::WaitForAll);
   def("create_cpu_device", &owl::CreateCpuDevice);
 #ifdef HAS_CUDA
   def("create_gpu_device", &owl::CreateGpuDevice);
@@ -279,6 +296,7 @@ BOOST_PYTHON_MODULE(libowl) {
   def("print_profiler_result", &owl::PrintProfilerResult);
   def("reset_profiler_result", &owl::ResetProfilerResult);
   def("print_dag_to_file", &owl::PrintDagToFile);
+  def("print_dot_dag_to_file", &owl::PrintDotDagToFile);
 
   // elewise
   def("mult", &m::Elewise::Mult);

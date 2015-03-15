@@ -1,7 +1,7 @@
-#include "op/physical.h"
-#include "op/physical_fn.h"
 #include <string>
 #include <sstream>
+#include "op/physical.h"
+#include "op/physical_fn.h"
 
 namespace minerva {
 
@@ -42,4 +42,5 @@ class AllInfoPrinter {
   }
 };
 
-}
+}  // namespace minerva
+

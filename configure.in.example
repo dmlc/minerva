@@ -14,6 +14,7 @@ CXXFLAGS=
 # Root path to find cuda, if you installed it into some other places
 # CUDA_ROOT=
 
-# Comma seperated list of external dependencies, e.g. cuDNN
-EXTERN_INCLUDE_PATH=$(pwd)/deps/include,/home/cs_user/Libs/cudnn-6.5-linux-R1
-EXTERN_LIB_PATH=$(pwd)/deps/lib,/home/cs_user/Libs/cudnn-6.5-linux-R1
+# Semicolon seperated list of external dependencies, e.g. cuDNN
+# Double quote paths to make it a single string
+EXTERN_INCLUDE_PATH="$(pwd)/deps/include;/home/cs_user/Libs/cudnn-6.5-linux-R1"
+EXTERN_LIB_PATH="$(pwd)/deps/lib;/home/cs_user/Libs/cudnn-6.5-linux-R1"

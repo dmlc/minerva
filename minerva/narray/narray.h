@@ -1,11 +1,11 @@
 #pragma once
-#include "common/scale.h"
-#include "op/closure.h"
-#include "system/backend.h"
-
-#include <glog/logging.h>
 #include <initializer_list>
 #include <memory>
+#include <glog/logging.h>
+#include "op/closure.h"
+#include "common/scale.h"
+#include "backend/backend.h"
+#include "backend/backend_chunk.h"
 
 namespace minerva {
 
@@ -16,16 +16,16 @@ struct FileFormat {
 class NArray {
   friend class Elewise;
   friend class Convolution;
-  friend class MinervaSystem;
+
  public:
   // Static constructors
   static NArray Constant(const Scale& size, float val);
   static NArray Randn(const Scale& size, float mu, float var);
   static NArray RandBernoulli(const Scale& size, float p);
-  //static NArray LoadFromFile(const Scale& size, const std::string& fname, std::shared_ptr<IFileLoader> loader);
   static NArray Zeros(const Scale& size);
   static NArray Ones(const Scale& size);
   static NArray MakeNArray(const Scale& size, std::shared_ptr<float> array);
+  static NArray PushGradAndPullWeight(const NArray& grad, const std::string& layer_name);
   // DAG generating operations
   static std::vector<NArray> Compute(
       const std::vector<NArray>& params,
@@ -44,7 +44,7 @@ class NArray {
   NArray(NArray&&);
   NArray& operator=(const NArray&);
   NArray& operator=(NArray&&);
-  ~NArray();
+  virtual ~NArray();
   // Element-wise operations
   friend NArray operator+(const NArray&, const NArray&);
   friend NArray operator-(const NArray&, const NArray&);
@@ -68,11 +68,11 @@ class NArray {
   // Matmult
   friend NArray operator*(const NArray&, const NArray&);
   NArray& operator*=(const NArray&);
-
+  // Parameter server interaction
+  NArray& Pull(const std::string& layer_name);
   // Concat
   friend NArray Concat(const std::vector<NArray>& params, int concat_dim);
-  friend NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count);	
-
+  friend NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count);
   // Shape
   const Scale& Size() const { return CHECK_NOTNULL(data_)->shape(); }
   int Size(int dim) const { return CHECK_NOTNULL(data_)->shape()[dim]; }
@@ -84,7 +84,7 @@ class NArray {
   NArray Max(int dim) const;
   NArray Max(const Scale& dims) const;
   NArray MaxIndex(int dim) const;
- 
+
   // Replicate matrix
   NArray NormArithmetic(const NArray&, ArithmeticType) const;
   // Non-lazy reductions
@@ -92,22 +92,20 @@ class NArray {
   float Max() const;  // TODO
   int CountZero() const;
   // System
-  void WaitForEval() const;
-  void StartEval() const;
+  void Wait() const;
   std::shared_ptr<float> Get() const;
   void ToStream(std::ostream& out, const FileFormat& format) const;
   void ToFile(const std::string& filename, const FileFormat& format) const;
-  // PS related
-  static NArray PushGradAndPullWeight(const NArray & grad, const std::string & layer_name);
-  NArray& Pull(const std::string & layer_name);
+
  private:
-  NArray(MData*);
-  MData* data_;
+  NArray(BackendChunk*);
+  BackendChunk* data_;
 };
 
 // Matmult
 NArray operator*(const NArray&, const NArray&);
 NArray Concat(const std::vector<NArray>& params, int concat_dim);
-NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count);	
-} // end of namespace minerva
+NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count);
+
+}  // end of namespace minerva
 

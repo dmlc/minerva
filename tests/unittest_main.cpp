@@ -13,9 +13,9 @@ class MinervaTestEnvironment : public testing::Environment {
   }
   void SetUp() {
     MinervaSystem::Initialize(argc, argv);
-    cpu_device = MinervaSystem::Instance().CreateCpuDevice();
+    cpu_device = MinervaSystem::Instance().device_manager().CreateCpuDevice();
 #ifdef HAS_CUDA
-    gpu_device = MinervaSystem::Instance().CreateGpuDevice(0);
+    gpu_device = MinervaSystem::Instance().device_manager().CreateGpuDevice(0);
 #endif
   }
   void TearDown() {

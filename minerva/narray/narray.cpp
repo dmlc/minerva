@@ -1,10 +1,11 @@
-#include "narray/narray.h"
+#include "narray.h"
+#include <fstream>
+#include <iomanip>
+#include <memory>
+#include <glog/logging.h>
 #include "op/physical_op.h"
 #include "common/common.h"
 #include "system/minerva_system.h"
-#include <fstream>
-#include <glog/logging.h>
-#include <iomanip>
 
 using namespace std;
 
@@ -31,12 +32,6 @@ NArray NArray::RandBernoulli(const Scale& size, float p) {
   return NArray::GenerateOne(size, op);
 }
 
-/*NArray NArray::LoadFromFile(const Scale& size, const string& fname, shared_ptr<IFileLoader> loader) {
-  FileLoaderOp* loader_op = new FileLoaderOp();
-  loader_op->closure = {fname, size, loader};
-  return NArray::GenerateOne(size, loader_op);
-}*/
-
 NArray NArray::Zeros(const Scale& size) {
   return NArray::Constant(size, 0.0);
 }
@@ -51,16 +46,10 @@ NArray NArray::MakeNArray(const Scale& size, shared_ptr<float> array) {
   return NArray::GenerateOne(size, loader_op);
 }
 
-NArray NArray::PushGradAndPullWeight(const NArray & grad, const std::string & layer_name) {
-  SyncWithPSOp * op = new SyncWithPSOp();
-  op->closure = { layer_name };
-  return NArray::ComputeOne({ grad }, grad.Size(), op);
-}
-
-NArray& NArray::Pull(const std::string & layer_name) {
-  SyncWithPSOp * op = new SyncWithPSOp();
-  op->closure = { layer_name };
-  return *this = NArray::GenerateOne(this->Size(), op);
+NArray NArray::PushGradAndPullWeight(const NArray& grad, const std::string& layer_name) {
+  SyncWithPSOp* op = new SyncWithPSOp();
+  op->closure = {layer_name};
+  return NArray::ComputeOne({grad}, grad.Size(), op);
 }
 
 // DAG building operations
@@ -69,9 +58,9 @@ vector<NArray> NArray::Compute(
     const vector<Scale>& result_sizes,
     ComputeFn* fn) {
   auto& ms = MinervaSystem::Instance();
-  auto param_mdata = Map<MData*>(params, [](const NArray& a) { return a.data_; });
-  auto result_mdata = ms.Create(param_mdata, result_sizes, fn);
-  return Map<NArray>(result_mdata, [](MData* md) { return NArray(md); });
+  auto param_mdata = Map<BackendChunk*>(params, [](const NArray& a) { return CHECK_NOTNULL(a.data_); });
+  auto result_mdata = ms.backend().Create(param_mdata, result_sizes, shared_ptr<ComputeFn>(fn));
+  return Map<NArray>(result_mdata, [](BackendChunk* md) { return NArray(md); });
 }
 
 NArray NArray::ComputeOne(const vector<NArray>& params, const Scale& size, ComputeFn* fn) {
@@ -85,8 +74,12 @@ NArray NArray::GenerateOne(const Scale& size, ComputeFn* fn) {
 // Constructors and destructors
 NArray::NArray() : data_(nullptr) {}
 
-NArray::NArray(const NArray& other) : data_(nullptr) {
-  MinervaSystem::Instance().ShallowCopy(data_, other.data_);
+NArray::NArray(const NArray& other) {
+  if (other.data_ == 0) {
+    data_ = 0;
+  } else {
+    data_ = other.data_->ShallowCopy();
+  }
 }
 
 NArray::NArray(NArray&& other) : data_(other.data_) {
@@ -97,7 +90,11 @@ NArray& NArray::operator=(const NArray& other) {
   if (this == &other) {
     return *this;
   }
-  MinervaSystem::Instance().ShallowCopy(data_, other.data_);
+  if (other.data_ == 0) {
+    data_ = 0;
+  } else {
+    data_ = other.data_->ShallowCopy();
+  }
   return *this;
 }
 
@@ -105,18 +102,14 @@ NArray& NArray::operator=(NArray&& other) {
   if (this == &other) {
     return *this;
   }
-  if (data_ != nullptr) {
-    MinervaSystem::Instance().Destroy(data_);
-  }
+  delete data_;
   data_ = other.data_;
   other.data_ = nullptr;
   return *this;
 }
 
 NArray::~NArray() {
-  if (data_ != nullptr && MinervaSystem::IsAlive()) {
-    MinervaSystem::Instance().Destroy(data_);
-  }
+  delete data_;
 }
 
 // Matmult
@@ -129,42 +122,49 @@ NArray operator*(const NArray& lhs, const NArray& rhs) {
   return NArray::ComputeOne({lhs, rhs}, newsize, matmult_op);
 }
 
-NArray Concat(const std::vector<NArray>& arrays, int catdim) {
-	CHECK_GT(arrays[0].Size().NumDims(), catdim) << "can't concat on non-sense dim";
-	CHECK_GT(arrays.size(), 1) << "Concat more than one narray";
-	ConcatOp* op = new ConcatOp();
-	op->closure = {catdim}; 
-	int target_dim = 0;
-	for(size_t i = 0; i < arrays.size(); i++)
-		target_dim += arrays[i].Size()[catdim];
-	std::vector<int> sizevec(arrays[0].Size().NumDims(), 0);
-	for(size_t i = 0; i < sizevec.size(); i++) {
-		if(i == (size_t)catdim)
-			sizevec[i] = target_dim;
-		else
-			sizevec[i] = arrays[0].Size()[i]; 
-	}
-	return NArray::ComputeOne(arrays, Scale(sizevec), op);
-}
-
-NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count)
-{
-	CHECK_GT(src.Size().NumDims(), slice_dim) << "can't concat on non-sense dim";
-	std::vector<int> sizevec(src.Size().NumDims(), 0);
-	for(size_t i = 0; i < sizevec.size(); i++) {
-		if(i == (size_t)slice_dim)
-			sizevec[i] = slice_count;
-		else
-			sizevec[i] = src.Size()[i]; 
-	}
-	SliceOp* op = new SliceOp();
-	op->closure = {slice_dim, st_off, slice_count};
-	return NArray::ComputeOne({src}, Scale(sizevec), op);
-}
-
-
 NArray& NArray::operator*=(const NArray& rhs) {
   return *this = (*this * rhs);
+}
+
+NArray Concat(const std::vector<NArray>& arrays, int catdim) {
+  CHECK_GT(arrays[0].Size().NumDims(), catdim) << "can't concat on non-sense dim";
+  CHECK_GT(arrays.size(), 1) << "Concat more than one narray";
+  ConcatOp* op = new ConcatOp();
+  op->closure = {catdim};
+  int target_dim = 0;
+  for (size_t i = 0; i < arrays.size(); i++) {
+    target_dim += arrays[i].Size()[catdim];
+  }
+  std::vector<int> sizevec(arrays[0].Size().NumDims(), 0);
+  for (size_t i = 0; i < sizevec.size(); i++) {
+    if (i == (size_t)catdim) {
+      sizevec[i] = target_dim;
+    } else {
+      sizevec[i] = arrays[0].Size()[i];
+    }
+  }
+  return NArray::ComputeOne(arrays, Scale(sizevec), op);
+}
+
+NArray Slice(const NArray& src, int slice_dim, int st_off, int slice_count) {
+  CHECK_GT(src.Size().NumDims(), slice_dim) << "can't concat on non-sense dim";
+  std::vector<int> sizevec(src.Size().NumDims(), 0);
+  for (size_t i = 0; i < sizevec.size(); i++) {
+    if (i == (size_t)slice_dim) {
+      sizevec[i] = slice_count;
+    } else {
+      sizevec[i] = src.Size()[i];
+    }
+  }
+  SliceOp* op = new SliceOp();
+  op->closure = {slice_dim, st_off, slice_count};
+  return NArray::ComputeOne({src}, Scale(sizevec), op);
+}
+
+NArray& NArray::Pull(const std::string& layer_name) {
+  SyncWithPSOp* op = new SyncWithPSOp();
+  op->closure = {layer_name};
+  return *this = NArray::GenerateOne(this->Size(), op);
 }
 
 // Shape
@@ -203,18 +203,13 @@ NArray NArray::NormArithmetic(const NArray& rhs, ArithmeticType type) const {
 }
 
 // System
-void NArray::WaitForEval() const {
-  MinervaSystem::Instance().Issue(data_);
-  MinervaSystem::Instance().Wait(data_);
-}
-
-void NArray::StartEval() const {
-  MinervaSystem::Instance().Issue(data_);
+void NArray::Wait() const {
+  MinervaSystem::Instance().backend().Wait(CHECK_NOTNULL(data_));
 }
 
 shared_ptr<float> NArray::Get() const {
-  WaitForEval();
-  return MinervaSystem::Instance().GetValue(data_);
+  Wait();
+  return MinervaSystem::Instance().backend().GetValue(CHECK_NOTNULL(data_));
 }
 
 void NArray::ToStream(ostream& out, const FileFormat& format) const {
@@ -237,8 +232,9 @@ void NArray::ToFile(const std::string& filename, const FileFormat& format) const
   fout.close();
 }
 
-NArray::NArray(MData* data) : data_(nullptr) {
-  MinervaSystem::Instance().ShallowCopy(data_, data);
+NArray::NArray(BackendChunk* data) : data_(data) {
+  CHECK_NOTNULL(data_);
 }
 
 }  // namespace minerva
+

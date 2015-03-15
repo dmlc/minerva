@@ -15,7 +15,7 @@ TEST(PerfTest, LotsOfUnusedNArray) {
     narrs[i] = narrs[i] * 100 + 1;
   }
   for (int i = 0; i < 1000; ++i) {
-    narrs[i].WaitForEval();
+    narrs[i].Wait();
   }
 }
 
@@ -24,17 +24,17 @@ TEST(PerfTest, LongChain) {
   for (int i = 0; i < 5000; ++i) {
     a += 1;
   }
-  a.WaitForEval();
+  a.Wait();
 }
 
 class AddOneManyTimesOp : public ComputeFn {
  public:
   void Execute(const DataList& inputs, const DataList& outputs, const Context&) {
-    float* src = inputs[0].data();
-    float* dst = outputs[0].data();
-    memcpy(dst, src, inputs[0].size().Prod() * sizeof(float));
+    float* src = inputs[0].data_;
+    float* dst = outputs[0].data_;
+    memcpy(dst, src, inputs[0].size_.Prod() * sizeof(float));
     for (int j = 0; j < 5000; ++j) {
-      for (int i = 0; i < inputs[0].size().Prod(); ++i) {
+      for (int i = 0; i < inputs[0].size_.Prod(); ++i) {
         dst[i] += 1;
       }
     }
@@ -47,6 +47,6 @@ class AddOneManyTimesOp : public ComputeFn {
 TEST(PerfTest, LongChainInOne) {
   NArray a = NArray::Constant({10, 10}, 0.0);
   NArray b = NArray::ComputeOne({a}, {a.Size()}, new AddOneManyTimesOp());
-  b.WaitForEval();
+  b.Wait();
 }
 

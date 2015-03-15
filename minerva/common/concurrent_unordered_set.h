@@ -4,12 +4,12 @@
 #include <boost/thread/shared_mutex.hpp>
 #include "common/common.h"
 
-template<typename T> class ConcurrentUnorderedSet {
+template<typename T>
+class ConcurrentUnorderedSet {
  public:
-  ConcurrentUnorderedSet() {
-  }
-  ~ConcurrentUnorderedSet() {
-  }
+  ConcurrentUnorderedSet() = default;
+  DISALLOW_COPY_AND_ASSIGN(ConcurrentUnorderedSet);
+  ~ConcurrentUnorderedSet() = default;
   size_t Erase(const T& k) {
     WriteLock lock(l_);
     return set_.erase(k);
@@ -29,6 +29,5 @@ template<typename T> class ConcurrentUnorderedSet {
   typedef boost::shared_lock<Lock> ReadLock;
   Lock l_;
   std::unordered_set<T> set_;
-  DISALLOW_COPY_AND_ASSIGN(ConcurrentUnorderedSet);
 };
 

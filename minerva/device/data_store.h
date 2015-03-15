@@ -1,6 +1,5 @@
 #pragma once
 #include <unordered_map>
-#include <unordered_set>
 #include <functional>
 #include <mutex>
 #include <cstdint>
@@ -13,6 +12,7 @@ namespace minerva {
 class DataStore {
  public:
   DataStore(std::function<void*(size_t)> a, std::function<void(void*)> d);
+  DISALLOW_COPY_AND_ASSIGN(DataStore);
   virtual ~DataStore();
   virtual float* CreateData(uint64_t, size_t);
   virtual float* GetData(uint64_t);
@@ -29,9 +29,6 @@ class DataStore {
   std::unordered_map<uint64_t, DataState> data_states_;
   std::function<void*(size_t)> allocator_;
   std::function<void(void*)> deallocator_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(DataStore);
 };
 
 }  // namespace minerva

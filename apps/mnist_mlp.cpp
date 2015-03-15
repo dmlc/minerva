@@ -12,10 +12,10 @@ const int num_mb_per_epoch = 235;
 const string weight_init_files[] = { "w12.dat", "w23.dat" };
 const string weight_out_files[] = { "w12.dat", "w23.dat" };
 const string bias_out_files[] = { "b2_trained.dat", "b3_trained.dat" };
-const string train_data_file = "/home/hct/mnist/traindata.dat";
-const string train_label_file = "/home/hct/mnist/trainlabel.dat";
-const string test_data_file = "/home/hct/mnist/testdata.dat";
-const string test_label_file = "/home/hct/mnist/testlabel.dat";
+const string train_data_file = "/home/yutian/mnist/traindata.dat";
+const string train_label_file = "/home/yutian/mnist/trainlabel.dat";
+const string test_data_file = "/home/yutian/mnist/testdata.dat";
+const string test_label_file = "/home/yutian/mnist/testlabel.dat";
 
 const int num_layers = 3;
 const int lsize[num_layers] = {784, 256, 10};
@@ -23,17 +23,18 @@ vector<NArray> weights;
 vector<NArray> bias;
 
 void GenerateInitWeight() {
-  for (int i = 0; i < num_layers - 1; ++ i)
-  {
+  for (int i = 0; i < num_layers - 1; ++i) {
     weights[i] = NArray::Randn({lsize[i + 1], lsize[i]}, 0.0, sqrt(4.0 / (lsize[0] + lsize[1])));
     bias[i] = NArray::Constant({lsize[i + 1], 1}, 1.0);
   }
   FileFormat format;
   format.binary = true;
-  for (int i = 0; i < num_layers - 1; ++ i)
+  for (int i = 0; i < num_layers - 1; ++i) {
     weights[i].ToFile(weight_init_files[i], format);
+  }
 }
 
+/*
 void InitWeight() {
   shared_ptr<SimpleFileLoader> loader(new SimpleFileLoader());
   for (int i = 0; i < num_layers - 1; ++ i) {
@@ -41,22 +42,20 @@ void InitWeight() {
     bias[i] = NArray::Constant({lsize[i + 1], 1}, 1.0);
   }
 }
+*/
 
 NArray Softmax(NArray m) {
   NArray maxval = m.Max(0);
-  // NArray centered = m - maxval.Tile({m.Size(0), 1});
   NArray centered = m.NormArithmetic(maxval, ArithmeticType::kSub);
   NArray class_normalizer = Elewise::Ln(Elewise::Exp(centered).Sum(0)) + maxval;
-  // return Elewise::Exp(m - class_normalizer.Tile({m.Size(0), 1}));
   return Elewise::Exp(m.NormArithmetic(class_normalizer, ArithmeticType::kSub));
 }
 
 void PrintTrainingAccuracy(NArray o, NArray t) {
-  //get predict
+  // Get predict
   NArray predict = o.MaxIndex(0);
-  //get groundtruth
+  // Get groundtruth
   NArray groundtruth = t.MaxIndex(0);
-
   float correct = (predict - groundtruth).CountZero();
   cout << "Training Error: " << (mb_size - correct) / mb_size << endl;
 }
@@ -64,25 +63,15 @@ void PrintTrainingAccuracy(NArray o, NArray t) {
 int main(int argc, char** argv) {
   MinervaSystem::Initialize(&argc, &argv);
   MinervaSystem& ms = MinervaSystem::Instance();
-  uint64_t cpuDevice = ms.CreateCpuDevice();
+  uint64_t cpuDevice = ms.device_manager().CreateCpuDevice();
 #ifdef HAS_CUDA
-  uint64_t gpuDevice = ms.CreateGpuDevice(0);
+  uint64_t gpuDevice = ms.device_manager().CreateGpuDevice(0);
 #endif
   ms.current_device_id_ = cpuDevice;
 
   weights.resize(num_layers - 1);
   bias.resize(num_layers - 1);
   GenerateInitWeight();
-/*  if(FLAGS_init) {
-    cout << "Generate initial weights" << endl;
-    GenerateInitWeight();
-    cout << "Finished!" << endl;
-    return 0;
-  } else {
-    cout << "Init weights and bias" << endl;
-    InitWeight();
-  }
-*/
   cout << "Training procedure:" << endl;
   NArray acts[num_layers], sens[num_layers];
   for(int epoch = 0; epoch < numepochs; ++ epoch) {
@@ -140,14 +129,9 @@ int main(int argc, char** argv) {
     data_file_in.close();
     label_file_in.close();
   }
-  ms.current_device_id_ = cpuDevice;
-
-  // output weights
-  cout << "Write weight to files" << endl;
-  //FileFormat format;
-  //format.binary = true;
   weights.clear();
   bias.clear();
   cout << "Training finished." << endl;
   return 0;
 }
+

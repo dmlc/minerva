@@ -1,7 +1,7 @@
 #pragma once
 #include <unordered_map>
 #include "device/device.h"
-#include "procedures/device_listener.h"
+#include "device/device_listener.h"
 #include "common/common.h"
 
 namespace minerva {

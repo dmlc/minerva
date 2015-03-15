@@ -69,7 +69,7 @@ def sigm_back(y):
 
 def relu_back(y, x):
     """ Derivative of RELU function
-    
+
     :param owl.NArray y: error from higher layer
     :param owl.NArray x: input of forward pass
     :return: result ndarray

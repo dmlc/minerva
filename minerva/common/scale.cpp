@@ -128,7 +128,7 @@ Scale Scale::Concat(int val) const {
 
 string Scale::ToString() const {
   stringstream ss;
-  ss << "[";
+  ss << "[ ";
   for (auto i : vec_) {
     ss << i << " ";
   }
