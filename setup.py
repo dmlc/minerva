@@ -12,10 +12,13 @@ with open(config_file_path) as config_file:
     for line in config_file.readlines():
         if line.find('INCLUDE') >= 0:
             in_p = line.split('=')[-1]
-            ex_include_dirs += [p.strip() for p in in_p.split(',')]
+            # remove the " 
+            in_p = in_p[1:len(in_p)-2]
+            ex_include_dirs += [p.strip() for p in in_p.split(';')]
         elif line.find('LIB') >= 0:
             lib_p = line.split('=')[-1]
-            ex_lib_dirs += [p.strip() for p in lib_p.split(',')]
+            lib_p = lib_p[1:len(lib_p)-2]
+            ex_lib_dirs += [p.strip() for p in lib_p.split(';')]
         elif line.find('CUDA_ROOT') >= 0:
             cuda_in = line.split('=')[-1]
             ex_include_dirs.append(cuda_in.strip() + '/include')
