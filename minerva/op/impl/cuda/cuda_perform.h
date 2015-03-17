@@ -1,4 +1,6 @@
 #pragma once
+
+#ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 #include <cudnn.h>
@@ -72,3 +74,5 @@ void CudaPerformLRNBackward(float* bottom_data, float* top_data, float* scale, f
 
 } // end of namespace cuda
 } // end of namespace minerva
+
+#endif

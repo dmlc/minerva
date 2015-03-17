@@ -145,9 +145,9 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
 
   MinervaSystem& ms = MinervaSystem::Instance();
   ms.Initialize(&argc, &argv);
-  uint64_t cpuDevice = ms.CreateCpuDevice();
+  uint64_t cpuDevice = ms.device_manager().CreateCpuDevice();
 #ifdef HAS_CUDA
-  uint64_t gpuDevice = ms.CreateGpuDevice(0);
+  uint64_t gpuDevice = ms.device_manager().CreateGpuDevice(0);
 #endif
   ms.current_device_id_ = cpuDevice;
 
@@ -214,7 +214,6 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
 
       if ((mb - rank) % 20 == 0) {
         ms.current_device_id_ = cpuDevice;
-        acts[num_layers - 1].WaitForEval();
         PrintTrainingAccuracy(acts[num_layers - 1], label);
       }
       DumpParams(mb + 1);
