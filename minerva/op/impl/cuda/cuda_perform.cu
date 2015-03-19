@@ -6,7 +6,6 @@
 #include <cudnn.h>
 #include <curand.h>
 #include <limits>
-#include "stdio.h"
 
 namespace minerva {
 namespace cuda {
@@ -641,8 +640,6 @@ void CudaPerformLRNBackward(float* bottom_data, float* top_data, float* scale, f
     -beta, float(2. * alpha * beta / local_size), bottom_diff);
     CheckCudaError("LRNBackward");
 }
-
-
 
 }  // namespace cuda
 }  // namespace minerva
