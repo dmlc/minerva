@@ -7,10 +7,10 @@ include_directories(
 enable_testing()
 
 if (CUDA_FOUND)
-  CUDA_ADD_LIBRARY(unittest_main SHARED unittest_main.cpp)
+  CUDA_ADD_LIBRARY(unittest_main STATIC unittest_main.cpp)
   CUDA_ADD_CUBLAS_TO_TARGET(unittest_main)
 else ()
-  add_library(unittest_main SHARED unittest_main.cpp)
+  add_library(unittest_main STATIC unittest_main.cpp)
 endif ()
 target_link_libraries(unittest_main minerva gtest)
 
