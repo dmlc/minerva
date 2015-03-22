@@ -21,6 +21,7 @@ class NetTrainer:
         self.owl_net = net.Net()
         self.builder = CaffeNetBuilder(self.net_file, self.solver_file)
         self.builder.build_net(self.owl_net, self.num_gpu)
+        self.owl_net.init_layer_size()
         self.builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
 
     def run(s):
@@ -85,7 +86,6 @@ class NetTrainer:
                     all_accunits = s.owl_net.get_accuracy_units()
                     accunit = all_accunits[len(all_accunits)-1]
                     #accunit = all_accunits[0]
-                    print accunit.name
                     test_num += accunit.batch_size
                     acc_num += (accunit.batch_size * accunit.acc)
                     print "Accuracy the %d mb: %f" % (testiteridx, accunit.acc)

@@ -48,6 +48,9 @@ class CaffeNetBuilder:
                 if ty == V1LayerParameter.LayerType.Value('DATA'):
                     if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
                         owl_net.batch_size = l.data_param.batch_size
+                elif ty == V1LayerParameter.LayerType.Value('IMAGE_DATA'):
+                    if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
+                        owl_net.batch_size = l.image_data_param.batch_size
                 elif ty == V1LayerParameter.LayerType.Value('SOFTMAX_LOSS'):
                     owl_net.loss_uids.append(uid)
                 elif ty == V1LayerParameter.LayerType.Value('ACCURACY'):
@@ -98,6 +101,8 @@ class CaffeNetBuilder:
         ty = caffe_layer.type
         if ty == V1LayerParameter.LayerType.Value('DATA'):
             return net.DataUnit(caffe_layer, num_gpu)
+        elif ty == V1LayerParameter.LayerType.Value('IMAGE_DATA'):
+            return net.ImageDataUnit(caffe_layer, num_gpu)
         elif ty == V1LayerParameter.LayerType.Value('INNER_PRODUCT'):
             return net.FullyConnection(caffe_layer)
         elif ty == V1LayerParameter.LayerType.Value('CONVOLUTION'):
@@ -132,52 +137,75 @@ class CaffeNetBuilder:
                 layername = owl_net.units[i].name
                 layername = layername.replace("/","_")
                 weightname = '%s%s_weights.dat' % (weightpath, layername)
-                npweight = np.fromfile(weightname, dtype = np.float32)
-                length = np.shape(npweight)[0]
-                wshape = [owl_net.units[i].inner_product_param.num_output, length / owl_net.units[i].inner_product_param.num_output]
-                owl_net.units[i].weight = owl.from_numpy(npweight).reshape(wshape)
                 
-                weightname = '%s%s_weightdelta.dat' % (weightpath, layername)
+                wshape = owl_net.units[i].wshape
                 if os.path.isfile(weightname):
-                    npweightdelta = np.fromfile(weightname, dtype = np.float32)
-                    owl_net.units[i].weightdelta = owl.from_numpy(npweightdelta).reshape(wshape)             
+                    npweight = np.fromfile(weightname, dtype = np.float32)
+                    length = np.shape(npweight)[0]
+                    if length == owl_net.units[i].in_shape[0] * owl_net.units[i].out_shape[0]:
+                        owl_net.units[i].weight = owl.from_numpy(npweight).reshape(wshape)
+                        weightname = '%s%s_weightdelta.dat' % (weightpath, layername)
+                        if os.path.isfile(weightname):
+                            npweightdelta = np.fromfile(weightname, dtype = np.float32)
+                            owl_net.units[i].weightdelta = owl.from_numpy(npweightdelta).reshape(wshape) 
+                    else:
+                        print "Weight Need Reinit %s" % (owl_net.units[i].name)
+                else:
+                    print "Weight Need Reinit %s" % (owl_net.units[i].name)
                 
+            
                 biasname = '%s%s_bias.dat' % (weightpath, layername)
-                npbias = np.fromfile(biasname, dtype = np.float32)
-                bshape = [owl_net.units[i].inner_product_param.num_output, 1]
-                owl_net.units[i].bias = owl.from_numpy(npbias).reshape(bshape)
-                
-                biasname = '%s%s_biasdelta.dat' % (weightpath, layername)
+                bshape = owl_net.units[i].bshape
                 if os.path.isfile(biasname):
-                    npbiasdetla = np.fromfile(biasname, dtype = np.float32)
-                    owl_net.units[i].biasdelta = owl.from_numpy(npbiasdetla).reshape(bshape)
+                    npbias = np.fromfile(biasname, dtype = np.float32)
+                    length = np.shape(npbias)[0]
+                    if length == owl_net.units[i].out_shape[0]:
+                        owl_net.units[i].bias = owl.from_numpy(npbias).reshape(bshape)
+                        biasname = '%s%s_biasdelta.dat' % (weightpath, layername)
+                        if os.path.isfile(biasname):
+                            npbiasdetla = np.fromfile(biasname, dtype = np.float32)
+                            owl_net.units[i].biasdelta = owl.from_numpy(npbiasdetla).reshape(bshape)
+                    else:
+                        print "Bias Need Reinit %s" % (owl_net.units[i].name)
+                
             if isinstance(owl_net.units[i], net.ConvConnection):
                 #print owl_net.units[i].name
                 layername = owl_net.units[i].name
                 layername = layername.replace("/","_")
+                conv_params = owl_net.units[i].conv_params
                 
                 weightname = '%s%s_weights.dat' % (weightpath, layername)
-                npweight = np.fromfile(weightname, dtype = np.float32)
-                length = np.shape(npweight)[0]
-                conv_params = owl_net.units[i].conv_params
-                input_channel = length / conv_params.kernel_size / conv_params.kernel_size / conv_params.num_output
-                wshape = [conv_params.kernel_size, conv_params.kernel_size, input_channel, conv_params.num_output]
-                owl_net.units[i].weight = owl.from_numpy(npweight).reshape(wshape)
-   
-                weightname = '%s%s_weightdelta.dat' % (weightpath, layername)
+                wshape = owl_net.units[i].wshape
                 if os.path.isfile(weightname):
-                    npweightdelta = np.fromfile(weightname, dtype = np.float32)
-                    owl_net.units[i].weightdelta = owl.from_numpy(npweightdelta).reshape(wshape)              
-                
+                    npweight = np.fromfile(weightname, dtype = np.float32)
+                    length = np.shape(npweight)[0]
+                    if length == owl_net.units[i].in_shape[2] * owl_net.units[i].out_shape[2] * conv_params.kernel_size * conv_params.kernel_size:
+                        owl_net.units[i].weight = owl.from_numpy(npweight).reshape(wshape)
+                        weightname = '%s%s_weightdelta.dat' % (weightpath, layername)
+                        if os.path.isfile(weightname):
+                            npweightdelta = np.fromfile(weightname, dtype = np.float32)
+                            owl_net.units[i].weightdelta = owl.from_numpy(npweightdelta).reshape(wshape)
+                    else:
+                        print "Conv Weight Need Reinit %s" % (owl_net.units[i].name)
+                else:
+                    print "Conv Weight Need Reinit %s" % (owl_net.units[i].name)
+              
                 biasname = '%s%s_bias.dat' % (weightpath, layername)
-                npbias = np.fromfile(biasname, dtype = np.float32)
-                bshape = [owl_net.units[i].conv_params.num_output]
-                owl_net.units[i].bias = owl.from_numpy(npbias).reshape(bshape)
-                 
-                biasname = '%s%s_biasdelta.dat' % (weightpath, layername)
+                bshape = owl_net.units[i].bshape
                 if os.path.isfile(biasname):
-                    npbiasdetla = np.fromfile(biasname, dtype = np.float32)
-                    owl_net.units[i].biasdelta = owl.from_numpy(npbiasdetla).reshape(bshape)
+                    npbias = np.fromfile(biasname, dtype = np.float32)
+                    length = np.shape(npbias)[0]
+                    if length == owl_net.units[i].out_shape[2]:
+                        owl_net.units[i].bias = owl.from_numpy(npbias).reshape(bshape)
+                        biasname = '%s%s_biasdelta.dat' % (weightpath, layername)
+                        if os.path.isfile(biasname):
+                            npbiasdetla = np.fromfile(biasname, dtype = np.float32)
+                            owl_net.units[i].biasdelta = owl.from_numpy(npbiasdetla).reshape(bshape)
+                    else:
+                        print "Conv Bias Need Reinit %s" % (owl_net.units[i].name)
+                else:
+                    print "Conv Bias Need Reinit %s" % (owl_net.units[i].name)
+
     
     def save_net_to_file(self, owl_net, weightpath, epochidx):
         weightpath = "%ssnapshot%d/" % (weightpath, epochidx)
@@ -254,36 +282,7 @@ class CaffeModelLoader:
                 
                 filename = '%s/snapshot%d/%s_bias.dat' % (weightdir, snapshot, layername)
                 np.array(netparam.layers[i].blobs[1].data, dtype=np.float32).tofile(filename)
-               
-                '''
-                #trans delta
-                filename = '%s/snapshot%d/%s_weightdelta.dat' % (weightdir, snapshot, layername)
-                if netparam.layers[i].type == layerparam.LayerType.Value('CONVOLUTION'):
-                    num_output = netparam.layers[i].convolution_param.num_output
-                    kernelsize = netparam.layers[i].convolution_param.kernel_size
-                    oridelta = np.array(netdelta.layers[i].blobs[0].data, dtype=np.float32)
-                    channels = np.shape(oridelta)[0] / num_output / kernelsize / kernelsize
-                    oridelta = oridelta.reshape([num_output, channels, kernelsize, kernelsize])
-                    newdelta = np.zeros(np.shape(oridelta), dtype=np.float32)
-                    for outidx in range(num_output):
-                        for chaidx in range(channels):
-                            newdelta[outidx, chaidx, :, :] = np.rot90(oridelta[outidx, chaidx, :,:],2)
-                    print newdelta
-                    newdelta.reshape(np.prod(np.shape(newdelta)[0:4])).tofile(filename)
-                else:
-                    num_output = netdelta.layers[i].inner_product_param.num_output
-                    input_dim = np.shape(np.array(netdelta.layers[i].blobs[0].data, dtype=np.float32))[0] / num_output
-                    thedelta = np.transpose(np.array(netdelta.layers[i].blobs[0].data, dtype=np.float32).reshape([num_output, input_dim]))
-                    thedelta.tofile(filename)
-                
-                filename = '%s/snapshot%d/%s_biasdelta.dat' % (weightdir, snapshot, layername)
-                print netdelta
-                exit(0)
-                np.array(netdelta.layers[i].blobs[1].data, dtype=np.float32).tofile(filename)
-                '''
-
-
-
+              
 if __name__ == "__main__":
     CaffeModelLoader('/home/tianjun/caffe/caffe/models/bvlc_googlenet/bvlc_googlenet_quick_iter_40.caffemodel', '/home/tianjun/caffe/caffe/models/bvlc_googlenet/bvlc_googlenet_quick_iter_40.solverstate', '/home/tianjun/models/GoogModel/', 0)
     
