@@ -14,7 +14,8 @@ if (CUDA_FOUND)
 else (CUDA_FOUND)
   add_library(minerva SHARED ${src_file_list})
 endif (CUDA_FOUND)
-target_link_libraries(minerva glog gflags boost_thread boost_system)
+
+target_link_libraries(minerva ${GLOG_LIBRARIES} ${gflags_LIBRARIES} ${Boost_LIBRARIES})
 
 if (HAS_PS)
   target_link_libraries(minerva minervaps)

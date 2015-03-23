@@ -6,13 +6,16 @@ include_directories(
 
 enable_testing()
 
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+
 if (CUDA_FOUND)
   CUDA_ADD_LIBRARY(unittest_main STATIC unittest_main.cpp)
   CUDA_ADD_CUBLAS_TO_TARGET(unittest_main)
 else ()
   add_library(unittest_main STATIC unittest_main.cpp)
 endif ()
-target_link_libraries(unittest_main minerva gtest)
+target_link_libraries(unittest_main minerva ${GTEST_LIBRARIES})
 
 set(unittest_list "")
 set(test_list "")
