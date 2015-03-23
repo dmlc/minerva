@@ -5,8 +5,8 @@ DEBUG_DIR=debug
 RELEASE_DIR=release
 
 # Compilers
-CXX_COMPILER=g++
-C_COMPILER=gcc
+CXX_COMPILER=g++-4.8
+C_COMPILER=gcc-4.8
 
 # Flags passed to C++ compiler
 CXXFLAGS=

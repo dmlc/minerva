@@ -26,7 +26,7 @@ find_package(GFlags REQUIRED)
 find_package(Boost COMPONENTS thread system REQUIRED)
 
 include_directories(SYSTEM ${GLOG_INCLUDE_DIR})
-include_directories(SYSTEM ${GFLAGS_INCLUDE_DIR})
+include_directories(SYSTEM ${GFLAGS_INCLUDE_DIRS})
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
 if (NOT DISABLE_CUDA)
