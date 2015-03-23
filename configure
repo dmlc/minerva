@@ -40,6 +40,8 @@ while [[ $# -gt 0 ]]; do
       CXXFLAGS="$CXXFLAGS -DENABLE_PS=ON";;
     --disable-cuda)
       CXXFLAGS="$CXXFLAGS -DENABLE_CUDA=OFF";;
+    --disable-owl)
+      CXXFLAGS="$CXXFLAGS -DBUILD_OWL=OFF";;
     --prefix=*)
       CXXFLAGS="$CXXFLAGS -DCMAKE_INSTALL_PREFIX=`expr "x$1" : "x--prefix=\(.*\)"`"; shift ;;
     -D)
@@ -65,6 +67,7 @@ Configurations:
     --build-tests           Enable building unit tests
     --enable-ps             Enable building with PS
     --disable-cuda          Disable building with CUDA
+    --disable-owl           Disable building with OWL (python binding)
     --prefix                Specify install path
     -Dvar=value | -D value  Specify definitions to be passed on to CMake
 EOF
