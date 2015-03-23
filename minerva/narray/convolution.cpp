@@ -110,12 +110,12 @@ ImageBatch Convolution::PoolingForward(ImageBatch src, PoolingInfo info) {
   int pooled_height = static_cast<int>(ceil(static_cast<float>((src.GetHeight() + 2 * info.pad_height - info.height)) / info.stride_vertical)) + 1;
   int pooled_width = static_cast<int>(ceil(static_cast<float>((src.GetWidth() + 2 * info.pad_width - info.width)) / info.stride_horizontal)) + 1;
   if (info.pad_height > 0 || info.pad_width > 0) {
-	if ((pooled_height - 1) * info.stride_vertical >= src.GetHeight() + info.pad_height) {
-      --pooled_height;
-    }
-	if ((pooled_width - 1) * info.stride_horizontal >= src.GetWidth() + info.pad_width) {
-      --pooled_width;
-    }
+    if ((pooled_height - 1) * info.stride_vertical >= src.GetHeight() + info.pad_height) {
+        --pooled_height;
+      }
+    if ((pooled_width - 1) * info.stride_horizontal >= src.GetWidth() + info.pad_width) {
+        --pooled_width;
+      }
   }
   Scale new_size {
     pooled_height,
