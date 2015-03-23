@@ -1,24 +1,54 @@
 cmake_minimum_required(VERSION 2.8)
 
+function(find_cudnn)
+  set(CUDNN_ROOT "" CACHE PATH "CUDNN root path")
+  find_path(CUDNN_INCLUDE_DIR cudnn.h PATH ${CUDNN_ROOT} DOC "CUDNN include path")
+  find_library(CUDNN_LIBRARIES NAMES libcudnn.so PATH ${CUDNN_ROOT} DOC "CUDNN library path")
+  if(CUDNN_INCLUDE_DIR AND CUDNN_LIBRARIES)
+    set(CUDNN_FOUND TRUE PARENT_SCOPE)
+    message(STATUS "Found CUDNN libraries: ${CUDNN_LIBRARIES}")
+  else()
+    MESSAGE(FATAL_ERROR "Failed to find CUDNN which is required")
+  endif()
+endfunction()
+
 project(Minerva)
 
 message(STATUS "cmake generator: ${CMAKE_GENERATOR}")
 message(STATUS "cmake build tool: ${CMAKE_BUILD_TOOL}")
 message(STATUS "cmake build type: ${CMAKE_BUILD_TYPE}")
 
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-std=c++11" SUPPORTS_CXX11)
 check_cxx_compiler_flag("-flto"      SUPPORTS_LTO)
 
-set(COMPILER_FLAGS "-Wall -pthread -m64 -fPIC -march=native")
+set(COMPILER_FLAGS "-Wall -m64 -fPIC -march=native")
 set(GENERAL_FLAGS_DEBUG "${COMPILER_FLAGS} -O0 -g")
 set(GENERAL_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "${GENERAL_FLAGS_DEBUG} -std=c++11")
 set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11 -flto")
 
-set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_ROOT})
+set(Minerva_DEP_PATH "${Minerva_SOURCE_DIR}/dep")
+set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${Minerva_DEP_PATH})
+message(STATUS "Search dependencies in path: ${CMAKE_PREFIX_PATH}")
+find_package(Threads REQUIRED)
+find_package(GLog REQUIRED)
+find_package(GFlags REQUIRED)
+find_package(Boost COMPONENTS thread system REQUIRED)
+
+set(GLOG_LIBRARIES "/home/jermaine/installs/lib/libglog.so")
+message(STATUS "Find GLog libraries: ${GLOG_LIBRARIES}")
+message(STATUS "Find GFlags libraries: ${GFLAGS_LIBRARIES}")
+message(STATUS "Find Boost libraries: ${Boost_LIBRARIES}")
+
+include_directories(SYSTEM ${GLOG_INCLUDE_DIR})
+include_directories(SYSTEM ${GFLAGS_INCLUDE_DIRS})
+include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
 if (NOT DISABLE_CUDA)
+  set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_ROOT})
   find_package(CUDA)
   if (CUDA_FOUND)
     message(STATUS "Compiling with CUDA support")
@@ -33,6 +63,8 @@ if (NOT DISABLE_CUDA)
     set(CUDA_NVCC_FLAGS_DEBUG "-G -Xcompiler \\\"${CUDA_CONCAT_DEBUG}\\\"")
     set(CUDA_NVCC_FLAGS_RELEASE "-Xcompiler \\\"${CUDA_CONCAT_RELEASE}\\\"")
     set(CUDA_NVCC_FLAGS "-arch sm_35")
+    find_cudnn()
+    include_directories(SYSTEM ${CUDNN_INCLUDE_DIR})
   else ()
     message(FATAL_ERROR "CUDA enabled but not found")
   endif ()
@@ -46,17 +78,6 @@ if (NOT DISABLE_PS)
 else (NOT DISABLE_PS)
   message(STATUS "PS support disabled")
 endif (NOT DISABLE_PS)
-
-include_directories(
-  SYSTEM ${EXTERN_INCLUDE_PATH}
-)
-
-link_directories(
-  ${LIBRARY_OUTPUT_PATH}
-  ${EXTERN_LIB_PATH}
-)
-
-include(ExternalProject)
 
 add_subdirectory(minerva)
 add_subdirectory(apps)

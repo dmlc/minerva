@@ -6,7 +6,8 @@ include_directories(
 
 enable_testing()
 
-set(TEST_LINK_LIBRARIES "")
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
 
 add_library(utmain OBJECT unittest_main.cpp)
 
@@ -24,13 +25,13 @@ foreach(test_src ${test_file_list})
   if(is_unittest)
     if(NOT (${test_name} STREQUAL "unittest_main"))
       add_executable(${test_name} ${test_src} $<TARGET_OBJECTS:utmain>)
-      target_link_libraries(${test_name} minerva gtest)
+      target_link_libraries(${test_name} minerva ${GTEST_LIBRARIES} ${GFLAGS_LIBRARIES})
       list(APPEND unittest_list ${test_name})
       add_test(${test_name} ${test_name})
     endif()
   else()
     add_executable(${test_name} ${test_src})
-    target_link_libraries(${test_name} minerva gtest)
+    target_link_libraries(${test_name} minerva ${GTEST_LIBRARIES} ${GFLAGS_LIBRARIES})
     list(APPEND test_list ${test_name})
   endif()
 endforeach()

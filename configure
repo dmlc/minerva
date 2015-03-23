@@ -20,6 +20,7 @@ function run_clean {
 
 CXXFLAGS="$CXXFLAGS \
   -DCUDA_ROOT=$CUDA_ROOT \
+  -DCUDNN_ROOT=$CUDNN_ROOT \
   -DEXTERN_LIB_PATH=$EXTERN_LIB_PATH \
   -DEXTERN_INCLUDE_PATH=$EXTERN_INCLUDE_PATH"
 
@@ -33,9 +34,9 @@ while [[ $# -gt 0 ]]; do
     -c | --clean)
       run_clean ;;
     --disable-cuda)
-      DISABLE_CUDA="ON"; shift ;;
+      DISABLE_CUDA="ON";;
     --enable-ps)
-      DISABLE_PS="OFF"; shift ;;
+      DISABLE_PS="OFF";;
     --prefix=*)
       CXXFLAGS="$CXXFLAGS -DCMAKE_INSTALL_PREFIX=`expr "x$1" : "x--prefix=\(.*\)"`"; shift ;;
     -D)
