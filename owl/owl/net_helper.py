@@ -8,10 +8,6 @@ import owl
 from PIL import Image
 import subprocess
 
-class INetBuilder:
-    def build_net(self, owl_net):
-        pass
-
 class CaffeNetBuilder:
     def __init__(self, net_file, solver_file):
         print 'Caffe network file:', net_file
@@ -43,7 +39,7 @@ class CaffeNetBuilder:
             if owl_struct != None:
                 uid = owl_net.add_unit(owl_struct)
                 
-                #handle IO, may need better         
+                #handle IO. XXX: hard-coded
                 ty = l.type
                 if ty == V1LayerParameter.LayerType.Value('DATA'):
                     if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
@@ -54,8 +50,6 @@ class CaffeNetBuilder:
                     owl_net.accuracy_uids.append(uid)
                 
                 # stack issues
-                #stacked_layers[l.name] = [uid]
-                #rev_stacked_layers[uid] = l.name
                 if len(l.bottom) == 1 and len(l.top) == 1 and l.bottom[0] == l.top[0]:
                     # top name
                     top_name_to_layer[l.name] = [uid]
@@ -92,7 +86,6 @@ class CaffeNetBuilder:
             for btm in owl_net.units[uid].btm_names:
                 for btm_uid in top_name_to_layer[btm]:
                     owl_net.connect(btm_uid, uid)
-        #print owl_net
 
     def _convert_type(self, caffe_layer, num_gpu):
         ty = caffe_layer.type
@@ -286,9 +279,7 @@ class CaffeModelLoader:
 
 if __name__ == "__main__":
     CaffeModelLoader('/home/tianjun/caffe/caffe/models/bvlc_googlenet/bvlc_googlenet_quick_iter_40.caffemodel', '/home/tianjun/caffe/caffe/models/bvlc_googlenet/bvlc_googlenet_quick_iter_40.solverstate', '/home/tianjun/models/GoogModel/', 0)
-    
     #CaffeModelLoader('/home/tianjun/caffe/caffe/models/bvlc_alexnet/caffe_alexnet_train_iter_20.caffemodel', '/home/tianjun/caffe/caffe/models/bvlc_alexnet/Minervamodel/')
-    
     '''
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])
     owl_net = net.Net()
