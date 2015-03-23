@@ -6,17 +6,28 @@ message(STATUS "cmake generator: ${CMAKE_GENERATOR}")
 message(STATUS "cmake build tool: ${CMAKE_BUILD_TOOL}")
 message(STATUS "cmake build type: ${CMAKE_BUILD_TYPE}")
 
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-std=c++11" SUPPORTS_CXX11)
 check_cxx_compiler_flag("-flto"      SUPPORTS_LTO)
 
-set(COMPILER_FLAGS "-Wall -pthread -m64 -fPIC -march=native")
+set(COMPILER_FLAGS "-Wall -m64 -fPIC -march=native")
 set(GENERAL_FLAGS_DEBUG "${COMPILER_FLAGS} -O0 -g")
 set(GENERAL_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "${GENERAL_FLAGS_DEBUG} -std=c++11")
 set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11 -flto")
 
 set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_ROOT})
+
+find_package(Threads REQUIRED)
+find_package(GLog REQUIRED)
+find_package(GFlags REQUIRED)
+find_package(Boost COMPONENTS thread system REQUIRED)
+
+include_directories(SYSTEM ${GLOG_INCLUDE_DIR})
+include_directories(SYSTEM ${GFLAGS_INCLUDE_DIRS})
+include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
 if (NOT DISABLE_CUDA)
   find_package(CUDA)

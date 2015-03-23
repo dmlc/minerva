@@ -6,11 +6,15 @@ if (NOT HAS_PS)
     ${MinervaLib_SOURCE_DIR}
     ${PYTHON_INCLUDE_DIRS}
   )
+  find_package(Boost COMPONENTS python thread system REQUIRED)
+  find_package(BoostNumPy REQUIRED)
+  include_directories(SYSTEM ${BOOSTNUMPY_INCLUDE_DIR})
+
 
   file(GLOB_RECURSE src_list "*.cpp")
   add_library(owl SHARED ${src_list})
   set(LIBRARY_OUTPUT_PATH ${Minerva_BINARY_DIR}/owl)
-  target_link_libraries(owl boost_python boost_numpy python2.7 minerva)
+  target_link_libraries(owl minerva ${Boost_LIBRARIES} ${BOOSTNUMPY_LIBRARIES} ${PYTHON_LIBRARIES})
 
   if (CUDA_FOUND)
     CUDA_ADD_CUBLAS_TO_TARGET(owl)

@@ -33,9 +33,9 @@ while [[ $# -gt 0 ]]; do
     -c | --clean)
       run_clean ;;
     --disable-cuda)
-      DISABLE_CUDA="ON"; shift ;;
+      DISABLE_CUDA="ON";;
     --enable-ps)
-      DISABLE_PS="OFF"; shift ;;
+      DISABLE_PS="OFF";;
     --prefix=*)
       CXXFLAGS="$CXXFLAGS -DCMAKE_INSTALL_PREFIX=`expr "x$1" : "x--prefix=\(.*\)"`"; shift ;;
     -D)
