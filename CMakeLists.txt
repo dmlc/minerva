@@ -25,10 +25,6 @@ message(STATUS "cmake generator: ${CMAKE_GENERATOR}")
 message(STATUS "cmake build tool: ${CMAKE_BUILD_TOOL}")
 message(STATUS "cmake build type: ${CMAKE_BUILD_TYPE}")
 
-message(STATUS "build cxx applications -- " ${BUILD_CXX_APPS})
-message(STATUS "build tests -- " ${BUILD_TESTS})
-message(STATUS "build owl -- " ${BUILD_OWL})
-
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include(CheckCXXCompilerFlag)
@@ -49,9 +45,9 @@ find_package(GLog REQUIRED)
 find_package(GFlags REQUIRED)
 find_package(Boost COMPONENTS thread system REQUIRED)
 
-message(STATUS "Find GLog libraries: ${GLOG_LIBRARIES}")
-message(STATUS "Find GFlags libraries: ${GFLAGS_LIBRARIES}")
-message(STATUS "Find Boost libraries: ${Boost_LIBRARIES}")
+message(STATUS "Found GLog libraries: ${GLOG_LIBRARIES}")
+message(STATUS "Found GFlags libraries: ${GFLAGS_LIBRARIES}")
+message(STATUS "Found Boost libraries: ${Boost_LIBRARIES}")
 
 include_directories(SYSTEM ${GLOG_INCLUDE_DIR})
 include_directories(SYSTEM ${GFLAGS_INCLUDE_DIRS})
@@ -83,8 +79,9 @@ else ()
 endif()
 
 if(ENABLE_PS)
-  message(STATUS "Compiling with PS support")
+  message(STATUS "Compiling with PS support (Owl package will not be built)")
   add_definitions(-DHAS_PS)
+  set(BUILD_OWL OFF)
 else()
   message(STATUS "PS support disabled")
 endif()
@@ -94,12 +91,19 @@ include_directories(SYSTEM ${EXTERN_INCLUDE_PATH})
 link_directories(${EXTERN_LIB_PATH})
 
 add_subdirectory(minerva)
+
+message(STATUS "Building cxx applications             -- ${BUILD_CXX_APPS}")
+message(STATUS "Building owl package (python binding) -- ${BUILD_OWL}")
+message(STATUS "Building unit tests                   -- ${BUILD_TESTS}")
+
 if(BUILD_CXX_APPS)
   add_subdirectory(apps)
 endif()
+
 if(BUILD_OWL)
   add_subdirectory(owl)
 endif()
+
 if(BUILD_TESTS)
   add_subdirectory(tests)
 endif()
