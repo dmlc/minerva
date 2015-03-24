@@ -27,16 +27,7 @@ def copy_lib(build_dir, lib_name):
             msg = ("%s not found. Please build c++ library first." % lib)
             logger.error("Fatal: " + msg)
 
-
-class OwlInstall(install):
-    def run(self):
-        print '>>> Copying c++ libraries...'
-        copy_lib('release', 'libminerva.so')
-        copy_lib('release', 'libowl.so')
-        install.run(self)
-
-cmdclass = {'install': OwlInstall}
-package_data = {'owl': ["libowl.so", "libminerva.so"]}
+package_data = {'owl': ["libowl.so"]}
 
 setup(name='owl',
     version='1.0',
@@ -47,5 +38,5 @@ setup(name='owl',
     package_dir={'':'owl'},
     packages=['owl', 'owl.caffe'],
     package_data=package_data,
-    #cmdclass=cmdclass
+    zip_safe=False
     )
