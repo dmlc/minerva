@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os
+import os, sys
 import shutil
 import logging
 from setuptools import setup, Extension
@@ -8,6 +8,10 @@ from setuptools.command.build_ext import build_ext
 
 logging.getLogger().addHandler(logging.StreamHandler())
 logger = logging.getLogger()
+if not os.path.exists(os.path.realpath("owl/owl/libowl.so")):
+    logger.error("Fatal: libowl.so not built. Please build c++ library first.")
+    sys.exit(1)
+package_data = {'owl': ["libowl.so"]}
 
 def copy_lib(build_dir, lib_name):
     """ copy libminerva.so and libowl.so into source dir
@@ -26,8 +30,6 @@ def copy_lib(build_dir, lib_name):
         if not os.path.exists(lib):
             msg = ("%s not found. Please build c++ library first." % lib)
             logger.error("Fatal: " + msg)
-
-package_data = {'owl': ["libowl.so"]}
 
 setup(name='owl',
     version='1.0',

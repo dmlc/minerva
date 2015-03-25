@@ -22,5 +22,5 @@ if (CUDA_FOUND)
   CUDA_ADD_CUBLAS_TO_TARGET(owl)
 endif (CUDA_FOUND)
 
-set(LIBRARY_OUTPUT_PATH ${Minerva_BINARY_DIR}/lib)
+#set(LIBRARY_OUTPUT_PATH ${Minerva_BINARY_DIR}/lib)
 install(TARGETS owl DESTINATION ${MinervaOwl_SOURCE_DIR}/owl)
