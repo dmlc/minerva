@@ -13,7 +13,6 @@ Minerva is a fast and flexible tool for deep learning. It provides NDarray progr
 * N-D array programming interface (similar to numpy)
 * Easy interaction with NumPy
 * Multi-GPU, multi-CPU support
-* Good performance: ImageNet AlexNet training achieves 213 and 403 images/s with one and two Titan GPU, respectivly. Four GPU cards number will be coming soon.
 
 ## Performance
 
