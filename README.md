@@ -33,7 +33,7 @@ We will keep updating the latest performance we could achieve in this section.
 
 We also provide some end-to-end training codes in `owl` package, which could load Caffe's model file and perform training. Note that, Minerva is *not* the same tool as Caffe. We are not focusing on this part of logic. In fact, we implement these just to play with the Minerva's powerful and flexible programming interface (we could implement a Caffe-like network trainer in around 700~800 lines of python codes). Here is the training error with time compared with Caffe. Note that Minerva could finish GoogleNet training in less than four days with four GPU cards.
 
-
+![Error curve](https://cloud.githubusercontent.com/assets/4057701/6857873/454c44b2-d3e0-11e4-9010-9e62c6c94027.jpg)
 
 ## License and support
 
