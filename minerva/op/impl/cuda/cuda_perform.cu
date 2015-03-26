@@ -489,8 +489,14 @@ void CudaPerformTanhBackward(float* bottom, float* top, float* top_diff, float* 
 
 void CudaPerformMaxPoolingForward(float* bottom, float* top, int num_images, int num_channels, int bottom_height, int bottom_width, int stride_vertical, int stride_horizontal, int window_height, int window_width, int pad_height, int pad_width, cudaStream_t stream, cudnnHandle_t handle) {
   // Calculate the dimension after pooling
-  int pooled_height = static_cast<int>(ceil(static_cast<float>((bottom_height + 2 * pad_height - window_height)) / stride_vertical)) + 1;
-  int pooled_width = static_cast<int>(ceil(static_cast<float>((bottom_width + 2 * pad_width - window_width)) / stride_horizontal)) + 1;
+  int pooled_height = (bottom_height + 2 * pad_height - window_height + stride_vertical - 1) / stride_vertical + 1;
+  if (0 <= (pooled_height - 1) * stride_vertical - bottom_height - pad_height) {
+    --pooled_height;
+  }
+  int pooled_width = (bottom_width + 2 * pad_width - window_width + stride_horizontal - 1) / stride_horizontal + 1;
+  if (0 <= (pooled_width - 1) * stride_horizontal - bottom_width - pad_width) {
+    --pooled_width;
+  }
   cudnnTensorDescriptor_t bottom_desc;
   cudnnPoolingDescriptor_t pool_desc;
   cudnnTensorDescriptor_t top_desc;
@@ -515,8 +521,14 @@ void CudaPerformMaxPoolingForward(float* bottom, float* top, int num_images, int
 
 void CudaPerformAveragePoolingForward(float* bottom, float* top, int num_images, int num_channels, int bottom_height, int bottom_width, int stride_vertical, int stride_horizontal, int window_height, int window_width, int pad_height, int pad_width, cudaStream_t stream, cudnnHandle_t handle) {
   // Calculate the dimension after pooling
-  int pooled_height = static_cast<int>(ceil(static_cast<float>((bottom_height + 2 * pad_height - window_height)) / stride_vertical)) + 1;
-  int pooled_width = static_cast<int>(ceil(static_cast<float>((bottom_width + 2 * pad_width - window_width)) / stride_horizontal)) + 1;
+  int pooled_height = (bottom_height + 2 * pad_height - window_height + stride_vertical - 1) / stride_vertical + 1;
+  if (0 <= (pooled_height - 1) * stride_vertical - bottom_height - pad_height) {
+    --pooled_height;
+  }
+  int pooled_width = (bottom_width + 2 * pad_width - window_width + stride_horizontal - 1) / stride_horizontal + 1;
+  if (0 <= (pooled_width - 1) * stride_horizontal - bottom_width - pad_width) {
+    --pooled_width;
+  }
   cudnnTensorDescriptor_t bottom_desc;
   cudnnPoolingDescriptor_t pool_desc;
   cudnnTensorDescriptor_t top_desc;
@@ -541,8 +553,14 @@ void CudaPerformAveragePoolingForward(float* bottom, float* top, int num_images,
 
 void CudaPerformMaxPoolingBackward(float* bottom, float* top, float* top_diff, float* bottom_diff, int num_images, int num_channels, int bottom_height, int bottom_width, int stride_vertical, int stride_horizontal, int window_height, int window_width, int pad_height, int pad_width, cudaStream_t stream, cudnnHandle_t handle) {
   // Calculate the dimension after pooling
-  int pooled_height = static_cast<int>(ceil(static_cast<float>((bottom_height + 2 * pad_height - window_height)) / stride_vertical)) + 1;
-  int pooled_width = static_cast<int>(ceil(static_cast<float>((bottom_width + 2 * pad_width - window_width)) / stride_horizontal)) + 1;
+  int pooled_height = (bottom_height + 2 * pad_height - window_height + stride_vertical - 1) / stride_vertical + 1;
+  if (0 <= (pooled_height - 1) * stride_vertical - bottom_height - pad_height) {
+    --pooled_height;
+  }
+  int pooled_width = (bottom_width + 2 * pad_width - window_width + stride_horizontal - 1) / stride_horizontal + 1;
+  if (0 <= (pooled_width - 1) * stride_horizontal - bottom_width - pad_width) {
+    --pooled_width;
+  }
   cudnnTensorDescriptor_t bottom_desc;
   cudnnPoolingDescriptor_t pool_desc;
   cudnnTensorDescriptor_t top_desc;
@@ -567,8 +585,14 @@ void CudaPerformMaxPoolingBackward(float* bottom, float* top, float* top_diff, f
 
 void CudaPerformAveragePoolingBackward(float* bottom, float* top, float* top_diff, float* bottom_diff, int num_images, int num_channels, int bottom_height, int bottom_width, int stride_vertical, int stride_horizontal, int window_height, int window_width, int pad_height, int pad_width, cudaStream_t stream, cudnnHandle_t handle) {
   // Calculate the dimension after pooling
-  int pooled_height = static_cast<int>(ceil(static_cast<float>((bottom_height + 2 * pad_height - window_height)) / stride_vertical)) + 1;
-  int pooled_width = static_cast<int>(ceil(static_cast<float>((bottom_width + 2 * pad_width - window_width)) / stride_horizontal)) + 1;
+  int pooled_height = (bottom_height + 2 * pad_height - window_height + stride_vertical - 1) / stride_vertical + 1;
+  if (0 <= (pooled_height - 1) * stride_vertical - bottom_height - pad_height) {
+    --pooled_height;
+  }
+  int pooled_width = (bottom_width + 2 * pad_width - window_width + stride_horizontal - 1) / stride_horizontal + 1;
+  if (0 <= (pooled_width - 1) * stride_horizontal - bottom_width - pad_width) {
+    --pooled_width;
+  }
   cudnnTensorDescriptor_t bottom_desc;
   cudnnPoolingDescriptor_t pool_desc;
   cudnnTensorDescriptor_t top_desc;
