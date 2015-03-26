@@ -1,4 +1,5 @@
 import owl
+import owl.conv
 import sys
 owl.initialize(sys.argv)
 cpu = owl.create_cpu_device()
@@ -13,3 +14,4 @@ print '''
 '''
 print '[INFO] You have %d GPU devices' % len(gpu)
 print '[INFO] Set device to gpu[0]'
+owl.set_device(gpu[0])
