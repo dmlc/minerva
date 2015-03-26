@@ -1,27 +1,35 @@
 #!/usr/bin/env python
-import os
+import os, sys
+import shutil
+import logging
 from setuptools import setup, Extension
+from setuptools.command.install import install
+from setuptools.command.build_ext import build_ext
 
-minerva_include_path = os.getcwd() + '/minerva'
-minerva_lib_path = os.getcwd() + '/release/lib' # TODO: currently only use release version
-ex_include_dirs = [minerva_include_path]
-ex_lib_dirs = [minerva_lib_path]
+logging.getLogger().addHandler(logging.StreamHandler())
+logger = logging.getLogger()
+if not os.path.exists(os.path.realpath("owl/owl/libowl.so")):
+    logger.error("Fatal: libowl.so not built. Please build c++ library first.")
+    sys.exit(1)
+package_data = {'owl': ["libowl.so"]}
 
-config_file_path = os.path.join('configure.in')
-with open(config_file_path) as config_file:
-    for line in config_file.readlines():
-        if line.find('INCLUDE') >= 0:
-            in_p = line.split('=')[-1]
-            # remove the " 
-            in_p = in_p[1:len(in_p)-2]
-            ex_include_dirs += [p.strip() for p in in_p.split(';')]
-        elif line.find('LIB') >= 0:
-            lib_p = line.split('=')[-1]
-            lib_p = lib_p[1:len(lib_p)-2]
-            ex_lib_dirs += [p.strip() for p in lib_p.split(';')]
-        elif line.find('CUDA_ROOT') >= 0:
-            cuda_in = line.split('=')[-1]
-            ex_include_dirs.append(cuda_in.strip() + '/include')
+def copy_lib(build_dir, lib_name):
+    """ copy libminerva.so and libowl.so into source dir
+    
+    This command is prior to running a bdist
+    """
+    root = os.path.dirname(__file__)
+    local = os.path.abspath(os.path.join(root, 'owl', 'owl'))
+    try:
+        lib = os.path.realpath(os.path.join(build_dir, 'lib', lib_name))
+        print ("copying %s -> %s" % (lib, local))
+        shutil.copy(lib, local)
+    except Exception:
+        if not os.path.exists(local):
+            logger.error("Fatal: local path not exist.")
+        if not os.path.exists(lib):
+            msg = ("%s not found. Please build c++ library first." % lib)
+            logger.error("Fatal: " + msg)
 
 setup(name='owl',
     version='1.0',
@@ -31,15 +39,6 @@ setup(name='owl',
     url='https://github.com/minerva-developers/minerva',
     package_dir={'':'owl'},
     packages=['owl', 'owl.caffe'],
-    ext_modules=[
-        Extension('libowl',
-            ['owl/owl.cpp'],
-            language='c++',
-            define_macros=[('HAS_CUDA', '1')], # TODO: must have cuda
-            include_dirs=ex_include_dirs,
-            libraries=['boost_python', 'boost_numpy', 'python2.7', 'minerva'],
-            library_dirs=ex_lib_dirs,
-            extra_compile_args=['-O2', '-std=c++11'],
-            extra_link_args=[])
-        ]
+    package_data=package_data,
+    zip_safe=False
     )

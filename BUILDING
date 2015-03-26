@@ -1,0 +1,6 @@
+To build Minerva so that it finds the locally installed dependencies, use the
+following command:
+
+  ./configure -DCMAKE_PREFIX_PATH=`pwd`/deps
+
+

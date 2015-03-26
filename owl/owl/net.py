@@ -382,10 +382,6 @@ class DataUnit(ComputeUnit):
 
         to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
         to_top[self.top_names[1]] = owl.from_numpy(labels)
-        '''
-        to_top[self.top_names[0]] = owl.from_numpy(self.samples).reshape([self.crop_size, self.crop_size, 3, self.samples.shape[0]])
-        to_top[self.top_names[1]] = owl.from_numpy(self.labels)
-        '''
 
     def backward(self, from_top, to_btm, phase):
         pass

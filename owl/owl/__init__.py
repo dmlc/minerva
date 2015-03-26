@@ -42,7 +42,10 @@ def finalize():
 def wait_for_all():
     """ Wait for all evaluation to complete
 
-    :neturn: None
+    .. note::
+        The user thread (python) will be blocked until all previous operations are finished.
+
+    :return: None
     """
     _owl.wait_for_all()
 
