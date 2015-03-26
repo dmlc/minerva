@@ -104,18 +104,13 @@ ImageBatch Convolution::ActivationBackward(ImageBatch diff, ImageBatch top, Imag
 }
 
 ImageBatch Convolution::PoolingForward(ImageBatch src, PoolingInfo info) {
-  //No such check
-  //CHECK_EQ((src.GetHeight() - info.height) % info.stride_vertical, 0) << "window height mismatch";
-  //CHECK_EQ((src.GetWidth() - info.width) % info.stride_horizontal, 0) << "window width mismatch";
-  int pooled_height = static_cast<int>(ceil(static_cast<float>((src.GetHeight() + 2 * info.pad_height - info.height)) / info.stride_vertical)) + 1;
-  int pooled_width = static_cast<int>(ceil(static_cast<float>((src.GetWidth() + 2 * info.pad_width - info.width)) / info.stride_horizontal)) + 1;
-  if (info.pad_height > 0 || info.pad_width > 0) {
-	if ((pooled_height - 1) * info.stride_vertical >= src.GetHeight() + info.pad_height) {
-      --pooled_height;
-    }
-	if ((pooled_width - 1) * info.stride_horizontal >= src.GetWidth() + info.pad_width) {
-      --pooled_width;
-    }
+  int pooled_height = (src.GetHeight() + 2 * info.pad_height - info.height + info.stride_vertical - 1) / info.stride_vertical + 1;
+  int pooled_width = (src.GetWidth() + 2 * info.pad_width - info.width + info.stride_horizontal - 1) / info.stride_horizontal + 1;
+  if (0 <= (pooled_height - 1) * info.stride_vertical - src.GetHeight() - info.pad_height) {
+    --pooled_height;
+  }
+  if (0 <= (pooled_width - 1) * info.stride_horizontal - src.GetWidth() - info.pad_width) {
+    --pooled_width;
   }
   Scale new_size {
     pooled_height,
@@ -141,15 +136,13 @@ ImageBatch Convolution::PoolingBackward(ImageBatch diff, ImageBatch top, ImageBa
   CHECK_EQ(diff.GetNumImages(), bottom.GetNumImages()) << "#images mismatch";
   CHECK_EQ(diff.GetNumFeatureMaps(), bottom.GetNumFeatureMaps()) << "#channels mismatch";
 
-  int pooled_height = static_cast<int>(ceil(static_cast<float>((bottom.GetHeight() + 2 * info.pad_height - info.height)) / info.stride_vertical)) + 1;
-  int pooled_width = static_cast<int>(ceil(static_cast<float>((bottom.GetWidth() + 2 * info.pad_width - info.width)) / info.stride_horizontal)) + 1;
-
-  if (info.pad_height > 0 || info.pad_width > 0)
-  {
-	if((pooled_height - 1) * info.stride_vertical >= bottom.GetHeight() + info.pad_height)
-		--pooled_height;
-	if((pooled_width - 1) * info.stride_horizontal >= bottom.GetWidth() + info.pad_width)
-		--pooled_width;
+  int pooled_height = (bottom.GetHeight() + 2 * info.pad_height - info.height + info.stride_vertical - 1) / info.stride_vertical + 1;
+  int pooled_width = (bottom.GetWidth() + 2 * info.pad_width - info.width + info.stride_horizontal - 1) / info.stride_horizontal + 1;
+  if (0 <= (pooled_height - 1) * info.stride_vertical - bottom.GetHeight() - info.pad_height) {
+    --pooled_height;
+  }
+  if (0 <= (pooled_width - 1) * info.stride_horizontal - bottom.GetWidth() - info.pad_width) {
+    --pooled_width;
   }
 
   CHECK_EQ(top.GetHeight(), pooled_height) << "height mismatch";
