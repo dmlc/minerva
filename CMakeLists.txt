@@ -2,8 +2,16 @@ cmake_minimum_required(VERSION 2.8)
 
 function(find_cudnn)
   set(CUDNN_ROOT "" CACHE PATH "CUDNN root path")
-  find_path(CUDNN_INCLUDE_DIRS cudnn.h PATHS ${CUDNN_ROOT} DOC "CUDNN include path")
-  find_library(CUDNN_LIBRARIES NAMES libcudnn.so PATHS ${CUDNN_ROOT} DOC "CUDNN library path")
+  find_path(CUDNN_INCLUDE_DIRS cudnn.h
+    PATHS ${CUDNN_ROOT} 
+          ${CUDNN_ROOT}/include
+    DOC "CUDNN include path")
+  find_library(CUDNN_LIBRARIES NAMES libcudnn.so
+    PATHS ${CUDNN_ROOT} 
+          ${CUDNN_ROOT}/lib
+          ${CUDNN_ROOT}/lib64
+    DOC "CUDNN library path")
+    message(STATUS "Found CUDNN (include: ${CUDNN_INCLUDE_DIRS}, library: ${CUDNN_LIBRARIES})")
   if(CUDNN_INCLUDE_DIRS AND CUDNN_LIBRARIES)
     set(CUDNN_FOUND TRUE PARENT_SCOPE)
     message(STATUS "Found CUDNN (include: ${CUDNN_INCLUDE_DIRS}, library: ${CUDNN_LIBRARIES})")
