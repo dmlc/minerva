@@ -26,7 +26,7 @@ We will keep updating the latest performance we could achieve in this section.
 | 2 cards| 371.01 | 29.58 | 160.53 |
 | 4 cards| 632.09 | 50.26 | 309.27 |
 * The performance is measured on a machine with 4 GTX Titan cards.
-* On each card, we load minibatch size of 256, 64, 120 for AlexNet, VGGNet and GoogLeNet respectively. Therefore, the total minibatch size will increase as the number of cards grows (for example, training AlexNet on 4 cards will use 1024 minibatch size).
+* On each card, we load minibatch size of 256, 24, 120 for AlexNet, VGGNet and GoogLeNet respectively. Therefore, the total minibatch size will increase as the number of cards grows (for example, training AlexNet on 4 cards will use 1024 minibatch size).
 
 ### An end-to-end training
 
