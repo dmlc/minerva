@@ -51,6 +51,9 @@ class CaffeNetBuilder:
                 elif ty == V1LayerParameter.LayerType.Value('IMAGE_DATA'):
                     if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
                         owl_net.batch_size = l.image_data_param.batch_size
+                elif ty == V1LayerParameter.LayerType.Value('WINDOW_DATA'):
+                    if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
+                        owl_net.batch_size = l.window_data_param.batch_size
                 elif ty == V1LayerParameter.LayerType.Value('SOFTMAX_LOSS'):
                     owl_net.loss_uids.append(uid)
                 elif ty == V1LayerParameter.LayerType.Value('ACCURACY'):
@@ -100,9 +103,11 @@ class CaffeNetBuilder:
     def _convert_type(self, caffe_layer, num_gpu):
         ty = caffe_layer.type
         if ty == V1LayerParameter.LayerType.Value('DATA'):
-            return net.DataUnit(caffe_layer, num_gpu)
+            return net.LMDBDataUnit(caffe_layer, num_gpu)
         elif ty == V1LayerParameter.LayerType.Value('IMAGE_DATA'):
             return net.ImageDataUnit(caffe_layer, num_gpu)
+        elif ty == V1LayerParameter.LayerType.Value('WINDOW_DATA'):
+            return net.ImageWindowDataUnit(caffe_layer, num_gpu)
         elif ty == V1LayerParameter.LayerType.Value('INNER_PRODUCT'):
             return net.FullyConnection(caffe_layer)
         elif ty == V1LayerParameter.LayerType.Value('CONVOLUTION'):
@@ -152,7 +157,6 @@ class CaffeNetBuilder:
                         print "Weight Need Reinit %s" % (owl_net.units[i].name)
                 else:
                     print "Weight Need Reinit %s" % (owl_net.units[i].name)
-                
             
                 biasname = '%s%s_bias.dat' % (weightpath, layername)
                 bshape = owl_net.units[i].bshape

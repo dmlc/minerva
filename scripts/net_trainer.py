@@ -25,6 +25,32 @@ class NetTrainer:
         self.builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
 
     def run(s):
+        
+        acc_num = 0
+        test_num = 0
+
+        losslayername = 'loss'
+        for testiteridx in range(s.owl_net.solver.test_iter[0]):
+            s.owl_net.forward('TEST')
+            all_accunits = s.owl_net.get_accuracy_units()
+            accunit = all_accunits[len(all_accunits)-1]
+            #accunit = all_accunits[0]
+            test_num += accunit.batch_size
+            acc_num += (accunit.batch_size * accunit.acc)
+            print "Accuracy the %d mb: %f" % (testiteridx, accunit.acc)
+            
+            loss_unit = s.owl_net.units[s.owl_net.name_to_uid[losslayername][0]] 
+            predict = loss_unit.ff_y.to_numpy()
+            print np.max(predict, axis=1)
+            
+            
+            sys.stdout.flush()
+        print "Testing Accuracy: %f" % (float(acc_num)/test_num)
+
+        
+        
+        
+        
         wgrad = [[] for i in range(s.num_gpu)]
         bgrad = [[] for i in range(s.num_gpu)]
         last = time.time()

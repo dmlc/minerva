@@ -7,6 +7,7 @@ import Queue
 from caffe import *
 from netio import LMDBDataProvider
 from netio import ImageListDataProvider
+from netio import ImageWindowDataProvider
 
 class ComputeUnit(object):
     def __init__(self, params):
@@ -213,10 +214,10 @@ class SoftmaxUnit(ComputeUnit):
         self.ff_y = to_top[self.top_names[0]]
         #turn label into matrix form
         nplabel = np.zeros([self.ff_y.shape[1], self.ff_y.shape[0]], dtype=np.float32)
-        strlabel = from_btm[self.btm_names[1]]
+        self.strlabel = from_btm[self.btm_names[1]]
         
-        for i in range(len(strlabel)):
-            nplabel[i, strlabel[i]] = 1
+        for i in range(len(self.strlabel)):
+            nplabel[i, self.strlabel[i]] = 1
         self.y = owl.from_numpy(nplabel)
         
     def backward(self, from_top, to_btm, phase):
@@ -249,7 +250,7 @@ class AccuracyUnit(ComputeUnit):
         ground_truth = owl.from_numpy(from_btm[self.btm_names[1]]).reshape(predict.shape)
         self.batch_size = from_btm[self.btm_names[0]].shape[1]
         correct = (predict - ground_truth).count_zero()
-        self.acc = 1 - (self.batch_size - correct) * 1.0 / self.batch_size
+        self.acc = correct * 1.0 / self.batch_size
 
     def backward(self, from_top, to_btm, phase):
         pass
@@ -437,59 +438,12 @@ class ConvConnection(WeightedComputeUnit):
     def __str__(self):
         return 'conv'
 
-class ImageDataUnit(ComputeUnit):
-    def __init__(self, params, num_gpu):
-        super(ImageDataUnit, self).__init__(params)
-        if params.include[0].phase == Phase.Value('TRAIN'):
-            self.dp = ImageListDataProvider(params.image_data_param, params.transform_param, num_gpu)
-        else:
-            self.dp = ImageListDataProvider(params.image_data_param, params.transform_param, 1)
-        self.params = params
-        self.generator = None
-
-    def init_layer_size(self, from_btm, to_top):
-        self.out_shape = [self.params.transform_param.crop_size, self.params.transform_param.crop_size, 3, 1]
-        to_top[self.top_names[0]] = self.out_shape[:]
-
-    def forward(self, from_btm, to_top, phase):
-        if self.generator == None:
-            self.generator = self.dp.get_mb(phase)
-
-        while True:
-            try:
-                (samples, labels) = next(self.generator)
-                if len(labels) == 0:
-                    (samples, labels) = next(self.generator)
-            except StopIteration:
-                print 'Have scanned the whole dataset; start from the begginning agin'
-                self.generator = self.dp.get_mb(phase)
-                continue
-            break
-
-        to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.params.transform_param.crop_size, self.params.transform_param.crop_size, 3, samples.shape[0]])
-
-        #may have multiplier labels
-        for i in range (1, len(self.top_names)):
-            to_top[self.top_names[i]] = labels[:,i - 1]
-
-    def backward(self, from_top, to_btm, phase):
-        pass
-    def __str__(self):
-        return 'image_data'
-
 class DataUnit(ComputeUnit):
     def __init__(self, params, num_gpu):
         super(DataUnit, self).__init__(params)
-        if params.include[0].phase == Phase.Value('TRAIN'):
-            self.dp = LMDBDataProvider(params.data_param, params.transform_param, num_gpu)
-        else:
-            self.dp = LMDBDataProvider(params.data_param, params.transform_param, 1)
-        self.params = params
-        self.generator = None
 
     def init_layer_size(self, from_btm, to_top):
-        self.out_shape = [self.params.transform_param.crop_size, self.params.transform_param.crop_size, 3, 1]
-        to_top[self.top_names[0]] = self.out_shape[:]
+        pass
 
     def forward(self, from_btm, to_top, phase):
         if self.generator == None:
@@ -506,7 +460,7 @@ class DataUnit(ComputeUnit):
                 continue
             break
 
-        to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.params.transform_param.crop_size, self.params.transform_param.crop_size, 3, samples.shape[0]])
+        to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
         #may have multiplier labels
         
         for i in range (1, len(self.top_names)):
@@ -516,6 +470,60 @@ class DataUnit(ComputeUnit):
         pass
     def __str__(self):
         return 'data'
+
+class LMDBDataUnit(DataUnit):
+    def __init__(self, params, num_gpu):
+        super(LMDBDataUnit, self).__init__(params, num_gpu)
+        if params.include[0].phase == Phase.Value('TRAIN'):
+            self.dp = LMDBDataProvider(params.data_param, params.transform_param, num_gpu)
+        else:
+            self.dp = LMDBDataProvider(params.data_param, params.transform_param, 1)
+        self.params = params
+        self.crop_size = params.transform_param.crop_size
+        self.generator = None
+
+    def init_layer_size(self, from_btm, to_top):
+        self.out_shape = [self.params.transform_param.crop_size, self.params.transform_param.crop_size, 3, 1]
+        to_top[self.top_names[0]] = self.out_shape[:]
+    
+    def __str__(self):
+        return 'lmdb_data'
+
+class ImageDataUnit(DataUnit):
+    def __init__(self, params, num_gpu):
+        super(ImageDataUnit, self).__init__(params, num_gpu)
+        if params.include[0].phase == Phase.Value('TRAIN'):
+            self.dp = ImageListDataProvider(params.image_data_param, params.transform_param, num_gpu)
+        else:
+            self.dp = ImageListDataProvider(params.image_data_param, params.transform_param, 1)
+        self.params = params
+        self.crop_size = params.transform_param.crop_size
+        self.generator = None
+
+    def init_layer_size(self, from_btm, to_top):
+        self.out_shape = [self.params.transform_param.crop_size, self.params.transform_param.crop_size, 3, 1]
+        to_top[self.top_names[0]] = self.out_shape[:]
+
+    def __str__(self):
+        return 'image_data'
+
+class ImageWindowDataUnit(DataUnit):
+    def __init__(self, params, num_gpu):
+        super(ImageWindowDataUnit, self).__init__(params, num_gpu)
+        if params.include[0].phase == Phase.Value('TRAIN'):
+            self.dp = ImageWindowDataProvider(params.window_data_param, num_gpu)
+        else:
+            self.dp = ImageWindowDataProvider(params.window_data_param, 1)
+        self.params = params
+        self.crop_size = params.window_data_param.crop_size
+        self.generator = None
+
+    def init_layer_size(self, from_btm, to_top):
+        self.out_shape = [self.params.window_data_param.crop_size, self.params.window_data_param.crop_size, 3, 1]
+        to_top[self.top_names[0]] = self.out_shape[:]
+    
+    def __str__(self):
+        return 'window_data'
 
 class Net:
     def __init__(self):
