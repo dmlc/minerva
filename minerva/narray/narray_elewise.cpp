@@ -37,10 +37,6 @@ NArray Elewise::Mult(const NArray& lhs, const NArray& rhs) {
   return ArithmeticHelper(lhs, rhs, ArithmeticType::kMult);
 }
 
-NArray Elewise::Div(const NArray& lhs, const NArray& rhs) {
-  return ArithmeticHelper(lhs, rhs, ArithmeticType::kDiv);
-}
-
 NArray Elewise::Exp(const NArray& narr) {
   return ElewiseHelper(narr, ElewiseType::kExp);
 }

@@ -6,7 +6,6 @@ namespace minerva {
 class Elewise {
  public:
   static NArray Mult(const NArray&, const NArray&);
-  static NArray Div(const NArray&, const NArray&);
   static NArray Exp(const NArray&);
   static NArray Ln(const NArray&);
   static NArray SigmoidForward(const NArray&);
