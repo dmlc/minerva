@@ -35,34 +35,6 @@ inline const char* CublasGetErrorString(cublasStatus_t error) {
   return "Unknown cuBLAS status";
 }
 
-inline const char* CudnnGetErrorString(cudnnStatus_t status) {
-  switch (status) {
-    case CUDNN_STATUS_SUCCESS:
-      return "CUDNN_STATUS_SUCCESS";
-    case CUDNN_STATUS_NOT_INITIALIZED:
-      return "CUDNN_STATUS_NOT_INITIALIZED";
-    case CUDNN_STATUS_ALLOC_FAILED:
-      return "CUDNN_STATUS_ALLOC_FAILED";
-    case CUDNN_STATUS_BAD_PARAM:
-      return "CUDNN_STATUS_BAD_PARAM";
-    case CUDNN_STATUS_INTERNAL_ERROR:
-      return "CUDNN_STATUS_INTERNAL_ERROR";
-    case CUDNN_STATUS_INVALID_VALUE:
-      return "CUDNN_STATUS_INVALID_VALUE";
-    case CUDNN_STATUS_ARCH_MISMATCH:
-      return "CUDNN_STATUS_ARCH_MISMATCH";
-    case CUDNN_STATUS_MAPPING_ERROR:
-      return "CUDNN_STATUS_MAPPING_ERROR";
-    case CUDNN_STATUS_EXECUTION_FAILED:
-      return "CUDNN_STATUS_EXECUTION_FAILED";
-    case CUDNN_STATUS_NOT_SUPPORTED:
-      return "CUDNN_STATUS_NOT_SUPPORTED";
-    case CUDNN_STATUS_LICENSE_ERROR:
-      return "CUDNN_STATUS_LICENSE_ERROR";
-  }
-  return "Unknown cuDNN status";
-}
-
 inline const char* CurandGetErrorString(curandStatus_t status) {
   switch (status) {
     case CURAND_STATUS_SUCCESS:
@@ -117,7 +89,7 @@ inline const char* CurandGetErrorString(curandStatus_t status) {
 
 #define CUDNN_CALL(func) { \
   cudnnStatus_t e = (func); \
-  CHECK_EQ(e, CUDNN_STATUS_SUCCESS) << "cuDNN: " << CudnnGetErrorString(e); \
+  CHECK_EQ(e, CUDNN_STATUS_SUCCESS) << "cuDNN: " << cudnnGetErrorString(e); \
 }
 
 #define CURAND_CALL(func) { \

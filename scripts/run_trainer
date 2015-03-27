@@ -1,28 +1,18 @@
 #!/bin/bash
 
 # Provide file paths in this external file
-source ./external_path.sh
 
 if [ $# -ne 3 ]; then
-  echo "Usage: ./run_trainer.sh <net-type> <snapshot> <num-gpu>"
+  echo "Usage: ./run_trainer.sh <net-path-file> <snapshot> <num-gpu>"
   echo "Available network type: alex, goognet, vggnet"
   exit 1
 fi
 
-case $1 in
-  alex)
-    net_file=$ALEXNET_NET;
-    solver_file=$ALEXNET_SOLVER;
-    snap_dir=$ALEXNET_SNAP_DIR ;;
-  goognet)
-    net_file=$GOOGNET_NET;
-    solver_file=$GOOGNET_SOLVER;
-    snap_dir=$GOOGNET_SNAP_DIR ;;
-  vggnet)
-    net_file=$VGGNET_NET;
-    solver_file=$VGGNET_SOLVER;
-    snap_dir=$VGGNET_SNAP_DIR ;;
-esac
+source $1
+
+net_file=$NET;
+solver_file=$SOLVER;
+snap_dir=$SNAP_DIR ;
 
 snapshot=$2
 num_gpu=$3

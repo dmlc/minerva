@@ -20,22 +20,29 @@ function run_clean {
 
 CXXFLAGS="$CXXFLAGS \
   -DCUDA_ROOT=$CUDA_ROOT \
+  -DCUDNN_ROOT=$CUDNN_ROOT \
   -DEXTERN_LIB_PATH=$EXTERN_LIB_PATH \
-  -DEXTERN_INCLUDE_PATH=$EXTERN_INCLUDE_PATH"
-
-DISABLE_PS="ON"
-DISABLE_CUDA="OFF"
+  -DEXTERN_INCLUDE_PATH=$EXTERN_INCLUDE_PATH \
+  -DPython_ADDITIONAL_VERSIONS=$PYTHON_VERSION"
 
 while [[ $# -gt 0 ]]; do
   case $1 in
     --help | -h)
-      want_help=yes ;;
+      WANT_HELP=yes ;;
     -c | --clean)
       run_clean ;;
-    --disable-cuda)
-      DISABLE_CUDA="ON"; shift ;;
+    --build-debug)
+      BUILD_DEBUG="ON";;
+    --build-apps)
+      CXXFLAGS="$CXXFLAGS -DBUILD_CXX_APPS=ON";;
+    --build-tests)
+      CXXFLAGS="$CXXFLAGS -DBUILD_TESTS=ON";;
     --enable-ps)
-      DISABLE_PS="OFF"; shift ;;
+      CXXFLAGS="$CXXFLAGS -DENABLE_PS=ON";;
+    --disable-cuda)
+      CXXFLAGS="$CXXFLAGS -DENABLE_CUDA=OFF";;
+    --disable-owl)
+      CXXFLAGS="$CXXFLAGS -DBUILD_OWL=OFF";;
     --prefix=*)
       CXXFLAGS="$CXXFLAGS -DCMAKE_INSTALL_PREFIX=`expr "x$1" : "x--prefix=\(.*\)"`"; shift ;;
     -D)
@@ -47,18 +54,21 @@ while [[ $# -gt 0 ]]; do
   esac
   shift
 done
-
-CXXFLAGS="${CXXFLAGS} -DDISABLE_PS=${DISABLE_PS} -DDISABLE_CUDA=${DISABLE_CUDA}"
+#CXXFLAGS="${CXXFLAGS} -DDISABLE_PS=${DISABLE_PS} -DDISABLE_CUDA=${DISABLE_CUDA}"
 
 #================================ help description =============================
-if test "x$want_help" = xyes; then
+if test "x$WANT_HELP" = xyes; then
     cat <<EOF
 Usage: ./configure [OPTION]...
 Configurations:
     -h, --help              Display this help and exit
     -c, --clean             Clean up debug and release build
-    --disable-cuda          Disable building with CUDA
+    --build-debug           Enable building debug version
+    --build-apps            Enable building cxx applications
+    --build-tests           Enable building unit tests
     --enable-ps             Enable building with PS
+    --disable-cuda          Disable building with CUDA
+    --disable-owl           Disable building with OWL (python binding)
     --prefix                Specify install path
     -Dvar=value | -D value  Specify definitions to be passed on to CMake
 EOF
@@ -75,11 +85,12 @@ cd $RELEASE_DIR
 CC=$C_COMPILER CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Release $CXXFLAGS ..
 cd ..
 
-echo -e "\n========================== Debug =========================="
-if [ ! -d $DEBUG_DIR ]; then
-    mkdir $DEBUG_DIR
+if test "$BUILD_DEBUG" = ON; then
+    echo -e "\n========================== Debug =========================="
+    if [ ! -d $DEBUG_DIR ]; then
+        mkdir $DEBUG_DIR
+    fi
+    cd $DEBUG_DIR
+    CC=$C_COMPILER CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Debug $CXXFLAGS ..
+    cd ..
 fi
-cd $DEBUG_DIR
-CC=$C_COMPILER CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Debug $CXXFLAGS ..
-cd ..
-

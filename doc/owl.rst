@@ -4,6 +4,11 @@ Owl APIs
 owl module
 ---------------
 
+.. automodule:: owl
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 .. py:class:: owl.NArray
 
   .. py:attribute:: __add__
@@ -130,11 +135,6 @@ owl module
     :return: numpy's ndarray with the same contents
     :rtype: numpy::ndarray
 
-
-.. automodule:: owl
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 
 owl.conv module

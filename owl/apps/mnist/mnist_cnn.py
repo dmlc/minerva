@@ -101,7 +101,6 @@ def train_network(model, num_epochs=100, minibatch_size=256, lr=0.01, mom=0.75, 
             data = owl.from_numpy(mb_samples).reshape([28, 28, 1, num_samples])
             label = owl.from_numpy(mb_labels)
             out, weightgrads[current_gpu], biasgrads[current_gpu] = bpprop(model, data, label)
-            out.start_eval()
             if current_gpu == 0:
                 for k in range(len(model.weights)):
                     model.weightdelta[k] = mom * model.weightdelta[k] - lr / num_samples / len(gpu) * multi_gpu_merge(weightgrads, 0, k) - lr * wd * model.weights[k]
