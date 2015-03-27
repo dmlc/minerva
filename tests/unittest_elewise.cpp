@@ -33,6 +33,19 @@ TEST(Elewise, GpuExp) {
     EXPECT_FLOAT_EQ(b_ptr.get()[i], exp(a_ptr.get()[i]));
   }
 }
+
+TEST(Elewise, GpuElewiseQuotient) {
+  auto& ms = MinervaSystem::Instance();
+  ms.current_device_id_ = gpu_device;
+  Scale size{2, 3};
+  auto a = NArray::Constant(size, 1); 
+  auto b = NArray::Constant(size, 2); 
+  auto c = Elewise::Div(a, b);
+  auto c_ptr = c.Get();
+  for (int i = 0; i < size.Prod(); ++i) {
+    EXPECT_FLOAT_EQ(c_ptr.get()[i], 0.5);
+  }
+}
 #endif
 
 TEST(Elewise, CpuLn) {
