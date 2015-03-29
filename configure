@@ -44,7 +44,7 @@ while [[ $# -gt 0 ]]; do
     --disable-owl)
       CXXFLAGS="$CXXFLAGS -DBUILD_OWL=OFF";;
     --prefix=*)
-      CXXFLAGS="$CXXFLAGS -DCMAKE_INSTALL_PREFIX=`expr "x$1" : "x--prefix=\(.*\)"`"; shift ;;
+      CXXFLAGS="$CXXFLAGS -DCMAKE_INSTALL_PREFIX=`expr "x$1" : "x--prefix=\(.*\)"`";;
     -D)
       CXXFLAGS="$CXXFLAGS -D$2=ON"; shift ;;
     -D*)
