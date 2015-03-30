@@ -35,8 +35,10 @@ message(STATUS "cmake build type: ${CMAKE_BUILD_TYPE}")
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-std=c++11" SUPPORTS_CXX11)
-check_cxx_compiler_flag("-flto"      SUPPORTS_LTO)
+check_cxx_compiler_flag("-std=c++11"       SUPPORTS_CXX11)
+check_cxx_compiler_flag("-flto"            SUPPORTS_LTO)
+check_cxx_compiler_flag("-mssse3"          SUPPORTS_MSSSE3)
+check_cxx_compiler_flag("-ftree-vectorize" SUPPORTS_VECTORIZE)
 
 set(COMPILER_FLAGS "-Wall -m64 -fPIC -march=native")
 set(GENERAL_FLAGS_DEBUG "${COMPILER_FLAGS} -O0 -g")
