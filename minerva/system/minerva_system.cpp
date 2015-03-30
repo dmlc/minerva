@@ -7,6 +7,7 @@
 #include <glog/logging.h>
 #include <gflags/gflags.h>
 #include "backend/dag/dag_scheduler.h"
+#include "backend/simple_backend.h"
 #include "common/cuda_utils.h"
 
 DEFINE_bool(use_dag, true, "Use dag engine");
@@ -52,10 +53,11 @@ MinervaSystem::MinervaSystem(int* argc, char*** argv) : current_device_id_(0), d
   profiler_ = new ExecutionProfiler();
   device_manager_ = new DeviceManager();
   if (FLAGS_use_dag) {
-    DLOG(INFO) << "enable dag engine";
+    LOG(INFO) << "dag engine enabled";
     backend_ = new DagScheduler(physical_dag_, device_manager_);
   } else {
-    LOG(FATAL) << "simple dag engine not implemented";
+    LOG(INFO) << "dag engine disabled";
+    backend_ = new SimpleBackend(*device_manager_);
   }
 }
 
