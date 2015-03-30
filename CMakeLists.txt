@@ -11,7 +11,6 @@ function(find_cudnn)
           ${CUDNN_ROOT}/lib
           ${CUDNN_ROOT}/lib64
     DOC "CUDNN library path")
-    message(STATUS "Found CUDNN (include: ${CUDNN_INCLUDE_DIRS}, library: ${CUDNN_LIBRARIES})")
   if(CUDNN_INCLUDE_DIRS AND CUDNN_LIBRARIES)
     set(CUDNN_FOUND TRUE PARENT_SCOPE)
     message(STATUS "Found CUDNN (include: ${CUDNN_INCLUDE_DIRS}, library: ${CUDNN_LIBRARIES})")
@@ -36,8 +35,10 @@ message(STATUS "cmake build type: ${CMAKE_BUILD_TYPE}")
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-std=c++11" SUPPORTS_CXX11)
-check_cxx_compiler_flag("-flto"      SUPPORTS_LTO)
+check_cxx_compiler_flag("-std=c++11"       SUPPORTS_CXX11)
+check_cxx_compiler_flag("-flto"            SUPPORTS_LTO)
+check_cxx_compiler_flag("-mssse3"          SUPPORTS_MSSSE3)
+check_cxx_compiler_flag("-ftree-vectorize" SUPPORTS_VECTORIZE)
 
 set(COMPILER_FLAGS "-Wall -m64 -fPIC -march=native")
 
