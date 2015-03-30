@@ -1,4 +1,5 @@
 import sys,os,gc
+import time
 import lmdb
 import numpy as np
 import numpy.random
@@ -47,8 +48,8 @@ class ImageWindowDataProvider:
             height = int(sourcefile.readline())
             width = int(sourcefile.readline())
             boxnum = int(sourcefile.readline())
+            
             #open image
-            print path
             try:
                 img = Image.open(path)
             except IOError, e:
@@ -61,6 +62,7 @@ class ImageWindowDataProvider:
             for i in range(boxnum):
                 line = sourcefile.readline()
                 box_info = line.split(' ')
+                
                 x1 = int(box_info[2]) - 1
                 y1 = int(box_info[3]) - 1
                 x2 = int(box_info[4]) 
@@ -79,6 +81,18 @@ class ImageWindowDataProvider:
                 orinpimg = np.array(patch, dtype = np.uint8)
                 npimg = np.transpose(orinpimg.reshape([self.crop_size * self.crop_size, 3])).reshape(np.shape(self.mean_data))
                 npimg = npimg[::-1,:,:]
+                
+                '''
+                #output
+                imgdata = np.zeros([self.crop_size, self.crop_size, 3], dtype=np.uint8)
+                imgdata[:,:,0] = npimg[2,:,:]
+                imgdata[:,:,1] = npimg[1,:,:]
+                imgdata[:,:,2] = npimg[0,:,:]
+                cropimg = Image.fromarray(imgdata)
+                nnn = '/home/tianjun/tests/img_%d.jpg' % (i)
+                cropimg.save(nnn, format = 'JPEG')
+                ''' 
+                
                 pixels = npimg - self.mean_data
                 if self.mirror == True and numpy.random.rand() > 0.5:
                     pixels = pixels[:,:,::-1]
@@ -243,6 +257,7 @@ class LMDBDataProvider:
             yield (np.delete(samples, delete_idx, 0), np.delete(labels, delete_idx, 0))
 
 if __name__ == '__main__':
+    ''' 
     if sys.argv[1] == 'lmdb':
         #Test 
         net_file = '/home/tianjun/configfile/Googmodel/train_val_CUB_lmdb.prototxt'
@@ -267,5 +282,23 @@ if __name__ == '__main__':
         for (samples, labels) in dp.get_mb():
             print count, ':', samples.shape
             count = count + 1
+    '''
+    
+    net_file = '/home/tianjun/configfile/Alexmodel/filternet.prototxt'
+    with open(net_file, 'r') as f:
+        netconfig = NetParameter()
+        text_format.Merge(str(f.read()), netconfig)
+    layerinfo = netconfig.layers[0]
+    dp = ImageWindowDataProvider(layerinfo.window_data_param, 1)
+    count = 0
+    
+    last = time.time()
 
+    for (samples, labels) in dp.get_mb():
+        print count, ':', samples.shape
+        thistime = time.time() - last
+        print thistime
+        last = time.time()
+        count = count + 1
+    
 
