@@ -12,28 +12,34 @@ namespace minerva {
 
 class SimpleChunk : public BackendChunk {
  public:
-  SimpleChunk(const PhysicalData& data): data(data) {}
-  const Scale& shape() const override { return data.size; }
-  BackendChunk* ShallowCopy() const override { return new SimpleChunk(data); }
-  PhysicalData data;
+  SimpleChunk(std::shared_ptr<PhysicalData> data): data_(data) {}
+  const Scale& shape() const override { return data_->size; }
+  BackendChunk* ShallowCopy() const override { return new SimpleChunk(data_); }
+  PhysicalData& data() { return *data_; }
+ private:
+  std::shared_ptr<PhysicalData> data_;
 };
 
 SimpleBackend::SimpleBackend(DeviceManager& dm): device_manager_(dm), finished_flag_(false) {
   device_manager_.RegisterListener(this);
 }
 
-std::vector<BackendChunk*> SimpleBackend::Create(const std::vector<BackendChunk*>& input, const std::vector<Scale>& result_sizes, std::shared_ptr<ComputeFn> fn) {
+std::vector<BackendChunk*> SimpleBackend::Create(const std::vector<BackendChunk*>& input,
+    const std::vector<Scale>& result_sizes, std::shared_ptr<ComputeFn> fn) {
   auto current_device_id = MinervaSystem::Instance().current_device_id_;
   std::vector<BackendChunk*> result_chunks;
   Task* task = new Task();
   for (auto i : input) {
     auto c = CHECK_NOTNULL(dynamic_cast<SimpleChunk*>(i));
-    task->inputs.emplace_back(c->data, 0);
+    task->inputs.emplace_back(c->data(), 0);
   }
   for (auto s : result_sizes) {
-    SimpleChunk* o = new SimpleChunk(PhysicalData(s, current_device_id, MinervaSystem::Instance().GenerateDataId()));
+    auto data_id = MinervaSystem::Instance().GenerateDataId();
+    std::shared_ptr<PhysicalData> data_ptr( new PhysicalData(s, current_device_id, data_id),
+       [&] (PhysicalData* d) { device_manager_.FreeData(d->data_id); delete d; } );
+    SimpleChunk* o = new SimpleChunk(data_ptr);
     result_chunks.emplace_back(o);
-    task->outputs.emplace_back(o->data, 0);
+    task->outputs.emplace_back(o->data(), 0);
   }
   task->op = PhysicalOp{fn, current_device_id};
   task->id = 0;
@@ -57,7 +63,7 @@ void SimpleBackend::WaitForAll() {
 }
 
 std::shared_ptr<float> SimpleBackend::GetValue(BackendChunk* chunk) {
-  auto& data = CHECK_NOTNULL(dynamic_cast<SimpleChunk*>(chunk))->data;
+  auto& data = CHECK_NOTNULL(dynamic_cast<SimpleChunk*>(chunk))->data();
   shared_ptr<float> ret(new float[data.size.Prod()], [](float* p) {
     delete[] p;
   });
