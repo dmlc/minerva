@@ -241,7 +241,18 @@ class LMDBDataProvider:
                     im_cropped = im_cropped[:,:,::-1]
                 
                 samples[count, :] = im_cropped.reshape(self.crop_size ** 2 * 3).astype(np.float32)
-                
+               
+                '''
+                #output
+                imgdata = np.zeros([self.crop_size, self.crop_size, 3], dtype=np.uint8)
+                imgdata[:,:,0] = im_cropped[2,:,:]
+                imgdata[:,:,1] = im_cropped[1,:,:]
+                imgdata[:,:,2] = im_cropped[0,:,:]
+                cropimg = Image.fromarray(imgdata)
+                nnn = '/home/tianjun/tests/img_%d.jpg' % (count)
+                cropimg.save(nnn, format = 'JPEG')
+                '''
+
                 if num_label == -1:
                     num_label = len(d.label)
                     labels = np.zeros([self.batch_size, num_label], dtype=np.float32)

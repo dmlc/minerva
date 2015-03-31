@@ -13,16 +13,19 @@ class INetBuilder:
         pass
 
 class CaffeNetBuilder:
-    def __init__(self, net_file, solver_file):
-        print 'Caffe network file:', net_file
+    def __init__(self, solver_file):
         print 'Caffe solver file:', solver_file
-        with open(net_file, 'r') as f:
-            self.netconfig = NetParameter()
-            text_format.Merge(str(f.read()), self.netconfig)
         with open(solver_file, 'r') as f:
             self.solverconfig = SolverParameter()
             text_format.Merge(str(f.read()), self.solverconfig)
-
+        self.net_file = self.solverconfig.net
+        print 'Caffe network file:', self.net_file
+        with open(self.net_file, 'r') as f:
+            self.netconfig = NetParameter()
+            text_format.Merge(str(f.read()), self.netconfig)
+        self.snapshot_dir = self.solverconfig.snapshot_prefix
+        print 'Snapshot Dir: %s' % (self.snapshot_dir)
+    
     def build_net(self, owl_net, num_gpu):
         #set globle lr and wd
         owl_net.base_lr = self.solverconfig.base_lr
