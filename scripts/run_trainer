@@ -3,21 +3,16 @@
 # Provide file paths in this external file
 
 if [ $# -ne 3 ]; then
-  echo "Usage: ./run_trainer.sh <net-path-file> <snapshot> <num-gpu>"
+  echo "Usage: ./run_trainer.sh <solver-path> <snapshot> <num-gpu>"
   echo "Available network type: alex, goognet, vggnet"
   exit 1
 fi
 
-source $1
 
-net_file=$NET;
-solver_file=$SOLVER;
-snap_dir=$SNAP_DIR ;
-
+solver_file=$1
 snapshot=$2
 num_gpu=$3
 
-python net_trainer.py $net_file $solver_file \
+python net_trainer.py $solver_file \
   --snapshot=$snapshot \
-  --snapshot_dir=$snap_dir \
   --num_gpu=$num_gpu
