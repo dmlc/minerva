@@ -190,6 +190,52 @@ void Reduction(const DataList& inputs, const DataList& outputs, ReductionClosure
   } while (accumulator.IncrWithDimensionsFixed(res_max, closure.dims_to_reduce));
 }
 
+void SoftmaxForward(const DataList& inputs, const DataList& outputs, SoftmaxForwardClosure& closure) {
+  //TODO: Currently CPU only support kInstance softmax 
+  CHECK_EQ(inputs.size(), 1) << "(reduction) #inputs is wrong!";
+  CHECK_EQ(outputs.size(), 1) << "(reduction) #outputs is wrong!";
+  float* in_data = inputs[0].data_;
+  float* res_data = outputs[0].data_;
+  auto in_max = inputs[0].size_;
+  auto in_range = ScaleRange::MakeRangeFromOrigin(in_max);
+  auto res_max = outputs[0].size_;
+  auto res_range = ScaleRange::MakeRangeFromOrigin(res_max);
+  auto accumulator = Scale::Origin(in_max.NumDims());
+ 
+  //normalize according to batch dimension
+  std::vector<int> batchdim(1,0);
+  auto dim_to_norm = Scale(batchdim);
+
+  //sub the max to prevent numerical problem
+  do {
+    auto cur = accumulator;
+    float tmp = in_data[in_range.Flatten(cur)];
+    //get max
+    while (cur.IncrDimensions(in_max, dim_to_norm)) {
+      float tmp2 = in_data[in_range.Flatten(cur)];
+      if (tmp < tmp2) {
+        tmp = tmp2;
+      }
+    }
+    //exp(x - max), also sum the result
+    cur = accumulator;
+    float sum_exp = 0;
+    while (cur.IncrDimensions(in_max, dim_to_norm)) {
+      res_data[in_range.Flatten(cur)] = expf(in_data[in_range.Flatten(cur)] - tmp);
+      sum_exp += res_data[in_range.Flatten(cur)];
+    }
+    //devide the sum
+    cur = accumulator;
+    while (cur.IncrDimensions(in_max, dim_to_norm)) {
+      res_data[in_range.Flatten(cur)] /= sum_exp; 
+    }
+  } while (accumulator.IncrWithDimensionsFixed(res_max, dim_to_norm));
+}
+
+
+
+
+
 void ArrayLoader(const DataList& outputs, ArrayLoaderClosure& closure) {
   CHECK_EQ(outputs.size(), 1) << "(array loader) #outputs wrong";
   CHECK(closure.data) << "probably already executed";
