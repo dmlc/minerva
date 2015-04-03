@@ -11,6 +11,11 @@ void NO_IMPL(Args&&...) {
   LOG(FATAL) << "no implementation";
 }
 
+template<typename I, typename O, typename C, typename... Args>
+void NO_IMPL(const I & i, const O & o, C & c, Args&&...) {
+  LOG(FATAL) << "no implementation for " << typeid(C).name();
+}
+
 INSTALL_COMPUTE_FN(ArithmeticClosure, basic::Arithmetic, NO_IMPL, cuda::Arithmetic);
 INSTALL_COMPUTE_FN(ArithmeticConstClosure, basic::ArithmeticConst, NO_IMPL, cuda::ArithmeticConst);
 INSTALL_COMPUTE_FN(MatMultClosure, basic::MatMult, NO_IMPL, cuda::MatMult);
