@@ -24,6 +24,34 @@ class NetTrainer:
         self.builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
 
     def run(s):
+        
+        #multi-view test
+        acc_num = 0
+        test_num = 0
+        loss_unit = s.owl_net.units[s.owl_net.name_to_uid['loss'][0]] 
+        for testiteridx in range(s.owl_net.solver.test_iter[0]):
+            for i in range(10): 
+                s.owl_net.forward('TEST')
+                if i == 0:
+                    softmax_val = loss_unit.ff_y
+                    batch_size = softmax_val.shape[1]
+                    softmax_label = loss_unit.y
+                else:
+                    softmax_val = softmax_val + loss_unit.ff_y
+            
+            test_num += batch_size
+            predict = softmax_val.argmax(0)
+            truth = softmax_label.argmax(0)
+            correct = (predict - truth).count_zero()
+            acc_num += correct
+            print "Accuracy the %d mb: %f" % (testiteridx, correct)
+            sys.stdout.flush()
+        print "Testing Accuracy: %f" % (float(acc_num)/test_num)
+        exit(0)
+    
+        
+        
+        
         wgrad = [[] for i in range(s.num_gpu)]
         bgrad = [[] for i in range(s.num_gpu)]
         last = time.time()

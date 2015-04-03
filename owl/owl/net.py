@@ -484,7 +484,31 @@ class LMDBDataUnit(DataUnit):
     def init_layer_size(self, from_btm, to_top):
         self.out_shape = [self.params.transform_param.crop_size, self.params.transform_param.crop_size, 3, 1]
         to_top[self.top_names[0]] = self.out_shape[:]
-    
+   
+    def forward(self, from_btm, to_top, phase):
+        if self.generator == None:
+            if phase == 'TRAIN':
+                self.generator = self.dp.get_mb(phase)
+            #multiview test
+            else:
+                self.generator = self.dp.get_multiview_mb()
+
+        while True:
+            try:
+                (samples, labels) = next(self.generator)
+                if len(labels) == 0:
+                    (samples, labels) = next(self.generator)
+            except StopIteration:
+                print 'Have scanned the whole dataset; start from the begginning agin'
+                self.generator = self.dp.get_mb(phase)
+                continue
+            break
+
+        to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
+        for i in range (1, len(self.top_names)):
+            to_top[self.top_names[i]] = labels[:,i - 1]
+
+
     def __str__(self):
         return 'lmdb_data'
 

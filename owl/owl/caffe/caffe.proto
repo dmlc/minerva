@@ -192,6 +192,7 @@ message SolverState {
 enum Phase {
    TRAIN = 0;
    TEST = 1;
+   MULTI_VIEW = 2;
 }
 
 message NetState {

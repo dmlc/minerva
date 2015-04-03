@@ -21,6 +21,14 @@ class CaffeNetBuilder:
             text_format.Merge(str(f.read()), self.netconfig)
         self.snapshot_dir = self.solverconfig.snapshot_prefix
         print 'Snapshot Dir: %s' % (self.snapshot_dir)
+ 
+    #TODO: hack for patchnet
+    def change_net(self, net_file):
+        self.net_file = net_file
+        print 'Caffe network file:', self.net_file
+        with open(self.net_file, 'r') as f:
+            self.netconfig = NetParameter()
+            text_format.Merge(str(f.read()), self.netconfig)
     
     def build_net(self, owl_net, num_gpu):
         #set globle lr and wd

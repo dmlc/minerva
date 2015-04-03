@@ -267,6 +267,50 @@ class LMDBDataProvider:
             delete_idx = np.arange(count, self.batch_size)
             yield (np.delete(samples, delete_idx, 0), np.delete(labels, delete_idx, 0))
 
+    def get_multiview_mb(self):
+        env = lmdb.open(self.source, readonly=True)
+        view_num = 10
+        ori_size = -1
+        samples = np.zeros([view_num, self.batch_size, self.crop_size ** 2 * 3], dtype=np.float32)
+        num_label = -1
+        count = 0
+        with env.begin(write=False, buffers=False) as txn:
+            cursor = txn.cursor()
+            for key, value in cursor:
+                d = Datum()
+                d.ParseFromString(value)
+                if ori_size == -1:
+                    ori_size = np.sqrt(len(d.data) / 3)
+                    diff_size = ori_size - self.crop_size
+                    start_h = [0, diff_size, 0, diff_size, diff_size/2]
+                    start_w = [0, 0, diff_size, diff_size, diff_size/2]
+
+                im = np.fromstring(d.data, dtype=np.uint8).reshape([3, ori_size, ori_size]) - self.mean_data
+                
+                for i in range(view_num):
+                    crop_h = start_h[i/2]
+                    crop_w = start_w[i/2]
+                    im_cropped = im[:, crop_h:crop_h+self.crop_size, crop_w:crop_w+self.crop_size]
+                    if i%2 == 1:
+                        im_cropped = im_cropped[:,:,::-1]
+                    samples[i, count, :] = im_cropped.reshape(self.crop_size ** 2 * 3).astype(np.float32)
+                   
+                if num_label == -1:
+                    num_label = len(d.label)
+                    labels = np.zeros([self.batch_size, num_label], dtype=np.float32)
+                labels[count, :] = d.label
+                
+                count = count + 1
+                if count == self.batch_size:
+                    for i in range(view_num):
+                        yield (samples[i,:,:], labels)
+                    labels = np.zeros([self.batch_size, num_label], dtype=np.float32)
+                    count = 0
+        if count != self.batch_size:
+            delete_idx = np.arange(count, self.batch_size)
+            yield (np.delete(samples, delete_idx, 0), np.delete(labels, delete_idx, 0))
+
+
 if __name__ == '__main__':
     ''' 
     if sys.argv[1] == 'lmdb':
