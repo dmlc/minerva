@@ -308,7 +308,7 @@ class LMDBDataProvider:
                     count = 0
         if count != self.batch_size:
             delete_idx = np.arange(count, self.batch_size)
-            yield (np.delete(samples, delete_idx, 0), np.delete(labels, delete_idx, 0))
+            yield (np.delete(samples, delete_idx, 1), np.delete(labels, delete_idx, 0))
 
 
 if __name__ == '__main__':
