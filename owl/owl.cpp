@@ -9,6 +9,10 @@
 #include <glog/logging.h>
 #include "minerva.h"
 
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define NO_IMPORT_ARRAY
+#include <numpy/arrayobject.h>
+
 using namespace std;
 
 namespace m = minerva;
@@ -115,7 +119,10 @@ np::ndarray NArrayToNPArray(m::NArray narr) {
   size_t length = shape.Prod();
   float* np_ptr = new float[length];
   memcpy(np_ptr, v.get(), sizeof(float) * length);
-  return np::from_data(np_ptr, np::dtype::get_builtin<float>(), np_shape, np_stride, bp::object());
+  // We should set NPY_ARRAY_OWNDATA to let numpy deallocate np_ptr to avoid memory leaks.
+  np::ndarray nparr = np::from_data(np_ptr, np::dtype::get_builtin<float>(), np_shape, np_stride, bp::object());
+  PyArray_ENABLEFLAGS(reinterpret_cast<PyArrayObject*>(nparr.ptr()), NPY_ARRAY_OWNDATA);
+  return nparr;
 }
 
 bp::list ShapeWrapper(m::NArray narr) {
