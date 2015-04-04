@@ -5,7 +5,9 @@ import numpy as np
 import math
 import Queue
 from caffe import *
-from netio import ImageNetDataProvider
+from netio import LMDBDataProvider
+from netio import ImageListDataProvider
+from netio import ImageWindowDataProvider
 
 class ComputeUnit(object):
     def __init__(self, params):
@@ -13,8 +15,11 @@ class ComputeUnit(object):
         self.name = params.name
         self.btm_names = []
         self.top_names = []
+        self.out_shape = None
     def __str__(self):
         return 'N/A unit'
+    def init_layer_size(self, from_btm, to_top):
+        pass
     def forward(self, from_btm, to_top, phase):
         pass
     def backward(self, from_top, to_btm, phase):
@@ -25,6 +30,9 @@ class ComputeUnit(object):
 class ComputeUnitSimple(ComputeUnit):
     def __init__(self, params):
         super(ComputeUnitSimple, self).__init__(params)
+    def init_layer_size(self, from_btm, to_top):
+        to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
+        self.out_shape = to_top[self.top_names[0]][:]
     def forward(self, from_btm, to_top, phase):
         to_top[self.top_names[0]] = self.ff(from_btm[self.btm_names[0]], phase)
     def ff(self, act, phase):
@@ -45,6 +53,9 @@ class WeightedComputeUnit(ComputeUnitSimple):
         self.bias = None
         self.biasdelta = None
         self.biasgrad = None
+      
+        self.in_shape = None
+
         # blob learning rate and weight decay
         self.blobs_lr = params.blobs_lr
         self.weight_decay = params.weight_decay
@@ -52,9 +63,40 @@ class WeightedComputeUnit(ComputeUnitSimple):
             self.blobs_lr = [1,1]
         if len(self.weight_decay) == 0:
             self.weight_decay = [1, 0]
-
+    
+    def init_layer_size(self, from_btm, to_top):
+        pass 
+   
+    def init_weights_with_filler(self):
+        #init weight
+        npweights = None
+        if self.weight_filler.type == "constant":
+            npweights = np.ones(self.wshape, dtype = np.float32) * self.weight_filler.value
+        elif self.weight_filler.type == "gaussian":
+            npweights = np.random.normal(self.weight_filler.mean, self.weight_filler.std, self.wshape)
+        elif self.weight_filler.type == "uniform":
+            npweights = np.random.uniform(self.weight_filler.min, self.weight_filler.max, self.wshape)
+        elif self.weight_filler.type == "xavier":
+            fan_in = np.prod(self.in_shape[:])
+            scale = np.sqrt(float(3)/fan_in)
+            npweights = np.random.uniform(-scale, scale, self.wshape)
+        self.weight = owl.from_numpy(npweights.astype(np.float32)).reshape(self.wshape)
+      
+        #init bias
+        npwbias = None
+        if self.bias_filler.type == "constant":
+            npbias = np.ones(self.bshape, dtype = np.float32) * self.bias_filler.value
+        elif self.bias_filler.type == "gaussian":
+            npbias = np.random.normal(self.bias_filler.mean, self.bias_filler.std, self.bshape)
+        elif self.bias_filler.type == "uniform":
+            npbias = np.random.uniform(self.bias_filler.min, self.bias_filler.max, self.bshape)
+        elif self.bias_filler.type == "xavier":
+            fan_in = np.prod(self.in_shape[:])
+            scale = np.sqrt(float(3)/fan_in)
+            npbias = np.random.uniform(-scale, scale, self.bshape)
+        self.bias = owl.from_numpy(npbias.astype(np.float32)).reshape(self.bshape)
+        
     def weight_update(self, base_lr, base_weight_decay, momentum, batch_size):
-        #TODO: need recheck with caffe with what's the multiplier for weight decay
         if self.weightdelta == None:
             self.weightdelta = owl.zeros(self.weightgrad.shape)
 
@@ -105,12 +147,24 @@ class TanhUnit(ComputeUnitSimple):
 class PoolingUnit(ComputeUnitSimple):
     def __init__(self, params):
         super(PoolingUnit, self).__init__(params)
-        ppa = params.pooling_param
-        if ppa.pool == PoolingParameter.PoolMethod.Value('MAX'):
+        self.ppa = params.pooling_param
+        if self.ppa.pool == PoolingParameter.PoolMethod.Value('MAX'):
             pool_ty = co.pool_op.max
-        elif ppa.pool == PoolingParameter.PoolMethod.Value('AVE'):
+        elif self.ppa.pool == PoolingParameter.PoolMethod.Value('AVE'):
             pool_ty = co.pool_op.avg
-        self.pooler = co.Pooler(ppa.kernel_size, ppa.kernel_size, ppa.stride, ppa.stride, ppa.pad, ppa.pad, pool_ty)
+        self.pooler = co.Pooler(self.ppa.kernel_size, self.ppa.kernel_size, self.ppa.stride, self.ppa.stride, self.ppa.pad, self.ppa.pad, pool_ty)
+    def init_layer_size(self, from_btm, to_top):
+        self.out_shape = from_btm[self.btm_names[0]][:]
+        ori_height = self.out_shape[0]
+        ori_width = self.out_shape[1]
+        self.out_shape[0] = int(np.ceil(float(self.out_shape[0] + 2 * self.ppa.pad - self.ppa.kernel_size) / self.ppa.stride)) + 1
+        self.out_shape[1] = int(np.ceil(float(self.out_shape[1] + 2 * self.ppa.pad - self.ppa.kernel_size) / self.ppa.stride)) + 1
+        if self.ppa.pad:
+            if (self.out_shape[0] - 1) * self.ppa.stride >= ori_height + self.ppa.pad:
+                self.out_shape[0] = self.out_shape[0] - 1
+                self.out_shape[1] = self.out_shape[1] - 1
+        to_top[self.top_names[0]] = self.out_shape[:]
+
     def ff(self, x, phase):
         self.ff_x = x
         self.ff_y = self.pooler.ff(x)
@@ -150,10 +204,22 @@ class SoftmaxUnit(ComputeUnit):
     def __init__(self, params):
         super(SoftmaxUnit, self).__init__(params)
         self.loss_weight = params.loss_weight
+    
+    def init_layer_size(self, from_btm, to_top):
+        to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
+        self.out_shape = to_top[self.top_names[0]][:]
+    
     def forward(self, from_btm, to_top, phase):
         to_top[self.top_names[0]] = co.softmax(from_btm[self.btm_names[0]], co.soft_op.instance)
         self.ff_y = to_top[self.top_names[0]]
-        self.y = from_btm[self.btm_names[1]]
+        #turn label into matrix form
+        nplabel = np.zeros([self.ff_y.shape[1], self.ff_y.shape[0]], dtype=np.float32)
+        self.strlabel = from_btm[self.btm_names[1]]
+        
+        for i in range(len(self.strlabel)):
+            nplabel[i, self.strlabel[i]] = 1
+        self.y = owl.from_numpy(nplabel)
+        
     def backward(self, from_top, to_btm, phase):
         if len(self.loss_weight) == 1:
             to_btm[self.btm_names[0]] = (self.ff_y - self.y)*self.loss_weight[0]
@@ -162,32 +228,9 @@ class SoftmaxUnit(ComputeUnit):
 
 
     def getloss(self):
-        #get accuracy
-        '''
-        batch_size = self.ff_y.shape[1]
-        predict = self.ff_y.argmax(0)
-        ground_truth = self.y.argmax(0)
-        correct = (predict - ground_truth).count_zero()
-        acc = 1 - (batch_size - correct) * 1.0 / batch_size
-        print acc
-        '''
-
         lossmat = ele.mult(ele.ln(self.ff_y), self.y)
         res = lossmat.sum(0).sum(1).to_numpy()
         return -res[0][0] / lossmat.shape[1]
-
-        '''
-        outputlist = self.ff_y.to_numpy()
-        outputshape = np.shape(outputlist)
-        outputlist = outputlist.reshape(np.prod(outputshape[0:len(outputshape)]))
-        labellist = self.y.to_numpy().reshape(np.prod(outputshape[0:len(outputshape)]))
-        res = 0
-        for i in xrange(np.prod(outputshape[0:len(outputshape)])):
-            if labellist[i] > 0.5:
-                res -= math.log(outputlist[i])
-        #print res
-        return res
-        '''
 
     def __str__(self):
         return 'softmax'
@@ -197,12 +240,17 @@ class AccuracyUnit(ComputeUnit):
         super(AccuracyUnit, self).__init__(params)
         self.acc = 0
         self.batch_size = 0
+
+    def init_layer_size(self, from_btm, to_top):
+        to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
+        self.out_shape = to_top[self.top_names[0]][:]
+    
     def forward(self, from_btm, to_top, phase):
         predict = from_btm[self.btm_names[0]].argmax(0)
-        ground_truth = from_btm[self.btm_names[1]].argmax(0)
+        ground_truth = owl.from_numpy(from_btm[self.btm_names[1]]).reshape(predict.shape)
         self.batch_size = from_btm[self.btm_names[0]].shape[1]
         correct = (predict - ground_truth).count_zero()
-        self.acc = 1 - (self.batch_size - correct) * 1.0 / self.batch_size
+        self.acc = correct * 1.0 / self.batch_size
 
     def backward(self, from_top, to_btm, phase):
         pass
@@ -229,6 +277,14 @@ class ConcatUnit(ComputeUnit):
         super(ConcatUnit, self).__init__(params)
         self.concat_dim_caffe = params.concat_param.concat_dim
         self.slice_count = []
+
+    def init_layer_size(self, from_btm, to_top):
+        to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
+        self.concat_dim = len(from_btm[self.btm_names[0]]) - 1 - self.concat_dim_caffe
+        for i in range(1, len(self.btm_names)):
+            to_top[self.top_names[0]][self.concat_dim] = to_top[self.top_names[0]][self.concat_dim] + from_btm[self.btm_names[i]][self.concat_dim]
+        self.out_shape = to_top[self.top_names[0]][:]
+
     def forward(self, from_btm, to_top, phase):
         narrays = []
         self.concat_dim = len(from_btm[self.btm_names[0]].shape) - 1 - self.concat_dim_caffe
@@ -239,7 +295,7 @@ class ConcatUnit(ComputeUnit):
     def backward(self, from_top, to_btm, phase):
         st_off = 0
         for i in range(len(self.btm_names)):
-            to_btm[self.btm_names[i]]  = owl.slice(from_top[self.top_names[0]], self.concat_dim, st_off, self.slice_count[i])
+            to_btm[self.btm_names[i]] = owl.slice(from_top[self.top_names[0]], self.concat_dim, st_off, self.slice_count[i])
             st_off += self.slice_count[i]
     def __str__(self):
         return 'concat'
@@ -248,7 +304,23 @@ class FullyConnection(WeightedComputeUnit):
     def __init__(self, params):
         super(FullyConnection, self).__init__(params)
         self.inner_product_param = params.inner_product_param
-
+        self.weight_filler = params.inner_product_param.weight_filler
+        self.bias_filler = params.inner_product_param.bias_filler
+    
+    def init_layer_size(self, from_btm, to_top):
+        shp = from_btm[self.btm_names[0]][:]
+        if len(shp) > 2:
+            self.in_shape = [np.prod(shp[0:-1], dtype=np.int32), shp[-1]]
+        else:
+            self.in_shape = shp
+        to_top[self.top_names[0]] = self.in_shape[:]
+        to_top[self.top_names[0]][0] = self.inner_product_param.num_output
+        to_top[self.top_names[0]][1] = 1 
+        self.out_shape = to_top[self.top_names[0]][:]
+        self.wshape = [self.out_shape[0], self.in_shape[0]]
+        self.bshape = [self.out_shape[0], 1]
+ 
+    
     def ff(self, act, phase):
         shp = act.shape
         if len(shp) > 2:
@@ -256,6 +328,8 @@ class FullyConnection(WeightedComputeUnit):
         else:
             a = act
         self.ff_act = act # save ff value
+        if self.weight == None:
+            self.init_weights_with_filler()
         return self.weight * a + self.bias
     def bp(self, sen):
         shp = self.ff_act.shape
@@ -279,17 +353,35 @@ class ConvConnection(WeightedComputeUnit):
         self.conv_params = params.convolution_param
         self.convolver = co.Convolver(self.conv_params.pad,
                 self.conv_params.pad, self.conv_params.stride, self.conv_params.stride)
-        self.convolution_param = params.convolution_param
         self.num_output = params.convolution_param.num_output
         self.group = params.convolution_param.group
         #TODO: hack, we don't want to slice agian to use it into bp as a parameter
         self.group_data = []
         self.group_filter = []
         self.group_bias = []
+        self.weight_filler = params.convolution_param.weight_filler
+        self.bias_filler = params.convolution_param.bias_filler
+    
+    def init_layer_size(self, from_btm, to_top):
+        self.in_shape = from_btm[self.btm_names[0]][:]
+        to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
+        to_top[self.top_names[0]][0] = (to_top[self.top_names[0]][0] + 2 * self.conv_params.pad - self.conv_params.kernel_size) / self.conv_params.stride + 1
+        to_top[self.top_names[0]][1] = (to_top[self.top_names[0]][1] + 2 * self.conv_params.pad - self.conv_params.kernel_size) / self.conv_params.stride + 1
+        to_top[self.top_names[0]][2] = self.num_output
+        self.out_shape = to_top[self.top_names[0]][:]
+        self.wshape = [self.conv_params.kernel_size, self.conv_params.kernel_size, self.in_shape[2], self.num_output]
+        self.bshape = [self.out_shape[2]]
+    
     def ff(self, act, phase):
         if self.group == 1:
             self.ff_act = act
+            if self.weight == None:
+                self.init_weights_with_filler()
             return self.convolver.ff(act, self.weight, self.bias)
+        else:
+            #currently doesn't support multi-group
+            assert(False)
+        '''
         else:
             #slice data
             self.group_data = []
@@ -309,6 +401,7 @@ class ConvConnection(WeightedComputeUnit):
                 group_result.append(self.convolver.ff(self.group_data[i], self.group_filter[i], self.group_bias[i]))
             #concat
             return owl.concat(group_result, data_concat_dim)
+        '''
 
     def bp(self, sen):
         if self.group == 1:
@@ -348,26 +441,13 @@ class ConvConnection(WeightedComputeUnit):
 class DataUnit(ComputeUnit):
     def __init__(self, params, num_gpu):
         super(DataUnit, self).__init__(params)
-        self.crop_size = params.transform_param.crop_size
-        self.num_output = 3
-        self.mirror = params.transform_param.mirror
-        if params.include[0].phase == Phase.Value('TRAIN'):
-            self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.transform_param.mean_value,
-                    params.data_param.source,
-                    params.data_param.batch_size / num_gpu,
-                    params.transform_param.crop_size)
-        else:
-            self.dp = ImageNetDataProvider(params.transform_param.mean_file, params.transform_param.mean_value,
-                    params.data_param.source,
-                    params.data_param.batch_size,
-                    params.transform_param.crop_size)
 
-        self.generator = None
-        #(self.samples, self.labels) = next(self.generator)
+    def init_layer_size(self, from_btm, to_top):
+        pass
 
     def forward(self, from_btm, to_top, phase):
         if self.generator == None:
-            self.generator = self.dp.get_train_mb(self.mirror, phase)
+            self.generator = self.dp.get_mb(phase)
 
         while True:
             try:
@@ -376,17 +456,97 @@ class DataUnit(ComputeUnit):
                     (samples, labels) = next(self.generator)
             except StopIteration:
                 print 'Have scanned the whole dataset; start from the begginning agin'
-                self.generator = self.dp.get_train_mb(self.mirror, phase)
+                self.generator = self.dp.get_mb(phase)
                 continue
             break
 
         to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
-        to_top[self.top_names[1]] = owl.from_numpy(labels)
+        #may have multiplier labels
+        for i in range (1, len(self.top_names)):
+            to_top[self.top_names[i]] = labels[:,i - 1]
 
     def backward(self, from_top, to_btm, phase):
         pass
     def __str__(self):
         return 'data'
+
+class LMDBDataUnit(DataUnit):
+    def __init__(self, params, num_gpu):
+        super(LMDBDataUnit, self).__init__(params, num_gpu)
+        if params.include[0].phase == Phase.Value('TRAIN'):
+            self.dp = LMDBDataProvider(params.data_param, params.transform_param, num_gpu)
+        else:
+            self.dp = LMDBDataProvider(params.data_param, params.transform_param, 1)
+        self.params = params
+        self.crop_size = params.transform_param.crop_size
+        self.generator = None
+
+    def init_layer_size(self, from_btm, to_top):
+        self.out_shape = [self.params.transform_param.crop_size, self.params.transform_param.crop_size, 3, 1]
+        to_top[self.top_names[0]] = self.out_shape[:]
+   
+    def forward(self, from_btm, to_top, phase):
+        if self.generator == None:
+            if phase == 'TRAIN' or phase == 'TEST':
+                self.generator = self.dp.get_mb(phase)
+            #multiview test
+            else:
+                self.generator = self.dp.get_multiview_mb()
+
+        while True:
+            try:
+                (samples, labels) = next(self.generator)
+                if len(labels) == 0:
+                    (samples, labels) = next(self.generator)
+            except StopIteration:
+                print 'Have scanned the whole dataset; start from the begginning agin'
+                self.generator = self.dp.get_mb(phase)
+                continue
+            break
+
+        to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
+        for i in range (1, len(self.top_names)):
+            to_top[self.top_names[i]] = labels[:,i - 1]
+
+
+    def __str__(self):
+        return 'lmdb_data'
+
+class ImageDataUnit(DataUnit):
+    def __init__(self, params, num_gpu):
+        super(ImageDataUnit, self).__init__(params, num_gpu)
+        if params.include[0].phase == Phase.Value('TRAIN'):
+            self.dp = ImageListDataProvider(params.image_data_param, params.transform_param, num_gpu)
+        else:
+            self.dp = ImageListDataProvider(params.image_data_param, params.transform_param, 1)
+        self.params = params
+        self.crop_size = params.transform_param.crop_size
+        self.generator = None
+
+    def init_layer_size(self, from_btm, to_top):
+        self.out_shape = [self.params.transform_param.crop_size, self.params.transform_param.crop_size, 3, 1]
+        to_top[self.top_names[0]] = self.out_shape[:]
+
+    def __str__(self):
+        return 'image_data'
+
+class ImageWindowDataUnit(DataUnit):
+    def __init__(self, params, num_gpu):
+        super(ImageWindowDataUnit, self).__init__(params, num_gpu)
+        if params.include[0].phase == Phase.Value('TRAIN'):
+            self.dp = ImageWindowDataProvider(params.window_data_param, num_gpu)
+        else:
+            self.dp = ImageWindowDataProvider(params.window_data_param, 1)
+        self.params = params
+        self.crop_size = params.window_data_param.crop_size
+        self.generator = None
+
+    def init_layer_size(self, from_btm, to_top):
+        self.out_shape = [self.params.window_data_param.crop_size, self.params.window_data_param.crop_size, 3, 1]
+        to_top[self.top_names[0]] = self.out_shape[:]
+    
+    def __str__(self):
+        return 'window_data'
 
 class Net:
     def __init__(self):
@@ -488,6 +648,17 @@ class Net:
                 if depcount[l] == 0:
                     queue.put(l)
 
+    def init_layer_size(self, phase = 'TRAIN'):
+        unit_to_tops = [{} for name in self.units]
+        for u in self._toporder(phase):
+            from_btm = {}
+            for btm in self.reverse_adjacent[u]:
+                from_btm.update(unit_to_tops[btm])
+            self.units[u].init_layer_size(from_btm, unit_to_tops[u])
+        for u in self._toporder(phase):
+            print self.units[u].name
+            print self.units[u].out_shape
+    
     def forward(self, phase = 'TRAIN'):
         unit_to_tops = [{} for name in self.units]
         for u in self._toporder(phase):

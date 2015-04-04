@@ -64,7 +64,7 @@ class NArray {
   NArray& operator-=(float);
   NArray& operator*=(float);
   NArray& operator/=(float);
-  NArray operator-();
+  NArray operator-() const;
   // Matmult
   friend NArray operator*(const NArray&, const NArray&);
   NArray& operator*=(const NArray&);
