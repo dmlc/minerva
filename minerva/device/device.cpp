@@ -1,9 +1,12 @@
-#include "device.h"
 #include <utility>
 #include <cstdlib>
 #include <mutex>
 #include <sstream>
+
 #include <glog/logging.h>
+#include <gflags/gflags.h>
+
+#include "device.h"
 #include "device/task.h"
 #include "system/minerva_system.h"
 #include "op/context.h"
@@ -16,6 +19,7 @@
 #endif
 
 #define DEFAULT_POOL_SIZE ((size_t) 5.8 * 1024 * 1024 * 1024)
+DEFINE_bool(no_execute, false, "Disable the actual computation (for performance debuggin)");
 
 using namespace std;
 
@@ -89,20 +93,22 @@ void ThreadedDevice::Execute(Task* task, int thrid) {
   }
   auto& op = task->op;
   CHECK(op.compute_fn);
+  if(!FLAGS_no_execute) {
 #ifndef NDEBUG
-  Barrier(thrid);
-  memory_timer.Stop();
-  MinervaSystem::Instance().profiler().RecordTime(TimerType::kMemory, op.compute_fn->Name(), memory_timer);
-  WallTimer calculate_timer;
-  calculate_timer.Start();
+    Barrier(thrid);
+    memory_timer.Stop();
+    MinervaSystem::Instance().profiler().RecordTime(TimerType::kMemory, op.compute_fn->Name(), memory_timer);
+    WallTimer calculate_timer;
+    calculate_timer.Start();
 #endif
-  DLOG(INFO) << Name() << " execute task #" << task->id << ": " << op.compute_fn->Name();
-  DoExecute(input_shards, output_shards, op, thrid);
-  DLOG(INFO) << Name() << " finished execute task #" << task->id << ": " << op.compute_fn->Name();
+    DLOG(INFO) << Name() << " execute task #" << task->id << ": " << op.compute_fn->Name();
+    DoExecute(input_shards, output_shards, op, thrid);
+    DLOG(INFO) << Name() << " finished execute task #" << task->id << ": " << op.compute_fn->Name();
 #ifndef NDEBUG
-  calculate_timer.Stop();
-  MinervaSystem::Instance().profiler().RecordTime(TimerType::kCalculation, op.compute_fn->Name(), calculate_timer);
+    calculate_timer.Stop();
+    MinervaSystem::Instance().profiler().RecordTime(TimerType::kCalculation, op.compute_fn->Name(), calculate_timer);
 #endif
+  }
   listener_->OnOperationComplete(task);
 }
 
