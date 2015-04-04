@@ -147,7 +147,7 @@ NArray& NArray::operator/=(float val) {
   return *this = (*this / val);
 }
 
-NArray NArray::operator-() {
+NArray NArray::operator-() const {
   return ElewiseHelper(*this, ElewiseType::kNegative);
 }
 
