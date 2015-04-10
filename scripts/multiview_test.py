@@ -20,7 +20,7 @@ class NetTrainer:
         self.builder = CaffeNetBuilder(self.solver_file)
         self.snapshot_dir = self.builder.snapshot_dir
         self.builder.build_net(self.owl_net, self.num_gpu)
-        self.owl_net.init_layer_size()
+        self.owl_net.init_layer_size('MULTI_VIEW')
         self.builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
 
     def run(s):

@@ -487,7 +487,7 @@ class LMDBDataUnit(DataUnit):
    
     def forward(self, from_btm, to_top, phase):
         if self.generator == None:
-            if phase == 'TRAIN':
+            if phase == 'TRAIN' or phase == 'TEST':
                 self.generator = self.dp.get_mb(phase)
             #multiview test
             else:
