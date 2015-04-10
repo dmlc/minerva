@@ -46,7 +46,7 @@ std::vector<BackendChunk*> SimpleBackend::Create(const std::vector<BackendChunk*
   task->id = 0;
   DLOG(INFO) << "executing task name=" << fn->Name() << " to device #" << current_device_id;
   // wait for finish
-  unique_lock<mutex> ul(finish_mutex_);
+  //unique_lock<mutex> ul(finish_mutex_);
   finished_flag_.store(false);;
   device_manager_.GetDevice(current_device_id)->PushTask(task);
   while(! finished_flag_.load()) {
@@ -74,7 +74,7 @@ std::shared_ptr<float> SimpleBackend::GetValue(BackendChunk* chunk) {
 }
 
 void SimpleBackend::OnOperationComplete(Task* task) {
-  lock_guard<mutex> ul(finish_mutex_);
+  //lock_guard<mutex> ul(finish_mutex_);
   //std::cout << "Callback flag=" << finished_flag_ << std::endl;
   finished_flag_.store(true);
   //finish_cond_.notify_all();

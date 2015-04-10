@@ -51,6 +51,8 @@ ThreadedDevice::ThreadedDevice(uint64_t device_id, DeviceListener* l, size_t par
 }
 
 void ThreadedDevice::PushTask(Task* task) {
+  listener_->OnOperationComplete(task);
+  return;
   pool_.Push(bind(&ThreadedDevice::Execute, this, task, placeholders::_1));
 }
 
