@@ -19,6 +19,24 @@ namespace m = minerva;
 namespace bp = boost::python;
 namespace np = boost::numpy;
 
+#include <ctime>
+class Timer {
+ public:
+   Timer() {
+     start_ = clock();
+   }
+   ~Timer() {
+     clock_t end = clock();
+     double dur = ((double) end - start_) / CLOCKS_PER_SEC * 1000000;
+     elapsed_micro_seconds += dur;
+   }
+   static double elapsed_micro_seconds;
+ private:
+   clock_t start_;
+};
+
+double Timer::elapsed_micro_seconds = 0;
+
 namespace owl {
 
 void Initialize(bp::list args) {
@@ -59,11 +77,13 @@ void SetDevice(uint64_t id) {
 }
 
 m::Scale ToScale(const bp::list& l) {
+  //Timer timer;
   bp::stl_input_iterator<int> begin(l), end;
   return m::Scale(begin, end);
 }
 
 bp::list ToPythonList(const m::Scale& s) {
+  //Timer timer;
   bp::list l;
   for (int i : s) {
     l.append(i);
@@ -72,22 +92,27 @@ bp::list ToPythonList(const m::Scale& s) {
 }
 
 m::NArray ZerosWrapper(const bp::list& s) {
+  Timer timer;
   return m::NArray::Zeros(ToScale(s));
 }
 
 m::NArray OnesWrapper(const bp::list& s) {
+  Timer timer;
   return m::NArray::Ones(ToScale(s));
 }
 
 m::NArray RandnWrapper(const bp::list& s, float mean, float var) {
+  Timer timer;
   return m::NArray::Randn(ToScale(s), mean, var);
 }
 
 m::NArray RandBernoulliWrapper(const bp::list& s, float p) {
+  Timer timer;
   return m::NArray::RandBernoulli(ToScale(s), p);
 }
 
 m::NArray ReshapeWrapper(m::NArray narr, const bp::list& s) {
+  Timer timer;
   return narr.Reshape(ToScale(s));
 }
 
@@ -126,11 +151,13 @@ np::ndarray NArrayToNPArray(m::NArray narr) {
 }
 
 bp::list ShapeWrapper(m::NArray narr) {
+  Timer timer;
   return ToPythonList(narr.Size());
 }
 
 //////////////////////////////// profiler & debug
 void PrintProfilerResult() {
+  std::cout << "Timer: " << Timer::elapsed_micro_seconds << std::endl;
   m::MinervaSystem::Instance().profiler().PrintResult();
 }
 

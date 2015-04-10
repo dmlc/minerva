@@ -2,6 +2,7 @@
 #include <list>
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 #include <thread>
 #include <cstdio>
 #include "bool_flag.h"

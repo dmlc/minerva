@@ -61,11 +61,11 @@ void ThreadedDevice::FreeDataIfExist(uint64_t data_id) {
 
 void ThreadedDevice::Execute(Task* task, int thrid) {
   PreExecute();
-  DataList input_shards;
 #ifndef NDEBUG
   WallTimer memory_timer;
   memory_timer.Start();
 #endif
+  DataList input_shards;
   for (auto& i : task->inputs) {
     auto& input_data = i.physical_data;
     if (input_data.device_id == device_id_) {  // Input is local
