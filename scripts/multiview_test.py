@@ -43,7 +43,7 @@ class NetTrainer:
             truth = softmax_label.argmax(0)
             correct = (predict - truth).count_zero()
             acc_num += correct
-            print "Accuracy the %d mb: %f" % (testiteridx, correct)
+            print "Accuracy the %d mb: %f, batch_size: %d" % (testiteridx, correct, batch_size)
             sys.stdout.flush()
         print "Testing Accuracy: %f" % (float(acc_num)/test_num)
    
