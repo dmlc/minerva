@@ -11,6 +11,7 @@
 #include "common/cuda_utils.h"
 
 DEFINE_bool(use_dag, true, "Use dag engine");
+DEFINE_bool(no_init_glog, false, "Skip initializing Google Logging");
 
 using namespace std;
 
@@ -47,7 +48,8 @@ MinervaSystem::MinervaSystem(int* argc, char*** argv) : current_device_id_(0), d
 #ifndef HAS_PS
   // glog is initialized in PS::main, and also here, so we will hit a
   // double-initalize error when compiling with PS
-  google::InitGoogleLogging((*argv)[0]);
+  if (!FLAGS_no_init_glog)
+    google::InitGoogleLogging((*argv)[0]);
 #endif
   physical_dag_ = new PhysicalDag();
   profiler_ = new ExecutionProfiler();

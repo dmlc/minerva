@@ -2,6 +2,7 @@
 
 ## Latest News
 
+* Minerva had migrated to [dmlc](https://github.com/dmlc), where you could find many awesome machine learning repositories!
 * Minerva now evolves to use cudnn_v2. Please download and use the new [library](https://developer.nvidia.com/cuDNN).
 
 ## Overview
