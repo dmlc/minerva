@@ -4,9 +4,10 @@ import lmdb
 import numpy as np
 import numpy.random
 import scipy.io as si
-from caffe import *
 from PIL import Image
 from google.protobuf import text_format
+
+from caffe import *
 
 class ImageWindowDataProvider:
     def __init__(self, window_data_param, mm_batch_num):

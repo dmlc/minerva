@@ -1,10 +1,13 @@
-import owl
-import owl.elewise as ele
-import owl.conv as co
+
 import numpy as np
 import math
 import Queue
+
+import owl
+import owl.elewise as ele
+import owl.conv as co
 from caffe import *
+
 from netio import LMDBDataProvider
 from netio import ImageListDataProvider
 from netio import ImageWindowDataProvider
@@ -153,6 +156,7 @@ class PoolingUnit(ComputeUnitSimple):
         elif self.ppa.pool == PoolingParameter.PoolMethod.Value('AVE'):
             pool_ty = co.pool_op.avg
         self.pooler = co.Pooler(self.ppa.kernel_size, self.ppa.kernel_size, self.ppa.stride, self.ppa.stride, self.ppa.pad, self.ppa.pad, pool_ty)
+        
     def init_layer_size(self, from_btm, to_top):
         self.out_shape = from_btm[self.btm_names[0]][:]
         ori_height = self.out_shape[0]
@@ -184,9 +188,7 @@ class DropoutUnit(ComputeUnitSimple):
         if phase == "TRAIN":
             return ele.mult(x, self.dropmask)*self.scale
         else:
-            #return x * (1 - self.params.dropout_param.dropout_ratio)
             return x
-
         '''
         #for gradient test
         return x
@@ -226,7 +228,6 @@ class SoftmaxUnit(ComputeUnit):
         else:
             to_btm[self.btm_names[0]] = (self.ff_y - self.y)
 
-
     def getloss(self):
         lossmat = ele.mult(ele.ln(self.ff_y), self.y)
         res = lossmat.sum(0).sum(1).to_numpy()
@@ -254,6 +255,7 @@ class AccuracyUnit(ComputeUnit):
 
     def backward(self, from_top, to_btm, phase):
         pass
+
     def __str__(self):
         return 'accuracy'
 
@@ -295,7 +297,10 @@ class ConcatUnit(ComputeUnit):
     def backward(self, from_top, to_btm, phase):
         st_off = 0
         for i in range(len(self.btm_names)):
-            to_btm[self.btm_names[i]] = owl.slice(from_top[self.top_names[0]], self.concat_dim, st_off, self.slice_count[i])
+            to_btm[self.btm_names[i]] = owl.slice(from_top[self.top_names[0]],
+                                                  self.concat_dim,
+                                                  st_off,
+                                                  self.slice_count[i])
             st_off += self.slice_count[i]
     def __str__(self):
         return 'concat'
@@ -319,7 +324,6 @@ class FullyConnection(WeightedComputeUnit):
         self.out_shape = to_top[self.top_names[0]][:]
         self.wshape = [self.out_shape[0], self.in_shape[0]]
         self.bshape = [self.out_shape[0], 1]
- 
     
     def ff(self, act, phase):
         shp = act.shape
@@ -331,6 +335,7 @@ class FullyConnection(WeightedComputeUnit):
         if self.weight == None:
             self.init_weights_with_filler()
         return self.weight * a + self.bias
+
     def bp(self, sen):
         shp = self.ff_act.shape
         if len(shp) > 2:
@@ -369,7 +374,10 @@ class ConvConnection(WeightedComputeUnit):
         to_top[self.top_names[0]][1] = (to_top[self.top_names[0]][1] + 2 * self.conv_params.pad - self.conv_params.kernel_size) / self.conv_params.stride + 1
         to_top[self.top_names[0]][2] = self.num_output
         self.out_shape = to_top[self.top_names[0]][:]
-        self.wshape = [self.conv_params.kernel_size, self.conv_params.kernel_size, self.in_shape[2], self.num_output]
+        self.wshape = [self.conv_params.kernel_size,
+                       self.conv_params.kernel_size,
+                       self.in_shape[2],
+                       self.num_output]
         self.bshape = [self.out_shape[2]]
     
     def ff(self, act, phase):
@@ -381,60 +389,16 @@ class ConvConnection(WeightedComputeUnit):
         else:
             #currently doesn't support multi-group
             assert(False)
-        '''
-        else:
-            #slice data
-            self.group_data = []
-            group_result = []
-            self.group_filter = []
-            self.group_bias = []
-
-            data_concat_dim = 2
-            filter_concat_dim = 3
-            bias_concat_dim = 0
-            data_slice_count = act.shape[data_concat_dim] / self.group
-            filter_slice_count = self.weight.shape[filter_concat_dim] / self.group
-            for i in xrange(self.group):
-                self.group_data.append(owl.slice(act, data_concat_dim, data_slice_count * i, data_slice_count))
-                self.group_filter.append(owl.slice(self.weight, filter_concat_dim, filter_slice_count * i, filter_slice_count))
-                self.group_bias.append(owl.slice(self.bias, bias_concat_dim, filter_slice_count * i, filter_slice_count))
-                group_result.append(self.convolver.ff(self.group_data[i], self.group_filter[i], self.group_bias[i]))
-            #concat
-            return owl.concat(group_result, data_concat_dim)
-        '''
-
+        
     def bp(self, sen):
         if self.group == 1:
             self.weightgrad = self.convolver.weight_grad(sen, self.ff_act, self.weight)
             self.biasgrad = self.convolver.bias_grad(sen)
             return self.convolver.bp(sen, self.ff_act, self.weight)
         else:
-            #slice data
-            group_sen = []
-            group_wgrad = []
-            group_bgrad = []
-            group_result = []
-
-            data_concat_dim = 2
-            filter_concat_dim = 3
-            bias_concat_dim = 0
-            data_slice_count = sen.shape[data_concat_dim] / self.group
-            filter_slice_count = self.weight.shape[filter_concat_dim] / self.group
-            for i in xrange(self.group):
-                group_sen.append(owl.slice(sen, data_concat_dim, data_slice_count * i, data_slice_count))
-                group_wgrad.append(self.convolver.weight_grad(group_sen[i], self.group_data[i], self.group_filter[i]))
-                group_bgrad.append(self.convolver.bias_grad(group_sen[i]))
-                group_result.append(self.convolver.bp(group_sen[i], self.group_data[i], self.group_filter[i]))
-            #concat
-            self.weightgrad = owl.concat(group_wgrad, filter_concat_dim)
-            self.biasgrad = owl.concat(group_bgrad, bias_concat_dim)
-
-            #free space
-            self.group_data = []
-            self.group_filter = []
-            self.group_bias = []
-            return owl.concat(group_result, data_concat_dim)
-
+            #currently doesn't support multi-group
+            assert(False)
+            
     def __str__(self):
         return 'conv'
 
@@ -460,12 +424,13 @@ class DataUnit(ComputeUnit):
                 continue
             break
 
-        to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
+        to_top[self.top_names[0]] = owl.from_numpy(samples).reshape(
+                [self.crop_size, self.crop_size, 3, samples.shape[0]])
         #may have multiplier labels
         for i in range (1, len(self.top_names)):
             to_top[self.top_names[i]] = labels[:,i - 1]
-
     def backward(self, from_top, to_btm, phase):
+        # no bp pass
         pass
     def __str__(self):
         return 'data'
@@ -482,7 +447,9 @@ class LMDBDataUnit(DataUnit):
         self.generator = None
 
     def init_layer_size(self, from_btm, to_top):
-        self.out_shape = [self.params.transform_param.crop_size, self.params.transform_param.crop_size, 3, 1]
+        self.out_shape = [self.params.transform_param.crop_size,
+                          self.params.transform_param.crop_size,
+                          3, 1]
         to_top[self.top_names[0]] = self.out_shape[:]
    
     def forward(self, from_btm, to_top, phase):
@@ -503,11 +470,10 @@ class LMDBDataUnit(DataUnit):
                 self.generator = self.dp.get_mb(phase)
                 continue
             break
-
-        to_top[self.top_names[0]] = owl.from_numpy(samples).reshape([self.crop_size, self.crop_size, 3, samples.shape[0]])
+        to_top[self.top_names[0]] = owl.from_numpy(samples).reshape(
+                [self.crop_size, self.crop_size, 3, samples.shape[0]])
         for i in range (1, len(self.top_names)):
             to_top[self.top_names[i]] = labels[:,i - 1]
-
 
     def __str__(self):
         return 'lmdb_data'
@@ -524,7 +490,9 @@ class ImageDataUnit(DataUnit):
         self.generator = None
 
     def init_layer_size(self, from_btm, to_top):
-        self.out_shape = [self.params.transform_param.crop_size, self.params.transform_param.crop_size, 3, 1]
+        self.out_shape = [self.params.transform_param.crop_size,
+                          self.params.transform_param.crop_size,
+                          3, 1]
         to_top[self.top_names[0]] = self.out_shape[:]
 
     def __str__(self):
@@ -542,7 +510,9 @@ class ImageWindowDataUnit(DataUnit):
         self.generator = None
 
     def init_layer_size(self, from_btm, to_top):
-        self.out_shape = [self.params.window_data_param.crop_size, self.params.window_data_param.crop_size, 3, 1]
+        self.out_shape = [self.params.window_data_param.crop_size,
+                          self.params.window_data_param.crop_size,
+                          3, 1]
         to_top[self.top_names[0]] = self.out_shape[:]
     
     def __str__(self):
@@ -680,7 +650,10 @@ class Net:
             self.units[u].backward(from_top, unit_to_btms[u], phase)
 
     def update(self, uid):
-        self.units[uid].weight_update(self.current_lr, self.base_weight_decay, self.momentum, self.batch_size)
+        self.units[uid].weight_update(self.current_lr,
+                                      self.base_weight_decay,
+                                      self.momentum,
+                                      self.batch_size)
 
     def weight_update(self, num_gpu):
         for i in range(len(self.units)):

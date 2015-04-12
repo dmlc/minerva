@@ -1,6 +1,6 @@
 import os
 import sys
-import owl.net as net
+import net
 from caffe import *
 from google.protobuf import text_format
 import numpy as np
