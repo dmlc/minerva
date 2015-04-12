@@ -38,6 +38,7 @@ class ComputeUnitSimple(ComputeUnit):
         self.out_shape = to_top[self.top_names[0]][:]
     def forward(self, from_btm, to_top, phase):
         to_top[self.top_names[0]] = self.ff(from_btm[self.btm_names[0]], phase)
+        self.out = to_top[self.top_names[0]]
     def ff(self, act, phase):
         pass
     def backward(self, from_top, to_btm, phase):
@@ -508,6 +509,13 @@ class ImageWindowDataUnit(DataUnit):
         self.params = params
         self.crop_size = params.window_data_param.crop_size
         self.generator = None
+    
+    #reset generator
+    def reset_generator(self):
+        if self.params.include[0].phase == Phase.Value('TRAIN'):
+            self.generator = self.dp.get_mb('TRAIN')
+        else:
+            self.generator = self.dp.get_mb('TEST')
 
     def init_layer_size(self, from_btm, to_top):
         self.out_shape = [self.params.window_data_param.crop_size,

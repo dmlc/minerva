@@ -41,8 +41,8 @@ check_cxx_compiler_flag("-mssse3"          SUPPORTS_MSSSE3)
 check_cxx_compiler_flag("-ftree-vectorize" SUPPORTS_VECTORIZE)
 
 set(COMPILER_FLAGS "-Wall -m64 -fPIC -march=native")
-set(GENERAL_FLAGS_DEBUG "${COMPILER_FLAGS} -O0 -g")
-set(GENERAL_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0 -DNDEBUG")
+
+set(GENERAL_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0")
 set(CMAKE_CXX_FLAGS_DEBUG "${GENERAL_FLAGS_DEBUG} -std=c++11")
 set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11 -flto")
 

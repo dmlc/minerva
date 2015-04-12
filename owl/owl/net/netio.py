@@ -92,8 +92,8 @@ class ImageWindowDataProvider:
                 cropimg = Image.fromarray(imgdata)
                 nnn = '/home/tianjun/tests/img_%d.jpg' % (i)
                 cropimg.save(nnn, format = 'JPEG')
-                ''' 
-                
+                '''
+
                 pixels = npimg - self.mean_data
                 if self.mirror == True and numpy.random.rand() > 0.5:
                     pixels = pixels[:,:,::-1]
@@ -107,7 +107,7 @@ class ImageWindowDataProvider:
             #finish one  
             if count  > 0:
                 delete_idx = np.arange(count, self.batch_size)
-                yield (np.delete(samples, delete_idx, 0))
+                yield (np.delete(samples, delete_idx, 0), np.delete(labels, delete_idx, 0))
                 count = 0
             line = sourcefile.readline()
         sourcefile.close()
@@ -125,7 +125,11 @@ class ImageListDataProvider:
         else:    
             with open(transform_param.mean_file, 'rb') as f:
                 bp.ParseFromString(f.read())
-            self.mean_data = np.array(bp.data, dtype=np.float32).reshape([3, image_data_param.new_height, image_data_param.new_width])
+            np_mean = np.array(bp.data, dtype=np.float32)
+            mean_size = np.sqrt(np.shape(np_mean)[0] / 3)
+            self.mean_data = np_mean.reshape([3, mean_size, mean_size])
+            self.mean_data = self.mean_data[:, (mean_size-image_data_param.new_height)/2:mean_size-(mean_size-image_data_param.new_height)/2, (mean_size-image_data_param.new_width)/2:mean_size-(mean_size-image_data_param.new_width)/2] 
+        
         self.source = image_data_param.source
         self.new_height = image_data_param.new_height
         self.new_width = image_data_param.new_width
@@ -168,7 +172,7 @@ class ImageListDataProvider:
                 print "resize error occur %s" % (line_info[0])
             
             orinpimg = np.array(img, dtype = np.uint8)
-            npimg = np.transpose(orinpimg.reshape([self.crop_size * self.crop_size, 3])).reshape(np.shape(self.mean_data))
+            npimg = np.transpose(orinpimg.reshape([self.new_height * self.new_width, 3])).reshape(np.shape(self.mean_data))
             npimg = npimg[::-1,:,:]
             pixels = npimg - self.mean_data
 
@@ -309,7 +313,10 @@ class LMDBDataProvider:
                     count = 0
         if count != self.batch_size:
             delete_idx = np.arange(count, self.batch_size)
-            yield (np.delete(samples, delete_idx, 1), np.delete(labels, delete_idx, 0))
+            left_samples = np.delete(samples, delete_idx, 1)
+            left_labels = np.delete(labels, delete_idx, 0)
+            for i in range(view_num):
+                yield (left_samples[i,:,:], left_labels)
 
 
 if __name__ == '__main__':
