@@ -2,8 +2,9 @@
 
 ## Overview
 OwelNet is a DNN training framework build on Minerva python interface. The main purposes of this package are:
+
 1. Provide a simple way for Minerva users to train deep neural network for computer vision problems.
-2. Provide a prototype about how to build user applications utilizing the advantages of Minerva.
+1. Provide a prototype about how to build user applications utilizing the advantages of Minerva.
 
 We borrow Caffe's well-defined network architecture protobuf but the execution is conducted in Minerva engine. It's a showcase of Minerva's flexibile interface (building Caffe's main functionality in several hundreds of lines) and computation efficiency (Multi-GPU training). 
 
@@ -15,18 +16,19 @@ We borrow Caffe's well-defined network architecture protobuf but the execution i
 
 ## Usage
 ### Quick Example: Training GooLeNet Using 4 GPUs
-  1. Download the training and validation set of ILSVRC12.
-  2. Download the image list files (train.txt and val.txt) of ILSVRC12 using [get_ilsvrc_aux.sh](https://github.com/BVLC/caffe/blob/master/data/ilsvrc12/get_ilsvrc_aux.sh) provided by Caffe.
-  3. Create LMDB Data for train and val set using [create_imagenet.sh](https://github.com/BVLC/caffe/blob/master/examples/imagenet/create_imagenet.sh) provided by Caffe.
-  4. Compute mean_file for the training set of ILSVRC12 using [make_imagenet_mean.sh](https://github.com/BVLC/caffe/blob/master/examples/imagenet/make_imagenet_mean.sh) provided by Caffe.
-  5. Write the configuration file of GoogleNet. You can use this [train_val.prototxt](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/train_val.prototxt) and then reset the path of the lmdb and mean file.
-  6. Set the training parameters through solver file. You can use this [quick_solver.prototxt](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/quick_solver.prototxt) and the reset the path of train_val.prototxt and snapshot_prefix to where you store.
-  7. With everything ready, we can start training by calling in `/path/to/minerva/scripts/`:
+
+1. Download the training and validation set of ILSVRC12.
+1. Download the image list files (train.txt and val.txt) of ILSVRC12 using [get_ilsvrc_aux.sh](https://github.com/BVLC/caffe/blob/master/data/ilsvrc12/get_ilsvrc_aux.sh) provided by Caffe.
+1. Create LMDB Data for train and val set using [create_imagenet.sh](https://github.com/BVLC/caffe/blob/master/examples/imagenet/create_imagenet.sh) provided by Caffe.
+1. Compute mean_file for the training set of ILSVRC12 using [make_imagenet_mean.sh](https://github.com/BVLC/caffe/blob/master/examples/imagenet/make_imagenet_mean.sh) provided by Caffe.
+1. Write the configuration file of GoogleNet. You can use this [train_val.prototxt](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/train_val.prototxt) and then reset the path of the lmdb and mean file.
+1. Set the training parameters through solver file. You can use this [quick_solver.prototxt](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/quick_solver.prototxt) and the reset the path of train_val.prototxt and snapshot_prefix to where you store.
+1. With everything ready, we can start training by calling in `/path/to/minerva/scripts/`:
   ```bash
   ./run_trainer /path/to/solver 0 4
   ```
   The number 4 means the network will be trained using 4 GPUs.
-  8. If you want to restart the training at snapshot `N`. You can call:
+1. If you want to restart the training at snapshot `N`. You can call:
   ```bash
   ./run_trainer /path/to/solver N 4
   ```
@@ -44,30 +46,30 @@ We borrow Caffe's well-defined network architecture protobuf but the execution i
 ####Layer Abstraction
   We use the same layer abstraction as in Caffe. We implement part of Caffe's functionality using Minerva interface and use Caffe's network protobuf(https://github.com/BVLC/caffe/tree/master/src/caffe/proto) to describe network configuration. Currently OwlNet can run [AlexNet](www.cs.toronto.edu/~fritz/absps/imagenet.pdf), [VGGNet](http://arxiv.org/pdf/1409.1556.pdf) and [GoogLeNet](http://arxiv.org/pdf/1409.4842v1.pdf). Below is the layers we have implemented.
 
-  1. Data Layer
-  * LMDBDataUnit: Create LMDBDataProvider to use LMDB to handle IO.
-  * ImageDataUnit: Create ImageListDataProvider to read from images as input.
-  * ImageWindowDataUnit: Create ImageWindowDataProvider to read cropped window from image as input
+1. Data Layer
+  * `LMDBDataUnit`: Create LMDBDataProvider to use LMDB to handle IO.
+  * `ImageDataUnit`: Create ImageListDataProvider to read from images as input.
+  * `ImageWindowDataUnit`: Create ImageWindowDataProvider to read cropped window from image as input
 
-  1. Connection Layer
-  * FullyConnection: Feed-forward is conducted by inner product of weight and activation.
-  * ConvConnection: Feed-forward is conducted by using filters to convolve on activation.
-  * PoolingUnit: Feed-forward is conducted by pooling. Max pooling and average pooling are provided.
-  * ConcatUnit: Concatenating some layers into one layer on a certain dimension.
+1. Connection Layer
+  * `FullyConnection`: Feed-forward is conducted by inner product of weight and activation.
+  * `ConvConnection`: Feed-forward is conducted by using filters to convolve on activation.
+  * `PoolingUnit`: Feed-forward is conducted by pooling. Max pooling and average pooling are provided.
+  * `ConcatUnit`: Concatenating some layers into one layer on a certain dimension.
 
-  1. Activation Layer
-  * LinearUnit
-  * ReluUnit
-  * SigmoidUnit
-  * TanhUnit
+1. Activation Layer
+  * `LinearUnit`
+  * `ReluUnit`
+  * `SigmoidUnit`
+  * `TanhUnit`
 
-  1. Other Layer
-  * SoftmaxUnit: Softmax loss layer.
-  * AccuracyUnit: Compute top-1 error.
-  * DropoutUnit: Introduce dropout on activation.
-  * LRNUnit: Local response normalization layer.
+1. Other Layer
+  * `SoftmaxUnit`: Softmax loss layer.
+  * `AccuracyUnit`: Compute top-1 error.
+  * `DropoutUnit`: Introduce dropout on activation.
+  * `LRNUnit`: Local response normalization layer.
 
-  More information could be found [here](https://github.com/minerva-developers/minerva/blob/master/owl/owl/net.py).
+More information could be found [here](https://github.com/minerva-developers/minerva/blob/master/owl/owl/net/net.py).
 
 ###Training
   When you have data prepared and network configured, we can start training. 
@@ -91,14 +93,7 @@ We borrow Caffe's well-defined network architecture protobuf but the execution i
   ```
 
 ####Resume Training
-  When <snapshot-index> is not zero, our code will try to load the snapshot of that index and continue training. If the weight dimension of a layer is not the same with the snapshot, our code will automatically reinitilize that weight, it allows easily finetuning on other datasets.
+  When `<snapshot-index>` is not zero, our code will try to load the snapshot of that index and continue training. If the weight dimension of a layer is not the same with the snapshot, our code will automatically reinitilize that weight, it allows easily finetuning on other datasets.
 
 ####Multi-GPU
-  When <num-of-gpu> is greater than one, our code will automatically dispatch data batch to multi-gpu to train in parallel. We apply synchronize update, thus the result is the same with the one training using one GPU.
-
-## How to build your own application
-  You can use OwlNet as an example to build your own applications.
-  * First select out the Minerva's C++ interfaces you need, then warpping them into python functions like what we do in owl/owl.cpp. Those functions are the building block of your application. You can refer to owl/owl/__init__.py, owl/owl/elewise.py.
-  * Implement the training logic using python functions. For neural network applications, you may need to encapsulate those functions into layer, net, updater, trainer to clarify the logic. You can refer to owl/owl/net.py, scripts/net_trainer.py.
-  * Handling data IO and model saving issue. You can refer to owl/owl/netio.py, owl/owl/net_helper.py.
-  * Implement tools to make it easier to use and debug.
+  When `<num-of-gpu>` is greater than one, our code will automatically dispatch data batch to multi-gpu to train in parallel. We apply synchronize update, thus the result is the same with the one training using one GPU.
