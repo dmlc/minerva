@@ -4,6 +4,38 @@
 #include <limits>
 #include "minerva/common/common.h"
 
+template<typename Mutex>
+class ReaderLock {
+ public:
+  ReaderLock();
+  ReaderLock(ReaderLock&&);
+  explicit ReaderLock(Mutex&);
+  ReaderLock& operator=(ReaderLock&&);
+  DISALLOW_COPY_AND_ASSIGN(ReaderLock);
+  ~ReaderLock();
+
+ private:
+  void lock();
+  void unlock();
+  Mutex* mutex_;
+};
+
+template<typename Mutex>
+class WriterLock {
+ public:
+  WriterLock();
+  WriterLock(WriterLock&&);
+  explicit WriterLock(Mutex&);
+  WriterLock& operator=(WriterLock&&);
+  DISALLOW_COPY_AND_ASSIGN(WriterLock);
+  ~WriterLock();
+
+ private:
+  void lock();
+  void unlock();
+  Mutex* mutex_;
+};
+
 class SharedMutex {
  public:
   SharedMutex() = default;
