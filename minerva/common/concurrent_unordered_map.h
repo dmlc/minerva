@@ -4,7 +4,8 @@
 #include <boost/thread/shared_mutex.hpp>
 #include "common/common.h"
 
-template<typename K, typename V> class ConcurrentUnorderedMap {
+template<typename K, typename V>
+class ConcurrentUnorderedMap {
  public:
   ConcurrentUnorderedMap() = default;
   DISALLOW_COPY_AND_ASSIGN(ConcurrentUnorderedMap);
