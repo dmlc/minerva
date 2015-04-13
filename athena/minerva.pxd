@@ -1,7 +1,8 @@
 # distutils: language = c++
 
 cdef extern from '../minerva/minerva.h' namespace 'minerva::MinervaSystem':
-  void Initialize(int*, char***);
+  void Initialize(int*, char***)
+  void Finalize()
 
 cdef extern from '../minerva/minerva.h' namespace 'minerva':
   NArray operator+(NArray, NArray)
