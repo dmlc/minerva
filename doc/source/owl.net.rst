@@ -1,30 +1,26 @@
-owl.caffe package
+owl.net package
 =================
 
-Submodules
-----------
-
-owl.caffe.caffe_pb2 module
+owl.net.net module
 --------------------------
 
-.. automodule:: owl.caffe.caffe_pb2
+.. automodule:: owl.net.net
     :members:
     :undoc-members:
     :show-inheritance:
 
-owl.caffe.converter module
+owl.net.net_helper module
 --------------------------
 
-.. automodule:: owl.caffe.converter
+.. automodule:: owl.net.net_helper
     :members:
     :undoc-members:
     :show-inheritance:
 
+owl.net.netio module
+--------------------
 
-Module contents
----------------
-
-.. automodule:: owl.caffe
+.. automodule:: owl.net.netio
     :members:
     :undoc-members:
     :show-inheritance:
