@@ -1,57 +1,56 @@
 #pragma once
 #include <unordered_map>
-#include <boost/thread/locks.hpp>
-#include <boost/thread/shared_mutex.hpp>
+#include <memory>
+#include "common/shared_mutex.h"
 #include "common/common.h"
 
 template<typename K, typename V>
 class ConcurrentUnorderedMap {
  public:
+  using Type = std::unordered_map<K, V>;
+
   ConcurrentUnorderedMap() = default;
-  DISALLOW_COPY_AND_ASSIGN(ConcurrentUnorderedMap);
+  DISALLOW_COPY_AND_MOVE(ConcurrentUnorderedMap);
   ~ConcurrentUnorderedMap() = default;
   V& operator[](const K& k) {
-    WriteLock lock(l_);
+    WriterLock lock(l_);
     return map_[k];
   }
   size_t Erase(const K& k) {
-    WriteLock lock(l_);
+    WriterLock lock(l_);
     return map_.erase(k);
   }
-  size_t Insert(const typename std::unordered_map<K, V>::value_type& v) {
-    WriteLock lock(l_);
+  size_t Insert(const typename Type::value_type& v) {
+    WriterLock lock(l_);
     return map_.insert(v).second;
   }
   V& At(const K& k) {
-    ReadLock lock(l_);
+    ReaderLock lock(l_);
     return map_.at(k);
   }
   const V& At(const K& k) const {
-    ReadLock lock(l_);
+    ReaderLock lock(l_);
     return map_.at(k);
   }
   size_t Size() const {
-    ReadLock lock(l_);
+    ReaderLock lock(l_);
     return map_.size();
   }
-  void LockRead() const {
-    l_.lock_shared();
+  std::shared_ptr<ReaderLock> GetReaderLock() const {
+    return make_shared<ReaderLock>(m_);
   }
-  void UnlockRead() const {
-    l_.unlock_shared();
-  }
-  std::unordered_map<K, V>& VolatilePayload() {
+  Type& VolatilePayload() {
     return map_;
   }
-  const std::unordered_map<K, V>& VolatilePayload() const {
+  const Type& VolatilePayload() const {
     return map_;
   }
 
  private:
-  typedef boost::shared_mutex Lock;
-  typedef boost::unique_lock<Lock> WriteLock;
-  typedef boost::shared_lock<Lock> ReadLock;
-  mutable Lock l_;
-  std::unordered_map<K, V> map_;
+  using Mutex = minerva::common::SharedMutex;
+  using ReaderLock = minerva::common::ReaderLock<Mutex>;
+  using WriterLock = minerva::common::WriterLock<Mutex>;
+  mutable Mutex m_;
+  Type map_;
 };
 
