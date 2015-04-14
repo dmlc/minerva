@@ -2,7 +2,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <limits>
-#include "minerva/common/common.h"
+#include "common/common.h"
 
 template<typename Mutex>
 class ReaderLock {
@@ -51,7 +51,7 @@ class SharedMutex {
   uint64_t state_ = 0;
 
   static constexpr uint64_t writer_entered_ =
-    std::numeric_limits<uint64_t>::max >> 1;
+    std::numeric_limits<uint64_t>::max() >> 1;
   static constexpr uint64_t reader_entered_ = ~writer_entered_;
 };
 

@@ -10,7 +10,7 @@
   TypeName& operator=(const TypeName&) = delete
 
 #define DISALLOW_MOVE_AND_ASSIGN(TypeName) \
-  Typename(TypeName&&) = delete; \
+  TypeName(TypeName&&) = delete; \
   TypeName& operator=(TypeName&&) = delete
 
 #define DISALLOW_COPY_AND_MOVE(TypeName) \
