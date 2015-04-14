@@ -24,13 +24,15 @@ We borrow Caffe's well-defined network architecture protobuf but the execution i
 1. Write the configuration file of GoogleNet. You can use this [train_val.prototxt](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/train_val.prototxt) and then reset the path of the lmdb and mean file.
 1. Set the training parameters through solver file. You can use this [quick_solver.prototxt](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/quick_solver.prototxt) and the reset the path of train_val.prototxt and snapshot_prefix to where you store.
 1. With everything ready, we can start training by calling in `/path/to/minerva/scripts/`:
+
   ```bash
-  ./run_trainer /path/to/solver 0 4
+  ./net_trainer /path/to/solver -n 4
   ```
   The number 4 means the network will be trained using 4 GPUs.
-1. If you want to restart the training at snapshot `N`. You can call:
+1. If you want to restart the training from snapshot `N`. You can call:
+
   ```bash
-  ./run_trainer /path/to/solver N 4
+  ./net_trainer /path/to/solver -n 4 --snapshot N
   ```
 
 ###Data Preparation
@@ -86,14 +88,15 @@ More information could be found [here](https://github.com/minerva-developers/min
   * momentun
   * weight decay
 
-####Call Format
+####Running command
   We have implement the running logic, all users need to do is to call a script. The format of the call is:
+  
   ```bash
-  scripts/run_trainer <path-to-solver> <snapshot-index> <num-of-gpu>
+  /path/to/minerva/scripts/net_trainer <path-to-solver> [-n NUM_GPU] [--snapshot SNAPSHOT]
   ```
 
 ####Resume Training
-  When `<snapshot-index>` is not zero, our code will try to load the snapshot of that index and continue training. If the weight dimension of a layer is not the same with the snapshot, our code will automatically reinitilize that weight, it allows easily finetuning on other datasets.
+  When `SNAPSHOT` is not zero, our code will try to load the snapshot of that index and continue training. If the weight dimension of a layer is not the same with the snapshot, our code will automatically reinitilize that weight, it allows easily finetuning on other datasets.
 
 ####Multi-GPU
-  When `<num-of-gpu>` is greater than one, our code will automatically dispatch data batch to multi-gpu to train in parallel. We apply synchronize update, thus the result is the same with the one training using one GPU.
+  When `NUM_GPU` is greater than one, our code will automatically dispatch data batch to multi-gpu to train in parallel. We apply synchronize update, thus the result is the same with the one training using one GPU.
