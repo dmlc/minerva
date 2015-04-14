@@ -24,10 +24,10 @@ void SharedMutex::LockShared() {
   while ((state_ & writer_entered_) ||
       (state_ & reader_entered_) == reader_entered_) {
     gate1_.wait(lock);
-    uint64_t num_readers = (state_ & reader_entered_) + 1;
-    state_ &= ~reader_entered_;
-    state_ |= num_readers;
   }
+  uint64_t num_readers = (state_ & reader_entered_) + 1;
+  state_ &= ~reader_entered_;
+  state_ |= num_readers;
 }
 
 void SharedMutex::UnlockShared() {
