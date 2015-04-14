@@ -93,3 +93,77 @@ class NetTrainer:
                 print "Save to snapshot %d, current lr %f" % ((iteridx + 1) / (s.owl_net.solver.snapshot), s.owl_net.current_lr)
                 s.builder.save_net_to_file(s.owl_net, s.snapshot_dir, (iteridx + 1) / (s.owl_net.solver.snapshot))
             sys.stdout.flush()
+
+class MultiviewTester:
+    def __init__(self, solver_file, snapshot, gpu_idx = 0):
+        self.solver_file = solver_file
+        self.snapshot = snapshot
+        self.gpu = owl.create_gpu_device(gpu_idx)
+        owl.set_device(self.gpu)
+
+    def build_net(self):
+        self.owl_net = net.Net()
+        self.builder = CaffeNetBuilder(self.solver_file)
+        self.snapshot_dir = self.builder.snapshot_dir
+        self.builder.build_net(self.owl_net)
+        self.owl_net.compute_size('MULTI_VIEW')
+        self.builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
+
+    def run(s):
+        #multi-view test
+        acc_num = 0
+        test_num = 0
+        loss_unit = s.owl_net.units[s.owl_net.name_to_uid['loss'][0]] 
+        for testiteridx in range(s.owl_net.solver.test_iter[0]):
+            for i in range(10): 
+                s.owl_net.forward('MULTI_VIEW')
+                if i == 0:
+                    softmax_val = loss_unit.ff_y
+                    batch_size = softmax_val.shape[1]
+                    softmax_label = loss_unit.y
+                else:
+                    softmax_val = softmax_val + loss_unit.ff_y
+            
+            test_num += batch_size
+            predict = softmax_val.argmax(0)
+            truth = softmax_label.argmax(0)
+            correct = (predict - truth).count_zero()
+            acc_num += correct
+            print "Accuracy the %d mb: %f, batch_size: %d" % (testiteridx, correct, batch_size)
+            sys.stdout.flush()
+        print "Testing Accuracy: %f" % (float(acc_num)/test_num)
+
+class FeatureExtractor:
+    def __init__(self, solver_file, snapshot, gpu_idx = 0):
+        self.solver_file = solver_file
+        self.snapshot = snapshot
+        self.gpu = owl.create_gpu_device(gpu_idx)
+        owl.set_device(self.gpu)
+
+    def build_net(self):
+        self.owl_net = net.Net()
+        self.builder = CaffeNetBuilder(self.solver_file)
+        self.snapshot_dir = self.builder.snapshot_dir
+        self.builder.build_net(self.owl_net)
+        self.owl_net.compute_size('TEST')
+        self.builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
+
+    def run(s, layer_name, feature_path):
+        feature_unit = s.owl_net.units[s.owl_net.name_to_uid[layer_name][0]] 
+        feature_file = open(feature_path, 'w')
+        batch_dir = 0
+        for testiteridx in range(s.owl_net.solver.test_iter[0]):
+            s.owl_net.forward('TEST')
+            feature = feature_unit.out.to_numpy()
+            feature_shape = np.shape(feature)
+            img_num = feature_shape[0]
+            feature_length = np.prod(feature_shape[1:len(feature_shape)])
+            feature = np.reshape(feature, [img_num, feature_length])
+            for imgidx in range(img_num):
+                for feaidx in range(feature_length):
+                    info ='%f ' % (feature[imgidx, feaidx])
+                    feature_file.write(info)
+                feature_file.write('\n')
+            print "Finish One Batch %d" % (batch_dir)
+            batch_dir += 1
+        feature_file.close()
