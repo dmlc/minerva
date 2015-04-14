@@ -1,5 +1,5 @@
-owl.net package
-=================
+Subpackage: owl.net
+===================
 
 owl.net.net module
 --------------------------
