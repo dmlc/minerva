@@ -30,7 +30,7 @@ class WriterLock {
   }
   DISALLOW_COPY_AND_MOVE(WriterLock);
   ~WriterLock() {
-    mutex_->UnlockShared();
+    mutex_->Unlock();
   }
 
  private:
