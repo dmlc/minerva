@@ -22,7 +22,7 @@ We borrow Caffe's well-defined network architecture protobuf but the execution i
 1. Create LMDB Data for train and val set using [create_imagenet.sh](https://github.com/BVLC/caffe/blob/master/examples/imagenet/create_imagenet.sh) provided by Caffe.
 1. Compute mean_file for the training set of ILSVRC12 using [make_imagenet_mean.sh](https://github.com/BVLC/caffe/blob/master/examples/imagenet/make_imagenet_mean.sh) provided by Caffe.
 1. Write the configuration file of GoogleNet. You can use this [train_val.prototxt](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/train_val.prototxt) and then reset the path of the lmdb and mean file.
-1. Set the training parameters through solver file. You can use this [quick_solver.prototxt](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/quick_solver.prototxt) and the reset the path of train_val.prototxt and snapshot_prefix to where you store.
+1. Set the training parameters through solver file. You can use this [quick_solver.prototxt](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/quick_solver.prototxt) and the reset the path of `train_val.prototxt` and snapshot_prefix to where you store.
 1. With everything ready, we can start training by calling in `/path/to/minerva/scripts/`:
   ```bash
   ./run_trainer /path/to/solver 0 4
