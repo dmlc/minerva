@@ -54,9 +54,11 @@ Dag<D, O>::Dag() : index_counter_(0) {
 
 template<typename D, typename O>
 Dag<D, O>::~Dag() {
-  index_to_node_.LockRead();
-  auto index_to_node_cp = index_to_node_.VolatilePayload();
-  index_to_node_.UnlockRead();
+  ContainerType::Type index_to_node_cp;
+  {
+    auto lock = index_to_node_.GetReaderLock();
+    index_to_node_cp = index_to_node_.VolatilePayload();
+  }
   for (auto i : index_to_node_cp) {
     delete RemoveNodeFromDag(i.first);
   }
@@ -163,21 +165,22 @@ std::string Dag<D, O>::ToString(
   std::ostringstream ns, es;
   ns << "Nodes:" << std::endl;
   es << "Edges:" << std::endl;
-  index_to_node_.LockRead();
-  for (auto i : index_to_node_.VolatilePayload()) {
-    ns << i.first << ">>>>";
-    if (i.second->Type() == DagNode::NodeType::kOpNode) {
-      ONode* onode = CHECK_NOTNULL(dynamic_cast<ONode*>(i.second));
-      ns << "type===o;;;" << op_to_string(onode->op_) << std::endl;
-    } else {
-      DNode* dnode = CHECK_NOTNULL(dynamic_cast<DNode*>(i.second));
-      ns << "type===d;;;" << data_to_string(dnode->data_) << std::endl;
-    }
-    for (auto j : i.second->successors_) {
-      es << i.first << " -> " << j->node_id_ << std::endl;
+  {
+    auto lock = index_to_node_.GetReaderLock();
+    for (auto i : index_to_node_.VolatilePayload()) {
+      ns << i.first << ">>>>";
+      if (i.second->Type() == DagNode::NodeType::kOpNode) {
+        ONode* onode = CHECK_NOTNULL(dynamic_cast<ONode*>(i.second));
+        ns << "type===o;;;" << op_to_string(onode->op_) << std::endl;
+      } else {
+        DNode* dnode = CHECK_NOTNULL(dynamic_cast<DNode*>(i.second));
+        ns << "type===d;;;" << data_to_string(dnode->data_) << std::endl;
+      }
+      for (auto j : i.second->successors_) {
+        es << i.first << " -> " << j->node_id_ << std::endl;
+      }
     }
   }
-  index_to_node_.UnlockRead();
   return ns.str() + es.str();
 }
 

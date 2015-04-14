@@ -2,6 +2,9 @@
 
 using namespace std;
 
+namespace minerva {
+namespace common {
+
 void SharedMutex::Lock() {
   unique_lock<mutex> lock(mutex_);
   while (state_ & writer_entered_) {
@@ -46,3 +49,5 @@ void SharedMutex::UnlockShared() {
   }
 }
 
+}  // namespace common
+}  // namespace minerva

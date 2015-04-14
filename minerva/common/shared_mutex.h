@@ -4,6 +4,9 @@
 #include <limits>
 #include "minerva/common/common.h"
 
+namespace minerva {
+namespace common {
+
 template<typename Mutex>
 class ReaderLock {
  public:
@@ -54,4 +57,7 @@ class SharedMutex {
     std::numeric_limits<uint64_t>::max >> 1;
   static constexpr uint64_t reader_entered_ = ~writer_entered_;
 };
+
+}  // namespace common
+}  // namespace minerva
 
