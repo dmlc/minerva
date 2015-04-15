@@ -1,3 +1,12 @@
+''' A package for implementing Caffe-like network structure using Owl APIs.
+
+The package implements Caffe-like network structure with some minor differences. It uses Caffe-defined 
+protobuf as core data structure so Caffe users could easily adapt to this. The package serves the purpose
+of:
+
+1. Quick deployment of neural network training using configure file.
+2. Demonstrate the power of ``owl`` package (it takes only several hundreds LOC to implement Caffe and run it on dataflow engine).
+'''
 
 import numpy as np
 import math
@@ -13,6 +22,25 @@ from netio import ImageListDataProvider
 from netio import ImageWindowDataProvider
 
 class ComputeUnit(object):
+    ''' Interface for each compute unit.
+
+    In ``owl.net``, the network is graph (in fact a DAG) that is composed of ``ComputeUnit`` s.
+    ``ComputeUnit`` is a wrap-up of Caffe's ``layer`` abstraction, but is more
+    general and flexible in its function sigature.
+
+    :ivar caffe.LayerParameter params: layer parameter in Caffe's proto structure
+    :ivar str name: name of the unit; the name must be unique
+    :ivar btm_names: names of the bottom units
+    :vartype btm_names: list str
+    :ivar top_names: names of the top units
+    :vartype top_names: list str
+    :ivar list int out_shape:
+
+    .. note::
+        ``params``, ``name``, ``btm_names`` and ``top_names`` will be parsed from Caffe's network
+        description file. ``out_shape`` should be set in :py:meth:`compute_size`
+
+    '''
     def __init__(self, params):
         self.params = params
         self.name = params.name
@@ -21,35 +49,115 @@ class ComputeUnit(object):
         self.out_shape = None
     def __str__(self):
         return 'N/A unit'
-    def init_layer_size(self, from_btm, to_top):
+    def compute_size(self, from_btm, to_top):
+        ''' Calculate the output size of this unit
+
+        This function will be called before training during the ``compute_size`` phase.
+        The ``compute_size`` phase is a feed-forward-like phase, during which each ``ComputeUnit``, rather than
+        calculating the output tensor but calculating the output size (list int) for the top units. The
+        size is usually used to calculate the weight and bias size for initialization.
+
+        :param dict from_btm: input size from bottom units
+        :param dict to_top: output size to top units
+
+        .. seealso::
+            :py:meth:`FullyConnection.compute_size`
+            :py:meth:`ConvConnection.compute_size`
+            :py:meth:`Net.compute_size`
+        '''
         pass
     def forward(self, from_btm, to_top, phase):
+        ''' Function for forward propagation
+
+        This function will be called during forward-propagation. The function
+        should take input in ``from_btm``, perform customized computation, and then
+        put the result in ``to_top``. Both ``from_btm`` and ``to_top`` are ``dict`` type 
+        where key is a ``str`` of name of the bottom/top units and value is an ``owl.NArray``
+        served as input or output of the function.
+
+        :param dict from_btm: input from bottom units
+        :param dict to_top: output for top units
+        :param str phase: name of the phase of the running. Currently either ``"TRAIN"`` or ``"TEST"``
+        '''
         pass
     def backward(self, from_top, to_btm, phase):
+        ''' Function for backward propagation
+
+        This function will be called during backward-propagation. Similar to :py:meth:`forward`,
+        The function should take input in ``from_top``, perform customized computation, and then
+        put the result in ``to_btm``. The function also need to calculate the gradient (if any) and
+        save them to the ``weightgrad`` field (see :py:meth:WeightedComputeUnit.weight_update).
+
+        :param dict from_top: input from top units
+        :param dict to_btm: output for top units
+        :param str phase: name of the phase of the running. Currently either ``"TRAIN"`` or ``"TEST"``
+        '''
         pass
     def weight_update(self, base_lr, base_weight_decay, momentum, batch_size):
+        ''' Function for weight update
+
+        This function will be called during weight update. 
+
+        :param float base_lr: base learning rate
+        :param float base_weight_decay: base weight decay
+        :param float momentum: momentum value
+        :param int batch_size: the size of the current minibatch
+        '''
         pass
 
 class ComputeUnitSimple(ComputeUnit):
+    ''' An auxiliary class for :py:class:`ComputeUnit` that will only have one input unit and one output unit.
+    '''
     def __init__(self, params):
         super(ComputeUnitSimple, self).__init__(params)
-    def init_layer_size(self, from_btm, to_top):
+    def compute_size(self, from_btm, to_top):
+        ''' Set the ``out_shape`` as the same shape of the input. Inherited classes could override this function.
+        '''
         to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
         self.out_shape = to_top[self.top_names[0]][:]
     def forward(self, from_btm, to_top, phase):
+        ''' Transform the interface from multiple input/output to only one input/output function :py:meth:`ff`.
+        '''
         to_top[self.top_names[0]] = self.ff(from_btm[self.btm_names[0]], phase)
         self.out = to_top[self.top_names[0]]
     def ff(self, act, phase):
+        ''' Function for forward-propagation
+
+        :param owl.NArray act: the activation from the bottom unit
+        :param str phase: name of the phase of the running. Currently either ``"TRAIN"`` or ``"TEST"``
+        :return: the activation of this unit
+        :rtype: owl.NArray
+        '''
         pass
     def backward(self, from_top, to_btm, phase):
+        ''' Transform the interface from multiple input/output to only one input/output function :py:meth:`bp`.
+        '''
         to_btm[self.btm_names[0]] = self.bp(from_top[self.top_names[0]])
     def bp(self, sen):
+        ''' Function for backward-propagation
+
+        :param owl.NArray sen: the sensitivity (or error derivative to the input) from the top unit
+        :return: the sensitivity of this unit
+        :rtype: owl.NArray
+        '''
         pass
 
 class WeightedComputeUnit(ComputeUnitSimple):
+    ''' An auxiliary class for :py:class:`ComputeUnit` with weights
+
+    :ivar owl.NArray weight: weight tensor
+    :ivar owl.NArray weightdelta: momentum of weight
+    :ivar owl.NArray weightgrad: gradient of weight
+    :ivar owl.NArray bias: bias tensor
+    :ivar owl.NArray biasdelta: momentum of bias
+    :ivar owl.NArray biasgrad: gradient of bias
+    :ivar blobs_lr: learning rate specific for this unit; a list of float represents: [weight_lr, bias_lr]
+    :vartype blobs_lr: list float
+    :ivar weight_decay: weight decay specific for this unit; a list of float represents: [weight_wd, bias_wd]
+    :vartype weight_decay: list float
+    '''
     def __init__(self, params):
         super(WeightedComputeUnit, self).__init__(params)
-        self.params = params
         # weights and bias
         self.weight = None
         self.weightdelta = None
@@ -68,10 +176,14 @@ class WeightedComputeUnit(ComputeUnitSimple):
         if len(self.weight_decay) == 0:
             self.weight_decay = [1, 0]
     
-    def init_layer_size(self, from_btm, to_top):
+    def compute_size(self, from_btm, to_top):
         pass 
    
     def init_weights_with_filler(self):
+        ''' Init weights & bias. The function will be called during weight initialization.
+
+        Currently, four types of initializers are supported: ``"constant", "gaussian", "uniform", "xavier"``.
+        '''
         #init weight
         npweights = None
         if self.weight_filler.type == "constant":
@@ -101,21 +213,35 @@ class WeightedComputeUnit(ComputeUnitSimple):
         self.bias = owl.from_numpy(npbias.astype(np.float32)).reshape(self.bshape)
         
     def weight_update(self, base_lr, base_weight_decay, momentum, batch_size):
+        ''' Update the weight & bias
+
+        Using following formula:
+
+        ``$_delta = momentum * $_delta - (base_lr * $_lr / batch_size) * $_grad - (base_lr * $_lr * base_wd * $_wd) * $``
+        
+        , where ``$`` could be either ``weight`` or ``bias``.
+        '''
         if self.weightdelta == None:
             self.weightdelta = owl.zeros(self.weightgrad.shape)
 
-        self.weightdelta = momentum * self.weightdelta - (base_lr * self.blobs_lr[0] / batch_size) * self.weightgrad  - (base_lr * self.blobs_lr[0] * base_weight_decay * self.weight_decay[0]) * self.weight
+        self.weightdelta = momentum * self.weightdelta \
+                        - (base_lr * self.blobs_lr[0] / batch_size) * self.weightgrad \
+                        - (base_lr * self.blobs_lr[0] * base_weight_decay * self.weight_decay[0]) * self.weight
         self.weight = self.weight + self.weightdelta
         self.weightgrad = None
 
         if self.biasdelta == None:
             self.biasdelta = owl.zeros(self.biasgrad.shape)
 
-        self.biasdelta = momentum * self.biasdelta - (base_lr * self.blobs_lr[1] / batch_size) * self.biasgrad - (base_lr * self.blobs_lr[1] * base_weight_decay * self.weight_decay[1]) * self.bias
+        self.biasdelta = momentum * self.biasdelta \
+                        - (base_lr * self.blobs_lr[1] / batch_size) * self.biasgrad \
+                        - (base_lr * self.blobs_lr[1] * base_weight_decay * self.weight_decay[1]) * self.bias
         self.bias = self.bias + self.biasdelta
         self.biasgrad = None
 
 class LinearUnit(ComputeUnitSimple):
+    ''' Compute unit for linear transformation
+    '''
     def ff(self, x, phase):
         return x
     def bp(self, y):
@@ -124,6 +250,8 @@ class LinearUnit(ComputeUnitSimple):
         return 'linear'
 
 class SigmoidUnit(ComputeUnitSimple):
+    ''' Compute unit for Sigmoid non-linearity
+    '''
     def ff(self, x, phase):
         return ele.sigm(x)
     def bp(self, y):
@@ -132,6 +260,8 @@ class SigmoidUnit(ComputeUnitSimple):
         return 'sigmoid'
 
 class ReluUnit(ComputeUnitSimple):
+    ''' Compute unit for RELU non-linearity
+    '''
     def ff(self, x, phase):
         self.ff_x = x
         return ele.relu(x)
@@ -141,6 +271,8 @@ class ReluUnit(ComputeUnitSimple):
         return 'relu'
 
 class TanhUnit(ComputeUnitSimple):
+    ''' Compute unit for Hyperbolic Tangine non-linearity
+    '''
     def ff(self, x, phase):
         return ele.tanh(x)
     def bp(self, y):
@@ -149,6 +281,16 @@ class TanhUnit(ComputeUnitSimple):
         return 'tanh'
 
 class PoolingUnit(ComputeUnitSimple):
+    ''' Compute unit for Pooling
+
+    .. note::
+        The input and output is of size ``[HWCN]``:
+
+        - ``H``: image height
+        - ``W``: image width
+        - ``C``: number of image channels (feature maps)
+        - ``N``: size of minibatch
+    '''
     def __init__(self, params):
         super(PoolingUnit, self).__init__(params)
         self.ppa = params.pooling_param
@@ -156,9 +298,12 @@ class PoolingUnit(ComputeUnitSimple):
             pool_ty = co.pool_op.max
         elif self.ppa.pool == PoolingParameter.PoolMethod.Value('AVE'):
             pool_ty = co.pool_op.avg
-        self.pooler = co.Pooler(self.ppa.kernel_size, self.ppa.kernel_size, self.ppa.stride, self.ppa.stride, self.ppa.pad, self.ppa.pad, pool_ty)
+        self.pooler = co.Pooler(self.ppa.kernel_size, self.ppa.kernel_size,
+                                self.ppa.stride, self.ppa.stride,
+                                self.ppa.pad, self.ppa.pad,
+                                pool_ty)
         
-    def init_layer_size(self, from_btm, to_top):
+    def compute_size(self, from_btm, to_top):
         self.out_shape = from_btm[self.btm_names[0]][:]
         ori_height = self.out_shape[0]
         ori_width = self.out_shape[1]
@@ -180,35 +325,39 @@ class PoolingUnit(ComputeUnitSimple):
         return 'pooling'
 
 class DropoutUnit(ComputeUnitSimple):
+    ''' Compute unit for dropout
+    '''
     def __init__(self, params):
         super(DropoutUnit, self).__init__(params)
         self.scale = 1.0 / (1.0 - self.params.dropout_param.dropout_ratio)
         self.keep_ratio = 1 - self.params.dropout_param.dropout_ratio
     def ff(self, x, phase):
+        ''' Foward function of dropout
+        
+        The dropout mask will not be multiplied if under ``"TEST"`` mode.
+        '''
         self.dropmask = owl.randb(x.shape, self.keep_ratio)
         if phase == "TRAIN":
             return ele.mult(x, self.dropmask)*self.scale
         else:
             return x
-        '''
         #for gradient test
-        return x
-        '''
+        #return x
     def bp(self, y):
         return ele.mult(y, self.dropmask)*self.scale
-        '''
         #for gradient test
-        return y
-        '''
+        #return y
     def __str__(self):
         return 'dropout'
 
 class SoftmaxUnit(ComputeUnit):
+    ''' Compute unit for softmax
+    '''
     def __init__(self, params):
         super(SoftmaxUnit, self).__init__(params)
         self.loss_weight = params.loss_weight
     
-    def init_layer_size(self, from_btm, to_top):
+    def compute_size(self, from_btm, to_top):
         to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
         self.out_shape = to_top[self.top_names[0]][:]
     
@@ -230,6 +379,8 @@ class SoftmaxUnit(ComputeUnit):
             to_btm[self.btm_names[0]] = (self.ff_y - self.y)
 
     def getloss(self):
+        ''' Get the loss of the softmax (cross entropy)
+        '''
         lossmat = ele.mult(ele.ln(self.ff_y), self.y)
         res = lossmat.sum(0).sum(1).to_numpy()
         return -res[0][0] / lossmat.shape[1]
@@ -238,12 +389,18 @@ class SoftmaxUnit(ComputeUnit):
         return 'softmax'
 
 class AccuracyUnit(ComputeUnit):
+    ''' Compute unit for calculating accuracy
+
+    .. note::
+        In terms of Minerva's lazy evaluation, the unit is a **non-lazy** one since it gets the actual
+        contents (accuracy) out of an ``owl.NArray``.
+    '''
     def __init__(self, params):
         super(AccuracyUnit, self).__init__(params)
         self.acc = 0
         self.batch_size = 0
 
-    def init_layer_size(self, from_btm, to_top):
+    def compute_size(self, from_btm, to_top):
         to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
         self.out_shape = to_top[self.top_names[0]][:]
     
@@ -261,6 +418,8 @@ class AccuracyUnit(ComputeUnit):
         return 'accuracy'
 
 class LRNUnit(ComputeUnitSimple):
+    ''' Compute unit for LRN
+    '''
     def __init__(self, params):
         super(LRNUnit, self).__init__(params)
         self.lrner = co.Lrner(params.lrn_param.local_size, params.lrn_param.alpha, params.lrn_param.beta)
@@ -276,12 +435,16 @@ class LRNUnit(ComputeUnitSimple):
         return 'lrn'
 
 class ConcatUnit(ComputeUnit):
+    ''' Compute unit for concatenation
+
+    Concatenate input arrays along the dimension specified by Caffe's ``concat_dim_caffe``
+    '''
     def __init__(self, params):
         super(ConcatUnit, self).__init__(params)
         self.concat_dim_caffe = params.concat_param.concat_dim
         self.slice_count = []
 
-    def init_layer_size(self, from_btm, to_top):
+    def compute_size(self, from_btm, to_top):
         to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
         self.concat_dim = len(from_btm[self.btm_names[0]]) - 1 - self.concat_dim_caffe
         for i in range(1, len(self.btm_names)):
@@ -307,13 +470,19 @@ class ConcatUnit(ComputeUnit):
         return 'concat'
 
 class FullyConnection(WeightedComputeUnit):
+    ''' Compute unit for traditional fully connected layer
+    '''
     def __init__(self, params):
         super(FullyConnection, self).__init__(params)
         self.inner_product_param = params.inner_product_param
         self.weight_filler = params.inner_product_param.weight_filler
         self.bias_filler = params.inner_product_param.bias_filler
     
-    def init_layer_size(self, from_btm, to_top):
+    def compute_size(self, from_btm, to_top):
+        ''' Compute the output size and also weight and bias size
+        The weight size is ``[top_shape[0], btm_shape[0]]``; the bias size is ``[top_shape[0], 1]``
+        (assume both ``top`` and ``btm`` are 2-dimensional array)
+        '''
         shp = from_btm[self.btm_names[0]][:]
         if len(shp) > 2:
             self.in_shape = [np.prod(shp[0:-1], dtype=np.int32), shp[-1]]
@@ -343,7 +512,6 @@ class FullyConnection(WeightedComputeUnit):
             a = self.ff_act.reshape([np.prod(shp[0:-1], dtype=np.int32), shp[-1]])
         else:
             a = self.ff_act
-
         self.weightgrad = sen * a.trans()
         self.biasgrad = sen.sum(1)
         s = self.weight.trans() * sen
@@ -354,6 +522,17 @@ class FullyConnection(WeightedComputeUnit):
         return 'fc'
 
 class ConvConnection(WeightedComputeUnit):
+    ''' Convolution operation
+
+    .. note::
+        The input and output is of size ``[HWCN]``:
+
+        - ``H``: image height
+        - ``W``: image width
+        - ``C``: number of image channels (feature maps)
+        - ``N``: size of minibatch
+
+    '''
     def __init__(self, params):
         super(ConvConnection, self).__init__(params)
         self.conv_params = params.convolution_param
@@ -368,7 +547,17 @@ class ConvConnection(WeightedComputeUnit):
         self.weight_filler = params.convolution_param.weight_filler
         self.bias_filler = params.convolution_param.bias_filler
     
-    def init_layer_size(self, from_btm, to_top):
+    def compute_size(self, from_btm, to_top):
+        ''' Compute the output size and also weight and bias size
+
+        .. note::
+            The weight(kernel) size is ``[HWCiCo]``; bias shape is ``[Co]``:
+
+            - ``H``: kernel_height
+            - ``W``: kernel_width
+            - ``Ci``: number of input channels
+            - ``Co``: number of output channels
+        '''
         self.in_shape = from_btm[self.btm_names[0]][:]
         to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
         to_top[self.top_names[0]][0] = (to_top[self.top_names[0]][0] + 2 * self.conv_params.pad - self.conv_params.kernel_size) / self.conv_params.stride + 1
@@ -382,6 +571,12 @@ class ConvConnection(WeightedComputeUnit):
         self.bshape = [self.out_shape[2]]
     
     def ff(self, act, phase):
+        ''' Feed-forward of convolution
+
+        .. warning::
+            Currently multi-group convolution (as in AlexNet paper) is not supported. One could walk around it by
+            using a bigger convolution with number of feature maps doubled.
+        '''
         if self.group == 1:
             self.ff_act = act
             if self.weight == None:
@@ -392,6 +587,12 @@ class ConvConnection(WeightedComputeUnit):
             assert(False)
         
     def bp(self, sen):
+        ''' Backward propagation of convolution
+
+        .. warning::
+            Currently multi-group convolution (as in AlexNet paper) is not supported. One could walk around it by
+            using a bigger convolution with number of feature maps doubled.
+        '''
         if self.group == 1:
             self.weightgrad = self.convolver.weight_grad(sen, self.ff_act, self.weight)
             self.biasgrad = self.convolver.bias_grad(sen)
@@ -407,7 +608,7 @@ class DataUnit(ComputeUnit):
     def __init__(self, params, num_gpu):
         super(DataUnit, self).__init__(params)
 
-    def init_layer_size(self, from_btm, to_top):
+    def compute_size(self, from_btm, to_top):
         pass
 
     def forward(self, from_btm, to_top, phase):
@@ -447,7 +648,7 @@ class LMDBDataUnit(DataUnit):
         self.crop_size = params.transform_param.crop_size
         self.generator = None
 
-    def init_layer_size(self, from_btm, to_top):
+    def compute_size(self, from_btm, to_top):
         self.out_shape = [self.params.transform_param.crop_size,
                           self.params.transform_param.crop_size,
                           3, 1]
@@ -460,7 +661,6 @@ class LMDBDataUnit(DataUnit):
             #multiview test
             else:
                 self.generator = self.dp.get_multiview_mb()
-
         while True:
             try:
                 (samples, labels) = next(self.generator)
@@ -490,7 +690,7 @@ class ImageDataUnit(DataUnit):
         self.crop_size = params.transform_param.crop_size
         self.generator = None
 
-    def init_layer_size(self, from_btm, to_top):
+    def compute_size(self, from_btm, to_top):
         self.out_shape = [self.params.transform_param.crop_size,
                           self.params.transform_param.crop_size,
                           3, 1]
@@ -517,7 +717,7 @@ class ImageWindowDataUnit(DataUnit):
         else:
             self.generator = self.dp.get_mb('TEST')
 
-    def init_layer_size(self, from_btm, to_top):
+    def compute_size(self, from_btm, to_top):
         self.out_shape = [self.params.window_data_param.crop_size,
                           self.params.window_data_param.crop_size,
                           3, 1]
@@ -527,6 +727,22 @@ class ImageWindowDataUnit(DataUnit):
         return 'window_data'
 
 class Net:
+    ''' The class for neural network structure
+
+    The Net is basically a graph (DAG), of which each node is a :py:class:`ComputeUnit`.
+
+    :ivar units: all the ``ComputeUnit`` s.
+    :vartype units: list owl.net.ComputeUnit
+    :ivar adjacent: the adjacent list (units are represented by their name)
+    :vartype adjacent: list list str
+    :ivar reverse_adjacent: the reverse adjacent list (units are represented by their name)
+    :vartype reverse_adjacent: list list str
+    :ivar dict name_to_uid: a map from units' name to the unit object
+    :ivar loss_uids: all the units for computing loss
+    :vartype loss_uids: list int
+    :ivar accuracy_uids: all the units for calculating accuracy
+    :vartype accuracy_uids: list int
+    '''
     def __init__(self):
         self.units = []
         self.adjacent = []
@@ -539,6 +755,10 @@ class Net:
         self.accuracy_uids = []
 
     def add_unit(self, unit):
+        ''' Method for adding units into the graph
+
+        :param owl.net.ComputeUnit unit: the unit to add
+        '''
         uid = len(self.units)
         self.units.append(unit)
         self.adjacent.append([])
@@ -548,31 +768,63 @@ class Net:
         self.name_to_uid[unit.name].append(uid)
         return uid
 
+    def connect(self, u1, u2):
+        ''' Method for connecting two units
+
+        :param str u1: name of the bottom unit
+        :param str u2: name of the top unit
+        '''
+        self.adjacent[u1].append(u2)
+        self.reverse_adjacent[u2].append(u1)
+
     def get_units_by_name(self, name):
+        ''' Get ``ComputeUnit`` object by its name
+
+        :param str name: unit name
+        :return: the compute unit object of that name
+        :rtype: owl.net.ComputeUnit
+        '''
         return [self.units[uid] for uid in self.name_to_uid[name]]
 
     def get_loss_units(self):
+        ''' Get all ``ComputeUnit`` object for loss
+
+        :return: all compute unit object for computing loss
+        :rtype: list owl.net.ComputeUnit
+        '''
         return [self.units[uid] for uid in self.loss_uids]
 
     def get_accuracy_units(self):
+        ''' Get all ``ComputeUnit`` object for accuracy
+
+        :return: all compute unit object for computing accuracy
+        :rtype: list owl.net.ComputeUnit
+        '''
         return [self.units[uid] for uid in self.accuracy_uids]
 
     def get_data_unit(self, phase = 'TRAIN'):
+        ''' Get the ``ComputeUnit`` object for data loading
+
+        :param str phase: phase name of the run
+        :return: the compute unit object for loading data
+        :rtype: owl.net.ComputeUnit
+        '''
         data_units = self.name_to_uid['data']
         for du in data_units:
             if not self._is_excluded(du, phase):
                 return self.units[du]
 
     def get_weighted_unit_ids(self):
+        ''' Get ids for all :py:class:owl.net.WeightedComputeUnit
+
+        :return: ids of all weighted compute unit
+        :rtype: list int
+        '''
         weights_id = []
         for i in xrange(len(self.units)):
             if isinstance(self.units[i], WeightedComputeUnit):
                 weights_id.append(i)
         return weights_id
-
-    def connect(self, u1, u2):
-        self.adjacent[u1].append(u2)
-        self.reverse_adjacent[u2].append(u1)
 
     def _is_excluded(self, unit, phase):
         p = self.units[unit].params
@@ -626,18 +878,22 @@ class Net:
                 if depcount[l] == 0:
                     queue.put(l)
 
-    def init_layer_size(self, phase = 'TRAIN'):
+    def compute_size(self, phase = 'TRAIN'):
+        ''' Perform the compute_size phase before running
+        '''
         unit_to_tops = [{} for name in self.units]
         for u in self._toporder(phase):
             from_btm = {}
             for btm in self.reverse_adjacent[u]:
                 from_btm.update(unit_to_tops[btm])
-            self.units[u].init_layer_size(from_btm, unit_to_tops[u])
-        for u in self._toporder(phase):
-            print self.units[u].name
-            print self.units[u].out_shape
+            self.units[u].compute_size(from_btm, unit_to_tops[u])
+        #for u in self._toporder(phase):
+            #print self.units[u].name
+            #print self.units[u].out_shape
     
     def forward(self, phase = 'TRAIN'):
+        ''' Perform the forward pass
+        '''
         unit_to_tops = [{} for name in self.units]
         for u in self._toporder(phase):
             from_btm = {}
@@ -646,6 +902,8 @@ class Net:
             self.units[u].forward(from_btm, unit_to_tops[u], phase)
 
     def backward(self, phase = 'TRAIN'):
+        ''' Perform the backward pass
+        '''
         unit_to_btms = [{} for name in self.units]
         for u in self._reverse_toporder(phase):
             from_top = {}
@@ -658,17 +916,20 @@ class Net:
             self.units[u].backward(from_top, unit_to_btms[u], phase)
 
     def update(self, uid):
+        ''' Update weights of one compute unit of the given uid
+
+        :param int uid: id of the compute unit to update
+        '''
         self.units[uid].weight_update(self.current_lr,
                                       self.base_weight_decay,
                                       self.momentum,
                                       self.batch_size)
 
-    def weight_update(self, num_gpu):
+    def weight_update(self):
+        ''' Update weights for all units
+        '''
         for i in range(len(self.units)):
-            update(i, num_gpu)
-
-    def wait_for_eval_loss(self):
-        self.get_loss_units()[0].ff_y.wait_for_eval()
+            self.update(i)
 
     def __str__(self):
         ret = 'digraph G {\n'

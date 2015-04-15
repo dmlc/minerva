@@ -30,7 +30,7 @@ class CaffeNetBuilder:
             self.netconfig = NetParameter()
             text_format.Merge(str(f.read()), self.netconfig)
     
-    def build_net(self, owl_net, num_gpu):
+    def build_net(self, owl_net, num_gpu = 1):
         #set globle lr and wd
         owl_net.base_lr = self.solverconfig.base_lr
         owl_net.current_lr = self.solverconfig.base_lr
