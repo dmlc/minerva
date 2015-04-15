@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
   MinervaSystem& ms = MinervaSystem::Instance();
   uint64_t cpu_device = ms.device_manager().CreateCpuDevice();
   uint64_t gpu_device[2] = {ms.device_manager().CreateGpuDevice(0), ms.device_manager().CreateGpuDevice(1)};
-  ms.current_device_id_ = gpu_device[0];
+  ms.SetDevice(gpu_device[0]);
   if (0 < FLAGS_mb && FLAGS_mb <= 512) {
     mb_size = FLAGS_mb;
   }
@@ -151,10 +151,10 @@ int main(int argc, char** argv) {
     for (int mb = 0; mb < 60000 / mb_size; ++mb) {
       vector<NArray> res1, res2;
       bool second = false;
-      ms.current_device_id_ = gpu_device[0];
+      ms.SetDevice(gpu_device[0]);
       res1 = TrainMB(data_file_in, label_file_in, mb % 40 == 0);
       if (++mb < 60000 / mb_size) {
-        ms.current_device_id_ = gpu_device[1];
+        ms.SetDevice(gpu_device[1]);
         res2 = TrainMB(data_file_in, label_file_in, mb % 40 == 0);
         second = true;
       }

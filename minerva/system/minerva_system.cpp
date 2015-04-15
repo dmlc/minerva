@@ -43,7 +43,17 @@ uint64_t MinervaSystem::GenerateDataId() {
   return data_id_counter_++;
 }
 
-MinervaSystem::MinervaSystem(int* argc, char*** argv) : current_device_id_(0), data_id_counter_(0) {
+uint64_t MinervaSystem::CreateCpuDevice() {
+  return MinervaSystem::Instance().device_manager().GetGpuDeviceCount();
+}
+uint64_t MinervaSystem::CreateGpuDevice(int id) {
+  return MinervaSystem::Instance().device_manager().CreateGpuDevice(id);
+}
+void MinervaSystem::SetDevice(uint64_t id) {
+  current_device_id_ = id;
+}
+
+MinervaSystem::MinervaSystem(int* argc, char*** argv): data_id_counter_(0), current_device_id_(0) {
   gflags::ParseCommandLineFlags(argc, argv, true);
 #ifndef HAS_PS
   // glog is initialized in PS::main, and also here, so we will hit a

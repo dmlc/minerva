@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
 #ifdef HAS_CUDA
   uint64_t gpuDevice = ms.device_manager().CreateGpuDevice(0);
 #endif
-  ms.current_device_id_ = cpuDevice;
+  ms.SetDevice(cpuDevice);
 
   weights.resize(num_layers - 1);
   bias.resize(num_layers - 1);
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
     ifstream label_file_in(train_label_file.c_str());
     for(int mb = 0; mb < num_mb_per_epoch; ++ mb) {
 
-      ms.current_device_id_ = cpuDevice;
+      ms.SetDevice(cpuDevice);
 
       Scale data_size{lsize[0], mb_size};
       Scale label_size{lsize[num_layers - 1], mb_size};
@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
       NArray label = NArray::MakeNArray(label_size, label_ptr);
 
 #ifdef HAS_CUDA
-      ms.current_device_id_ = gpuDevice;
+      ms.SetDevice(gpuDevice);
 #endif
 
       // ff
@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
       }
 
       if (mb % 20 == 0) {
-        ms.current_device_id_ = cpuDevice;
+        ms.SetDevice(cpuDevice);
         PrintTrainingAccuracy(acts[num_layers - 1], label);
       }
     }
@@ -134,4 +134,3 @@ int main(int argc, char** argv) {
   cout << "Training finished." << endl;
   return 0;
 }
-

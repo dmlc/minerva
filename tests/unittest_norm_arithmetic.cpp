@@ -5,7 +5,7 @@ using namespace std;
 
 TEST(NormArithmetic, CpuAddOnFirstDimension) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale s1{9, 7};
   Scale s2{1, 7};
   NArray n1 = NArray::Randn(s1, 0, 1);
@@ -21,7 +21,7 @@ TEST(NormArithmetic, CpuAddOnFirstDimension) {
 
 TEST(NormArithmetic, GpuMultSecondDimension) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale s1{9, 7};
   Scale s2{9, 1};
   NArray n1 = NArray::Randn(s1, 0, 1);

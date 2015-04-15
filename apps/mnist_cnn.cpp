@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
   MinervaSystem& ms = MinervaSystem::Instance();
   uint64_t cpu_device = ms.device_manager().CreateCpuDevice();
   uint64_t gpu_device[2] = {ms.device_manager().CreateGpuDevice(0), ms.device_manager().CreateGpuDevice(1)};
-  ms.current_device_id_ = gpu_device[0];
+  ms.SetDevice(gpu_device[0]);
   if (0 < FLAGS_mb && FLAGS_mb <= 512) {
     mb_size = FLAGS_mb;
   }
@@ -149,7 +149,7 @@ int main(int argc, char** argv) {
     label_file_in.ignore(2 * sizeof(float));
     LOG(INFO) << "Epoch #" << epoch;
     for (int mb = 0; mb < 60000 / mb_size; ++mb) {
-      ms.current_device_id_ = gpu_device[0];
+      ms.SetDevice(gpu_device[0]);
       auto res = TrainMB(data_file_in, label_file_in, mb % 20 == 0);
       weights[0] -= alpha / mb_size * res[0];
       bias[0] -= alpha / mb_size * res[1];

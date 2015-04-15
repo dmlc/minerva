@@ -33,7 +33,12 @@ class MinervaSystem :
   }
   std::pair<Device::MemType, float*> GetPtr(uint64_t, uint64_t);
   uint64_t GenerateDataId();
-  uint64_t current_device_id_;
+
+  // device
+  uint64_t CreateCpuDevice();
+  uint64_t CreateGpuDevice(int );
+  void SetDevice(uint64_t );
+  uint64_t current_device_id() const { return current_device_id_; }
 
  private:
   MinervaSystem(int*, char***);
@@ -42,6 +47,7 @@ class MinervaSystem :
   ExecutionProfiler* profiler_;
   DeviceManager* device_manager_;
   std::atomic<uint64_t> data_id_counter_;
+  uint64_t current_device_id_;
 };
 
 }  // end of namespace minerva
