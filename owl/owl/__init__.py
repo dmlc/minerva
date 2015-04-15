@@ -52,6 +52,10 @@ def wait_for_all():
 def create_cpu_device():
     """ Create device for running on CPU cores
 
+    .. note::
+        At least one of :py:func:create_cpu_device or :py:func:create_gpu_device should be called
+        before using any ``owl`` APIs.
+
     :return: A unique id for cpu device
     :rtype: int
     """
@@ -59,6 +63,10 @@ def create_cpu_device():
 
 def create_gpu_device(which):
     """ Create device for running on GPU card
+
+    .. note::
+        At least one of :py:func:create_cpu_device or :py:func:create_gpu_device should be called
+        before using any ``owl`` APIs.
 
     :param int which: which GPU card the code would be run on
     :return: A unique id for the device on that GPU card
