@@ -6,7 +6,13 @@ owl.net.net module
 
 .. automodule:: owl.net.net
     :members:
-    :undoc-members:
+    :show-inheritance:
+
+owl.net.trainer module
+----------------------
+
+.. automodule:: owl.net.trainer
+    :members:
     :show-inheritance:
 
 owl.net.net_helper module

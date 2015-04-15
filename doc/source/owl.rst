@@ -154,16 +154,3 @@ owl.elewise module
     :members:
     :undoc-members:
     :show-inheritance:
-
-owl.net module
---------------
-
-.. automodule:: owl.net
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. Subpackage
- -----------
- .. toctree::
- owl.caffe: !!comment out
