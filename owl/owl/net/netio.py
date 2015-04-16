@@ -10,23 +10,21 @@ from google.protobuf import text_format
 from caffe import *
 
 class ImageWindowDataProvider:
-    ''' Class for Image Window Data Provider. This data provider will read the original image and crop out patches according to the given box position, then resize the patch to form batch. 
+    ''' Class for Image Window Data Provider. This data provider will read the original image
+    and crop out patches according to the given box position, then resize the patch to form batch. 
 
     .. note::
-        layer type in configure file:
-        WINDOW_DATA
+        Layer type in Caffe's configure file: WINDOW_DATA
         
-        Data source file format for each image:
-        # Img_ind \n
-        Img_path \n
-        C \n
-        H \n 
-        W \n
-        Window_num \n
-        label overlap_ratio upper left lower right \n
-        label overlap_ratio upper left lower right \n
-        ''......'' \n
-        label overlap_ratio upper left lower right 
+        Data format for each image::
+
+            # window meta data
+            [Img_ind][Img_path][C][H][W][Window_num]
+            # windows
+            [label][overlap_ratio][upper][left][lower][right]
+            [label][overlap_ratio][upper][left][lower][right]
+                            ......
+            [label][overlap_ratio][upper][left][lower][right]
         
         - ``Img_ind``: image index
         - ``Img_path``: image path
@@ -39,8 +37,6 @@ class ImageWindowDataProvider:
         - ``upper left lower right``: position of the window
 
     '''
-
-
 
     def __init__(self, window_data_param, mm_batch_num):
         bp = BlobProto()
@@ -60,11 +56,16 @@ class ImageWindowDataProvider:
                 bp.ParseFromString(f.read())
             np_mean = np.array(bp.data, dtype=np.float32)
             mean_size = np.sqrt(np.shape(np_mean)[0] / 3)
+            mean_range_st = (mean_size - self.crop_size) / 2
+            mean_range_ed = mean_size - mean_range_st
             self.mean_data = np_mean.reshape([3, mean_size, mean_size])
-            self.mean_data = self.mean_data[:, (mean_size-self.crop_size)/2:mean_size-(mean_size-self.crop_size)/2, (mean_size-self.crop_size)/2:mean_size-(mean_size-self.crop_size)/2] 
-
+            self.mean_data = self.mean_data[:, 
+                    mean_range_st : mean_range_ed,
+                    mean_range_st : mean_range_ed]
 
     def get_mb(self, phase = 'TRAIN'):
+        ''' Get next minibatch
+        '''
         sourcefile = open(self.source, 'r')
         samples = np.zeros([self.batch_size, self.crop_size ** 2 * 3], dtype = np.float32)
         labels = np.zeros([self.batch_size, 1], dtype=np.float32)
@@ -149,17 +150,16 @@ class ImageListDataProvider:
     ''' Class for Image Data Provider. This data provider will read from original data into RGB value, then resize the patch to form batch. 
 
     .. note::
-        layer type in configure file:
-        IMAGE_DATA
+        Layer type in Caffe's configure file: IMAGE_DATA
         
-        Data source file format for each image:
-        Img_path label_0 label_1 ... label_n
+        Data format for each image::
+        
+            [Img_path][label_0][label_1]...[label_n]
         
         - ``Img_path``: image path
         - ``label_0 label_1 ... label_n``: we support multi-label for a single image
 
     '''
-    
     
     def __init__(self, image_data_param, transform_param, mm_batch_num):
         bp = BlobProto()
@@ -175,8 +175,13 @@ class ImageListDataProvider:
             np_mean = np.array(bp.data, dtype=np.float32)
             mean_size = np.sqrt(np.shape(np_mean)[0] / 3)
             self.mean_data = np_mean.reshape([3, mean_size, mean_size])
-            self.mean_data = self.mean_data[:, (mean_size-image_data_param.new_height)/2:mean_size-(mean_size-image_data_param.new_height)/2, (mean_size-image_data_param.new_width)/2:mean_size-(mean_size-image_data_param.new_width)/2] 
-        
+            mean_height_st = (mean_size - image_data_param.new_height) / 2
+            mean_height_ed = mean_size - mean_height_st
+            mean_width_st = (mean_size - image_data_param.new_width) / 2
+            mean_width_ed = mean_size - mean_width_st
+            self.mean_data = self.mean_data[:,
+                    mean_height_st : mean_height_ed,
+                    mean_width_st : mean_width_ed]
         self.source = image_data_param.source
         self.new_height = image_data_param.new_height
         self.new_width = image_data_param.new_width
@@ -184,8 +189,9 @@ class ImageListDataProvider:
         self.crop_size = transform_param.crop_size
         self.mirror = transform_param.mirror
 
-
     def get_mb(self, phase = 'TRAIN'):
+        ''' Get next minibatch
+        '''
         sourcefile = open(self.source, 'r')
         samples = np.zeros([self.batch_size, self.crop_size ** 2 * 3], dtype = np.float32)
         num_label = -1
@@ -254,8 +260,7 @@ class LMDBDataProvider:
     ''' Class for LMDB Data Provider. 
 
     .. note::
-        layer type in configure file:
-        DATA
+        Layer type in Caffe's configure file: DATA
 
     '''
 
@@ -279,6 +284,8 @@ class LMDBDataProvider:
         self.mirror = transform_param.mirror
 
     def get_mb(self, phase = 'TRAIN'):
+        ''' Get next minibatch
+        '''
         env = lmdb.open(self.source, readonly=True)
         samples = np.zeros([self.batch_size, self.crop_size ** 2 * 3], dtype=np.float32)
         num_label = -1
@@ -328,10 +335,11 @@ class LMDBDataProvider:
             yield (np.delete(samples, delete_idx, 0), np.delete(labels, delete_idx, 0))
 
     def get_multiview_mb(self):
-        '''  Multiview testing will get better accuracy than single view testing. For each image, it will crop out the left-top, right-top, left-down, right-down, central patches and their hirizontal flipped version. The final prediction is averaged according to the 10 views. Thus, for each original batch, get_multiview_mb will produce 10 consecutive batches for the batch.
-
+        '''  Multiview testing will get better accuracy than single view testing. For each image,
+        it will crop out the left-top, right-top, left-down, right-down, central patches and their
+        hirizontal flipped version. The final prediction is averaged according to the 10 views.
+        Thus, for each original batch, get_multiview_mb will produce 10 consecutive batches for the batch.
         '''
-
 
         env = lmdb.open(self.source, readonly=True)
         view_num = 10
