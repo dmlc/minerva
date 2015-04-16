@@ -11,7 +11,7 @@ if __name__ == "__main__":
     # parse command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('solver_file', help='caffe solver configure file')
-    parser.add_argument('snapshot', help='the snapshot idx to start from')
+    parser.add_argument('snapshot', help='the snapshot idx to start from', action='store', type=int, default=0)
     parser.add_argument('layer_name', help='layer_name')
     parser.add_argument('feature_path', help='feature_path')
     parser.add_argument('-g', '--gpu_idx', help='gpu to use', action='store', type=int, default=0)

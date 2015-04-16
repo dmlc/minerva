@@ -56,7 +56,7 @@ class Lrner:
         :rtype: owl.NArray
         """
         #print np.reshape(x.to_numpy(), np.prod(np.shape(x.to_numpy()))).tolist()[0:100] 
-        return _owl.lrn_forward(x, s, self.local_size, self.alpha, self.beta)
+        return _owl.lrn_forward(x, scale, self.local_size, self.alpha, self.beta)
     
     def bp(self, bottom_data, top_data, scale, top_diff):
         """ Backward local response norm

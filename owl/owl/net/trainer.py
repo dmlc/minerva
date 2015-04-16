@@ -47,7 +47,7 @@ class NetTrainer:
             # weight update
             for i in range(len(wunits)):
                 wid = wunits[i]
-                upd_gpu = i * num_gpu / len(wunits)
+                upd_gpu = i * s.num_gpu / len(wunits)
                 owl.set_device(s.gpu[upd_gpu])
                 for gid in range(s.num_gpu):
                     if gid == upd_gpu:
@@ -95,14 +95,15 @@ class NetTrainer:
             sys.stdout.flush()
 
 class MultiviewTester:
-    def __init__(self, solver_file, snapshot, gpu_idx = 0):
+    def __init__(self, solver_file, softmax_layer_name, snapshot, gpu_idx = 0):
         self.solver_file = solver_file
+        self.softmax_layer_name = softmax_layer_name
         self.snapshot = snapshot
         self.gpu = owl.create_gpu_device(gpu_idx)
         owl.set_device(self.gpu)
 
     def build_net(self):
-        self.owl_net = net.Net()
+        self.owl_net = Net()
         self.builder = CaffeNetBuilder(self.solver_file)
         self.snapshot_dir = self.builder.snapshot_dir
         self.builder.build_net(self.owl_net)
@@ -113,7 +114,7 @@ class MultiviewTester:
         #multi-view test
         acc_num = 0
         test_num = 0
-        loss_unit = s.owl_net.units[s.owl_net.name_to_uid['loss'][0]] 
+        loss_unit = s.owl_net.units[s.owl_net.name_to_uid[s.softmax_layer_name][0]] 
         for testiteridx in range(s.owl_net.solver.test_iter[0]):
             for i in range(10): 
                 s.owl_net.forward('MULTI_VIEW')
@@ -141,7 +142,7 @@ class FeatureExtractor:
         owl.set_device(self.gpu)
 
     def build_net(self):
-        self.owl_net = net.Net()
+        self.owl_net = Net()
         self.builder = CaffeNetBuilder(self.solver_file)
         self.snapshot_dir = self.builder.snapshot_dir
         self.builder.build_net(self.owl_net)
