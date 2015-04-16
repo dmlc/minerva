@@ -10,6 +10,12 @@ namespace common {
 template<typename Mutex>
 class ReaderLock {
  public:
+  static void Lock(Mutex& m_) {
+    m_.LockShared();
+  }
+  static void Unlock(Mutex& m_) {
+    m_.UnlockShared();
+  }
   explicit ReaderLock(Mutex& m) : mutex_(&m) {
     mutex_->LockShared();
   }
@@ -25,6 +31,12 @@ class ReaderLock {
 template<typename Mutex>
 class WriterLock {
  public:
+  static void Lock(Mutex& m_) {
+    m_.Lock();
+  }
+  static void Unlock(Mutex& m_) {
+    m_.Unlock();
+  }
   explicit WriterLock(Mutex& m) : mutex_(&m) {
     mutex_->Lock();
   }
