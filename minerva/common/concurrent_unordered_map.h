@@ -3,10 +3,11 @@
 #include "common/shared_mutex.h"
 #include "common/common.h"
 
-template<typename K, typename V> class ConcurrentUnorderedMap {
+template<typename K, typename V>
+class ConcurrentUnorderedMap {
  public:
   ConcurrentUnorderedMap() = default;
-  DISALLOW_COPY_AND_ASSIGN(ConcurrentUnorderedMap);
+  DISALLOW_COPY_AND_MOVE(ConcurrentUnorderedMap);
   ~ConcurrentUnorderedMap() = default;
   V& operator[](const K& k) {
     WriterLock lock(m_);
@@ -46,9 +47,9 @@ template<typename K, typename V> class ConcurrentUnorderedMap {
   }
 
  private:
-  typedef minerva::common::SharedMutex Mutex;
-  typedef minerva::common::ReaderLock<Mutex> ReaderLock;
-  typedef minerva::common::WriterLock<Mutex> WriterLock;
+  using Mutex = minerva::common::SharedMutex;
+  using ReaderLock = minerva::common::ReaderLock<Mutex>;
+  using WriterLock = minerva::common::WriterLock<Mutex>;
   mutable Mutex m_;
   std::unordered_map<K, V> map_;
 };
