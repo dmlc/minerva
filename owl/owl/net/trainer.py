@@ -7,6 +7,14 @@ from net import Net
 from net_helper import CaffeNetBuilder
 
 class NetTrainer:
+    ''' Class for DNN training.
+
+    :ivar str solver_file: name of the solver_file, it will tell Minerva the network configuration and model saving path 
+    :ivar snapshot: continue training from the snapshot under model saving path. If no model is saved under that snapshot folder, Minerva will randomly initial the weights according to configure file and training from scratch
+    :ivar num_gpu: Minerva support training with multiple gpus and update weights synchronously
+    
+    '''
+    
     def __init__(self, solver_file, snapshot, num_gpu = 1):
         self.solver_file = solver_file
         self.snapshot = snapshot
@@ -95,6 +103,17 @@ class NetTrainer:
             sys.stdout.flush()
 
 class MultiviewTester:
+    ''' Class for multiview testing.
+
+    Multiview testing will get better accuracy than single view testing. For each image, it will crop out the left-top, right-top, left-down, right-down, central patches and their hirizontal flipped version. The final prediction is averaged according to the 10 views.
+
+    :ivar str solver_file: name of the solver_file, it will tell Minerva the network configuration and model saving path 
+    :ivar str softmax_layer_name: name of the softmax layer that produce prediction 
+    :ivar snapshot: saved model snapshot index
+    :ivar gpu: the gpu to run testing
+
+    '''
+    
     def __init__(self, solver_file, softmax_layer_name, snapshot, gpu_idx = 0):
         self.solver_file = solver_file
         self.softmax_layer_name = softmax_layer_name
@@ -135,9 +154,23 @@ class MultiviewTester:
         print "Testing Accuracy: %f" % (float(acc_num)/test_num)
 
 class FeatureExtractor:
-    def __init__(self, solver_file, snapshot, gpu_idx = 0):
+    ''' Class of feature extractor.
+    Feature will be stored in a txt file as a matrix. The size of the feature matrix is [num_img, feature_dimension]
+
+    :ivar str solver_file: name of the solver_file, it will tell Minerva the network configuration and model saving path 
+    :ivar snapshot: saved model snapshot index
+    :ivar str layer_name: name of the ayer that produce feature 
+    :ivar str feature_path: the file path to save feature
+    :ivar gpu: the gpu to run testing
+
+    '''
+    
+    
+    def __init__(self, solver_file, snapshot, layer_name, feature_path, gpu_idx = 0):
         self.solver_file = solver_file
         self.snapshot = snapshot
+        self.layer_name = layer_name
+        self.feature_path = feature_path
         self.gpu = owl.create_gpu_device(gpu_idx)
         owl.set_device(self.gpu)
 
@@ -149,9 +182,9 @@ class FeatureExtractor:
         self.owl_net.compute_size('TEST')
         self.builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
 
-    def run(s, layer_name, feature_path):
-        feature_unit = s.owl_net.units[s.owl_net.name_to_uid[layer_name][0]] 
-        feature_file = open(feature_path, 'w')
+    def run(s):
+        feature_unit = s.owl_net.units[s.owl_net.name_to_uid[s.layer_name][0]] 
+        feature_file = open(s.feature_path, 'w')
         batch_dir = 0
         for testiteridx in range(s.owl_net.solver.test_iter[0]):
             s.owl_net.forward('TEST')

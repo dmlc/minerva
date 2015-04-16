@@ -606,9 +606,13 @@ class ConvConnection(WeightedComputeUnit):
 
 class DataUnit(ComputeUnit):
     ''' The base class of dataunit.
-    :ivar dp: dataprovider, different kind of dp load data from different formats.
-    :ivar generator: the iterator produced by dataprovider.
+    
+    :ivar dp: dataprovider, different kind of dp load data from different formats
+    :ivar generator: the iterator produced by dataprovider
+
     '''
+    
+    
     def __init__(self, params, num_gpu):
         super(DataUnit, self).__init__(params)
 
@@ -616,8 +620,14 @@ class DataUnit(ComputeUnit):
         pass
 
     def forward(self, from_btm, to_top, phase):
-        ''' Feed-forward of data unit will get a batch of a fixed batch_size from data provider 
-        :ivar phase: forward operation may vary according to the phase parameter. Phase indicates whether it's training or testing. Usualy, the data augmentation operation for training involves some randomness, while testing doesn't.
+        ''' Feed-forward of data unit will get a batch of a fixed batch_size from data provider. 
+       
+        :param phase: forward operation may vary according to the phase parameter
+
+        .. note::
+        Phase indicates whether it's training or testing. Usualy, the data augmentation operation for training involves some randomness, while testing doesn't
+
+        
         '''
         
         
@@ -647,8 +657,10 @@ class DataUnit(ComputeUnit):
         return 'data'
 
 class LMDBDataUnit(DataUnit):
-    ''' DataUnit load from LMDB
-    :ivar params: lmdb data layer param defined by Caffe, params.data_param contains information about data source, parmas.transform_param mainly defines data augmentation operations.
+    ''' DataUnit load from LMDB.
+
+    :ivar caffe.LayerParameter params: lmdb data layer param defined by Caffe, params.data_param contains information about data source, parmas.transform_param mainly defines data augmentation operations
+    
     '''
     
     
@@ -669,9 +681,9 @@ class LMDBDataUnit(DataUnit):
         to_top[self.top_names[0]] = self.out_shape[:]
    
     def forward(self, from_btm, to_top, phase):
-        ''' Feed-forward operation may vary according to phase: 
+        ''' Feed-forward operation may vary according to phase. 
             .. note::
-            LMDB data provider now support multi-view testing, if phase is "MULTI_VIEW", it will produce 10 batches of different views of the same original image     
+            LMDB data provider now support multi-view testing, if phase is "MULTI_VIEW", it will produce concequtive 10 batches of different views of the same original image     
         '''
         if self.generator == None:
             if phase == 'TRAIN' or phase == 'TEST':
@@ -698,6 +710,10 @@ class LMDBDataUnit(DataUnit):
         return 'lmdb_data'
 
 class ImageDataUnit(DataUnit):
+    ''' DataUnit load from raw images.
+    :ivar caffe.LayerParameter params: image data layer param defined by Caffe, this is often used when data is limited. Loading from original image will be slower than loading from LMDB
+    '''
+    
     def __init__(self, params, num_gpu):
         super(ImageDataUnit, self).__init__(params, num_gpu)
         if params.include[0].phase == Phase.Value('TRAIN'):
@@ -718,30 +734,9 @@ class ImageDataUnit(DataUnit):
         return 'image_data'
 
 class ImageWindowDataUnit(DataUnit):
-    ''' DataUnit load from image window patches 
-    :ivar params: image window data layer param defined by Caffe, this is often used when data is limited and object bounding box is given.
-    .. note::
-        Data source format for each image:
-        # Img_ind
-        Img_path
-        C
-        H
-        W
-        Window_num
-        label overlap_ratio upper left lower right 
-        label overlap_ratio upper left lower right 
-        ......
-        label overlap_ratio upper left lower right 
-        
-        - ``Img_ind``: image index
-        - ``Img_path``: image path
-        - ``C``: number of image channels (feature maps)
-        - ``H``: image height
-        - ``W``: image width
-        - ``Window_num``: number of window patches
-        - ``label``: label
-        - ``overlap_ratio``: overlap ratio between the window and object bouding box
-        - ``upper left lower right``: position of the window
+    ''' DataUnit load from image window patches. 
+    :ivar caffe.LayerParameter params: image window data layer param defined by Caffe, this is often used when data is limited and object bounding box is given
+
     '''
     
     def __init__(self, params, num_gpu):

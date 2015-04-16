@@ -10,6 +10,38 @@ from google.protobuf import text_format
 from caffe import *
 
 class ImageWindowDataProvider:
+    ''' Class for Image Window Data Provider. This data provider will read the original image and crop out patches according to the given box position, then resize the patch to form batch. 
+
+    .. note::
+        layer type in configure file:
+        WINDOW_DATA
+        
+        Data source file format for each image:
+        # Img_ind \n
+        Img_path \n
+        C \n
+        H \n 
+        W \n
+        Window_num \n
+        label overlap_ratio upper left lower right \n
+        label overlap_ratio upper left lower right \n
+        ''......'' \n
+        label overlap_ratio upper left lower right 
+        
+        - ``Img_ind``: image index
+        - ``Img_path``: image path
+        - ``C``: number of image channels (feature maps)
+        - ``H``: image height
+        - ``W``: image width
+        - ``Window_num``: number of window patches
+        - ``label``: label
+        - ``overlap_ratio``: overlap ratio between the window and object bouding box
+        - ``upper left lower right``: position of the window
+
+    '''
+
+
+
     def __init__(self, window_data_param, mm_batch_num):
         bp = BlobProto()
         self.source = window_data_param.source
@@ -114,6 +146,21 @@ class ImageWindowDataProvider:
 
 
 class ImageListDataProvider:
+    ''' Class for Image Data Provider. This data provider will read from original data into RGB value, then resize the patch to form batch. 
+
+    .. note::
+        layer type in configure file:
+        IMAGE_DATA
+        
+        Data source file format for each image:
+        Img_path label_0 label_1 ... label_n
+        
+        - ``Img_path``: image path
+        - ``label_0 label_1 ... label_n``: we support multi-label for a single image
+
+    '''
+    
+    
     def __init__(self, image_data_param, transform_param, mm_batch_num):
         bp = BlobProto()
         if len(transform_param.mean_file) == 0:
@@ -204,6 +251,14 @@ class ImageListDataProvider:
 
 
 class LMDBDataProvider:
+    ''' Class for LMDB Data Provider. 
+
+    .. note::
+        layer type in configure file:
+        DATA
+
+    '''
+
     def __init__(self, data_param, transform_param, mm_batch_num):
         bp = BlobProto()
         if len(transform_param.mean_file) == 0:
@@ -273,6 +328,11 @@ class LMDBDataProvider:
             yield (np.delete(samples, delete_idx, 0), np.delete(labels, delete_idx, 0))
 
     def get_multiview_mb(self):
+        '''  Multiview testing will get better accuracy than single view testing. For each image, it will crop out the left-top, right-top, left-down, right-down, central patches and their hirizontal flipped version. The final prediction is averaged according to the 10 views. Thus, for each original batch, get_multiview_mb will produce 10 consecutive batches for the batch.
+
+        '''
+
+
         env = lmdb.open(self.source, readonly=True)
         view_num = 10
         ori_size = -1

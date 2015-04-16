@@ -28,6 +28,6 @@ if __name__ == "__main__":
     sys_args = [sys.argv[0]] + remain
     owl.initialize(sys_args)
 
-    extractor = FeatureExtractor(solver_file, snapshot, gpu_idx)
+    extractor = FeatureExtractor(solver_file, snapshot, layer_name, feature_path, gpu_idx)
     extractor.build_net()
-    extractor.run(layer_name, feature_path)
+    extractor.run()
