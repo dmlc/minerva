@@ -1,52 +1,43 @@
 #pragma once
 #include <unordered_map>
-#include <atomic>
-#include "common/shared_mutex.h"
+#include <boost/thread/locks.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include "common/common.h"
 
-template<typename K, typename V>
-class ConcurrentUnorderedMap {
+template<typename K, typename V> class ConcurrentUnorderedMap {
  public:
   ConcurrentUnorderedMap() = default;
-  DISALLOW_COPY_AND_MOVE(ConcurrentUnorderedMap);
+  DISALLOW_COPY_AND_ASSIGN(ConcurrentUnorderedMap);
   ~ConcurrentUnorderedMap() = default;
   V& operator[](const K& k) {
-    // WriterLock lock(m_);
-    std::lock_guard<std::mutex> lock(m_);
+    WriteLock lock(l_);
     return map_[k];
   }
   size_t Erase(const K& k) {
-    // WriterLock lock(m_);
-    std::lock_guard<std::mutex> lock(m_);
+    WriteLock lock(l_);
     return map_.erase(k);
   }
   size_t Insert(const typename std::unordered_map<K, V>::value_type& v) {
-    // WriterLock lock(m_);
-    std::lock_guard<std::mutex> lock(m_);
+    WriteLock lock(l_);
     return map_.insert(v).second;
   }
   V& At(const K& k) {
-    // ReaderLock lock(m_);
-    std::lock_guard<std::mutex> lock(m_);
+    ReadLock lock(l_);
     return map_.at(k);
   }
   const V& At(const K& k) const {
-    // ReaderLock lock(m_);
-    std::lock_guard<std::mutex> lock(m_);
+    ReadLock lock(l_);
     return map_.at(k);
   }
   size_t Size() const {
-    // ReaderLock lock(m_);
-    std::lock_guard<std::mutex> lock(m_);
+    ReadLock lock(l_);
     return map_.size();
   }
   void LockRead() const {
-    std::lock_guard<std::mutex> lock(m_);
-    // m_.LockShared();
+    l_.lock_shared();
   }
   void UnlockRead() const {
-    std::lock_guard<std::mutex> lock(m_);
-    // m_.UnlockShared();
+    l_.unlock_shared();
   }
   std::unordered_map<K, V>& VolatilePayload() {
     return map_;
@@ -56,11 +47,10 @@ class ConcurrentUnorderedMap {
   }
 
  private:
-  // using Mutex = minerva::common::SharedMutex;
-  // using ReaderLock = minerva::common::ReaderLock<Mutex>;
-  // using WriterLock = minerva::common::WriterLock<Mutex>;
-  // mutable Mutex m_;
-  mutable std::mutex m_;
+  typedef boost::shared_mutex Lock;
+  typedef boost::unique_lock<Lock> WriteLock;
+  typedef boost::shared_lock<Lock> ReadLock;
+  mutable Lock l_;
   std::unordered_map<K, V> map_;
 };
 
