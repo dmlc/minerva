@@ -115,7 +115,7 @@ class NetTrainer:
             # weight update
             for i in range(len(wunits)):
                 wid = wunits[i]
-                upd_gpu = i * num_gpu / len(wunits)
+                upd_gpu = i * s.num_gpu / len(wunits)
                 owl.set_device(s.gpu[upd_gpu])
                 for gid in range(s.num_gpu):
                     if gid == upd_gpu:
@@ -166,22 +166,24 @@ class MultiviewTester:
     ''' Class for performing multi-view testing
 
     Run it as::
-        >>> tester = MultiviewTester(solver_file, snapshot, gpu_idx)
+        >>> tester = MultiviewTester(solver_file, softmax_layer, snapshot, gpu_idx)
         >>> tester.build_net()
         >>> tester.run()
 
     :ivar str solver_file: path of the solver file in Caffe's proto format
     :ivar int snapshot: the snapshot for testing
+    :ivar str softmax_layer_name: name of the softmax layer that produce prediction 
     :ivar int gpu_idx: which gpu to perform the test
     '''
-    def __init__(self, solver_file, snapshot, gpu_idx = 0):
+    def __init__(self, solver_file, softmax_layer_name, snapshot, gpu_idx = 0):
         self.solver_file = solver_file
+        self.softmax_layer_name = softmax_layer_name
         self.snapshot = snapshot
         self.gpu = owl.create_gpu_device(gpu_idx)
         owl.set_device(self.gpu)
 
     def build_net(self):
-        self.owl_net = net.Net()
+        self.owl_net = Net()
         self.builder = CaffeNetBuilder(self.solver_file)
         self.snapshot_dir = self.builder.snapshot_dir
         self.builder.build_net(self.owl_net)
@@ -192,7 +194,7 @@ class MultiviewTester:
         #multi-view test
         acc_num = 0
         test_num = 0
-        loss_unit = s.owl_net.units[s.owl_net.name_to_uid['loss'][0]] 
+        loss_unit = s.owl_net.units[s.owl_net.name_to_uid[s.softmax_layer_name][0]] 
         for testiteridx in range(s.owl_net.solver.test_iter[0]):
             for i in range(10): 
                 s.owl_net.forward('MULTI_VIEW')
@@ -214,6 +216,7 @@ class MultiviewTester:
 
 class FeatureExtractor:
     ''' Class for extracting trained features
+    Feature will be stored in a txt file as a matrix. The size of the feature matrix is [num_img, feature_dimension]
 
     Run it as::
         >>> extractor = FeatureExtractor(solver_file, snapshot, gpu_idx)
@@ -222,6 +225,7 @@ class FeatureExtractor:
 
     :ivar str solver_file: path of the solver file in Caffe's proto format
     :ivar int snapshot: the snapshot for testing
+    :ivar str layer_name: name of the ayer that produce feature 
     :ivar int gpu_idx: which gpu to perform the test
     '''
     def __init__(self, solver_file, snapshot, gpu_idx = 0):
@@ -231,7 +235,7 @@ class FeatureExtractor:
         owl.set_device(self.gpu)
 
     def build_net(self):
-        self.owl_net = net.Net()
+        self.owl_net = Net()
         self.builder = CaffeNetBuilder(self.solver_file)
         self.snapshot_dir = self.builder.snapshot_dir
         self.builder.build_net(self.owl_net)

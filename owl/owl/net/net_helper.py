@@ -9,6 +9,10 @@ from PIL import Image
 import subprocess
 
 class CaffeNetBuilder:
+    ''' Class to build network from Caffe's solver and configure file. 
+    :ivar str solver_file: Caffe's solver file. 
+            
+    '''
     def __init__(self, solver_file):
         print 'Caffe solver file:', solver_file
         with open(solver_file, 'r') as f:
@@ -24,6 +28,9 @@ class CaffeNetBuilder:
  
     #TODO: hack for patchnet
     def change_net(self, net_file):
+        ''' You can mannually assign the network configure file and do not use the file provided in the solver
+        :ivar str net_file: Caffe's network configure file.
+        '''
         self.net_file = net_file
         print 'Caffe network file:', self.net_file
         with open(self.net_file, 'r') as f:
@@ -31,6 +38,9 @@ class CaffeNetBuilder:
             text_format.Merge(str(f.read()), self.netconfig)
     
     def build_net(self, owl_net, num_gpu = 1):
+        '''Parse the information from solver and network configure file and build the network and processing plan.
+        :ivar num_gpu: the number of GPU to train in parallel should be provided in this function, it will tell the data layer how to slice a training batch
+        '''
         #set globle lr and wd
         owl_net.base_lr = self.solverconfig.base_lr
         owl_net.current_lr = self.solverconfig.base_lr
@@ -138,8 +148,13 @@ class CaffeNetBuilder:
             print "Not implemented type:", V1LayerParameter.LayerType.Name(caffe_layer.type)
             return None
     
-    def init_net_from_file(self, owl_net, weightpath, epochidx):
-        weightpath = "%ssnapshot%d/" % (weightpath, epochidx)
+    def init_net_from_file(self, owl_net, weightpath, snapshotidx):
+        '''Load network parameters from a saved snapshot.
+        :ivar owl_net: the network to load parameters to
+        :ivar str weightpath: the folder storing parameters 
+        :ivar int snapshotidx: the index of the snapshot
+        '''
+        weightpath = "%ssnapshot%d/" % (weightpath, snapshotidx)
         for i in range(len(owl_net.units)):
             if isinstance(owl_net.units[i], net.FullyConnection):
                 #print owl_net.units[i].name
@@ -215,8 +230,13 @@ class CaffeNetBuilder:
                     print "Conv Bias Need Reinit %s" % (owl_net.units[i].name)
 
     
-    def save_net_to_file(self, owl_net, weightpath, epochidx):
-        weightpath = "%ssnapshot%d/" % (weightpath, epochidx)
+    def save_net_to_file(self, owl_net, weightpath, snapshotidx):
+        '''Save network parameters to a saved snapshot.
+        :ivar owl_net: the network to save parameters from
+        :ivar str weightpath: the folder storing parameters 
+        :ivar int snapshotidx: the index of the snapshot
+        '''
+        weightpath = "%ssnapshot%d/" % (weightpath, snapshotidx)
         cmd = "mkdir %s" % (weightpath)
         res = subprocess.call(cmd, shell=True)
         for i in range(len(owl_net.units)):
@@ -245,17 +265,17 @@ class CaffeNetBuilder:
                 npbiasdetla.tofile(biasname)
 
 class CaffeModelLoader:
-    def __init__(self, model_file, status_file, weightdir, snapshot):
+    ''' Class to convert Caffe's caffemodel into numpy array files. Minerva use numpy array files to store and save model snapshots.
+    :ivar str model_file: Caffe's caffemodel
+    :ivar str weightdir: directory to save numpy-array models
+    :ivar int snapshot: snapshot index
+    '''
+    def __init__(self, model_file,  weightdir, snapshot):
         netparam = NetParameter()
         layerparam = V1LayerParameter()
         with open(model_file, 'rb') as f:
             netparam.ParseFromString(f.read())
        
-        '''
-        netdelta = SolverState()
-        with open(status_file, 'rb') as fd:
-            netdelta.ParseFromString(fd.read())
-        '''
 
         cmd = 'mkdir %s' % (weightdir) 
         res = subprocess.call(cmd, shell=True)
