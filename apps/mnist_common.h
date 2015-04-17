@@ -20,6 +20,7 @@ DEFINE_string(train_label_file, "./trainlabel.dat", "Path of MNIST training labe
 DEFINE_string(test_data_file, "./testdata.dat", "Path to the MNIST testing data");
 DEFINE_string(test_label_file, "./testlabel.dat", "Path to the MNIST testing label");
 DEFINE_int32(num_tests, 10000, "Number of images to test in test set");
+DEFINE_int32(num_gpus, 1, "Number of gpus to use");
 
 typedef struct {
   float alpha;
@@ -29,6 +30,7 @@ typedef struct {
   string train_data_file, train_label_file;
   string test_data_file, test_label_file;
   int num_tests;
+  int num_gpus;
 } MnistParam;
 
 ostream& operator << (ostream& os, const MnistParam& param) {
@@ -45,7 +47,7 @@ ostream& operator << (ostream& os, const MnistParam& param) {
 }
 
 inline void PrintAccuracy(NArray o, NArray t, const MnistParam& param, bool test = false) {
-  int n = test ? param.num_tests : param.mb_size;
+  int n = test ? param.num_tests : (param.mb_size / param.num_gpus);
   NArray predict = o.Reshape({10, n}).MaxIndex(0);
   shared_ptr<float> pp = o.Get();
   NArray groundtruth = t.Reshape({10, n}).MaxIndex(0);
@@ -105,6 +107,7 @@ inline MnistParam InitMnistApps(int argc, char** argv) {
   param.test_data_file = FLAGS_test_data_file;
   param.test_label_file = FLAGS_test_label_file;
   param.num_tests = FLAGS_num_tests;
+  param.num_gpus = FLAGS_num_gpus;
   // initial minerva system
   MinervaSystem::Initialize(&argc, &argv);
   MinervaSystem& ms = MinervaSystem::Instance();
@@ -121,8 +124,8 @@ class MnistCnnAlgo : public MnistAlgorithm {
  public:
   MnistCnnAlgo(const MnistParam& p): MnistAlgorithm(p) { }
   void Init() override {
-    train_data_size = Scale{28, 28, 1, param_.mb_size};
-    train_label_size = Scale{10, 1, 1, param_.mb_size};
+    train_data_size = Scale{28, 28, 1, param_.mb_size / param_.num_gpus};
+    train_label_size = Scale{10, 1, 1, param_.mb_size / param_.num_gpus};
     test_data_size = Scale{28, 28, 1, param_.num_tests};
     test_label_size = Scale{10, 1, 1, param_.num_tests};
     // convolution
@@ -148,7 +151,7 @@ class MnistCnnAlgo : public MnistAlgorithm {
     ResetGrad();
   }
   NArray FF(shared_ptr<float> data_ptr, bool test) override {
-    int bsize = test? param_.num_tests : param_.mb_size;
+    int bsize = test? param_.num_tests : (param_.mb_size / param_.num_gpus);
     acts[0] = test? 
       NArray::MakeNArray(test_data_size, data_ptr) :
       NArray::MakeNArray(train_data_size, data_ptr);
@@ -222,8 +225,8 @@ class MnistMlpAlgo : public MnistAlgorithm {
  public:
   MnistMlpAlgo(const MnistParam& p): MnistAlgorithm(p) { }
   void Init() override {
-    train_data_size = Scale{784, param_.mb_size};
-    train_label_size = Scale{10, param_.mb_size};
+    train_data_size = Scale{784, param_.mb_size / param_.num_gpus};
+    train_label_size = Scale{10, param_.mb_size / param_.num_gpus};
     test_data_size = Scale{784, param_.num_tests};
     test_label_size = Scale{10, param_.num_tests};
 
@@ -235,7 +238,7 @@ class MnistMlpAlgo : public MnistAlgorithm {
     ResetGrad();
   }
   NArray FF(shared_ptr<float> data_ptr, bool test) override {
-    int bsize = test? param_.num_tests : param_.mb_size;
+    int bsize = test? param_.num_tests : (param_.mb_size / param_.num_gpus);
     acts[0] = test? 
       NArray::MakeNArray(test_data_size, data_ptr) :
       NArray::MakeNArray(train_data_size, data_ptr);
