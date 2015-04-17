@@ -6,7 +6,14 @@ extensions = [
     Extension(
         '*',
         ['*.pyx'],
-        include_dirs=['../minerva']
+        language='c++',
+        include_dirs=[
+            '../minerva',
+            '../deps'
+        ],
+        extra_compile_args=[
+            '-std=c++11'
+        ]
     )
 ]
 

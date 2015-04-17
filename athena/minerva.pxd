@@ -1,5 +1,3 @@
-# distutils: language = c++
-
 cdef extern from '../minerva/minerva.h' namespace 'minerva::MinervaSystem':
   void Initialize(int*, char***)
   void Finalize()
