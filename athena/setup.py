@@ -4,8 +4,9 @@ from Cython.Build import cythonize
 
 extensions = [
     Extension(
-        '*',
+        'athena',
         ['*.pyx'],
+        language='c++',
         include_dirs=[
             '../minerva',
             '../deps'
@@ -13,8 +14,15 @@ extensions = [
         extra_compile_args=[
             '-std=c++11'
         ],
-        libraries=[],
-        library_dirs=[]
+        libraries=[
+            'minerva'
+        ],
+        library_dirs=[
+            '../release/lib'
+        ],
+        runtime_library_dirs=[
+            '../release/lib'
+        ],
     )
 ]
 
