@@ -16,3 +16,6 @@ def initialize():
 
 def finalize():
     minerva.Finalize()
+
+def test():
+    minerva.Test()

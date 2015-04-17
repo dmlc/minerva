@@ -4,7 +4,7 @@ from Cython.Build import cythonize
 extensions = [
     Extension(
         '*',
-        ['*.pyx'],
+        ['*.pyx', 'minerva_utils.cpp'],
         language='c++',
         include_dirs=[
             '../minerva',
