@@ -7,34 +7,47 @@
 int main(int argc, char** argv) {
   const auto& param = InitMnistApps(argc, argv);
   cout << param << endl;
-  size_t data_length = 28 * 28 * param.mb_size; // img size = 28x28
-  size_t label_length = 10 * param.mb_size; // 10 classes
+  size_t train_data_len = 28 * 28 * param.mb_size; // img size = 28x28
+  size_t train_label_len = 10 * param.mb_size; // 10 classes
+  size_t test_data_len = 28 * 28 * param.num_tests; // img size = 28x28
+  size_t test_label_len = 10 * param.num_tests; // 10 classes
 
   MnistMlpAlgo mlp_algo(param);
   mlp_algo.Init();
 
-  ifstream data_file_in(param.train_data_file.c_str(), ios::binary);
-  ifstream label_file_in(param.train_label_file.c_str(), ios::binary);
+  ifstream train_data_in(param.train_data_file.c_str(), ios::binary);
+  ifstream train_label_in(param.train_label_file.c_str(), ios::binary);
+  ifstream test_data_in(param.test_data_file.c_str(), ios::binary);
+  ifstream test_label_in(param.test_label_file.c_str(), ios::binary);
 
   cout << "Start training:" << endl;
   for (int epoch = 0; epoch < param.num_epochs; ++epoch) {
-    data_file_in.ignore(2 * sizeof(int));
-    label_file_in.ignore(2 * sizeof(int));
+    train_data_in.clear();
+    train_data_in.seekg(2 * sizeof(int), ios::beg);
+    train_label_in.clear();
+    train_label_in.seekg(2 * sizeof(int), ios::beg);
     cout << "Epoch #" << epoch << endl;
     for (int mb = 0; mb < param.num_mb; ++mb) {
       shared_ptr<float> data_ptr, label_ptr;
-      tie(data_ptr, label_ptr) = GetNextBatch(data_file_in, label_file_in, data_length, label_length);
+      tie(data_ptr, label_ptr) = GetNextBatch(train_data_in, train_label_in, train_data_len, train_label_len);
       NArray predict = mlp_algo.FF(data_ptr, false);
-      NArray label = mlp_algo.BP(label_ptr);
+      NArray label = mlp_algo.BP(label_ptr, false);
       if (mb % 20 == 0) {
-        PrintTrainingAccuracy(predict, label, param);
+        PrintAccuracy(predict, label, param);
       }
       mlp_algo.Update();
     }
-    data_file_in.clear();
-    data_file_in.seekg(0, ios::beg);
-    label_file_in.clear();
-    label_file_in.seekg(0, ios::beg);
+    // Testing
+    cout << "Testing:" << endl;
+    test_data_in.clear();
+    test_data_in.seekg(2 * sizeof(int), ios::beg);
+    test_label_in.clear();
+    test_label_in.seekg(2 * sizeof(int), ios::beg);
+    shared_ptr<float> data_ptr, label_ptr;
+    tie(data_ptr, label_ptr) = GetNextBatch(test_data_in, test_label_in, test_data_len, test_label_len);
+    NArray predict = mlp_algo.FF(data_ptr, true);
+    NArray label = mlp_algo.BP(label_ptr, true);
+    PrintAccuracy(predict, label, param, true);
   }
   MinervaSystem::Finalize();
   cout << "Training finished" << endl;
