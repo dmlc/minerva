@@ -17,12 +17,16 @@ using namespace std;
 
 namespace minerva {
 
-void MinervaSystem::UniversalMemcpy(pair<Device::MemType, float*> to, pair<Device::MemType, float*> from, size_t size) {
+void MinervaSystem::UniversalMemcpy(
+    pair<Device::MemType, float*> to,
+    pair<Device::MemType, float*> from,
+    size_t size) {
 #ifdef HAS_CUDA
   CUDA_CALL(cudaMemcpy(to.second, from.second, size, cudaMemcpyDefault));
 #else
   CHECK_EQ(static_cast<int>(to.first), static_cast<int>(Device::MemType::kCpu));
-  CHECK_EQ(static_cast<int>(from.first), static_cast<int>(Device::MemType::kCpu));
+  CHECK_EQ(static_cast<int>(from.first),
+      static_cast<int>(Device::MemType::kCpu));
   memcpy(to.second, from.second, size);
 #endif
 }
@@ -43,14 +47,15 @@ uint64_t MinervaSystem::GenerateDataId() {
   return data_id_counter_++;
 }
 
-MinervaSystem::MinervaSystem(int* argc, char*** argv) : current_device_id_(0), data_id_counter_(0) {
-  cout << "init" << endl;
+MinervaSystem::MinervaSystem(int* argc, char*** argv)
+  : current_device_id_(0), data_id_counter_(0) {
   gflags::ParseCommandLineFlags(argc, argv, true);
 #ifndef HAS_PS
   // glog is initialized in PS::main, and also here, so we will hit a
   // double-initalize error when compiling with PS
-  if (!FLAGS_no_init_glog)
+  if (!FLAGS_no_init_glog) {
     google::InitGoogleLogging((*argv)[0]);
+  }
 #endif
   physical_dag_ = new PhysicalDag();
   profiler_ = new ExecutionProfiler();
