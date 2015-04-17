@@ -1,4 +1,11 @@
 #pragma once
 #include "minerva.h"
 
-void Test();
+namespace athena {
+
+inline uint64_t CreateCpuDevice() {
+  return minerva::MinervaSystem::Instance().device_manager().CreateCpuDevice();
+}
+}
+
+

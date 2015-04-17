@@ -17,5 +17,5 @@ def initialize():
 def finalize():
     minerva.Finalize()
 
-def test():
-    minerva.Test()
+def create_cpu_device():
+    return minerva.CreateCpuDevice()

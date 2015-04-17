@@ -1,5 +1,7 @@
-cdef extern from './minerva_utils.h':
-  void Test() except *
+from libc.stdint cimport *
+
+cdef extern from './minerva_utils.h' namespace 'athena':
+  uint64_t CreateCpuDevice() except *
 
 cdef extern from '../minerva/minerva.h' namespace 'minerva::MinervaSystem':
   void Initialize(int*, char***) except *

@@ -8,10 +8,15 @@ extensions = [
         language='c++',
         include_dirs=[
             '../minerva',
-            '../deps'
+            '../deps',
+            '/usr/local/cuda/include',
+            '/home/yutian/cpp/cudnn-6.5-linux-x64-v2'
         ],
         extra_compile_args=[
             '-std=c++11'
+        ],
+        define_macros=[
+            ('HAS_CUDA', None)
         ],
         libraries=[
             'minerva'
