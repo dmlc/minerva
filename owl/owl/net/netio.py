@@ -431,5 +431,3 @@ if __name__ == '__main__':
         print thistime
         last = time.time()
         count = count + 1
-    
-
