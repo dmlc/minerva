@@ -1,6 +1,6 @@
 cdef extern from '../minerva/minerva.h' namespace 'minerva::MinervaSystem':
-  void Initialize(int*, char***)
-  void Finalize()
+  void Initialize(int*, char***) except *
+  void Finalize() except *
 
 cdef extern from '../minerva/minerva.h' namespace 'minerva':
   NArray operator+(NArray, NArray)

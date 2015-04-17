@@ -11,8 +11,8 @@
 namespace minerva {
 
 class MinervaSystem :
-  public EverlastingSingleton<MinervaSystem> {
-  friend class EverlastingSingleton<MinervaSystem>;
+  public common::EverlastingSingleton<MinervaSystem> {
+  friend class common::EverlastingSingleton<MinervaSystem>;
 
  public:
   static void UniversalMemcpy(std::pair<Device::MemType, float*>, std::pair<Device::MemType, float*>, size_t);

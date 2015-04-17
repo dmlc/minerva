@@ -13,3 +13,6 @@ def initialize():
     for i in range(argc):
         free(argv[i])
     free(argv)
+
+def finalize():
+    minerva.Finalize()

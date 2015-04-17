@@ -1,30 +1,34 @@
 #pragma once
+#include <memory>
 #include <glog/logging.h>
+
+namespace minerva {
+namespace common {
 
 template<typename T>
 class EverlastingSingleton {
  public:
   static T& Instance() {
-    CHECK(alive_) << "please initialize before use";
+    CHECK(data_) << "please initialize before use";
     return *data_;
   }
   static void Initialize(int* argc, char*** argv) {
-    data_ = new T(argc, argv);
-    alive_ = true;
+    CHECK(!data_) << "already initialized";
+    data_.reset(new T(argc, argv));
   }
   static void Finalize() {
-    delete data_;
-    alive_ = false;
+    CHECK(data_) << "not alive";
+    data_.release();
   }
   static bool IsAlive() {
-    return alive_;
+    return static_cast<bool>(data_);
   }
 
  private:
-  static T* data_;
-  static bool alive_;
+  static std::unique_ptr<T> data_;
 };
 
-template<typename T> T* EverlastingSingleton<T>::data_ = 0;
-template<typename T> bool EverlastingSingleton<T>::alive_ = false;
+template<typename T> std::unique_ptr<T> EverlastingSingleton<T>::data_{};
 
+}  // namespace common
+}  // namespace minerva
