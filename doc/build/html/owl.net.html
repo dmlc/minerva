@@ -1,0 +1,1098 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Subpackage: owl.net &mdash; Minerva 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Minerva 2.0 documentation" href="index.html" />
+    <link rel="next" title="Owl API Cheatsheet" href="cheatsheet.html" />
+    <link rel="prev" title="Owl APIs" href="owl.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="cheatsheet.html" title="Owl API Cheatsheet"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="owl.html" title="Owl APIs"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Minerva 2.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Subpackage: owl.net</a><ul>
+<li><a class="reference internal" href="#module-owl.net.net">owl.net.net module</a></li>
+<li><a class="reference internal" href="#module-owl.net.trainer">owl.net.trainer module</a></li>
+<li><a class="reference internal" href="#module-owl.net.net_helper">owl.net.net_helper module</a></li>
+<li><a class="reference internal" href="#module-owl.net.netio">owl.net.netio module</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="owl.html"
+                        title="previous chapter">Owl APIs</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="cheatsheet.html"
+                        title="next chapter">Owl API Cheatsheet</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/owl.net.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="subpackage-owl-net">
+<h1>Subpackage: owl.net<a class="headerlink" href="#subpackage-owl-net" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-owl.net.net">
+<span id="owl-net-net-module"></span><h2>owl.net.net module<a class="headerlink" href="#module-owl.net.net" title="Permalink to this headline">¶</a></h2>
+<p>A package for implementing Caffe-like network structure using Owl APIs.</p>
+<p>The package implements Caffe-like network structure with some minor differences. It uses Caffe-defined 
+protobuf as core data structure so Caffe users could easily adapt to this. The package serves the purpose
+of:</p>
+<ol class="arabic simple">
+<li>Quick deployment of neural network training using configure file.</li>
+<li>Demonstrate the power of <code class="docutils literal"><span class="pre">owl</span></code> package (it takes only several hundreds LOC to implement Caffe and run it on dataflow engine).</li>
+</ol>
+<dl class="class">
+<dt id="owl.net.net.ComputeUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">ComputeUnit</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ComputeUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ComputeUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Interface for each compute unit.</p>
+<p>In <code class="docutils literal"><span class="pre">owl.net</span></code>, the network is graph (in fact a DAG) that is composed of <code class="docutils literal"><span class="pre">ComputeUnit</span></code> s.
+<code class="docutils literal"><span class="pre">ComputeUnit</span></code> is a wrap-up of Caffe&#8217;s <code class="docutils literal"><span class="pre">layer</span></code> abstraction, but is more
+general and flexible in its function sigature.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Variables:</th><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>caffe.LayerParameter</em>) &#8211; layer parameter in Caffe&#8217;s proto structure</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; name of the unit; the name must be unique</li>
+<li><strong>btm_names</strong> (<em>list str</em>) &#8211; names of the bottom units</li>
+<li><strong>top_names</strong> (<em>list str</em>) &#8211; names of the top units</li>
+<li><strong>int out_shape</strong> (<em>list</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><code class="docutils literal"><span class="pre">params</span></code>, <code class="docutils literal"><span class="pre">name</span></code>, <code class="docutils literal"><span class="pre">btm_names</span></code> and <code class="docutils literal"><span class="pre">top_names</span></code> will be parsed from Caffe&#8217;s network
+description file. <code class="docutils literal"><span class="pre">out_shape</span></code> should be set in <a class="reference internal" href="#owl.net.net.ComputeUnit.compute_size" title="owl.net.net.ComputeUnit.compute_size"><code class="xref py py-meth docutils literal"><span class="pre">compute_size()</span></code></a></p>
+</div>
+<dl class="method">
+<dt id="owl.net.net.ComputeUnit.compute_size">
+<code class="descname">compute_size</code><span class="sig-paren">(</span><em>from_btm</em>, <em>to_top</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ComputeUnit.compute_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ComputeUnit.compute_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the output size of this unit</p>
+<p>This function will be called before training during the <code class="docutils literal"><span class="pre">compute_size</span></code> phase.
+The <code class="docutils literal"><span class="pre">compute_size</span></code> phase is a feed-forward-like phase, during which each <code class="docutils literal"><span class="pre">ComputeUnit</span></code>, rather than
+calculating the output tensor but calculating the output size (list int) for the top units. The
+size is usually used to calculate the weight and bias size for initialization.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>from_btm</strong> (<em>dict</em>) &#8211; input size from bottom units</li>
+<li><strong>to_top</strong> (<em>dict</em>) &#8211; output size to top units</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#owl.net.net.FullyConnection.compute_size" title="owl.net.net.FullyConnection.compute_size"><code class="xref py py-meth docutils literal"><span class="pre">FullyConnection.compute_size()</span></code></a>
+<a class="reference internal" href="#owl.net.net.ConvConnection.compute_size" title="owl.net.net.ConvConnection.compute_size"><code class="xref py py-meth docutils literal"><span class="pre">ConvConnection.compute_size()</span></code></a>
+<a class="reference internal" href="#owl.net.net.Net.compute_size" title="owl.net.net.Net.compute_size"><code class="xref py py-meth docutils literal"><span class="pre">Net.compute_size()</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.ComputeUnit.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>from_btm</em>, <em>to_top</em>, <em>phase</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ComputeUnit.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ComputeUnit.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function for forward propagation</p>
+<p>This function will be called during forward-propagation. The function
+should take input in <code class="docutils literal"><span class="pre">from_btm</span></code>, perform customized computation, and then
+put the result in <code class="docutils literal"><span class="pre">to_top</span></code>. Both <code class="docutils literal"><span class="pre">from_btm</span></code> and <code class="docutils literal"><span class="pre">to_top</span></code> are <code class="docutils literal"><span class="pre">dict</span></code> type 
+where key is a <code class="docutils literal"><span class="pre">str</span></code> of name of the bottom/top units and value is an <code class="docutils literal"><span class="pre">owl.NArray</span></code>
+served as input or output of the function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>from_btm</strong> (<em>dict</em>) &#8211; input from bottom units</li>
+<li><strong>to_top</strong> (<em>dict</em>) &#8211; output for top units</li>
+<li><strong>phase</strong> (<em>str</em>) &#8211; name of the phase of the running. Currently either <code class="docutils literal"><span class="pre">&quot;TRAIN&quot;</span></code> or <code class="docutils literal"><span class="pre">&quot;TEST&quot;</span></code></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.ComputeUnit.backward">
+<code class="descname">backward</code><span class="sig-paren">(</span><em>from_top</em>, <em>to_btm</em>, <em>phase</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ComputeUnit.backward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ComputeUnit.backward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function for backward propagation</p>
+<p>This function will be called during backward-propagation. Similar to <a class="reference internal" href="#owl.net.net.ComputeUnit.forward" title="owl.net.net.ComputeUnit.forward"><code class="xref py py-meth docutils literal"><span class="pre">forward()</span></code></a>,
+The function should take input in <code class="docutils literal"><span class="pre">from_top</span></code>, perform customized computation, and then
+put the result in <code class="docutils literal"><span class="pre">to_btm</span></code>. The function also need to calculate the gradient (if any) and
+save them to the <code class="docutils literal"><span class="pre">weightgrad</span></code> field (see :py:meth:WeightedComputeUnit.weight_update).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>from_top</strong> (<em>dict</em>) &#8211; input from top units</li>
+<li><strong>to_btm</strong> (<em>dict</em>) &#8211; output for top units</li>
+<li><strong>phase</strong> (<em>str</em>) &#8211; name of the phase of the running. Currently either <code class="docutils literal"><span class="pre">&quot;TRAIN&quot;</span></code> or <code class="docutils literal"><span class="pre">&quot;TEST&quot;</span></code></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.ComputeUnit.weight_update">
+<code class="descname">weight_update</code><span class="sig-paren">(</span><em>base_lr</em>, <em>base_weight_decay</em>, <em>momentum</em>, <em>batch_size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ComputeUnit.weight_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ComputeUnit.weight_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function for weight update</p>
+<p>This function will be called during weight update.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>base_lr</strong> (<em>float</em>) &#8211; base learning rate</li>
+<li><strong>base_weight_decay</strong> (<em>float</em>) &#8211; base weight decay</li>
+<li><strong>momentum</strong> (<em>float</em>) &#8211; momentum value</li>
+<li><strong>batch_size</strong> (<em>int</em>) &#8211; the size of the current minibatch</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.ComputeUnitSimple">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">ComputeUnitSimple</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ComputeUnitSimple"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ComputeUnitSimple" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.ComputeUnit" title="owl.net.net.ComputeUnit"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.ComputeUnit</span></code></a></p>
+<p>An auxiliary class for <a class="reference internal" href="#owl.net.net.ComputeUnit" title="owl.net.net.ComputeUnit"><code class="xref py py-class docutils literal"><span class="pre">ComputeUnit</span></code></a> that will only have one input unit and one output unit.</p>
+<dl class="method">
+<dt id="owl.net.net.ComputeUnitSimple.compute_size">
+<code class="descname">compute_size</code><span class="sig-paren">(</span><em>from_btm</em>, <em>to_top</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ComputeUnitSimple.compute_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ComputeUnitSimple.compute_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the <code class="docutils literal"><span class="pre">out_shape</span></code> as the same shape of the input. Inherited classes could override this function.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.ComputeUnitSimple.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>from_btm</em>, <em>to_top</em>, <em>phase</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ComputeUnitSimple.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ComputeUnitSimple.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform the interface from multiple input/output to only one input/output function <a class="reference internal" href="#owl.net.net.ComputeUnitSimple.ff" title="owl.net.net.ComputeUnitSimple.ff"><code class="xref py py-meth docutils literal"><span class="pre">ff()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.ComputeUnitSimple.ff">
+<code class="descname">ff</code><span class="sig-paren">(</span><em>act</em>, <em>phase</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ComputeUnitSimple.ff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ComputeUnitSimple.ff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function for forward-propagation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>act</strong> (<a class="reference internal" href="owl.html#owl.owl.NArray" title="owl.owl.NArray"><em>owl.NArray</em></a>) &#8211; the activation from the bottom unit</li>
+<li><strong>phase</strong> (<em>str</em>) &#8211; name of the phase of the running. Currently either <code class="docutils literal"><span class="pre">&quot;TRAIN&quot;</span></code> or <code class="docutils literal"><span class="pre">&quot;TEST&quot;</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the activation of this unit</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="owl.html#owl.owl.NArray" title="owl.owl.NArray">owl.NArray</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.ComputeUnitSimple.backward">
+<code class="descname">backward</code><span class="sig-paren">(</span><em>from_top</em>, <em>to_btm</em>, <em>phase</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ComputeUnitSimple.backward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ComputeUnitSimple.backward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform the interface from multiple input/output to only one input/output function <a class="reference internal" href="#owl.net.net.ComputeUnitSimple.bp" title="owl.net.net.ComputeUnitSimple.bp"><code class="xref py py-meth docutils literal"><span class="pre">bp()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.ComputeUnitSimple.bp">
+<code class="descname">bp</code><span class="sig-paren">(</span><em>sen</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ComputeUnitSimple.bp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ComputeUnitSimple.bp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function for backward-propagation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sen</strong> (<a class="reference internal" href="owl.html#owl.owl.NArray" title="owl.owl.NArray"><em>owl.NArray</em></a>) &#8211; the sensitivity (or error derivative to the input) from the top unit</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the sensitivity of this unit</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="owl.html#owl.owl.NArray" title="owl.owl.NArray">owl.NArray</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.WeightedComputeUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">WeightedComputeUnit</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#WeightedComputeUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.WeightedComputeUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.ComputeUnitSimple" title="owl.net.net.ComputeUnitSimple"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.ComputeUnitSimple</span></code></a></p>
+<p>An auxiliary class for <a class="reference internal" href="#owl.net.net.ComputeUnit" title="owl.net.net.ComputeUnit"><code class="xref py py-class docutils literal"><span class="pre">ComputeUnit</span></code></a> with weights</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Variables:</th><td class="field-body"><ul class="first last simple">
+<li><strong>weight</strong> (<a class="reference internal" href="owl.html#owl.owl.NArray" title="owl.owl.NArray"><em>owl.NArray</em></a>) &#8211; weight tensor</li>
+<li><strong>weightdelta</strong> (<a class="reference internal" href="owl.html#owl.owl.NArray" title="owl.owl.NArray"><em>owl.NArray</em></a>) &#8211; momentum of weight</li>
+<li><strong>weightgrad</strong> (<a class="reference internal" href="owl.html#owl.owl.NArray" title="owl.owl.NArray"><em>owl.NArray</em></a>) &#8211; gradient of weight</li>
+<li><strong>bias</strong> (<a class="reference internal" href="owl.html#owl.owl.NArray" title="owl.owl.NArray"><em>owl.NArray</em></a>) &#8211; bias tensor</li>
+<li><strong>biasdelta</strong> (<a class="reference internal" href="owl.html#owl.owl.NArray" title="owl.owl.NArray"><em>owl.NArray</em></a>) &#8211; momentum of bias</li>
+<li><strong>biasgrad</strong> (<a class="reference internal" href="owl.html#owl.owl.NArray" title="owl.owl.NArray"><em>owl.NArray</em></a>) &#8211; gradient of bias</li>
+<li><strong>blobs_lr</strong> (<em>list float</em>) &#8211; learning rate specific for this unit; a list of float represents: [weight_lr, bias_lr]</li>
+<li><strong>weight_decay</strong> (<em>list float</em>) &#8211; weight decay specific for this unit; a list of float represents: [weight_wd, bias_wd]</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="owl.net.net.WeightedComputeUnit.init_weights_with_filler">
+<code class="descname">init_weights_with_filler</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#WeightedComputeUnit.init_weights_with_filler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.WeightedComputeUnit.init_weights_with_filler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Init weights &amp; bias. The function will be called during weight initialization.</p>
+<p>Currently, four types of initializers are supported: <code class="docutils literal"><span class="pre">&quot;constant&quot;,</span> <span class="pre">&quot;gaussian&quot;,</span> <span class="pre">&quot;uniform&quot;,</span> <span class="pre">&quot;xavier&quot;</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.WeightedComputeUnit.weight_update">
+<code class="descname">weight_update</code><span class="sig-paren">(</span><em>base_lr</em>, <em>base_weight_decay</em>, <em>momentum</em>, <em>batch_size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#WeightedComputeUnit.weight_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.WeightedComputeUnit.weight_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the weight &amp; bias</p>
+<p>Using following formula:</p>
+<p><code class="docutils literal"><span class="pre">$_delta</span> <span class="pre">=</span> <span class="pre">momentum</span> <span class="pre">*</span> <span class="pre">$_delta</span> <span class="pre">-</span> <span class="pre">(base_lr</span> <span class="pre">*</span> <span class="pre">$_lr</span> <span class="pre">/</span> <span class="pre">batch_size)</span> <span class="pre">*</span> <span class="pre">$_grad</span> <span class="pre">-</span> <span class="pre">(base_lr</span> <span class="pre">*</span> <span class="pre">$_lr</span> <span class="pre">*</span> <span class="pre">base_wd</span> <span class="pre">*</span> <span class="pre">$_wd)</span> <span class="pre">*</span> <span class="pre">$</span></code></p>
+<p>, where <code class="docutils literal"><span class="pre">$</span></code> could be either <code class="docutils literal"><span class="pre">weight</span></code> or <code class="docutils literal"><span class="pre">bias</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.LinearUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">LinearUnit</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#LinearUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.LinearUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.ComputeUnitSimple" title="owl.net.net.ComputeUnitSimple"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.ComputeUnitSimple</span></code></a></p>
+<p>Compute unit for linear transformation</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.SigmoidUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">SigmoidUnit</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#SigmoidUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.SigmoidUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.ComputeUnitSimple" title="owl.net.net.ComputeUnitSimple"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.ComputeUnitSimple</span></code></a></p>
+<p>Compute unit for Sigmoid non-linearity</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.ReluUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">ReluUnit</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ReluUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ReluUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.ComputeUnitSimple" title="owl.net.net.ComputeUnitSimple"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.ComputeUnitSimple</span></code></a></p>
+<p>Compute unit for RELU non-linearity</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.TanhUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">TanhUnit</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#TanhUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.TanhUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.ComputeUnitSimple" title="owl.net.net.ComputeUnitSimple"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.ComputeUnitSimple</span></code></a></p>
+<p>Compute unit for Hyperbolic Tangine non-linearity</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.PoolingUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">PoolingUnit</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#PoolingUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.PoolingUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.ComputeUnitSimple" title="owl.net.net.ComputeUnitSimple"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.ComputeUnitSimple</span></code></a></p>
+<p>Compute unit for Pooling</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>The input and output is of size <code class="docutils literal"><span class="pre">[HWCN]</span></code>:</p>
+<ul class="last simple">
+<li><code class="docutils literal"><span class="pre">H</span></code>: image height</li>
+<li><code class="docutils literal"><span class="pre">W</span></code>: image width</li>
+<li><code class="docutils literal"><span class="pre">C</span></code>: number of image channels (feature maps)</li>
+<li><code class="docutils literal"><span class="pre">N</span></code>: size of minibatch</li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.DropoutUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">DropoutUnit</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#DropoutUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.DropoutUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.ComputeUnitSimple" title="owl.net.net.ComputeUnitSimple"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.ComputeUnitSimple</span></code></a></p>
+<p>Compute unit for dropout</p>
+<dl class="method">
+<dt id="owl.net.net.DropoutUnit.ff">
+<code class="descname">ff</code><span class="sig-paren">(</span><em>x</em>, <em>phase</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#DropoutUnit.ff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.DropoutUnit.ff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Foward function of dropout</p>
+<p>The dropout mask will not be multiplied if under <code class="docutils literal"><span class="pre">&quot;TEST&quot;</span></code> mode.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.SoftmaxUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">SoftmaxUnit</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#SoftmaxUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.SoftmaxUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.ComputeUnit" title="owl.net.net.ComputeUnit"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.ComputeUnit</span></code></a></p>
+<p>Compute unit for softmax</p>
+<dl class="method">
+<dt id="owl.net.net.SoftmaxUnit.getloss">
+<code class="descname">getloss</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#SoftmaxUnit.getloss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.SoftmaxUnit.getloss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the loss of the softmax (cross entropy)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.AccuracyUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">AccuracyUnit</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#AccuracyUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.AccuracyUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.ComputeUnit" title="owl.net.net.ComputeUnit"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.ComputeUnit</span></code></a></p>
+<p>Compute unit for calculating accuracy</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In terms of Minerva&#8217;s lazy evaluation, the unit is a <strong>non-lazy</strong> one since it gets the actual
+contents (accuracy) out of an <code class="docutils literal"><span class="pre">owl.NArray</span></code>.</p>
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.LRNUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">LRNUnit</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#LRNUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.LRNUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.ComputeUnitSimple" title="owl.net.net.ComputeUnitSimple"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.ComputeUnitSimple</span></code></a></p>
+<p>Compute unit for LRN</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.ConcatUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">ConcatUnit</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ConcatUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ConcatUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.ComputeUnit" title="owl.net.net.ComputeUnit"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.ComputeUnit</span></code></a></p>
+<p>Compute unit for concatenation</p>
+<p>Concatenate input arrays along the dimension specified by Caffe&#8217;s <code class="docutils literal"><span class="pre">concat_dim_caffe</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.FullyConnection">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">FullyConnection</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#FullyConnection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.FullyConnection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.WeightedComputeUnit" title="owl.net.net.WeightedComputeUnit"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.WeightedComputeUnit</span></code></a></p>
+<p>Compute unit for traditional fully connected layer</p>
+<dl class="method">
+<dt id="owl.net.net.FullyConnection.compute_size">
+<code class="descname">compute_size</code><span class="sig-paren">(</span><em>from_btm</em>, <em>to_top</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#FullyConnection.compute_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.FullyConnection.compute_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the output size and also weight and bias size
+The weight size is <code class="docutils literal"><span class="pre">[top_shape[0],</span> <span class="pre">btm_shape[0]]</span></code>; the bias size is <code class="docutils literal"><span class="pre">[top_shape[0],</span> <span class="pre">1]</span></code>
+(assume both <code class="docutils literal"><span class="pre">top</span></code> and <code class="docutils literal"><span class="pre">btm</span></code> are 2-dimensional array)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.ConvConnection">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">ConvConnection</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ConvConnection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ConvConnection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.WeightedComputeUnit" title="owl.net.net.WeightedComputeUnit"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.WeightedComputeUnit</span></code></a></p>
+<p>Convolution operation</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>The input and output is of size <code class="docutils literal"><span class="pre">[HWCN]</span></code>:</p>
+<ul class="last simple">
+<li><code class="docutils literal"><span class="pre">H</span></code>: image height</li>
+<li><code class="docutils literal"><span class="pre">W</span></code>: image width</li>
+<li><code class="docutils literal"><span class="pre">C</span></code>: number of image channels (feature maps)</li>
+<li><code class="docutils literal"><span class="pre">N</span></code>: size of minibatch</li>
+</ul>
+</div>
+<dl class="method">
+<dt id="owl.net.net.ConvConnection.compute_size">
+<code class="descname">compute_size</code><span class="sig-paren">(</span><em>from_btm</em>, <em>to_top</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ConvConnection.compute_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ConvConnection.compute_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the output size and also weight and bias size</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>The weight(kernel) size is <code class="docutils literal"><span class="pre">[HWCiCo]</span></code>; bias shape is <code class="docutils literal"><span class="pre">[Co]</span></code>:</p>
+<ul class="last simple">
+<li><code class="docutils literal"><span class="pre">H</span></code>: kernel_height</li>
+<li><code class="docutils literal"><span class="pre">W</span></code>: kernel_width</li>
+<li><code class="docutils literal"><span class="pre">Ci</span></code>: number of input channels</li>
+<li><code class="docutils literal"><span class="pre">Co</span></code>: number of output channels</li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.ConvConnection.ff">
+<code class="descname">ff</code><span class="sig-paren">(</span><em>act</em>, <em>phase</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ConvConnection.ff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ConvConnection.ff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Feed-forward of convolution</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Currently multi-group convolution (as in AlexNet paper) is not supported. One could walk around it by
+using a bigger convolution with number of feature maps doubled.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.ConvConnection.bp">
+<code class="descname">bp</code><span class="sig-paren">(</span><em>sen</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ConvConnection.bp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ConvConnection.bp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Backward propagation of convolution</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Currently multi-group convolution (as in AlexNet paper) is not supported. One could walk around it by
+using a bigger convolution with number of feature maps doubled.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.DataUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">DataUnit</code><span class="sig-paren">(</span><em>params</em>, <em>num_gpu</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#DataUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.DataUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.ComputeUnit" title="owl.net.net.ComputeUnit"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.ComputeUnit</span></code></a></p>
+<p>The base class of dataunit.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Variables:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dp</strong> &#8211; dataprovider, different kind of dp load data from different formats</li>
+<li><strong>generator</strong> &#8211; the iterator produced by dataprovider</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="owl.net.net.DataUnit.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>from_btm</em>, <em>to_top</em>, <em>phase</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#DataUnit.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.DataUnit.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Feed-forward of data unit will get a batch of a fixed batch_size from data provider.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Phase indicates whether it&#8217;s training or testing. Usualy, the data augmentation operation for training involves some randomness, while testing doesn&#8217;t</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.LMDBDataUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">LMDBDataUnit</code><span class="sig-paren">(</span><em>params</em>, <em>num_gpu</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#LMDBDataUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.LMDBDataUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.DataUnit" title="owl.net.net.DataUnit"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.DataUnit</span></code></a></p>
+<p>DataUnit load from LMDB.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Variables:</th><td class="field-body"><strong>params</strong> (<em>caffe.LayerParameter</em>) &#8211; lmdb data layer param defined by Caffe, params.data_param contains information about data source, parmas.transform_param mainly defines data augmentation operations</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="owl.net.net.LMDBDataUnit.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>from_btm</em>, <em>to_top</em>, <em>phase</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#LMDBDataUnit.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.LMDBDataUnit.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Feed-forward operation may vary according to phase.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">LMDB data provider now support multi-view testing, if phase is &#8220;MULTI_VIEW&#8221;, it will produce concequtive 10 batches of different views of the same original image</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.ImageDataUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">ImageDataUnit</code><span class="sig-paren">(</span><em>params</em>, <em>num_gpu</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ImageDataUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ImageDataUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.DataUnit" title="owl.net.net.DataUnit"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.DataUnit</span></code></a></p>
+<p>DataUnit load from raw images.
+:ivar caffe.LayerParameter params: image data layer param defined by Caffe, this is often used when data is limited. Loading from original image will be slower than loading from LMDB</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.ImageWindowDataUnit">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">ImageWindowDataUnit</code><span class="sig-paren">(</span><em>params</em>, <em>num_gpu</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#ImageWindowDataUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.ImageWindowDataUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#owl.net.net.DataUnit" title="owl.net.net.DataUnit"><code class="xref py py-class docutils literal"><span class="pre">owl.net.net.DataUnit</span></code></a></p>
+<p>DataUnit load from image window patches. 
+:ivar caffe.LayerParameter params: image window data layer param defined by Caffe, this is often used when data is limited and object bounding box is given</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net.Net">
+<em class="property">class </em><code class="descclassname">owl.net.net.</code><code class="descname">Net</code><a class="reference internal" href="_modules/owl/net/net.html#Net"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.Net" title="Permalink to this definition">¶</a></dt>
+<dd><p>The class for neural network structure</p>
+<p>The Net is basically a graph (DAG), of which each node is a <a class="reference internal" href="#owl.net.net.ComputeUnit" title="owl.net.net.ComputeUnit"><code class="xref py py-class docutils literal"><span class="pre">ComputeUnit</span></code></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Variables:</th><td class="field-body"><ul class="first last simple">
+<li><strong>units</strong> (<em>list owl.net.ComputeUnit</em>) &#8211; all the <code class="docutils literal"><span class="pre">ComputeUnit</span></code> s.</li>
+<li><strong>adjacent</strong> (<em>list list str</em>) &#8211; the adjacent list (units are represented by their name)</li>
+<li><strong>reverse_adjacent</strong> (<em>list list str</em>) &#8211; the reverse adjacent list (units are represented by their name)</li>
+<li><strong>name_to_uid</strong> (<em>dict</em>) &#8211; a map from units&#8217; name to the unit object</li>
+<li><strong>loss_uids</strong> (<em>list int</em>) &#8211; all the units for computing loss</li>
+<li><strong>accuracy_uids</strong> (<em>list int</em>) &#8211; all the units for calculating accuracy</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="owl.net.net.Net.add_unit">
+<code class="descname">add_unit</code><span class="sig-paren">(</span><em>unit</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#Net.add_unit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.Net.add_unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method for adding units into the graph</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>unit</strong> (<em>owl.net.ComputeUnit</em>) &#8211; the unit to add</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.Net.connect">
+<code class="descname">connect</code><span class="sig-paren">(</span><em>u1</em>, <em>u2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#Net.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.Net.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method for connecting two units</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>u1</strong> (<em>str</em>) &#8211; name of the bottom unit</li>
+<li><strong>u2</strong> (<em>str</em>) &#8211; name of the top unit</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.Net.get_units_by_name">
+<code class="descname">get_units_by_name</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#Net.get_units_by_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.Net.get_units_by_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get <code class="docutils literal"><span class="pre">ComputeUnit</span></code> object by its name</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<em>str</em>) &#8211; unit name</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the compute unit object of that name</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">owl.net.ComputeUnit</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.Net.get_loss_units">
+<code class="descname">get_loss_units</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#Net.get_loss_units"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.Net.get_loss_units" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all <code class="docutils literal"><span class="pre">ComputeUnit</span></code> object for loss</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">all compute unit object for computing loss</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">list owl.net.ComputeUnit</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.Net.get_accuracy_units">
+<code class="descname">get_accuracy_units</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#Net.get_accuracy_units"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.Net.get_accuracy_units" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all <code class="docutils literal"><span class="pre">ComputeUnit</span></code> object for accuracy</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">all compute unit object for computing accuracy</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">list owl.net.ComputeUnit</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.Net.get_data_unit">
+<code class="descname">get_data_unit</code><span class="sig-paren">(</span><em>phase='TRAIN'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#Net.get_data_unit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.Net.get_data_unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the <code class="docutils literal"><span class="pre">ComputeUnit</span></code> object for data loading</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>phase</strong> (<em>str</em>) &#8211; phase name of the run</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the compute unit object for loading data</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">owl.net.ComputeUnit</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.Net.get_weighted_unit_ids">
+<code class="descname">get_weighted_unit_ids</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#Net.get_weighted_unit_ids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.Net.get_weighted_unit_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get ids for all :py:class:owl.net.WeightedComputeUnit</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">ids of all weighted compute unit</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">list int</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.Net.compute_size">
+<code class="descname">compute_size</code><span class="sig-paren">(</span><em>phase='TRAIN'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#Net.compute_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.Net.compute_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform the compute_size phase before running</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.Net.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>phase='TRAIN'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#Net.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.Net.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform the forward pass</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.Net.backward">
+<code class="descname">backward</code><span class="sig-paren">(</span><em>phase='TRAIN'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#Net.backward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.Net.backward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform the backward pass</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.Net.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>uid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#Net.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.Net.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update weights of one compute unit of the given uid</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>uid</strong> (<em>int</em>) &#8211; id of the compute unit to update</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net.Net.weight_update">
+<code class="descname">weight_update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net.html#Net.weight_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net.Net.weight_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update weights for all units</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-owl.net.trainer">
+<span id="owl-net-trainer-module"></span><h2>owl.net.trainer module<a class="headerlink" href="#module-owl.net.trainer" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="owl.net.trainer.NetTrainer">
+<em class="property">class </em><code class="descclassname">owl.net.trainer.</code><code class="descname">NetTrainer</code><span class="sig-paren">(</span><em>solver_file</em>, <em>snapshot=0</em>, <em>num_gpu=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/trainer.html#NetTrainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.trainer.NetTrainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for training neural network</p>
+<p>Allows user to train using Caffe&#8217;s network configure format but on multiple GPUs. One
+could use NetTrainer as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">trainer</span> <span class="o">=</span> <span class="n">NetTrainer</span><span class="p">(</span><span class="n">solver_file</span><span class="p">,</span> <span class="n">snapshot</span><span class="p">,</span> <span class="n">num_gpu</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">trainer</span><span class="o">.</span><span class="n">build_net</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">trainer</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Variables:</th><td class="field-body"><ul class="first last simple">
+<li><strong>solver_file</strong> (<em>str</em>) &#8211; path of the solver file in Caffe&#8217;s proto format</li>
+<li><strong>snapshot</strong> (<em>int</em>) &#8211; the idx of snapshot to start with</li>
+<li><strong>num_gpu</strong> (<em>int</em>) &#8211; the number of gpu to use</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="owl.net.trainer.NetTrainer.build_net">
+<code class="descname">build_net</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/trainer.html#NetTrainer.build_net"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.trainer.NetTrainer.build_net" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build network structure using Caffe&#8217;s proto definition. It will also initialize
+the network either from given snapshot or from scratch (using proper initializer). 
+During initialization, it will first try to load weight from snapshot. If failed, it
+will then initialize the weight accordingly.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.trainer.NetTrainer.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>s</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/trainer.html#NetTrainer.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.trainer.NetTrainer.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the training algorithm on multiple GPUs</p>
+<p>The basic logic is similar to the traditional single GPU training code as follows (pseudo-code):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">MAX_EPOCH</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_MINI_BATCHES</span><span class="p">):</span>
+        <span class="c"># load i^th minibatch</span>
+        <span class="n">minibatch</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">MINI_BATCH_SIZE</span><span class="p">)</span>
+        <span class="n">net</span><span class="o">.</span><span class="n">ff</span><span class="p">(</span><span class="n">minibatch</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">net</span><span class="o">.</span><span class="n">bp</span><span class="p">(</span><span class="n">minibatch</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+        <span class="n">grad</span> <span class="o">=</span> <span class="n">net</span><span class="o">.</span><span class="n">gradient</span><span class="p">()</span>
+        <span class="n">net</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">grad</span><span class="p">,</span> <span class="n">MINI_BATCH_SIZE</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>With Minerva&#8217;s lazy evaluation and dataflow engine, we are able to modify the above logic
+to perform data parallelism on multiple GPUs (pseudo-code):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">MAX_EPOCH</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">NUM_MINI_BATCHES</span><span class="p">,</span> <span class="n">NUM_GPU</span><span class="p">):</span>
+        <span class="n">gpu_grad</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_GPU</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">gpuid</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_GPU</span><span class="p">):</span>
+            <span class="c"># specify which gpu following codes are running on</span>
+            <span class="n">owl</span><span class="o">.</span><span class="n">set_device</span><span class="p">(</span><span class="n">gpuid</span><span class="p">)</span>
+            <span class="c"># each minibatch is split among GPUs</span>
+            <span class="n">minibatch</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">gpuid</span><span class="p">,</span> <span class="n">MINI_BATCH_SIZE</span> <span class="o">/</span> <span class="n">NUM_GPU</span><span class="p">)</span>
+            <span class="n">net</span><span class="o">.</span><span class="n">ff</span><span class="p">(</span><span class="n">minibatch</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">net</span><span class="o">.</span><span class="n">bp</span><span class="p">(</span><span class="n">minibatch</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+            <span class="n">gpu_grad</span><span class="p">[</span><span class="n">gpuid</span><span class="p">]</span> <span class="o">=</span> <span class="n">net</span><span class="o">.</span><span class="n">gradient</span><span class="p">()</span>
+        <span class="n">net</span><span class="o">.</span><span class="n">accumulate_and_update</span><span class="p">(</span><span class="n">gpu_grad</span><span class="p">,</span> <span class="n">MINI_BATCH_SIZE</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>So each GPU will take charge of one <em>mini-mini batch</em> training, and since all their <code class="docutils literal"><span class="pre">ff</span></code>, <code class="docutils literal"><span class="pre">bp</span></code> and <code class="docutils literal"><span class="pre">gradient</span></code>
+calculations are independent among each others, they could be paralleled naturally using Minerva&#8217;s DAG engine.</p>
+<p>The only problem let is <code class="docutils literal"><span class="pre">accumulate_and_update</span></code> of the the gradient from all GPUs. If we do it on one GPU,
+that GPU would become a bottleneck. The solution is to also partition the workload to different GPUs (pseudo-code):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">accumulate_and_update</span><span class="p">(</span><span class="n">gpu_grad</span><span class="p">,</span> <span class="n">MINI_BATCH_SIZE</span><span class="p">):</span>
+    <span class="n">num_layers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gpu_grad</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_layers</span><span class="p">):</span>
+        <span class="n">upd_gpu</span> <span class="o">=</span> <span class="n">layer</span> <span class="o">*</span> <span class="n">NUM_GPU</span> <span class="o">/</span> <span class="n">num_layers</span>
+        <span class="c"># specify which gpu to update the layer</span>
+        <span class="n">owl</span><span class="o">.</span><span class="n">set_device</span><span class="p">(</span><span class="n">upd_gpu</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">gid</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_GPU</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">gid</span> <span class="o">!=</span> <span class="n">upd_gpu</span><span class="p">:</span>
+                <span class="n">gpu_grad</span><span class="p">[</span><span class="n">upd_gpu</span><span class="p">][</span><span class="n">layer</span><span class="p">]</span> <span class="o">+=</span> <span class="n">gpu_grad</span><span class="p">[</span><span class="n">gid</span><span class="p">][</span><span class="n">layer</span><span class="p">]</span>
+        <span class="n">net</span><span class="o">.</span><span class="n">update_layer</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">gpu_grad</span><span class="p">[</span><span class="n">upd_gpu</span><span class="p">][</span><span class="n">layer</span><span class="p">],</span> <span class="n">MINI_BATCH_SIZE</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Since the update of each layer is independent among each others, the update could be paralleled affluently. Minerva&#8217;s
+dataflow engine transparently handles the dependency resolving, scheduling and memory copying among different devices,
+so users don&#8217;t need to care about that.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.trainer.MultiviewTester">
+<em class="property">class </em><code class="descclassname">owl.net.trainer.</code><code class="descname">MultiviewTester</code><span class="sig-paren">(</span><em>solver_file</em>, <em>softmax_layer_name</em>, <em>snapshot</em>, <em>gpu_idx=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/trainer.html#MultiviewTester"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.trainer.MultiviewTester" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for performing multi-view testing</p>
+<dl class="docutils">
+<dt>Run it as::</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">tester</span> <span class="o">=</span> <span class="n">MultiviewTester</span><span class="p">(</span><span class="n">solver_file</span><span class="p">,</span> <span class="n">softmax_layer</span><span class="p">,</span> <span class="n">snapshot</span><span class="p">,</span> <span class="n">gpu_idx</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tester</span><span class="o">.</span><span class="n">build_net</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tester</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Variables:</th><td class="field-body"><ul class="first last simple">
+<li><strong>solver_file</strong> (<em>str</em>) &#8211; path of the solver file in Caffe&#8217;s proto format</li>
+<li><strong>snapshot</strong> (<em>int</em>) &#8211; the snapshot for testing</li>
+<li><strong>softmax_layer_name</strong> (<em>str</em>) &#8211; name of the softmax layer that produce prediction</li>
+<li><strong>gpu_idx</strong> (<em>int</em>) &#8211; which gpu to perform the test</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.trainer.FeatureExtractor">
+<em class="property">class </em><code class="descclassname">owl.net.trainer.</code><code class="descname">FeatureExtractor</code><span class="sig-paren">(</span><em>solver_file</em>, <em>snapshot</em>, <em>gpu_idx=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/trainer.html#FeatureExtractor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.trainer.FeatureExtractor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for extracting trained features
+Feature will be stored in a txt file as a matrix. The size of the feature matrix is [num_img, feature_dimension]</p>
+<dl class="docutils">
+<dt>Run it as::</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">extractor</span> <span class="o">=</span> <span class="n">FeatureExtractor</span><span class="p">(</span><span class="n">solver_file</span><span class="p">,</span> <span class="n">snapshot</span><span class="p">,</span> <span class="n">gpu_idx</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">extractor</span><span class="o">.</span><span class="n">build_net</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">extractor</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="n">feature_path</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Variables:</th><td class="field-body"><ul class="first last simple">
+<li><strong>solver_file</strong> (<em>str</em>) &#8211; path of the solver file in Caffe&#8217;s proto format</li>
+<li><strong>snapshot</strong> (<em>int</em>) &#8211; the snapshot for testing</li>
+<li><strong>layer_name</strong> (<em>str</em>) &#8211; name of the ayer that produce feature</li>
+<li><strong>gpu_idx</strong> (<em>int</em>) &#8211; which gpu to perform the test</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="owl.net.trainer.FeatureExtractor.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>s</em>, <em>layer_name</em>, <em>feature_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/trainer.html#FeatureExtractor.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.trainer.FeatureExtractor.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run feature extractor</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>layer_name</strong> (<em>str</em>) &#8211; the layer to extract feature from</li>
+<li><strong>feature_path</strong> (<em>str</em>) &#8211; feature output path</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-owl.net.net_helper">
+<span id="owl-net-net-helper-module"></span><h2>owl.net.net_helper module<a class="headerlink" href="#module-owl.net.net_helper" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="owl.net.net_helper.CaffeNetBuilder">
+<em class="property">class </em><code class="descclassname">owl.net.net_helper.</code><code class="descname">CaffeNetBuilder</code><span class="sig-paren">(</span><em>solver_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net_helper.html#CaffeNetBuilder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net_helper.CaffeNetBuilder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to build network from Caffe&#8217;s solver and configure file. 
+:ivar str solver_file: Caffe&#8217;s solver file.</p>
+<dl class="method">
+<dt id="owl.net.net_helper.CaffeNetBuilder.change_net">
+<code class="descname">change_net</code><span class="sig-paren">(</span><em>net_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net_helper.html#CaffeNetBuilder.change_net"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net_helper.CaffeNetBuilder.change_net" title="Permalink to this definition">¶</a></dt>
+<dd><p>You can mannually assign the network configure file and do not use the file provided in the solver
+:ivar str net_file: Caffe&#8217;s network configure file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net_helper.CaffeNetBuilder.build_net">
+<code class="descname">build_net</code><span class="sig-paren">(</span><em>owl_net</em>, <em>num_gpu=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net_helper.html#CaffeNetBuilder.build_net"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net_helper.CaffeNetBuilder.build_net" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse the information from solver and network configure file and build the network and processing plan.
+:ivar num_gpu: the number of GPU to train in parallel should be provided in this function, it will tell the data layer how to slice a training batch</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net_helper.CaffeNetBuilder.init_net_from_file">
+<code class="descname">init_net_from_file</code><span class="sig-paren">(</span><em>owl_net</em>, <em>weightpath</em>, <em>snapshotidx</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net_helper.html#CaffeNetBuilder.init_net_from_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net_helper.CaffeNetBuilder.init_net_from_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load network parameters from a saved snapshot.
+:ivar owl_net: the network to load parameters to
+:ivar str weightpath: the folder storing parameters 
+:ivar int snapshotidx: the index of the snapshot</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.net_helper.CaffeNetBuilder.save_net_to_file">
+<code class="descname">save_net_to_file</code><span class="sig-paren">(</span><em>owl_net</em>, <em>weightpath</em>, <em>snapshotidx</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net_helper.html#CaffeNetBuilder.save_net_to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net_helper.CaffeNetBuilder.save_net_to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save network parameters to a saved snapshot.
+:ivar owl_net: the network to save parameters from
+:ivar str weightpath: the folder storing parameters 
+:ivar int snapshotidx: the index of the snapshot</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.net_helper.CaffeModelLoader">
+<em class="property">class </em><code class="descclassname">owl.net.net_helper.</code><code class="descname">CaffeModelLoader</code><span class="sig-paren">(</span><em>model_file</em>, <em>weightdir</em>, <em>snapshot</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/net_helper.html#CaffeModelLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.net_helper.CaffeModelLoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to convert Caffe&#8217;s caffemodel into numpy array files. Minerva use numpy array files to store and save model snapshots.
+:ivar str model_file: Caffe&#8217;s caffemodel
+:ivar str weightdir: directory to save numpy-array models
+:ivar int snapshot: snapshot index</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-owl.net.netio">
+<span id="owl-net-netio-module"></span><h2>owl.net.netio module<a class="headerlink" href="#module-owl.net.netio" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="owl.net.netio.ImageWindowDataProvider">
+<em class="property">class </em><code class="descclassname">owl.net.netio.</code><code class="descname">ImageWindowDataProvider</code><span class="sig-paren">(</span><em>window_data_param</em>, <em>mm_batch_num</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/netio.html#ImageWindowDataProvider"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.netio.ImageWindowDataProvider" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for Image Window Data Provider. This data provider will read the original image
+and crop out patches according to the given box position, then resize the patch to form batch.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Layer type in Caffe&#8217;s configure file: WINDOW_DATA</p>
+<p>Data format for each image:</p>
+<div class="highlight-python"><div class="highlight"><pre># window meta data
+[Img_ind][Img_path][C][H][W][Window_num]
+# windows
+[label][overlap_ratio][upper][left][lower][right]
+[label][overlap_ratio][upper][left][lower][right]
+                ......
+[label][overlap_ratio][upper][left][lower][right]
+</pre></div>
+</div>
+<ul class="last simple">
+<li><code class="docutils literal"><span class="pre">Img_ind</span></code>: image index</li>
+<li><code class="docutils literal"><span class="pre">Img_path</span></code>: image path</li>
+<li><code class="docutils literal"><span class="pre">C</span></code>: number of image channels (feature maps)</li>
+<li><code class="docutils literal"><span class="pre">H</span></code>: image height</li>
+<li><code class="docutils literal"><span class="pre">W</span></code>: image width</li>
+<li><code class="docutils literal"><span class="pre">Window_num</span></code>: number of window patches</li>
+<li><code class="docutils literal"><span class="pre">label</span></code>: label</li>
+<li><code class="docutils literal"><span class="pre">overlap_ratio</span></code>: overlap ratio between the window and object bouding box</li>
+<li><code class="docutils literal"><span class="pre">upper</span> <span class="pre">left</span> <span class="pre">lower</span> <span class="pre">right</span></code>: position of the window</li>
+</ul>
+</div>
+<dl class="method">
+<dt id="owl.net.netio.ImageWindowDataProvider.get_mb">
+<code class="descname">get_mb</code><span class="sig-paren">(</span><em>phase='TRAIN'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/netio.html#ImageWindowDataProvider.get_mb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.netio.ImageWindowDataProvider.get_mb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get next minibatch</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.netio.ImageListDataProvider">
+<em class="property">class </em><code class="descclassname">owl.net.netio.</code><code class="descname">ImageListDataProvider</code><span class="sig-paren">(</span><em>image_data_param</em>, <em>transform_param</em>, <em>mm_batch_num</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/netio.html#ImageListDataProvider"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.netio.ImageListDataProvider" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for Image Data Provider. This data provider will read from original data into RGB value, then resize the patch to form batch.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Layer type in Caffe&#8217;s configure file: IMAGE_DATA</p>
+<p>Data format for each image:</p>
+<div class="highlight-python"><div class="highlight"><pre>[Img_path][label_0][label_1]...[label_n]
+</pre></div>
+</div>
+<ul class="last simple">
+<li><code class="docutils literal"><span class="pre">Img_path</span></code>: image path</li>
+<li><code class="docutils literal"><span class="pre">label_0</span> <span class="pre">label_1</span> <span class="pre">...</span> <span class="pre">label_n</span></code>: we support multi-label for a single image</li>
+</ul>
+</div>
+<dl class="method">
+<dt id="owl.net.netio.ImageListDataProvider.get_mb">
+<code class="descname">get_mb</code><span class="sig-paren">(</span><em>phase='TRAIN'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/netio.html#ImageListDataProvider.get_mb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.netio.ImageListDataProvider.get_mb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get next minibatch</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="owl.net.netio.LMDBDataProvider">
+<em class="property">class </em><code class="descclassname">owl.net.netio.</code><code class="descname">LMDBDataProvider</code><span class="sig-paren">(</span><em>data_param</em>, <em>transform_param</em>, <em>mm_batch_num</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/netio.html#LMDBDataProvider"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.netio.LMDBDataProvider" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for LMDB Data Provider.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Layer type in Caffe&#8217;s configure file: DATA</p>
+</div>
+<dl class="method">
+<dt id="owl.net.netio.LMDBDataProvider.get_mb">
+<code class="descname">get_mb</code><span class="sig-paren">(</span><em>phase='TRAIN'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/netio.html#LMDBDataProvider.get_mb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.netio.LMDBDataProvider.get_mb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get next minibatch</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="owl.net.netio.LMDBDataProvider.get_multiview_mb">
+<code class="descname">get_multiview_mb</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/owl/net/netio.html#LMDBDataProvider.get_multiview_mb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#owl.net.netio.LMDBDataProvider.get_multiview_mb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multiview testing will get better accuracy than single view testing. For each image,
+it will crop out the left-top, right-top, left-down, right-down, central patches and their
+hirizontal flipped version. The final prediction is averaged according to the 10 views.
+Thus, for each original batch, get_multiview_mb will produce 10 consecutive batches for the batch.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="cheatsheet.html" title="Owl API Cheatsheet"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="owl.html" title="Owl APIs"
+             >previous</a> |</li>
+        <li><a href="index.html">Minerva 2.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2015, Minjie Wang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3b2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Owl API Cheatsheet &mdash; Minerva 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Minerva 2.0 documentation" href="index.html" />
+    <link rel="prev" title="Subpackage: owl.net" href="owl.net.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="owl.net.html" title="Subpackage: owl.net"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Minerva 2.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="owl.net.html"
+                        title="previous chapter">Subpackage: owl.net</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/cheatsheet.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="owl-api-cheatsheet">
+<h1>Owl API Cheatsheet<a class="headerlink" href="#owl-api-cheatsheet" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="23%" />
+<col width="40%" />
+<col width="36%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Category</th>
+<th class="head">Description <a class="footnote-reference" href="#id4" id="id1">[1]</a></th>
+<th class="head">Function</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td rowspan="9">Element-wise</td>
+<td>basics</td>
+<td><code class="docutils literal"><span class="pre">+</span> <span class="pre">-</span> <span class="pre">*</span> <span class="pre">/</span></code></td>
+</tr>
+<tr class="row-odd"><td>exponential</td>
+<td><code class="docutils literal"><span class="pre">owl.elewise.exp(x)</span></code></td>
+</tr>
+<tr class="row-even"><td>ln</td>
+<td><code class="docutils literal"><span class="pre">owl.elewise.ln(x)</span></code></td>
+</tr>
+<tr class="row-odd"><td>sigmoid</td>
+<td><code class="docutils literal"><span class="pre">owl.elewise.sigm(x)</span></code></td>
+</tr>
+<tr class="row-even"><td>sigmoid back</td>
+<td><code class="docutils literal"><span class="pre">owl.elewise.sigm_back(y)</span></code></td>
+</tr>
+<tr class="row-odd"><td>tanh</td>
+<td><code class="docutils literal"><span class="pre">owl.elewise.tanh(x)</span></code></td>
+</tr>
+<tr class="row-even"><td>tanh back</td>
+<td><code class="docutils literal"><span class="pre">owl.elewise.tanh_back(y)</span></code></td>
+</tr>
+<tr class="row-odd"><td>relu</td>
+<td><code class="docutils literal"><span class="pre">owl.elewise.relu(x)</span></code></td>
+</tr>
+<tr class="row-even"><td>relu back</td>
+<td><code class="docutils literal"><span class="pre">owl.elewise.relu_back(y,</span> <span class="pre">x)</span></code></td>
+</tr>
+<tr class="row-odd"><td rowspan="2">Matrix</td>
+<td>multiplication</td>
+<td><code class="docutils literal"><span class="pre">*</span></code></td>
+</tr>
+<tr class="row-even"><td>transpose</td>
+<td><code class="docutils literal"><span class="pre">.trans()</span></code></td>
+</tr>
+<tr class="row-odd"><td rowspan="4">Reduction  <a class="footnote-reference" href="#id5" id="id2">[2]</a></td>
+<td>sum</td>
+<td><code class="docutils literal"><span class="pre">.sum(axis)</span></code></td>
+</tr>
+<tr class="row-even"><td>max</td>
+<td><code class="docutils literal"><span class="pre">.max(axis)</span></code></td>
+</tr>
+<tr class="row-odd"><td>argmax</td>
+<td><code class="docutils literal"><span class="pre">.argmax(axis)</span></code></td>
+</tr>
+<tr class="row-even"><td><strong>count zero</strong></td>
+<td><code class="docutils literal"><span class="pre">.count_zero()</span></code></td>
+</tr>
+<tr class="row-odd"><td>Broadcast  <a class="footnote-reference" href="#id6" id="id3">[3]</a></td>
+<td>broadcast</td>
+<td><code class="docutils literal"><span class="pre">+</span> <span class="pre">-</span> <span class="pre">*</span> <span class="pre">/</span></code></td>
+</tr>
+<tr class="row-even"><td rowspan="4">Generator</td>
+<td>fill zeros</td>
+<td><code class="docutils literal"><span class="pre">owl.zeros(shape)</span></code></td>
+</tr>
+<tr class="row-odd"><td>fill ones</td>
+<td><code class="docutils literal"><span class="pre">owl.ones(shape)</span></code></td>
+</tr>
+<tr class="row-even"><td>normal distribution</td>
+<td><code class="docutils literal"><span class="pre">owl.randn(shape,</span> <span class="pre">mu,</span> <span class="pre">var)</span></code></td>
+</tr>
+<tr class="row-odd"><td>bernoulli distribution</td>
+<td><code class="docutils literal"><span class="pre">owl.randb(shape,</span> <span class="pre">prob)</span></code></td>
+</tr>
+<tr class="row-even"><td rowspan="3">Shape</td>
+<td>reshape</td>
+<td><code class="docutils literal"><span class="pre">.reshape(shape)</span></code></td>
+</tr>
+<tr class="row-odd"><td>slice</td>
+<td><code class="docutils literal"><span class="pre">owl.slice(src,</span> <span class="pre">dim,</span> <span class="pre">off,</span> <span class="pre">count)</span></code></td>
+</tr>
+<tr class="row-even"><td>concat</td>
+<td><code class="docutils literal"><span class="pre">owl.concat(arrays,</span> <span class="pre">dim)</span></code></td>
+</tr>
+<tr class="row-odd"><td rowspan="2">I/O</td>
+<td><strong>convert to numpy</strong></td>
+<td><code class="docutils literal"><span class="pre">.to_numpy()</span></code></td>
+</tr>
+<tr class="row-even"><td>convert from numpy</td>
+<td><code class="docutils literal"><span class="pre">owl.from_numpy(nparr)</span></code></td>
+</tr>
+<tr class="row-odd"><td rowspan="4">Convnet</td>
+<td>convolution (ff/bp/grad)</td>
+<td><code class="docutils literal"><span class="pre">owl.conv.Convolver</span></code></td>
+</tr>
+<tr class="row-even"><td>pooling (ff/bp)</td>
+<td><code class="docutils literal"><span class="pre">owl.conv.Pooler</span></code></td>
+</tr>
+<tr class="row-odd"><td>lrn (ff/bp)</td>
+<td><code class="docutils literal"><span class="pre">owl.conv.Lrner</span></code></td>
+</tr>
+<tr class="row-even"><td>softmax</td>
+<td><code class="docutils literal"><span class="pre">owl.conv.softmax(x,</span> <span class="pre">op)</span></code></td>
+</tr>
+<tr class="row-odd"><td rowspan="5">Model &amp; Trainer</td>
+<td>neural network definition</td>
+<td><code class="docutils literal"><span class="pre">owl.net.Net</span></code></td>
+</tr>
+<tr class="row-even"><td>build network from Caffe&#8217;s config</td>
+<td><code class="docutils literal"><span class="pre">owl.net.CaffeNetBuilder</span></code></td>
+</tr>
+<tr class="row-odd"><td>multi-gpu trainer</td>
+<td><code class="docutils literal"><span class="pre">owl.net.NetTrainer</span></code></td>
+</tr>
+<tr class="row-even"><td>feature extractor</td>
+<td><code class="docutils literal"><span class="pre">owl.net.FeatureExtractor</span></code></td>
+</tr>
+<tr class="row-odd"><td>multi-view tester</td>
+<td><code class="docutils literal"><span class="pre">owl.net.MultiviewTester</span></code></td>
+</tr>
+<tr class="row-even"><td rowspan="5">System</td>
+<td>initialize system</td>
+<td><code class="docutils literal"><span class="pre">owl.initialize(argv)</span></code></td>
+</tr>
+<tr class="row-odd"><td><strong>wait for all laziness to finish</strong></td>
+<td><code class="docutils literal"><span class="pre">owl.wait_for_all()</span></code></td>
+</tr>
+<tr class="row-even"><td>create cpu device</td>
+<td><code class="docutils literal"><span class="pre">owl.create_cpu_device()</span></code></td>
+</tr>
+<tr class="row-odd"><td>create gpu device</td>
+<td><code class="docutils literal"><span class="pre">owl.create_gpu_device(id)</span></code></td>
+</tr>
+<tr class="row-even"><td>choose device to compute</td>
+<td><code class="docutils literal"><span class="pre">owl.set_device(dev)</span></code></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>Descriptions of non-lazy operations are in bold text.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id5" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td>Currently, reduction (<code class="docutils literal"><span class="pre">sum</span></code>, <code class="docutils literal"><span class="pre">max</span></code>, <code class="docutils literal"><span class="pre">argmax</span></code>) is only allowed on 2-D matrix along row or column.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id6" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[3]</a></td><td>Definition of <a class="reference external" href="http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html">broadcast</a>. Currently, broadcast is only allowed on 2-D matrix along row or column.</td></tr>
+</tbody>
+</table>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="owl.net.html" title="Subpackage: owl.net"
+             >previous</a> |</li>
+        <li><a href="index.html">Minerva 2.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2015, Minjie Wang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3b2.
+    </div>
+  </body>
+</html>

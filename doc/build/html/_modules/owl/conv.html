@@ -1,0 +1,276 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>owl.conv &mdash; Minerva 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Minerva 2.0 documentation" href="../../index.html" />
+    <link rel="up" title="owl" href="../owl.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Minerva 2.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../owl.html" accesskey="U">owl</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for owl.conv</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot; This module contains operations for convolution, pooling and softmax</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">libowl</span> <span class="kn">as</span> <span class="nn">_owl</span>
+
+<span class="n">soft_op</span> <span class="o">=</span> <span class="n">_owl</span><span class="o">.</span><span class="n">softmax_algo</span>
+<span class="sd">&quot;&quot;&quot; Same enum type as cudnn&#39;s ``cudnnSoftmaxMode_t``. Either ``soft_op.instance`` or ``soft_op.channel``.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">pool_op</span> <span class="o">=</span> <span class="n">_owl</span><span class="o">.</span><span class="n">pooling_algo</span>
+<span class="sd">&quot;&quot;&quot; Same enum type as cudnn&#39;s ``cudnnPoolingMode_t``. Either ``pool_op.max`` or ``pool_op.avg``.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="softmax"><a class="viewcode-back" href="../../owl.html#owl.conv.softmax">[docs]</a><span class="k">def</span> <span class="nf">softmax</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">op</span> <span class="o">=</span> <span class="n">soft_op</span><span class="o">.</span><span class="n">instance</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Perform softmax on the given ndarray.</span>
+
+<span class="sd">    Note that this function is currently only for softmax accross instances. And the last</span>
+<span class="sd">    dimension of ``x`` should represent instances. If ``x`` is of four dimension, directly</span>
+<span class="sd">    call the c++ routine. Otherwise, augment the number of dimension to four.</span>
+
+<span class="sd">    :param owl.NArray x: the ndarray to be softmaxed</span>
+<span class="sd">    :param owl.conv.soft_op op: what type of softmax to perform</span>
+<span class="sd">    :return: the ndarray after being softmaxed and of the same shape</span>
+<span class="sd">    :rtype: owl.NArray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">softmax_forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ori_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">soft_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">ori_shape</span><span class="p">))]</span> <span class="o">+</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">softmax_forward</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">soft_shape</span><span class="p">),</span> <span class="n">op</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">ori_shape</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Lrner"><a class="viewcode-back" href="../../owl.html#owl.conv.Lrner">[docs]</a><span class="k">class</span> <span class="nc">Lrner</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Wrapper class for LRN.</span>
+
+<span class="sd">    :ivar int local_size: the size of lrn across channel</span>
+<span class="sd">    :ivar float alpha: lrn parameters</span>
+<span class="sd">    :ivar float beta: lrn parameters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_size</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Constructor for Convolver class</span>
+<span class="sd">        </span>
+<span class="sd">        :param int local_size: the size of lrn across channel</span>
+<span class="sd">        :param float alpha: lrn parameters</span>
+<span class="sd">        :param float beta: lrn parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_size</span> <span class="o">=</span> <span class="n">local_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">beta</span>
+    
+<div class="viewcode-block" id="Lrner.ff"><a class="viewcode-back" href="../../owl.html#owl.conv.Lrner.ff">[docs]</a>    <span class="k">def</span> <span class="nf">ff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Feed-forward local response norm</span>
+
+<span class="sd">        :param owl.NArray x: input of the lrn</span>
+<span class="sd">        :param owl.NArray scale: auxiliary matrix to help computing</span>
+<span class="sd">        :return: result ndarray after forward lrn</span>
+<span class="sd">        :rtype: owl.NArray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c">#print np.reshape(x.to_numpy(), np.prod(np.shape(x.to_numpy()))).tolist()[0:100] </span>
+        <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">lrn_forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="Lrner.bp"><a class="viewcode-back" href="../../owl.html#owl.conv.Lrner.bp">[docs]</a>    <span class="k">def</span> <span class="nf">bp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bottom_data</span><span class="p">,</span> <span class="n">top_data</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">top_diff</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Backward local response norm</span>
+
+<span class="sd">        :param owl.NArray bottom_data: activation before lrn</span>
+<span class="sd">        :param owl.NArray top_data: activation after lrn</span>
+<span class="sd">        :param owl.NArray scale: auxiliary matrix to help computing</span>
+<span class="sd">        :param owl.NArray top_diff: error derivative</span>
+<span class="sd">        :return: result ndarray after backward lrn</span>
+<span class="sd">        :rtype: owl.NArray</span>
+<span class="sd">        &quot;&quot;&quot;</span>      
+        <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">lrn_backward</span><span class="p">(</span><span class="n">bottom_data</span><span class="p">,</span> <span class="n">top_data</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">top_diff</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="Convolver"><a class="viewcode-back" href="../../owl.html#owl.conv.Convolver">[docs]</a><span class="k">class</span> <span class="nc">Convolver</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Wrapper class for convolution.</span>
+<span class="sd">    </span>
+<span class="sd">    :ivar libowl.ConvInfo param: convolution parameters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pad_h</span><span class="p">,</span> <span class="n">pad_w</span><span class="p">,</span> <span class="n">stride_v</span><span class="p">,</span> <span class="n">stride_h</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Constructor for Convolver class</span>
+<span class="sd">        </span>
+<span class="sd">        :param int pad_h: padding height</span>
+<span class="sd">        :param int pad_w: padding width</span>
+<span class="sd">        :param int stride_v: vertical stride length</span>
+<span class="sd">        :param int stride_h: horizontal stride length</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ci</span> <span class="o">=</span> <span class="n">_owl</span><span class="o">.</span><span class="n">ConvInfo</span><span class="p">()</span>
+        <span class="n">ci</span><span class="o">.</span><span class="n">pad_height</span> <span class="o">=</span> <span class="n">pad_h</span>
+        <span class="n">ci</span><span class="o">.</span><span class="n">pad_width</span> <span class="o">=</span> <span class="n">pad_w</span>
+        <span class="n">ci</span><span class="o">.</span><span class="n">stride_vertical</span> <span class="o">=</span> <span class="n">stride_v</span>
+        <span class="n">ci</span><span class="o">.</span><span class="n">stride_horizontal</span> <span class="o">=</span> <span class="n">stride_h</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="o">=</span> <span class="n">ci</span>
+
+<div class="viewcode-block" id="Convolver.ff"><a class="viewcode-back" href="../../owl.html#owl.conv.Convolver.ff">[docs]</a>    <span class="k">def</span> <span class="nf">ff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Feed-forward convolution</span>
+
+<span class="sd">        :param owl.NArray x : input of the convolution</span>
+<span class="sd">        :param owl.NArray w: filters</span>
+<span class="sd">        :param owl.NArray b: bias of the convolution</span>
+<span class="sd">        :return: result ndarray after forward convolution</span>
+<span class="sd">        :rtype: owl.NArray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">conv_forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Convolver.bp"><a class="viewcode-back" href="../../owl.html#owl.conv.Convolver.bp">[docs]</a>    <span class="k">def</span> <span class="nf">bp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Backward convolution</span>
+
+<span class="sd">        :param owl.NArray y: error of the convolution usually passed by higher layers</span>
+<span class="sd">        :param owl.NArray x: bottom activation</span>
+<span class="sd">        :param owl.NArray w: filters</span>
+<span class="sd">        :return: result ndarray after backward convolution</span>
+<span class="sd">        :rtype: owl.NArray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">conv_backward_data</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Convolver.weight_grad"><a class="viewcode-back" href="../../owl.html#owl.conv.Convolver.weight_grad">[docs]</a>    <span class="k">def</span> <span class="nf">weight_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Compute the gradient of filters</span>
+
+<span class="sd">        :param owl.NArray y: error (sensitivity) passed by higher layer</span>
+<span class="sd">        :param owl.NArray x: input (activation) of lower layer</span>
+<span class="sd">        :param owl.NArray w: weight (used to get the filter dimension)</span>
+<span class="sd">        :return: the gradient of filters</span>
+<span class="sd">        :rtype: owl.NArray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">conv_backward_filter</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Convolver.bias_grad"><a class="viewcode-back" href="../../owl.html#owl.conv.Convolver.bias_grad">[docs]</a>    <span class="k">def</span> <span class="nf">bias_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Compute the gradient of bias</span>
+
+<span class="sd">        :param owl.NArray y: error (sensitivity) passed by higher layer</span>
+<span class="sd">        :return: the gradient of bias</span>
+<span class="sd">        :rtype: owl.NArray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">conv_backward_bias</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+</div></div>
+<div class="viewcode-block" id="Pooler"><a class="viewcode-back" href="../../owl.html#owl.conv.Pooler">[docs]</a><span class="k">class</span> <span class="nc">Pooler</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Wrapper class for pooling operations</span>
+
+<span class="sd">    :ivar libowl.PoolingInfo param: pooling parameters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">stride_v</span><span class="p">,</span> <span class="n">stride_h</span><span class="p">,</span> <span class="n">pad_h</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">pad_w</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">op</span> <span class="o">=</span> <span class="n">pool_op</span><span class="o">.</span><span class="n">max</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Constructor for Pooler class</span>
+
+<span class="sd">        :param int h: pooling height</span>
+<span class="sd">        :param int w: pooling width</span>
+<span class="sd">        :param int stride_v: vertical stride length</span>
+<span class="sd">        :param int stride_h: horizontal stride length</span>
+<span class="sd">        :param int pad_h: padding height</span>
+<span class="sd">        :param int pad_w: padding width</span>
+<span class="sd">        :param owl.conv.pool_op op: pooling type</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pi</span> <span class="o">=</span> <span class="n">_owl</span><span class="o">.</span><span class="n">PoolingInfo</span><span class="p">()</span>
+        <span class="n">pi</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">h</span>
+        <span class="n">pi</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">w</span>
+        <span class="n">pi</span><span class="o">.</span><span class="n">stride_vertical</span> <span class="o">=</span> <span class="n">stride_v</span>
+        <span class="n">pi</span><span class="o">.</span><span class="n">stride_horizontal</span> <span class="o">=</span> <span class="n">stride_h</span>
+        <span class="n">pi</span><span class="o">.</span><span class="n">pad_height</span> <span class="o">=</span> <span class="n">pad_h</span>
+        <span class="n">pi</span><span class="o">.</span><span class="n">pad_width</span> <span class="o">=</span> <span class="n">pad_w</span>
+        <span class="n">pi</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="n">op</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="o">=</span> <span class="n">pi</span>
+
+<div class="viewcode-block" id="Pooler.ff"><a class="viewcode-back" href="../../owl.html#owl.conv.Pooler.ff">[docs]</a>    <span class="k">def</span> <span class="nf">ff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Forward propagation for pooling</span>
+
+<span class="sd">        :param owl.NArray x: input ndarray of pooling</span>
+<span class="sd">        :return: output ndarray after forward pooling</span>
+<span class="sd">        :rtype: owl.NArray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c">#print &quot;%d %d %d %d&quot; % (self.param.height, self.param.width, self.param.stride_vertical, self.param.stride_horizontal)</span>
+        <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">pooling_forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Pooler.bp"><a class="viewcode-back" href="../../owl.html#owl.conv.Pooler.bp">[docs]</a>    <span class="k">def</span> <span class="nf">bp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">ff_y</span><span class="p">,</span> <span class="n">ff_x</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Backward propagation for pooling</span>
+
+<span class="sd">        :param owl.NArray y: error (sensitivity) from higher-layer</span>
+<span class="sd">        :param owl.NArray ff_y: value after forward pooling</span>
+<span class="sd">        :param owl.NArray ff_x: value before forward pooling</span>
+<span class="sd">        :return: output after backward pooling</span>
+<span class="sd">        :rtype: owl.NArray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">pooling_backward</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">ff_y</span><span class="p">,</span> <span class="n">ff_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Minerva 2.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../owl.html" >owl</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2015, Minjie Wang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3b2.
+    </div>
+  </body>
+</html>
