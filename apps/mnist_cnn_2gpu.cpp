@@ -12,8 +12,8 @@ int main(int argc, char** argv) {
   cout << param << endl;
   size_t train_data_len = 28 * 28 * param.mb_size / num_gpu; // img size = 28x28
   size_t train_label_len = 10 * param.mb_size / num_gpu; // 10 classes
-  size_t test_data_len = 28 * 28 * param.num_tests / num_gpu; // img size = 28x28
-  size_t test_label_len = 10 * param.num_tests / num_gpu; // 10 classes
+  size_t test_data_len = 28 * 28 * param.num_tests; // img size = 28x28
+  size_t test_label_len = 10 * param.num_tests; // 10 classes
 
   vector<uint64_t> gpus;
   for(int i = 0; i < num_gpu; ++i) {
