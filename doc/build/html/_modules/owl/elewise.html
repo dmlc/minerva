@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>owl.elewise &mdash; Minerva 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Minerva 2.0 documentation" href="../../index.html" />
+    <link rel="up" title="owl" href="../owl.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Minerva 2.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../owl.html" accesskey="U">owl</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for owl.elewise</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot; This module contains element-wise operations on ndarray</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">libowl</span> <span class="kn">as</span> <span class="nn">_owl</span>
+
+<div class="viewcode-block" id="mult"><a class="viewcode-back" href="../../owl.html#owl.elewise.mult">[docs]</a><span class="k">def</span> <span class="nf">mult</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Element-wise multiplication</span>
+
+<span class="sd">    :param owl.NArray x: first ndarray</span>
+<span class="sd">    :param owl.NArray y: second ndarray</span>
+<span class="sd">    :return: result after element-wise multiplication</span>
+<span class="sd">    :rtype: owl.NArray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">mult</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="exp"><a class="viewcode-back" href="../../owl.html#owl.elewise.exp">[docs]</a><span class="k">def</span> <span class="nf">exp</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Exponential function</span>
+
+<span class="sd">    :param owl.NArray x: input</span>
+<span class="sd">    :return: result ndarray</span>
+<span class="sd">    :rtype: owl.NArray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="ln"><a class="viewcode-back" href="../../owl.html#owl.elewise.ln">[docs]</a><span class="k">def</span> <span class="nf">ln</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Ln function</span>
+
+<span class="sd">    :param owl.NArray x: input</span>
+<span class="sd">    :return: result ndarray</span>
+<span class="sd">    :rtype: owl.NArray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">ln</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="sigm"><a class="viewcode-back" href="../../owl.html#owl.elewise.sigm">[docs]</a><span class="k">def</span> <span class="nf">sigm</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Sigmoid function: 1 / (1 + exp(-x))</span>
+
+<span class="sd">    :param owl.NArray x: input</span>
+<span class="sd">    :return: result ndarray</span>
+<span class="sd">    :rtype: owl.NArray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">sigm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="relu"><a class="viewcode-back" href="../../owl.html#owl.elewise.relu">[docs]</a><span class="k">def</span> <span class="nf">relu</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; REctified Linear Unit: y = x if x &gt;= 0; y = 0 if x &lt; 0;</span>
+
+<span class="sd">    :param owl.NArray x: input</span>
+<span class="sd">    :return: result ndarray</span>
+<span class="sd">    :rtype: owl.NArray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="tanh"><a class="viewcode-back" href="../../owl.html#owl.elewise.tanh">[docs]</a><span class="k">def</span> <span class="nf">tanh</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Hyperbolic tangent function</span>
+
+<span class="sd">    :param owl.NArray x: input</span>
+<span class="sd">    :return: result ndarray</span>
+<span class="sd">    :rtype: owl.NArray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="sigm_back"><a class="viewcode-back" href="../../owl.html#owl.elewise.sigm_back">[docs]</a><span class="k">def</span> <span class="nf">sigm_back</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Derivative of sigmoid function: y * (1 - y)</span>
+
+<span class="sd">    :param owl.NArray y: error from higher layer</span>
+<span class="sd">    :return: result ndarray</span>
+<span class="sd">    :rtype: owl.NArray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">sigm_back</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="relu_back"><a class="viewcode-back" href="../../owl.html#owl.elewise.relu_back">[docs]</a><span class="k">def</span> <span class="nf">relu_back</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Derivative of RELU function</span>
+
+<span class="sd">    :param owl.NArray y: error from higher layer</span>
+<span class="sd">    :param owl.NArray x: input of forward pass</span>
+<span class="sd">    :return: result ndarray</span>
+<span class="sd">    :rtype: owl.NArray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">relu_back</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="tanh_back"><a class="viewcode-back" href="../../owl.html#owl.elewise.tanh_back">[docs]</a><span class="k">def</span> <span class="nf">tanh_back</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Derivative of tanh function: sech^2(y)</span>
+
+<span class="sd">    :param owl.NArray y: error from higher layer</span>
+<span class="sd">    :return: result ndarray</span>
+<span class="sd">    :rtype: owl.NArray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_owl</span><span class="o">.</span><span class="n">tanh_back</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Minerva 2.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../owl.html" >owl</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2015, Minjie Wang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3b2.
+    </div>
+  </body>
+</html>
