@@ -1,4 +1,5 @@
 #include "./minerva_utils.h"
+#include <memory>
 #include <iostream>
 
 namespace athena {
@@ -26,6 +27,19 @@ void WaitForAll() {
 void SetDevice(uint64_t id) {
   auto&& ms = minerva::MinervaSystem::Instance();
   ms.current_device_id_ = id;
+}
+
+minerva::Scale ToScale(std::vector<int>* v) {
+  minerva::Scale r(std::move(*v));
+  return r;
+}
+
+std::vector<int> OfScale(minerva::Scale const& s) {
+  std::vector<int> ret;
+  for (auto i : s) {
+    ret.push_back(i);
+  }
+  return ret;
 }
 
 }  // namespace athena

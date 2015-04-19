@@ -2,6 +2,7 @@ from setuptools import setup, Extension
 from Cython.Build import cythonize
 import os
 
+# TODO yutian: clean up setuptools, or compile manually
 # Hack to use specified compiler
 os.environ['CC'] = 'g++'
 os.environ['OPT'] = ''
