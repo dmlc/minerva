@@ -94,7 +94,7 @@ class Convolver:
     def ff(self, x, w, b):
         """ Feed-forward convolution
 
-        :param owl.NArray x : input of the convolution
+        :param owl.NArray x: input of the convolution
         :param owl.NArray w: filters
         :param owl.NArray b: bias of the convolution
         :return: result ndarray after forward convolution
