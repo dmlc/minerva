@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "common/common.h"
+#include "common/scale.h"
 
 namespace minerva {
 

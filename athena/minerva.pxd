@@ -2,6 +2,10 @@ from libc.stdint cimport *
 
 cdef extern from './minerva_utils.h' namespace 'athena':
   uint64_t CreateCpuDevice() except *
+  uint64_t CreateGpuDevice(int) except *
+  int GetGpuDeviceCount() except *
+  void WaitForAll() except *
+  void SetDevice(uint64_t) except *
 
 cdef extern from '../minerva/minerva.h' namespace 'minerva::MinervaSystem':
   void Initialize(int*, char***) except *

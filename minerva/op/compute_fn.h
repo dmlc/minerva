@@ -1,4 +1,5 @@
 #pragma once
+#include "op/basic_fn.h"
 #include "op/data_shard.h"
 
 namespace minerva {
