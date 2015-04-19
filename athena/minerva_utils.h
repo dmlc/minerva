@@ -3,9 +3,12 @@
 
 namespace athena {
 
-inline uint64_t CreateCpuDevice() {
-  return minerva::MinervaSystem::Instance().device_manager().CreateCpuDevice();
-}
-}
+uint64_t CreateCpuDevice();
+uint64_t CreateGpuDevice(int);
+int GetGpuDeviceCount();
+void WaitForAll();
+void SetDevice(uint64_t);
+
+}  // namespace athena
 
 
