@@ -19,3 +19,16 @@ def finalize():
 
 def create_cpu_device():
     return minerva.CreateCpuDevice()
+
+def create_gpu_device(i):
+    return minerva.CreateGpuDevice(i)
+
+def get_gpu_device_count():
+    return minerva.GetGpuDeviceCount()
+
+def wait_for_all():
+    minerva.WaitForAll()
+
+def set_device(i):
+    minerva.SetDevice(i)
+
