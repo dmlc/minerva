@@ -76,6 +76,13 @@ Scale operator/(const Scale& sc1, int val) {
 
 const Scale Scale::kNullScale;
 
+Scale::Scale() = default;
+
+Scale::~Scale() = default;
+
+Scale::Scale(vector<int> other) : vec_(move(other)) {
+}
+
 bool Scale::IncrOne(const Scale& max) {
   for (size_t i = 0; i < NumDims(); ++i) {
     if (vec_[i] + 1 < max[i]) {
