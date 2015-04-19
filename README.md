@@ -11,7 +11,7 @@ Minerva is a fast and flexible tool for deep learning. It provides NDarray progr
 
 ## Quick try
 
-After building and installing Minerva and Owl package (python binding) as in **[[Install Minerva|Install-Minerva]]**. Try run `./run_owl_shell.sh` in Minerva's root directory. And enter:
+After building and installing Minerva and Owl package (python binding) as in [**Install Minerva**](https://github.com/dmlc/minerva/wiki/Install-Minerva). Try run `./run_owl_shell.sh` in Minerva's root directory. And enter:
 ```python
 >>> x = owl.ones([10, 5])
 >>> y = owl.ones([10, 5])
