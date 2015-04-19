@@ -9,6 +9,17 @@
 
 Minerva is a fast and flexible tool for deep learning. It provides NDarray programming interface, just like Numpy. Python bindings and C++ bindings are both available. The resulting code can be run on CPU or GPU. Multi-GPU support is very easy. Please refer to the examples to see how multi-GPU setting is used.Minerva is a fast and flexible tool for deep learning. It provides NDarray programming interface, just like Numpy. Python bindings and C++ bindings are both available. The resulting code can be run on CPU or GPU. Multi-GPU support is very easy. Please refer to the examples to see how multi-GPU setting is used.
 
+## Quick try
+
+After building and installing Minerva and Owl package (python binding) as in **[[Install Minerva|Install-Minerva]]**. Try run `./run_owl_shell.sh` in Minerva's root directory. And enter:
+```python
+>>> x = owl.ones([10, 5])
+>>> y = owl.ones([10, 5])
+>>> z = x + y
+>>> z.to_numpy()
+```
+The result will be a 10x5 array filled by value 2. Minerva supports many `numpy` style ndarray operations. Please see the API [document](http://minerva-developers.github.io/minerva-doc/) for more information.
+
 ## Features
 
 * N-D array programming interface (similar to numpy)
