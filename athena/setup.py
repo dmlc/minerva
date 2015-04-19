@@ -1,5 +1,10 @@
 from setuptools import setup, Extension
 from Cython.Build import cythonize
+import os
+
+# Hack to use specified compiler
+os.environ['CC'] = 'g++'
+os.environ['OPT'] = ''
 
 extensions = [
     Extension(
@@ -13,7 +18,10 @@ extensions = [
             '/home/yutian/cpp/cudnn-6.5-linux-x64-v2'
         ],
         extra_compile_args=[
-            '-std=c++11'
+            '-std=c++11',
+            '-Wall',
+            '-O2',
+            '-g'
         ],
         define_macros=[
             ('HAS_CUDA', None)
