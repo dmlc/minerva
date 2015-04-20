@@ -98,19 +98,12 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
   ActivationAlgorithm ToActivationAlgorithm\
     'athena::ToEvilEnumClass<minerva::ActivationAlgorithm>'(int) except +
 
-  # bool PoolingAlgorithmEqual 'athena::EnumClassEqual'(PoolingAlgorithm
-  # , PoolingAlgorithm)
-  # bool SoftmaxAlgorithm 'athena::EnumClassEqual'(SoftmaxAlgorithm
-  # , SoftmaxAlgorithm)
-  # bool ActivationAlgorithmEqual 'athena::EnumClassEqual'(ActivationAlgorithm
-  # , ActivationAlgorithm)
-
-  # cppclass ConvInfo:
-  #   ConvInfo(int, int, int, int)
-  #   int pad_height
-  #   int pad_width
-  #   int stride_vertical
-  #   int stride_horizontal
+  cppclass ConvInfo:
+    ConvInfo(int, int, int, int)
+    int pad_height
+    int pad_width
+    int stride_vertical
+    int stride_horizontal
 
   cppclass PoolingInfo:
     PoolingInfo(PoolingAlgorithm, int, int, int, int, int, int)

@@ -375,6 +375,48 @@ class _ActivationAlgorithms(object):
 
 activation_algo = _ActivationAlgorithms()
 
+cdef class ConvInfo(object):
+    cdef m.ConvInfo* _d
+
+    def __cinit__(
+            self,
+            int ph=0,
+            int pw=0,
+            int sv=1,
+            int sh=1):
+        self._d = new m.ConvInfo(ph, pw, sv, sh)
+
+    def __dealloc__(self):
+        del self._d
+
+    property pad_height:
+        def __set__(self, ph):
+            self._d.pad_height = ph
+
+        def __get__(self):
+            return self._d.pad_height
+
+    property pad_width:
+        def __set__(self, pw):
+            self._d.pad_width = pw
+
+        def __get__(self):
+            return self._d.pad_width
+
+    property stride_vertical:
+        def __set__(self, sv):
+            self._d.stride_vertical = sv
+
+        def __get__(self):
+            return self._d.stride_vertical
+
+    property stride_horizontal:
+        def __set__(self, sh):
+            self._d.stride_horizontal = sh
+
+        def __get__(self):
+            return self._d.stride_horizontal
+
 cdef class PoolingInfo(object):
     cdef m.PoolingInfo* _d
 
@@ -403,4 +445,46 @@ cdef class PoolingInfo(object):
         def __get__(self):
             return pooling_algo.find(PoolingAlgorithmWrapper(
                     m.OfPoolingAlgorithm(self._d.algorithm)))
+
+    property height:
+        def __set__(self, h):
+            self._d.height = h
+
+        def __get__(self):
+            return self._d.height
+
+    property width:
+        def __set__(self, w):
+            self._d.width = w
+
+        def __get__(self):
+            return self._d.width
+
+    property stride_vertical:
+        def __set__(self, sv):
+            self._d.stride_vertical = sv
+
+        def __get__(self):
+            return self._d.stride_vertical
+
+    property stride_horizontal:
+        def __set__(self, sh):
+            self._d.stride_horizontal = sh
+
+        def __get__(self):
+            return self._d.stride_horizontal
+
+    property pad_height:
+        def __set__(self, ph):
+            self._d.pad_height = ph
+
+        def __get__(self):
+            return self._d.pad_height
+
+    property pad_width:
+        def __set__(self, pw):
+            self._d.pad_width = pw
+
+        def __get__(self):
+            return self._d.pad_width
 
