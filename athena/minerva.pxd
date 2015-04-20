@@ -17,6 +17,17 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva::MinervaSystem':
   void Initialize(int*, char***) except +
   void Finalize() except +
 
+cdef extern from '../minerva/minerva.h' namespace 'minerva::Elewise':
+  NArray Mult(const NArray&, const NArray&) except +
+  NArray Exp(const NArray&) except +
+  NArray Ln(const NArray&) except +
+  NArray SigmoidForward(const NArray&) except +
+  NArray SigmoidBackward(const NArray&, const NArray&, const NArray&) except +
+  NArray ReluForward(const NArray&) except +
+  NArray ReluBackward(const NArray&, const NArray&, const NArray&) except +
+  NArray TanhForward(const NArray&) except +
+  NArray TanhBackward(const NArray&, const NArray&, const NArray&) except +
+
 cdef extern from '../minerva/minerva.h' namespace 'minerva':
   NArray narray_add_narray 'operator+'(const NArray&, const NArray&) except +
   NArray narray_sub_narray 'operator-'(const NArray&, const NArray&) except +

@@ -154,6 +154,54 @@ cdef class NArray(object):
             f = rhs
             self._d.div_assign_num(f)
 
+    @staticmethod
+    def mult(NArray lhs, NArray rhs):
+        return _wrap_cpp_narray(m.Mult(deref(lhs._d), deref(rhs._d)))
+
+    @staticmethod
+    def exp(NArray lhs):
+        return _wrap_cpp_narray(m.Exp(deref(lhs._d)))
+
+    @staticmethod
+    def ln(NArray lhs):
+        return _wrap_cpp_narray(m.Ln(deref(lhs._d)))
+
+    @staticmethod
+    def sigm(NArray lhs):
+        return _wrap_cpp_narray(m.SigmoidForward(deref(lhs._d)))
+
+    @staticmethod
+    def sigm_back(NArray diff, NArray top, NArray bottom):
+        return _wrap_cpp_narray(
+                m.SigmoidBackward(
+                    deref(diff._d)
+                ,   deref(top._d)
+                ,   deref(bottom._d)))
+
+    @staticmethod
+    def relu(NArray lhs):
+        return _wrap_cpp_narray(m.ReluForward(deref(lhs._d)))
+
+    @staticmethod
+    def relu_back(NArray diff, NArray top, NArray bottom):
+        return _wrap_cpp_narray(
+                m.ReluBackward(
+                    deref(diff._d)
+                ,   deref(top._d)
+                ,   deref(bottom._d)))
+
+    @staticmethod
+    def tanh(NArray lhs):
+        return _wrap_cpp_narray(m.TanhForward(deref(lhs._d)))
+
+    @staticmethod
+    def tanh_back(NArray diff, NArray top, NArray bottom):
+        return _wrap_cpp_narray(
+                m.TanhBackward(
+                    deref(diff._d)
+                ,   deref(top._d)
+                ,   deref(bottom._d)))
+
     def sum(self, rhs):
         cdef int i
         cdef vector[int] v

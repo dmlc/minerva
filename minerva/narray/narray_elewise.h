@@ -3,6 +3,7 @@
 
 namespace minerva {
 
+// TODO yutian: better use namespace
 class Elewise {
  public:
   static NArray Mult(const NArray&, const NArray&);
