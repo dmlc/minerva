@@ -62,7 +62,7 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
     @staticmethod
     NArray Randn(const Scale&, float, float) except +
     @staticmethod
-    NArray Randb(const Scale&, float) except +
+    NArray RandBernoulli(const Scale&, float) except +
 
   # TODO RI LE GOU
   ctypedef enum PoolingAlgorithm 'minerva::PoolingInfo::Algorithm':

@@ -198,9 +198,24 @@ cdef class NArray(object):
             return list(scale)
 
     @staticmethod
+    def zeros(s):
+        cdef vector[int] v = _list_to_vector(s)
+        return _wrap_cpp_narray(m.NArray.Zeros(m.ToScale(&v)))
+
+    @staticmethod
+    def ones(s):
+        cdef vector[int] v = _list_to_vector(s)
+        return _wrap_cpp_narray(m.NArray.Ones(m.ToScale(&v)))
+
+    @staticmethod
     def randn(s, float mean, float var):
-        cdef vector[int] scale = _list_to_vector(s)
-        return _wrap_cpp_narray(m.NArray.Randn(m.ToScale(&scale), mean, var))
+        cdef vector[int] v = _list_to_vector(s)
+        return _wrap_cpp_narray(m.NArray.Randn(m.ToScale(&v), mean, var))
+
+    @staticmethod
+    def randb(s, float p):
+        cdef vector[int] v = _list_to_vector(s)
+        return _wrap_cpp_narray(m.NArray.RandBernoulli(m.ToScale(&v), p))
 
 cdef class PoolingAlgorithm:
     max = m.PoolingAlgorithmMax
