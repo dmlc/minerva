@@ -163,6 +163,10 @@ struct SliceClosure {
 	int slice_count;
 };
 
+struct IndexClosure {
+	int idx;
+};
+
 }  // end of namespace minerva
 
 

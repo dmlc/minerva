@@ -236,5 +236,15 @@ NArray::NArray(BackendChunk* data) : data_(data) {
   CHECK_NOTNULL(data_);
 }
 
-}  // namespace minerva
+NArray NArray::operator[](const int idx) {
+  CHECK_GT(Size(0), idx) << "invalid index";
+  CHECK_GT(Size().NumDims(), 1) << "not eligible for less than 2D";
+  CHECK_GE(idx, 0) << "invalid index";
+  IndexOp *op = new IndexOp();
+  op->closure = {idx};
+  Scale newsize = Scale{Size().begin() + 1, Size().end()};
+  return NArray::ComputeOne({*this}, newsize, op);
+}
+
+} // namespace minerva
 

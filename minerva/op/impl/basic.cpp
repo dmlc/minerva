@@ -398,6 +398,26 @@ void ActivationForward(const DataList& inputs, const DataList& outputs, Activati
       LOG(FATAL) << "activation algorithm not supported";
   }
 }
+
+
+void Index(const DataList& inputs, const DataList& outputs, IndexClosure& closure) {
+	CHECK_EQ(inputs.size(), 1) << "(activation forward) #inputs wrong";
+	CHECK_EQ(outputs.size(), 1) << "(activation forward) #outputs wrong";
+	float* input_data = inputs[0].data_;
+	float* output_data = outputs[0].data_;
+
+	auto input_length = inputs[0].size_.Prod();
+	auto output_length = outputs[0].size_.Prod();
+	auto idx = closure.idx;
+
+	memcpy(output_data, input_data + idx * output_length, output_length * sizeof(input_data[0]));
+	for (size_t i = 0; i < output_length; ++ i)
+		cout << output_data[i] << endl;
+
+	for (size_t i = 0; i < output_length; ++ i)
+		output_data[i] = input_data[i + idx * output_length];
+}
+
 }  // end of namespace basic
 }  // end of namespace minerva
 

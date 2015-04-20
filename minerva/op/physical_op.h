@@ -360,6 +360,12 @@ class SliceOp : public ComputeFnWithClosure<SliceClosure> {
   }
 };
 
+class IndexOp : public ComputeFnWithClosure<IndexClosure> {
+  public:
+	std::string Name() const {
+	  return "Index";
+  }
+};
 
 }  // namespace minerva
 
