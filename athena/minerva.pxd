@@ -13,6 +13,14 @@ cdef extern from './minerva_utils.h' namespace 'athena':
   Scale ToScale(vector[int]*) except +
   vector[int] OfScale(const Scale&) except +
 
+# cdef extern from './minerva_utils.h'\
+#     namespace 'athena::PoolingAlgorithmWrapper':
+#   struct PoolingAlgorithmW 'W':
+#     pass
+#   PoolingAlgorithmW kMax
+#   PoolingAlgorithmW kAverage
+#   PoolingAlgorithm Extract(PoolingAlgorithmW) except +
+
 cdef extern from '../minerva/minerva.h' namespace 'minerva::MinervaSystem':
   void Initialize(int*, char***) except +
   void Finalize() except +
@@ -79,29 +87,32 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
   ctypedef enum PoolingAlgorithm 'minerva::PoolingInfo::Algorithm':
     kPoolingAlgorithmMax 'minerva::PoolingInfo::Algorithm::kMax'
     kPoolingAlgorithmAverage 'minerva::PoolingInfo::Algorithm::kAverage'
+  int OfPoolingAlgorithm 'athena::OfEvilEnumClass'(PoolingAlgorithm) except +
+  PoolingAlgorithm ToPoolingAlgorithm\
+    'athena::ToEvilEnumClass<minerva::PoolingInfo::Algorithm>' (int) except +
 
-  ctypedef enum SoftmaxAlgorithm 'minerva::SoftmaxAlgorithm':
-    kSoftmaxAlgorithmInstance 'SoftmaxAlgorithm::kInstance'
-    kSoftmaxAlgorithmChannel 'SoftmaxAlgorithm::kChannel'
+  # ctypedef enum SoftmaxAlgorithm 'minerva::SoftmaxAlgorithm':
+  #   kSoftmaxAlgorithmInstance 'SoftmaxAlgorithm::kInstance'
+  #   kSoftmaxAlgorithmChannel 'SoftmaxAlgorithm::kChannel'
 
-  ctypedef enum ActivationAlgorithm 'minerva::ActivationAlgorithm':
-    kActivationAlgorithmSigmoid 'ActivationAlgorithm::kSigmoid'
-    kActivationAlgorithmRelu 'ActivationAlgorithm::kRelu'
-    kActivationAlgorithmTanh 'ActivationAlgorithm::kTanh'
+  # ctypedef enum ActivationAlgorithm 'minerva::ActivationAlgorithm':
+  #   kActivationAlgorithmSigmoid 'ActivationAlgorithm::kSigmoid'
+  #   kActivationAlgorithmRelu 'ActivationAlgorithm::kRelu'
+  #   kActivationAlgorithmTanh 'ActivationAlgorithm::kTanh'
 
-  bool PoolingAlgorithmEqual 'athena::EnumClassEqual'(PoolingAlgorithm
-  , PoolingAlgorithm)
-  bool SoftmaxAlgorithm 'athena::EnumClassEqual'(SoftmaxAlgorithm
-  , SoftmaxAlgorithm)
-  bool ActivationAlgorithmEqual 'athena::EnumClassEqual'(ActivationAlgorithm
-  , ActivationAlgorithm)
+  # bool PoolingAlgorithmEqual 'athena::EnumClassEqual'(PoolingAlgorithm
+  # , PoolingAlgorithm)
+  # bool SoftmaxAlgorithm 'athena::EnumClassEqual'(SoftmaxAlgorithm
+  # , SoftmaxAlgorithm)
+  # bool ActivationAlgorithmEqual 'athena::EnumClassEqual'(ActivationAlgorithm
+  # , ActivationAlgorithm)
 
-  cppclass ConvInfo:
-    ConvInfo(int, int, int, int)
-    int pad_height
-    int pad_width
-    int stride_vertical
-    int stride_horizontal
+  # cppclass ConvInfo:
+  #   ConvInfo(int, int, int, int)
+  #   int pad_height
+  #   int pad_width
+  #   int stride_vertical
+  #   int stride_horizontal
 
   cppclass PoolingInfo:
     PoolingInfo(PoolingAlgorithm, int, int, int, int, int, int)
