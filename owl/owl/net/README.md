@@ -6,7 +6,9 @@ OwelNet is a DNN training framework build on Minerva python interface. The main 
 1. Provide a simple way for Minerva users to train deep neural network for computer vision problems.
 1. Provide a prototype about how to build user applications utilizing the advantages of Minerva.
 
-We borrow Caffe's well-defined network architecture protobuf but the execution is conducted in Minerva engine. It's a showcase of Minerva's flexibile interface (building Caffe's main functionality in several hundreds of lines) and computation efficiency (Multi-GPU training). 
+We borrow Caffe's well-defined network architecture protobuf but the execution is conducted in Minerva engine. It's a showcase of Minerva's flexibile interface (building Caffe's main functionality in several hundreds of lines) and computation efficiency (Multi-GPU training).
+
+See also: https://github.com/dmlc/minerva/wiki/Walkthrough:-AlexNet
 
 ## Features
 * Training complex DNN by simply running a script
