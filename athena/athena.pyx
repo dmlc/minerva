@@ -5,6 +5,17 @@ from libc.stdlib cimport calloc, free
 from libc.string cimport strcpy
 from libcpp.vector cimport vector
 
+cdef vector[int] _list_to_scale(l):
+    cdef vector[int] ret
+    for i in l:
+        ret.push_back(i)
+    return ret
+
+cdef NArray _wrap_cpp_narray(m.NArray n):
+    ret = NArray()
+    ret._d.assign(n)
+    return ret
+
 def create_cpu_device():
     return m.CreateCpuDevice()
 
@@ -136,18 +147,37 @@ cdef class NArray(object):
         else:
             f = rhs
             self._d.div_assign_num(f)
-    @staticmethod
-    def randn(s, float mean, float var):
-        cdef vector[int] scale
-        for i in s:
-            scale.push_back(i)
-        ret = NArray()
-        ret._d.assign(m.NArray.Randn(m.ToScale(&scale), mean, var))
-        return ret
+    def sum(NArray self, rhs):
+        cdef int i
+        cdef vector[int] v
+        # TODO yutian: use try catch to do type conversion
+        if isinstance(rhs, int):
+            i = rhs
+            return _wrap_cpp_narray(self._d.sum_one(i))
+        else:
+            v = _list_to_scale(rhs)
+            return _wrap_cpp_narray(self._d.sum_scale(m.ToScale(&v)))
+    def max(NArray self, rhs):
+        cdef int i
+        cdef vector[int] v
+        # TODO yutian: use try catch to do type conversion
+        if isinstance(rhs, int):
+            i = rhs
+            return _wrap_cpp_narray(self._d.max_one(i))
+        else:
+            v = _list_to_scale(rhs)
+            return _wrap_cpp_narray(self._d.max_scale(m.ToScale(&v)))
+    def max_index(NArray self, int rhs):
+        return _wrap_cpp_narray(self._d.max_index(rhs))
+
     property shape:
         def __get__(self):
             cdef vector[int] scale = m.OfScale(self._d.Size())
             return list(scale)
+    @staticmethod
+    def randn(s, float mean, float var):
+        cdef vector[int] scale = _list_to_scale(s)
+        return _wrap_cpp_narray(m.NArray.Randn(m.ToScale(&scale), mean, var))
 
 cdef class PoolingAlgorithm:
     max = m.PoolingAlgorithmMax

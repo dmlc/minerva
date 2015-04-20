@@ -32,8 +32,6 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
     pass
   cppclass NArray:
     NArray() except +
-    @staticmethod
-    NArray Randn(const Scale&, float, float) except +
     NArray assign 'operator='(const NArray&) except +
     NArray add_assign_narray 'operator+='(const NArray&) except +
     NArray sub_assign_narray 'operator-='(const NArray&) except +
@@ -43,7 +41,14 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
     NArray sub_assign_num 'operator-='(float) except +
     NArray mul_assign_num 'operator*='(float) except +
     NArray div_assign_num 'operator/='(float) except +
+    NArray sum_one 'Sum'(int) except +
+    NArray sum_scale 'Sum'(const Scale&) except +
+    NArray max_one 'Max'(int) except +
+    NArray max_scale 'Max'(const Scale&) except +
+    NArray max_index 'MaxIndex'(int) except +
     Scale Size() except +
+    @staticmethod
+    NArray Randn(const Scale&, float, float) except +
   # TODO RI LE GOU
   ctypedef enum PoolingAlgorithm 'minerva::PoolingInfo::Algorithm':
     kPoolingAlgorithmMax 'PoolingInfo::Algorithm::kMax'
