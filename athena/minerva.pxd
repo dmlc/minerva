@@ -29,18 +29,18 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva::Elewise':
   NArray TanhBackward(const NArray&, const NArray&, const NArray&) except +
 
 cdef extern from '../minerva/minerva.h' namespace 'minerva':
-  NArray narray_add_narray 'operator+'(const NArray&, const NArray&) except +
-  NArray narray_sub_narray 'operator-'(const NArray&, const NArray&) except +
-  NArray narray_mul_narray 'operator*'(const NArray&, const NArray&) except +
-  NArray narray_div_narray 'operator/'(const NArray&, const NArray&) except +
-  NArray num_add_narray 'operator+'(float, const NArray&) except +
-  NArray num_sub_narray 'operator-'(float, const NArray&) except +
-  NArray num_mul_narray 'operator*'(float, const NArray&) except +
-  NArray num_div_narray 'operator/'(float, const NArray&) except +
-  NArray narray_add_num 'operator+'(const NArray&, float) except +
-  NArray narray_sub_num 'operator-'(const NArray&, float) except +
-  NArray narray_mul_num 'operator*'(const NArray&, float) except +
-  NArray narray_div_num 'operator/'(const NArray&, float) except +
+  NArray NArrayAddNArray 'operator+'(const NArray&, const NArray&) except +
+  NArray NArraySubNArray 'operator-'(const NArray&, const NArray&) except +
+  NArray NArrayMulNArray 'operator*'(const NArray&, const NArray&) except +
+  NArray NArrayDivNArray 'operator/'(const NArray&, const NArray&) except +
+  NArray NumAddNArray 'operator+'(float, const NArray&) except +
+  NArray NumSubNArray 'operator-'(float, const NArray&) except +
+  NArray NumMulNArray 'operator*'(float, const NArray&) except +
+  NArray NumDivNArray 'operator/'(float, const NArray&) except +
+  NArray NArrayAddNum 'operator+'(const NArray&, float) except +
+  NArray NArraySubNum 'operator-'(const NArray&, float) except +
+  NArray NArrayMulNum 'operator*'(const NArray&, float) except +
+  NArray NArrayDivNum 'operator/'(const NArray&, float) except +
 
   cppclass Scale:
     pass
@@ -48,14 +48,14 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
   cppclass NArray:
     NArray() except +
     NArray assign 'operator='(const NArray&) except +
-    NArray add_assign_narray 'operator+='(const NArray&) except +
-    NArray sub_assign_narray 'operator-='(const NArray&) except +
-    NArray mul_assign_narray 'operator*='(const NArray&) except +
-    NArray div_assign_narray 'operator/='(const NArray&) except +
-    NArray add_assign_num 'operator+='(float) except +
-    NArray sub_assign_num 'operator-='(float) except +
-    NArray mul_assign_num 'operator*='(float) except +
-    NArray div_assign_num 'operator/='(float) except +
+    NArray AddAssignNArray 'operator+='(const NArray&) except +
+    NArray SubAssignNArray 'operator-='(const NArray&) except +
+    NArray MulAssignNArray 'operator*='(const NArray&) except +
+    NArray DivAssignNArray 'operator/='(const NArray&) except +
+    NArray AddAssignNum 'operator+='(float) except +
+    NArray SubAssignNum 'operator-='(float) except +
+    NArray MulAssignNum 'operator*='(float) except +
+    NArray DivAssignNum 'operator/='(float) except +
     NArray Sum(int) except +
     NArray Sum(const Scale&) except +
     NArray Max(int) except +

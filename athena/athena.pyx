@@ -60,24 +60,24 @@ cdef class NArray(object):
         if isinstance(rhs, NArray):
             r = rhs
             return _wrap_cpp_narray(
-                m.narray_add_narray(deref(self._d), deref(r._d)))
+                m.NArrayAddNArray(deref(self._d), deref(r._d)))
         else:
             f = rhs
             return _wrap_cpp_narray(
-                (m.narray_add_num(deref(self._d), f)))
+                (m.NArrayAddNum(deref(self._d), f)))
 
     def __radd__(self, float lhs):
-        return _wrap_cpp_narray(m.num_add_narray(lhs, deref(self._d)))
+        return _wrap_cpp_narray(m.NumAddNArray(lhs, deref(self._d)))
 
     def __iadd__(self, rhs):
         cdef NArray r
         cdef float f
         if isinstance(rhs, NArray):
             r = rhs
-            self._d.add_assign_narray(deref(r._d))
+            self._d.AddAssignNArray(deref(r._d))
         else:
             f = rhs
-            self._d.add_assign_num(f)
+            self._d.AddAssignNum(f)
 
     def __sub__(NArray self, rhs):
         cdef NArray r
@@ -85,24 +85,24 @@ cdef class NArray(object):
         if isinstance(rhs, NArray):
             r = rhs
             return _wrap_cpp_narray(
-                m.narray_sub_narray(deref(self._d), deref(r._d)))
+                m.NArraySubNArray(deref(self._d), deref(r._d)))
         else:
             f = rhs
             return _wrap_cpp_narray(
-                m.narray_sub_num(deref(self._d), f))
+                m.NArraySubNum(deref(self._d), f))
 
     def __rsub__(self, float lhs):
-        return _wrap_cpp_narray(m.num_sub_narray(lhs, deref(self._d)))
+        return _wrap_cpp_narray(m.NumSubNArray(lhs, deref(self._d)))
 
     def __isub__(self, rhs):
         cdef NArray r
         cdef float f
         if isinstance(rhs, NArray):
             r = rhs
-            self._d.sub_assign_narray(deref(r._d))
+            self._d.SubAssignNArray(deref(r._d))
         else:
             f = rhs
-            self._d.sub_assign_num(f)
+            self._d.SubAssignNum(f)
 
     def __mul__(NArray self, rhs):
         cdef NArray r
@@ -110,24 +110,24 @@ cdef class NArray(object):
         if isinstance(rhs, NArray):
             r = rhs
             return _wrap_cpp_narray(
-                m.narray_mul_narray(deref(self._d), deref(r._d)))
+                m.NArrayMulNArray(deref(self._d), deref(r._d)))
         else:
             f = rhs
             return _wrap_cpp_narray(
-                m.narray_mul_num(deref(self._d), f))
+                m.NArrayMulNum(deref(self._d), f))
 
     def __rmul__(self, float lhs):
-        return _wrap_cpp_narray(m.num_mul_narray(lhs, deref(self._d)))
+        return _wrap_cpp_narray(m.NumMulNArray(lhs, deref(self._d)))
 
     def __imul__(self, rhs):
         cdef NArray r
         cdef float f
         if isinstance(rhs, NArray):
             r = rhs
-            self._d.mul_assign_narray(deref(r._d))
+            self._d.MulAssignNArray(deref(r._d))
         else:
             f = rhs
-            self._d.mul_assign_num(f)
+            self._d.MulAssignNum(f)
 
     def __div__(NArray self, rhs):
         cdef NArray r
@@ -135,24 +135,24 @@ cdef class NArray(object):
         if isinstance(rhs, NArray):
             r = rhs
             return _wrap_cpp_narray(
-                m.narray_div_narray(deref(self._d), deref(r._d)))
+                m.NArrayDivNArray(deref(self._d), deref(r._d)))
         else:
             f = rhs
             return _wrap_cpp_narray(
-                m.narray_div_num(deref(self._d), f))
+                m.NArrayDivNum(deref(self._d), f))
 
     def __rdiv__(self, float lhs):
-        return _wrap_cpp_narray(m.num_div_narray(lhs, deref(self._d)))
+        return _wrap_cpp_narray(m.NumDivNArray(lhs, deref(self._d)))
 
     def __idiv__(self, rhs):
         cdef NArray r
         cdef float f
         if isinstance(rhs, NArray):
             r = rhs
-            self._d.div_assign_narray(deref(r._d))
+            self._d.DivAssignNArray(deref(r._d))
         else:
             f = rhs
-            self._d.div_assign_num(f)
+            self._d.DivAssignNum(f)
 
     @staticmethod
     def mult(NArray lhs, NArray rhs):
