@@ -265,7 +265,8 @@ cdef class NArray(object):
         cdef vector[int] v = _list_to_vector(s)
         return _wrap_cpp_narray(m.NArray.RandBernoulli(m.ToScale(&v), p))
 
-cdef class PoolingAlgorithm:
+cdef class PoolingAlgorithm(object):
+    cdef m.PoolingAlgorithm max
     max = m.PoolingAlgorithmMax
     average = m.PoolingAlgorithmAverage
 
@@ -276,7 +277,15 @@ cdef class PoolingAlgorithm:
         else:
             return PoolingAlgorithm.average
 
-cdef class PoolingInfo:
+cdef class SoftmaxAlgorithm(object):
+    instance = m.SoftmaxAlgorithmInstance
+    channel = m.SoftmaxAlgorithmChannel
+
+# cdef class PoolingAlgorithm:
+#     max = m.PoolingAlgorithmMax
+#     average = m.PoolingAlgorithmAverage
+
+cdef class PoolingInfo(object):
     cdef m.PoolingInfo* _d
 
     def __cinit__(
