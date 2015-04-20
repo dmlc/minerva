@@ -4,7 +4,7 @@ import os
 
 # TODO yutian: clean up setuptools, or compile manually
 # Hack to use specified compiler
-os.environ['CC'] = 'g++'
+os.environ['CC'] = 'clang++'
 os.environ['OPT'] = ''
 
 extensions = [

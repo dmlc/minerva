@@ -4,7 +4,7 @@
 
 namespace minerva {
 
-class Context;
+struct Context;
 
 class ComputeFn : public BasicFn {
  public:

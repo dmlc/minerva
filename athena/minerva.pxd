@@ -1,5 +1,6 @@
 from libc.stdint cimport *
 from libcpp.vector cimport vector
+from libcpp cimport bool
 
 cdef extern from './minerva_utils.h' namespace 'athena':
   uint64_t CreateCpuDevice() except +
@@ -27,9 +28,9 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
   NArray narray_sub_num 'operator-'(const NArray&, float) except +
   NArray narray_mul_num 'operator*'(const NArray&, float) except +
   NArray narray_div_num 'operator/'(const NArray&, float) except +
-  cdef cppclass Scale:
+  cppclass Scale:
     pass
-  cdef cppclass NArray:
+  cppclass NArray:
     NArray()
     @staticmethod
     NArray Randn(const Scale&, float, float) except +
@@ -37,10 +38,24 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
     NArray add_assign 'operator+='(NArray)
     NArray sub_assign 'operator-='(NArray)
     NArray mul_assign 'operator*='(NArray)
-    NArray div_assign 'operator*='(NArray)
+    NArray div_assign 'operator/='(NArray)
     NArray add_assign 'operator+='(float)
     NArray sub_assign 'operator-='(float)
     NArray mul_assign 'operator*='(float)
-    NArray div_assign 'operator*='(float)
+    NArray div_assign 'operator/='(float)
     Scale Size()
+  # TODO RI LE GOU
+  ctypedef enum PoolingAlgorithm 'minerva::PoolingInfo::Algorithm':
+    kPoolingAlgorithmMax 'PoolingInfo::Algorithm::kMax'
+    kPoolingAlgorithmAverage 'PoolingInfo::Algorithm::kAverage'
+  bool PoolingAlgorithmEqual 'athena::EnumClassEqual'(PoolingAlgorithm, PoolingAlgorithm)
+  cppclass PoolingInfo:
+    PoolingInfo(PoolingAlgorithm, int, int, int, int, int, int)
+    PoolingAlgorithm algorithm
+    int height
+    int width
+    int stride_vertical
+    int stride_horizontal
+    int pad_height
+    int pad_width
 
