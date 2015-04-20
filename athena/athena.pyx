@@ -265,48 +265,54 @@ cdef class NArray(object):
         cdef vector[int] v = _list_to_vector(s)
         return _wrap_cpp_narray(m.NArray.RandBernoulli(m.ToScale(&v), p))
 
-cdef class PoolingAlgorithm(object):
+cdef class _PoolingAlgorithm(object):
     cdef m.PoolingAlgorithm max
-    max = m.PoolingAlgorithmMax
-    average = m.PoolingAlgorithmAverage
+    cdef m.PoolingAlgorithm average
+    def __cinit__(self):
+        self.max = m.kPoolingAlgorithmMax
+        self.average = m.kPoolingAlgorithmAverage
 
-    @staticmethod
-    cdef of_cpp(m.PoolingAlgorithm v):
-        if m.PoolingAlgorithmEqual(v, m.PoolingAlgorithmMax):
-            return PoolingAlgorithm.max
-        else:
-            return PoolingAlgorithm.average
+PoolingAlgorithm = _PoolingAlgorithm()
+    # max = m.PoolingAlgorithmMax
+    # average = m.PoolingAlgorithmAverage
 
-cdef class SoftmaxAlgorithm(object):
-    instance = m.SoftmaxAlgorithmInstance
-    channel = m.SoftmaxAlgorithmChannel
+    # @staticmethod
+    # cdef of_cpp(m.PoolingAlgorithm v):
+    #     if m.PoolingAlgorithmEqual(v, m.PoolingAlgorithmMax):
+    #         return PoolingAlgorithm.max
+    #     else:
+    #         return PoolingAlgorithm.average
+
+# cdef class SoftmaxAlgorithm(object):
+#     instance = m.SoftmaxAlgorithmInstance
+#     channel = m.SoftmaxAlgorithmChannel
 
 # cdef class PoolingAlgorithm:
 #     max = m.PoolingAlgorithmMax
 #     average = m.PoolingAlgorithmAverage
 
-cdef class PoolingInfo(object):
-    cdef m.PoolingInfo* _d
-
-    def __cinit__(
-            self,
-            PoolingAlgorithm a=PoolingAlgorithm.max,
-            int h=0,
-            int w=0,
-            int sv=0,
-            int sh=0,
-            int ph=0,
-            int pw=0):
-        self._d = new m.PoolingInfo(a, h, w, sv, sh, ph, pw)
-
-    def __dealloc__(self):
-        del self._d
-
-    property algorithm:
-        def __set__(self, a):
-            self._d.algorithm = a
-        def __get__(self):
-            cdef m.PoolingInfo* p
-            p = self._d
-            return PoolingAlgorithm.of_cpp(p.algorithm)
+# cdef class PoolingInfo(object):
+#     cdef m.PoolingInfo* _d
+#
+#     def __cinit__(
+#             self,
+#             PoolingAlgorithm a=PoolingAlgorithm.max,
+#             int h=0,
+#             int w=0,
+#             int sv=0,
+#             int sh=0,
+#             int ph=0,
+#             int pw=0):
+#         self._d = new m.PoolingInfo(a, h, w, sv, sh, ph, pw)
+#
+#     def __dealloc__(self):
+#         del self._d
+#
+#     property algorithm:
+#         def __set__(self, a):
+#             self._d.algorithm = a
+#         def __get__(self):
+#             cdef m.PoolingInfo* p
+#             p = self._d
+#             return PoolingAlgorithm.of_cpp(p.algorithm)
 

@@ -77,8 +77,8 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
 
   # TODO yutian: RI LE GOU, see if there is a better way
   ctypedef enum PoolingAlgorithm 'minerva::PoolingInfo::Algorithm':
-    kPoolingAlgorithmMax 'PoolingInfo::Algorithm::kMax'
-    kPoolingAlgorithmAverage 'PoolingInfo::Algorithm::kAverage'
+    kPoolingAlgorithmMax 'minerva::PoolingInfo::Algorithm::kMax'
+    kPoolingAlgorithmAverage 'minerva::PoolingInfo::Algorithm::kAverage'
 
   ctypedef enum SoftmaxAlgorithm 'minerva::SoftmaxAlgorithm':
     kSoftmaxAlgorithmInstance 'SoftmaxAlgorithm::kInstance'
