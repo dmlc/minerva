@@ -1,5 +1,6 @@
 #include "./minerva_utils.h"
 #include <memory>
+#include <cstring>
 #include <iostream>
 
 namespace athena {
@@ -42,4 +43,14 @@ std::vector<int> OfScale(minerva::Scale const& s) {
   return ret;
 }
 
+minerva::NArray FromNumpy(float const* data, minerva::Scale const& scale) {
+  auto size = scale.Prod();
+  std::shared_ptr<float> ptr(new float[size], [](float* p) {
+    delete[] p;
+  });
+  memcpy(ptr.get(), data, size * sizeof(float));
+  return minerva::NArray::MakeNArray(scale, ptr);
+}
+
 }  // namespace athena
+

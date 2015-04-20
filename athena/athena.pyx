@@ -1,9 +1,12 @@
-cimport minerva as m
-from cython.operator cimport dereference as deref
 import sys
+from cython.operator cimport dereference as deref
+import cython
 from libc.stdlib cimport calloc, free
 from libc.string cimport strcpy
 from libcpp.vector cimport vector
+import numpy as np
+cimport numpy as np
+cimport minerva as m
 
 cdef vector[int] _list_to_vector(l):
     cdef vector[int] ret
@@ -202,6 +205,8 @@ cdef class NArray(object):
                 ,   deref(top._d)
                 ,   deref(bottom._d)))
 
+    # TODO yutian: conv methods
+
     def sum(self, rhs):
         cdef int i
         cdef vector[int] v
@@ -265,7 +270,20 @@ cdef class NArray(object):
         cdef vector[int] v = _list_to_vector(s)
         return _wrap_cpp_narray(m.NArray.RandBernoulli(m.ToScale(&v), p))
 
-    # TODO yutian: conv methods
+    @staticmethod
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def from_numpy(np.ndarray n):
+        s = list(np.shape(n))
+        n = n.astype(np.float32)
+        return NArray._from_numpy(n.flatten(), s)
+
+    @staticmethod
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def _from_numpy(np.ndarray[np.float32_t, ndim=1, mode='c'] n, list s):
+        cdef vector[int] shape = _list_to_vector(reversed(s))
+        return _wrap_cpp_narray(m.FromNumpy(&n[0], m.ToScale(&shape)))
 
 cdef class PoolingAlgorithmWrapper(object):
     cdef int _d

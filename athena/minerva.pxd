@@ -1,6 +1,6 @@
 from libc.stdint cimport *
-from libcpp.vector cimport vector
 from libcpp cimport bool
+from libcpp.vector cimport vector
 
 #TODO yutian: numpy
 
@@ -12,6 +12,7 @@ cdef extern from './minerva_utils.h' namespace 'athena':
   void SetDevice(uint64_t) except +
   Scale ToScale(vector[int]*) except +
   vector[int] OfScale(const Scale&) except +
+  NArray FromNumpy(const float*, const Scale&) except +
 
 cdef extern from '../minerva/minerva.h' namespace 'minerva::MinervaSystem':
   void Initialize(int*, char***) except +

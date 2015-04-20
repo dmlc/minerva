@@ -25,7 +25,8 @@ extensions = [
             '-g'
         ],
         define_macros=[
-            ('HAS_CUDA', None)
+            ('HAS_CUDA', None),
+            # ('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')
         ],
         libraries=[
             'minerva'

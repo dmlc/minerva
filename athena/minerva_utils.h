@@ -1,6 +1,7 @@
 #pragma once
 #include "minerva.h"
 #include <vector>
+#include <memory>
 
 namespace athena {
 
@@ -22,6 +23,8 @@ template<typename T>
 T ToEvilEnumClass(int a) {
   return static_cast<T>(a);
 }
+
+minerva::NArray FromNumpy(float const*, minerva::Scale const&);
 
 }  // namespace athena
 
