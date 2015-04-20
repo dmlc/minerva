@@ -265,6 +265,8 @@ cdef class NArray(object):
         cdef vector[int] v = _list_to_vector(s)
         return _wrap_cpp_narray(m.NArray.RandBernoulli(m.ToScale(&v), p))
 
+    # TODO yutian: conv methods
+
 cdef class PoolingAlgorithmWrapper(object):
     cdef int _d
 
