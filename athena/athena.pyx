@@ -379,11 +379,11 @@ cdef class ConvInfo(object):
     cdef m.ConvInfo* _d
 
     def __cinit__(
-            self,
-            int ph=0,
-            int pw=0,
-            int sv=1,
-            int sh=1):
+            self
+        ,   int ph=0
+        ,   int pw=0
+        ,   int sv=1
+        ,   int sh=1):
         self._d = new m.ConvInfo(ph, pw, sv, sh)
 
     def __dealloc__(self):
@@ -421,14 +421,14 @@ cdef class PoolingInfo(object):
     cdef m.PoolingInfo* _d
 
     def __cinit__(
-            self,
-            PoolingAlgorithmWrapper a=pooling_algo.max,
-            int h=0,
-            int w=0,
-            int sv=0,
-            int sh=0,
-            int ph=0,
-            int pw=0):
+            self
+        ,   PoolingAlgorithmWrapper a=pooling_algo.max
+        ,   int h=0
+        ,   int w=0
+        ,   int sv=0
+        ,   int sh=0
+        ,   int ph=0
+        ,   int pw=0):
         cdef m.PoolingAlgorithm algo
         algo = m.ToPoolingAlgorithm(a._d)
         self._d = new m.PoolingInfo(algo, h, w, sv, sh, ph, pw)
