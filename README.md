@@ -44,6 +44,7 @@ The result will be a 10x5 array filled by value 2. Minerva supports many `numpy`
 
 ## Tutorial and Documents
 * Tutorials and high-level concepts could be found in [our wiki page](https://github.com/dmlc/minerva/wiki)
+* A step-by-step walk through on MNIST example could be found [here](https://github.com/dmlc/minerva/wiki/Walkthrough:-MNIST)
 * API documents could be found [here](http://minerva-developers.github.io/minerva-doc/index.html)
 
 ## Performance
