@@ -52,6 +52,9 @@ uint64_t MinervaSystem::CreateGpuDevice(int id) {
 void MinervaSystem::SetDevice(uint64_t id) {
   current_device_id_ = id;
 }
+void MinervaSystem::WaitForAll() {
+  backend_->WaitForAll();
+}
 
 MinervaSystem::MinervaSystem(int* argc, char*** argv): data_id_counter_(0), current_device_id_(0) {
   gflags::ParseCommandLineFlags(argc, argv, true);

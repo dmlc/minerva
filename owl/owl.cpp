@@ -39,7 +39,7 @@ uint64_t CreateCpuDevice() {
 }
 
 void WaitForAll() {
-  m::MinervaSystem::Instance().backend().WaitForAll();
+  m::MinervaSystem::Instance().WaitForAll();
 }
 
 #ifdef HAS_CUDA
