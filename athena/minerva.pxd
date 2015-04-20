@@ -31,19 +31,19 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
   cppclass Scale:
     pass
   cppclass NArray:
-    NArray()
+    NArray() except +
     @staticmethod
     NArray Randn(const Scale&, float, float) except +
-    NArray assign 'operator='(NArray)
-    NArray add_assign 'operator+='(NArray)
-    NArray sub_assign 'operator-='(NArray)
-    NArray mul_assign 'operator*='(NArray)
-    NArray div_assign 'operator/='(NArray)
-    NArray add_assign 'operator+='(float)
-    NArray sub_assign 'operator-='(float)
-    NArray mul_assign 'operator*='(float)
-    NArray div_assign 'operator/='(float)
-    Scale Size()
+    NArray assign 'operator='(const NArray&) except +
+    NArray add_assign_narray 'operator+='(const NArray&) except +
+    NArray sub_assign_narray 'operator-='(const NArray&) except +
+    NArray mul_assign_narray 'operator*='(const NArray&) except +
+    NArray div_assign_narray 'operator/='(const NArray&) except +
+    NArray add_assign_num 'operator+='(float) except +
+    NArray sub_assign_num 'operator-='(float) except +
+    NArray mul_assign_num 'operator*='(float) except +
+    NArray div_assign_num 'operator/='(float) except +
+    Scale Size() except +
   # TODO RI LE GOU
   ctypedef enum PoolingAlgorithm 'minerva::PoolingInfo::Algorithm':
     kPoolingAlgorithmMax 'PoolingInfo::Algorithm::kMax'

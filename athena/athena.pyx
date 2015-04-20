@@ -60,10 +60,10 @@ cdef class NArray(object):
         cdef float f
         if isinstance(rhs, NArray):
             r = rhs
-            self._d.assign(m.narray_add_narray(deref(self._d), deref(r._d)))
+            self._d.add_assign_narray(deref(r._d))
         else:
             f = rhs
-            self._d.assign(m.narray_add_num(deref(self._d), f))
+            self._d.add_assign_num(f)
     def __sub__(NArray self, rhs):
         cdef NArray r
         cdef float f
@@ -84,10 +84,10 @@ cdef class NArray(object):
         cdef float f
         if isinstance(rhs, NArray):
             r = rhs
-            self._d.assign(m.narray_sub_narray(deref(self._d), deref(r._d)))
+            self._d.sub_assign_narray(deref(r._d))
         else:
             f = rhs
-            self._d.assign(m.narray_sub_num(deref(self._d), f))
+            self._d.sub_assign_num(f)
     def __mul__(NArray self, rhs):
         cdef NArray r
         cdef float f
@@ -108,10 +108,10 @@ cdef class NArray(object):
         cdef float f
         if isinstance(rhs, NArray):
             r = rhs
-            self._d.assign(m.narray_mul_narray(deref(self._d), deref(r._d)))
+            self._d.mul_assign_narray(deref(r._d))
         else:
             f = rhs
-            self._d.assign(m.narray_mul_num(deref(self._d), f))
+            self._d.mul_assign_num(f)
     def __div__(NArray self, rhs):
         cdef NArray r
         cdef float f
@@ -132,10 +132,10 @@ cdef class NArray(object):
         cdef float f
         if isinstance(rhs, NArray):
             r = rhs
-            self._d.assign(m.narray_div_narray(deref(self._d), deref(r._d)))
+            self._d.div_assign_narray(deref(r._d))
         else:
             f = rhs
-            self._d.assign(m.narray_div_num(deref(self._d), f))
+            self._d.div_assign_num(f)
     @staticmethod
     def randn(s, float mean, float var):
         cdef vector[int] scale
