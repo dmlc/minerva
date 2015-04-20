@@ -2,6 +2,7 @@
 
 ## Latest News
 
+* Minerva's Tutorial and API documents are released!
 * Minerva had migrated to [dmlc](https://github.com/dmlc), where you could find many awesome machine learning repositories!
 * Minerva now evolves to use cudnn_v2. Please download and use the new [library](https://developer.nvidia.com/cuDNN).
 
@@ -21,10 +22,27 @@ After building and installing Minerva and Owl package (python binding) as in [**
 The result will be a 10x5 array filled by value 2. Minerva supports many `numpy` style ndarray operations. Please see the API [document](http://minerva-developers.github.io/minerva-doc/) for more information.
 
 ## Features
+* N-D array programming interface and easy integration with `numpy`
+  ```python
+  >>> import numpy as np
+  >>> x = np.array([1, 2, 3])
+  >>> y = owl.from_numpy(x)
+  >>> y += 1
+  >>> y.to_numpy()
+  array([ 2., 3., 4., ], dtype=float32)
+  ```
+  More is in the [**API cheatsheet**](http://minerva-developers.github.io/minerva-doc/cheatsheet.html)
+* Automatically parallel execution
+  ```python
+  >>> x = owl.zeros([256, 128])
+  >>> y = owl.randn([1024, 32], 0.0, 0.01)
+  ```
+  The above `x` and `y` will be executed **concurrently**. How is this achieved? See [**Feature Highlight: Data-flow and lazy evaluation**](https://github.com/dmlc/minerva/wiki/Feature-Highlight:-Dataflow-engine)
+* Multi-GPU, multi-CPU support: How to utilize multiple GPUs? See See [**Feature Highlight: Multi GPU Training**](https://github.com/dmlc/minerva/wiki/Feature-Highlight:-Multi-GPU-Training)
 
-* N-D array programming interface (similar to numpy)
-* Easy interaction with NumPy
-* Multi-GPU, multi-CPU support
+## Tutorial and Documents
+* Tutorials and high-level concepts could be found in [our wiki page](https://github.com/dmlc/minerva/wiki)
+* API documents could be found [here](http://minerva-developers.github.io/minerva-doc/index.html)
 
 ## Performance
 
