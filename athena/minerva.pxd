@@ -41,11 +41,13 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
     NArray sub_assign_num 'operator-='(float) except +
     NArray mul_assign_num 'operator*='(float) except +
     NArray div_assign_num 'operator/='(float) except +
-    NArray sum_one 'Sum'(int) except +
-    NArray sum_scale 'Sum'(const Scale&) except +
-    NArray max_one 'Max'(int) except +
-    NArray max_scale 'Max'(const Scale&) except +
-    NArray max_index 'MaxIndex'(int) except +
+    NArray Sum(int) except +
+    NArray Sum(const Scale&) except +
+    NArray Max(int) except +
+    NArray Max(const Scale&) except +
+    NArray MaxIndex(int) except +
+    int CountZero() except +
+    NArray Trans() except +
     Scale Size() except +
     @staticmethod
     NArray Randn(const Scale&, float, float) except +

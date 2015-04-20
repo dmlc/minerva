@@ -64,12 +64,12 @@ cdef class NArray(object):
         else:
             f = rhs
             return _wrap_cpp_narray(
-                ret._d.assign(m.narray_add_num(deref(self._d), f)))
+                (m.narray_add_num(deref(self._d), f)))
 
-    def __radd__(NArray self, float lhs):
+    def __radd__(self, float lhs):
         return _wrap_cpp_narray(m.num_add_narray(lhs, deref(self._d)))
 
-    def __iadd__(NArray self, rhs):
+    def __iadd__(self, rhs):
         cdef NArray r
         cdef float f
         if isinstance(rhs, NArray):
@@ -91,10 +91,10 @@ cdef class NArray(object):
             return _wrap_cpp_narray(
                 m.narray_sub_num(deref(self._d), f))
 
-    def __rsub__(NArray self, float lhs):
+    def __rsub__(self, float lhs):
         return _wrap_cpp_narray(m.num_sub_narray(lhs, deref(self._d)))
 
-    def __isub__(NArray self, rhs):
+    def __isub__(self, rhs):
         cdef NArray r
         cdef float f
         if isinstance(rhs, NArray):
@@ -116,10 +116,10 @@ cdef class NArray(object):
             return _wrap_cpp_narray(
                 m.narray_mul_num(deref(self._d), f))
 
-    def __rmul__(NArray self, float lhs):
+    def __rmul__(self, float lhs):
         return _wrap_cpp_narray(m.num_mul_narray(lhs, deref(self._d)))
 
-    def __imul__(NArray self, rhs):
+    def __imul__(self, rhs):
         cdef NArray r
         cdef float f
         if isinstance(rhs, NArray):
@@ -141,10 +141,10 @@ cdef class NArray(object):
             return _wrap_cpp_narray(
                 m.narray_div_num(deref(self._d), f))
 
-    def __rdiv__(NArray self, float lhs):
+    def __rdiv__(self, float lhs):
         return _wrap_cpp_narray(m.num_div_narray(lhs, deref(self._d)))
 
-    def __idiv__(NArray self, rhs):
+    def __idiv__(self, rhs):
         cdef NArray r
         cdef float f
         if isinstance(rhs, NArray):
@@ -154,30 +154,36 @@ cdef class NArray(object):
             f = rhs
             self._d.div_assign_num(f)
 
-    def sum(NArray self, rhs):
+    def sum(self, rhs):
         cdef int i
         cdef vector[int] v
         # TODO yutian: use try catch to do type conversion
         if isinstance(rhs, int):
             i = rhs
-            return _wrap_cpp_narray(self._d.sum_one(i))
+            return _wrap_cpp_narray(self._d.Sum(i))
         else:
             v = _list_to_scale(rhs)
-            return _wrap_cpp_narray(self._d.sum_scale(m.ToScale(&v)))
+            return _wrap_cpp_narray(self._d.Sum(m.ToScale(&v)))
 
-    def max(NArray self, rhs):
+    def max(self, rhs):
         cdef int i
         cdef vector[int] v
         # TODO yutian: use try catch to do type conversion
         if isinstance(rhs, int):
             i = rhs
-            return _wrap_cpp_narray(self._d.max_one(i))
+            return _wrap_cpp_narray(self._d.Max(i))
         else:
             v = _list_to_scale(rhs)
-            return _wrap_cpp_narray(self._d.max_scale(m.ToScale(&v)))
+            return _wrap_cpp_narray(self._d.Max(m.ToScale(&v)))
 
-    def max_index(NArray self, int rhs):
-        return _wrap_cpp_narray(self._d.max_index(rhs))
+    def max_index(self, int rhs):
+        return _wrap_cpp_narray(self._d.MaxIndex(rhs))
+
+    def count_zero(self):
+        return self._d.CountZero()
+
+    def trans(self):
+        return _wrap_cpp_narray(self._d.Trans())
 
     property shape:
         def __get__(self):
