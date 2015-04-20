@@ -5,7 +5,7 @@ from libc.stdlib cimport calloc, free
 from libc.string cimport strcpy
 from libcpp.vector cimport vector
 
-cdef vector[int] _list_to_scale(l):
+cdef vector[int] _list_to_vector(l):
     cdef vector[int] ret
     for i in l:
         ret.push_back(i)
@@ -162,7 +162,7 @@ cdef class NArray(object):
             i = rhs
             return _wrap_cpp_narray(self._d.Sum(i))
         else:
-            v = _list_to_scale(rhs)
+            v = _list_to_vector(rhs)
             return _wrap_cpp_narray(self._d.Sum(m.ToScale(&v)))
 
     def max(self, rhs):
@@ -173,7 +173,7 @@ cdef class NArray(object):
             i = rhs
             return _wrap_cpp_narray(self._d.Max(i))
         else:
-            v = _list_to_scale(rhs)
+            v = _list_to_vector(rhs)
             return _wrap_cpp_narray(self._d.Max(m.ToScale(&v)))
 
     def max_index(self, int rhs):
@@ -185,6 +185,13 @@ cdef class NArray(object):
     def trans(self):
         return _wrap_cpp_narray(self._d.Trans())
 
+    def reshape(self, s):
+        cdef vector[int] v = _list_to_vector(s)
+        return _wrap_cpp_narray(self._d.Reshape(m.ToScale(&v)))
+
+    def wait_for_eval(self):
+        self._d.Wait()
+
     property shape:
         def __get__(self):
             cdef vector[int] scale = m.OfScale(self._d.Size())
@@ -192,7 +199,7 @@ cdef class NArray(object):
 
     @staticmethod
     def randn(s, float mean, float var):
-        cdef vector[int] scale = _list_to_scale(s)
+        cdef vector[int] scale = _list_to_vector(s)
         return _wrap_cpp_narray(m.NArray.Randn(m.ToScale(&scale), mean, var))
 
 cdef class PoolingAlgorithm:
