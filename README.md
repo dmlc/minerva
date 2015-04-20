@@ -39,12 +39,25 @@ The result will be a 10x5 array filled by value 2. Minerva supports many `numpy`
   >>> x = owl.zeros([256, 128])
   >>> y = owl.randn([1024, 32], 0.0, 0.01)
   ```
-  The above `x` and `y` will be executed **concurrently**. How is this achieved? See [**Feature Highlight: Data-flow and lazy evaluation**](https://github.com/dmlc/minerva/wiki/Feature-Highlight:-Dataflow-engine)
-* Multi-GPU, multi-CPU support: How to utilize multiple GPUs? See [**Feature Highlight: Multi GPU Training**](https://github.com/dmlc/minerva/wiki/Feature-Highlight:-Multi-GPU-Training)
+  The above `x` and `y` will be executed **concurrently**. How is this achieved?
+  
+  See [**Feature Highlight: Data-flow and lazy evaluation**](https://github.com/dmlc/minerva/wiki/Feature-Highlight:-Dataflow-engine)
+* Multi-GPU, multi-CPU support:
+
+  ```python
+  >>> owl.set_device(gpu0)
+  >>> x = owl.zeros([256, 128])
+  >>> owl.set_device(gpu1)
+  >>> y = owl.randn([1024, 32], 0.0, 0.01)
+  ```
+  The above `x` and `y` will be executed on two cards **simultaneously**. How is this achieved?
+  
+  See [**Feature Highlight: Multi GPU Training**](https://github.com/dmlc/minerva/wiki/Feature-Highlight:-Multi-GPU-Training)
 
 ## Tutorial and Documents
 * Tutorials and high-level concepts could be found in [our wiki page](https://github.com/dmlc/minerva/wiki)
 * A step-by-step walk through on MNIST example could be found [here](https://github.com/dmlc/minerva/wiki/Walkthrough:-MNIST)
+* We also built a tool to directly read Caffe's configure file and train. See [document](https://github.com/dmlc/minerva/wiki/Walkthrough:-AlexNet).
 * API documents could be found [here](http://minerva-developers.github.io/minerva-doc/index.html)
 
 ## Performance
