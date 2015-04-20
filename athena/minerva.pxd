@@ -13,14 +13,6 @@ cdef extern from './minerva_utils.h' namespace 'athena':
   Scale ToScale(vector[int]*) except +
   vector[int] OfScale(const Scale&) except +
 
-# cdef extern from './minerva_utils.h'\
-#     namespace 'athena::PoolingAlgorithmWrapper':
-#   struct PoolingAlgorithmW 'W':
-#     pass
-#   PoolingAlgorithmW kMax
-#   PoolingAlgorithmW kAverage
-#   PoolingAlgorithm Extract(PoolingAlgorithmW) except +
-
 cdef extern from '../minerva/minerva.h' namespace 'minerva::MinervaSystem':
   void Initialize(int*, char***) except +
   void Finalize() except +
@@ -83,22 +75,28 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
     @staticmethod
     NArray RandBernoulli(const Scale&, float) except +
 
-  # TODO yutian: RI LE GOU, see if there is a better way
   ctypedef enum PoolingAlgorithm 'minerva::PoolingInfo::Algorithm':
     kPoolingAlgorithmMax 'minerva::PoolingInfo::Algorithm::kMax'
     kPoolingAlgorithmAverage 'minerva::PoolingInfo::Algorithm::kAverage'
   int OfPoolingAlgorithm 'athena::OfEvilEnumClass'(PoolingAlgorithm) except +
   PoolingAlgorithm ToPoolingAlgorithm\
-    'athena::ToEvilEnumClass<minerva::PoolingInfo::Algorithm>' (int) except +
+    'athena::ToEvilEnumClass<minerva::PoolingInfo::Algorithm>'(int) except +
 
-  # ctypedef enum SoftmaxAlgorithm 'minerva::SoftmaxAlgorithm':
-  #   kSoftmaxAlgorithmInstance 'SoftmaxAlgorithm::kInstance'
-  #   kSoftmaxAlgorithmChannel 'SoftmaxAlgorithm::kChannel'
+  ctypedef enum SoftmaxAlgorithm 'minerva::SoftmaxAlgorithm':
+    kSoftmaxAlgorithmInstance 'minerva::SoftmaxAlgorithm::kInstance'
+    kSoftmaxAlgorithmChannel 'minerva::SoftmaxAlgorithm::kChannel'
+  int OfSoftmaxAlgorithm 'athena::OfEvilEnumClass'(SoftmaxAlgorithm) except +
+  SoftmaxAlgorithm ToSoftmaxAlgorithm\
+    'athena::ToEvilEnumClass<minerva::SoftmaxAlgorithm>'(int) except +
 
-  # ctypedef enum ActivationAlgorithm 'minerva::ActivationAlgorithm':
-  #   kActivationAlgorithmSigmoid 'ActivationAlgorithm::kSigmoid'
-  #   kActivationAlgorithmRelu 'ActivationAlgorithm::kRelu'
-  #   kActivationAlgorithmTanh 'ActivationAlgorithm::kTanh'
+  ctypedef enum ActivationAlgorithm 'minerva::ActivationAlgorithm':
+    kActivationAlgorithmSigmoid 'minerva::ActivationAlgorithm::kSigmoid'
+    kActivationAlgorithmRelu 'minerva::ActivationAlgorithm::kRelu'
+    kActivationAlgorithmTanh 'minerva::ActivationAlgorithm::kTanh'
+  int OfActivationAlgorithm\
+    'athena::OfEvilEnumClass'(ActivationAlgorithm) except +
+  ActivationAlgorithm ToActivationAlgorithm\
+    'athena::ToEvilEnumClass<minerva::ActivationAlgorithm>'(int) except +
 
   # bool PoolingAlgorithmEqual 'athena::EnumClassEqual'(PoolingAlgorithm
   # , PoolingAlgorithm)

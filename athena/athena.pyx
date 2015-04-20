@@ -298,31 +298,82 @@ class _PoolingAlgorithms(object):
         return self._average
 
 pooling_algo = _PoolingAlgorithms()
-# cdef class _PoolingAlgorithm(object):
-#     cdef m.PoolingAlgorithm max
-#     cdef m.PoolingAlgorithm average
-#     def __cinit__(self):
-#         self.max = m.kPoolingAlgorithmMax
-#         self.average = m.kPoolingAlgorithmAverage
 
+cdef class SoftmaxAlgorithmWrapper(object):
+    cdef int _d
 
-    # max = m.PoolingAlgorithmMax
-    # average = m.PoolingAlgorithmAverage
+    def __cinit__(self, int d):
+        self._d = d
 
-    # @staticmethod
-    # cdef of_cpp(m.PoolingAlgorithm v):
-    #     if m.PoolingAlgorithmEqual(v, m.PoolingAlgorithmMax):
-    #         return PoolingAlgorithm.max
-    #     else:
-    #         return PoolingAlgorithm.average
+    def is_same(self, SoftmaxAlgorithmWrapper rhs):
+        return self._d == rhs._d
 
-# cdef class SoftmaxAlgorithm(object):
-#     instance = m.SoftmaxAlgorithmInstance
-#     channel = m.SoftmaxAlgorithmChannel
+class _SoftmaxAlgorithms(object):
+    def __init__(self):
+        self._instance = SoftmaxAlgorithmWrapper(
+                m.OfSoftmaxAlgorithm(m.kSoftmaxAlgorithmInstance))
+        self._channel = SoftmaxAlgorithmWrapper(
+                m.OfSoftmaxAlgorithm(m.kSoftmaxAlgorithmChannel))
 
-# cdef class PoolingAlgorithm:
-#     max = m.PoolingAlgorithmMax
-#     average = m.PoolingAlgorithmAverage
+    def find(self, a):
+        if self._instance.is_same(a):
+            return self._instance
+        elif self._channel.is_same(a):
+            return self._channel
+        else:
+            raise TypeError('invalid softmax algorithm')
+
+    @property
+    def instance(self):
+        return self._instance
+
+    @property
+    def channel(self):
+        return self._channel
+
+softmax_algo = _SoftmaxAlgorithms()
+
+cdef class ActivationAlgorithmWrapper(object):
+    cdef int _d
+
+    def __cinit__(self, int d):
+        self._d = d
+
+    def is_same(self, ActivationAlgorithmWrapper rhs):
+        return self._d == rhs._d
+
+class _ActivationAlgorithms(object):
+    def __init__(self):
+        self._sigmoid = ActivationAlgorithmWrapper(
+                m.OfActivationAlgorithm(m.kActivationAlgorithmSigmoid))
+        self._relu = ActivationAlgorithmWrapper(
+                m.OfActivationAlgorithm(m.kActivationAlgorithmRelu))
+        self._tanh = ActivationAlgorithmWrapper(
+                m.OfActivationAlgorithm(m.kActivationAlgorithmTanh))
+
+    def find(self, a):
+        if self._sigmoid.is_same(a):
+            return self._sigmoid
+        elif self._relu.is_same(a):
+            return self._relu
+        elif self._relu.is_same(a):
+            return self._tanh
+        else:
+            raise TypeError('invalid activation algorithm')
+
+    @property
+    def sigmoid(self):
+        return self._sigmoid
+
+    @property
+    def relu(self):
+        return self._relu
+
+    @property
+    def tanh(self):
+        return self._tanh
+
+activation_algo = _ActivationAlgorithms()
 
 cdef class PoolingInfo(object):
     cdef m.PoolingInfo* _d
