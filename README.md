@@ -23,6 +23,7 @@ The result will be a 10x5 array filled by value 2. Minerva supports many `numpy`
 
 ## Features
 * N-D array programming interface and easy integration with `numpy`
+
   ```python
   >>> import numpy as np
   >>> x = np.array([1, 2, 3])
@@ -33,12 +34,13 @@ The result will be a 10x5 array filled by value 2. Minerva supports many `numpy`
   ```
   More is in the [**API cheatsheet**](http://minerva-developers.github.io/minerva-doc/cheatsheet.html)
 * Automatically parallel execution
+
   ```python
   >>> x = owl.zeros([256, 128])
   >>> y = owl.randn([1024, 32], 0.0, 0.01)
   ```
   The above `x` and `y` will be executed **concurrently**. How is this achieved? See [**Feature Highlight: Data-flow and lazy evaluation**](https://github.com/dmlc/minerva/wiki/Feature-Highlight:-Dataflow-engine)
-* Multi-GPU, multi-CPU support: How to utilize multiple GPUs? See See [**Feature Highlight: Multi GPU Training**](https://github.com/dmlc/minerva/wiki/Feature-Highlight:-Multi-GPU-Training)
+* Multi-GPU, multi-CPU support: How to utilize multiple GPUs? See [**Feature Highlight: Multi GPU Training**](https://github.com/dmlc/minerva/wiki/Feature-Highlight:-Multi-GPU-Training)
 
 ## Tutorial and Documents
 * Tutorials and high-level concepts could be found in [our wiki page](https://github.com/dmlc/minerva/wiki)
