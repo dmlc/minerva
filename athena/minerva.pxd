@@ -75,12 +75,33 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
     @staticmethod
     NArray RandBernoulli(const Scale&, float) except +
 
-  # TODO RI LE GOU
+  # TODO yutian: RI LE GOU, see if there is a better way
   ctypedef enum PoolingAlgorithm 'minerva::PoolingInfo::Algorithm':
     kPoolingAlgorithmMax 'PoolingInfo::Algorithm::kMax'
     kPoolingAlgorithmAverage 'PoolingInfo::Algorithm::kAverage'
 
-  bool PoolingAlgorithmEqual 'athena::EnumClassEqual'(PoolingAlgorithm, PoolingAlgorithm)
+  ctypedef enum SoftmaxAlgorithm 'minerva::SoftmaxAlgorithm':
+    kSoftmaxAlgorithmInstance 'SoftmaxAlgorithm::kInstance'
+    kSoftmaxAlgorithmChannel 'SoftmaxAlgorithm::kChannel'
+
+  ctypedef enum ActivationAlgorithm 'minerva::ActivationAlgorithm':
+    kActivationAlgorithmSigmoid 'ActivationAlgorithm::kSigmoid'
+    kActivationAlgorithmRelu 'ActivationAlgorithm::kRelu'
+    kActivationAlgorithmTanh 'ActivationAlgorithm::kTanh'
+
+  bool PoolingAlgorithmEqual 'athena::EnumClassEqual'(PoolingAlgorithm
+  , PoolingAlgorithm)
+  bool SoftmaxAlgorithm 'athena::EnumClassEqual'(SoftmaxAlgorithm
+  , SoftmaxAlgorithm)
+  bool ActivationAlgorithmEqual 'athena::EnumClassEqual'(ActivationAlgorithm
+  , ActivationAlgorithm)
+
+  cppclass ConvInfo:
+    ConvInfo(int, int, int, int)
+    int pad_height
+    int pad_width
+    int stride_vertical
+    int stride_horizontal
 
   cppclass PoolingInfo:
     PoolingInfo(PoolingAlgorithm, int, int, int, int, int, int)
