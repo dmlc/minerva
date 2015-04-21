@@ -225,7 +225,122 @@ cdef class NArray(object):
                 ,   deref(top._d)
                 ,   deref(bottom._d)))
 
-    # TODO yutian: conv methods
+    @staticmethod
+    def conv_forward(NArray src, NArray filter, NArray bias, ConvInfo info):
+        return _wrap_cpp_narray(
+                m.ConvForward(
+                    deref(src._d)
+                ,   deref(filter._d)
+                ,   deref(bias._d)
+                ,   deref(info._d)));
+
+    @staticmethod
+    def conv_backward_data(
+            NArray diff, NArray bottom, NArray filter, ConvInfo info):
+        return _wrap_cpp_narray(
+                m.ConvBackwardData(
+                    deref(diff._d)
+                ,   deref(bottom._d)
+                ,   deref(filter._d)
+                ,   deref(info._d)));
+
+    @staticmethod
+    def conv_backward_filter(
+            NArray diff, NArray bottom, NArray filter, ConvInfo info):
+        return _wrap_cpp_narray(
+                m.ConvBackwardFilter(
+                    deref(diff._d)
+                ,   deref(bottom._d)
+                ,   deref(filter._d)
+                ,   deref(info._d)));
+
+    @staticmethod
+    def conv_backward_bias(NArray diff):
+        return _wrap_cpp_narray(m.ConvBackwardBias(deref(diff._d)));
+
+    @staticmethod
+    def softmax_forward(NArray src, SoftmaxAlgorithmWrapper algo):
+        return _wrap_cpp_narray(
+                m.SoftmaxForward(
+                    deref(src._d)
+                ,   m.ToSoftmaxAlgorithm(algo._d)));
+
+    @staticmethod
+    def softmax_backward(NArray diff, NArray top, SoftmaxAlgorithmWrapper algo):
+        return _wrap_cpp_narray(
+                m.SoftmaxBackward(
+                    deref(diff._d)
+                ,   deref(top._d)
+                ,   m.ToSoftmaxAlgorithm(algo._d)));
+
+    @staticmethod
+    def activation_forward(NArray src, ActivationAlgorithmWrapper algo):
+        return _wrap_cpp_narray(
+                m.ActivationForward(
+                    deref(src._d)
+                ,   m.ToActivationAlgorithm(algo._d)));
+
+    @staticmethod
+    def activation_backward(
+            NArray diff
+        ,   NArray top
+        ,   NArray bottom
+        ,   ActivationAlgorithmWrapper algo):
+        return _wrap_cpp_narray(
+                m.ActivationBackward(
+                    deref(diff._d)
+                ,   deref(top._d)
+                ,   deref(bottom._d)
+                ,   m.ToActivationAlgorithm(algo._d)));
+
+    @staticmethod
+    def pooling_forward(NArray src, PoolingInfo algo):
+        return _wrap_cpp_narray(
+                m.PoolingForward(
+                    deref(src._d)
+                ,   deref(algo._d)));
+
+    @staticmethod
+    def pooling_backward(
+            NArray diff
+        ,   NArray top
+        ,   NArray bottom
+        ,   PoolingInfo algo):
+        return _wrap_cpp_narray(
+                m.PoolingBackward(
+                    deref(diff._d)
+                ,   deref(top._d)
+                ,   deref(bottom._d)
+                ,   deref(algo._d)));
+
+    @staticmethod
+    def lrn_forward(NArray src, NArray scale, int local_size, float a, float b):
+        return _wrap_cpp_narray(
+                m.LRNForward(
+                    deref(src._d)
+                ,   deref(scale._d)
+                ,   local_size
+                ,   a
+                ,   b));
+
+    @staticmethod
+    def lrn_backward(
+            NArray bottom_data
+        ,   NArray top_data
+        ,   NArray scale
+        ,   NArray top_diff
+        ,   int local_size
+        ,   float a
+        ,   float b):
+        return _wrap_cpp_narray(
+                m.LRNBackward(
+                    deref(bottom_data._d)
+                ,   deref(top_data._d)
+                ,   deref(scale._d)
+                ,   deref(top_diff._d)
+                ,   local_size
+                ,   a
+                ,   b));
 
     def sum(self, rhs):
         cdef int i

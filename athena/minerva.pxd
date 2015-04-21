@@ -2,8 +2,6 @@ from libc.stdint cimport *
 from libcpp cimport bool
 from libcpp.vector cimport vector
 
-#TODO yutian: numpy
-
 cdef extern from './minerva_utils.h' namespace 'athena':
   uint64_t CreateCpuDevice() except +
   uint64_t CreateGpuDevice(int) except +
@@ -29,6 +27,22 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva::Elewise':
   NArray ReluBackward(const NArray&, const NArray&, const NArray&) except +
   NArray TanhForward(const NArray&) except +
   NArray TanhBackward(const NArray&, const NArray&, const NArray&) except +
+
+cdef extern from '../minerva/minerva.h' namespace 'minerva::Convolution':
+  NArray ConvForward(NArray, NArray, NArray, ConvInfo) except +
+  NArray ConvBackwardData(NArray, NArray, NArray, ConvInfo) except +
+  NArray ConvBackwardFilter(NArray, NArray, NArray, ConvInfo) except +
+  NArray ConvBackwardBias(NArray) except +
+  NArray SoftmaxForward(NArray, SoftmaxAlgorithm) except +
+  NArray SoftmaxBackward(NArray, NArray, SoftmaxAlgorithm) except +
+  NArray ActivationForward(NArray, ActivationAlgorithm) except +
+  NArray ActivationBackward(
+      NArray, NArray, NArray, ActivationAlgorithm) except +
+  NArray PoolingForward(NArray, PoolingInfo) except +
+  NArray PoolingBackward(NArray, NArray, NArray, PoolingInfo) except +
+  NArray LRNForward(NArray, NArray, int, float, float) except +
+  NArray LRNBackward(
+      NArray, NArray, NArray, NArray, int, float, float) except +
 
 cdef extern from '../minerva/minerva.h' namespace 'minerva':
   NArray NArrayAddNArray 'operator+'(const NArray&, const NArray&) except +

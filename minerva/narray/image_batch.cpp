@@ -10,16 +10,11 @@ ImageBatch::ImageBatch(const ImageBatch& b) : NArray(b) {
 ImageBatch::ImageBatch(ImageBatch&& b) : NArray(std::move(b)) {
 }
 
-ImageBatch::ImageBatch(const NArray& n) : NArray(n) {
+ImageBatch::ImageBatch(NArray n) : NArray(std::move(n)) {
   CHECK_EQ(Size().NumDims(), 4);
 }
 
-ImageBatch::ImageBatch(NArray&& n) : NArray(std::move(n)) {
-  CHECK_EQ(Size().NumDims(), 4);
-}
-
-ImageBatch::~ImageBatch() {
-}
+ImageBatch::~ImageBatch() = default;
 
 ImageBatch& ImageBatch::operator=(const ImageBatch& b) {
   NArray::operator=(b);
@@ -31,13 +26,7 @@ ImageBatch& ImageBatch::operator=(ImageBatch&& b) {
   return *this;
 }
 
-ImageBatch& ImageBatch::operator=(const NArray& n) {
-  CHECK_EQ(n.Size().NumDims(), 4);
-  NArray::operator=(n);
-  return *this;
-}
-
-ImageBatch& ImageBatch::operator=(NArray&& n) {
+ImageBatch& ImageBatch::operator=(NArray n) {
   CHECK_EQ(n.Size().NumDims(), 4);
   NArray::operator=(std::move(n));
   return *this;
@@ -65,16 +54,11 @@ Filter::Filter(const Filter& f) : NArray(f) {
 Filter::Filter(Filter&& f) : NArray(std::move(f)) {
 }
 
-Filter::Filter(const NArray& n) : NArray(n) {
+Filter::Filter(NArray n) : NArray(std::move(n)) {
   CHECK_EQ(Size().NumDims(), 4);
 }
 
-Filter::Filter(NArray&& n) : NArray(std::move(n)) {
-  CHECK_EQ(Size().NumDims(), 4);
-}
-
-Filter::~Filter() {
-}
+Filter::~Filter() = default;
 
 Filter& Filter::operator=(const Filter& f) {
   NArray::operator=(f);
@@ -86,13 +70,7 @@ Filter& Filter::operator=(Filter&& f) {
   return *this;
 }
 
-Filter& Filter::operator=(const NArray& n) {
-  CHECK_EQ(n.Size().NumDims(), 4);
-  NArray::operator=(n);
-  return *this;
-}
-
-Filter& Filter::operator=(NArray&& n) {
+Filter& Filter::operator=(NArray n) {
   CHECK_EQ(n.Size().NumDims(), 4);
   NArray::operator=(std::move(n));
   return *this;
