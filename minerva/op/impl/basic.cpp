@@ -1,5 +1,6 @@
 #include "basic.h"
 #include "op/closure.h"
+#include <cblas.h>
 #include <cmath>
 #include <glog/logging.h>
 #include <chrono>
@@ -136,6 +137,7 @@ void MatMult(const DataList& inputs, const DataList& outputs, MatMultClosure& cl
   int n = outputs[0].size_[1];
   int o = inputs[0].size_[1];
   // ATTENTION: the data is column major !!
+#if 0
   for (int i = 0; i < m; ++i) {
     for (int j = 0; j < n; ++j) {
       res_data[i + j * m] = 0;
@@ -144,6 +146,9 @@ void MatMult(const DataList& inputs, const DataList& outputs, MatMultClosure& cl
       }
     }
   }
+#else
+  cblas_sgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, m, n, o, 1.0, left_data, m, right_data, o, 1.0, res_data, m);
+#endif
 }
 
 void Transpose(const DataList& inputs, const DataList& outputs, TransposeClosure& closure) {

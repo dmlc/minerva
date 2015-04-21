@@ -16,6 +16,7 @@ else (CUDA_FOUND)
 endif (CUDA_FOUND)
 
 target_link_libraries(minerva ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(minerva openblas)
 
 if (HAS_PS)
   target_link_libraries(minerva minervaps)
