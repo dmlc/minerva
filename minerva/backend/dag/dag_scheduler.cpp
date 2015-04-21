@@ -26,7 +26,7 @@ DagScheduler::~DagScheduler() {
 
 vector<BackendChunk*> DagScheduler::Create(const vector<BackendChunk*>& params,
     const std::vector<Scale>& result_sizes, shared_ptr<ComputeFn> fn) {
-  auto current_device_id = MinervaSystem::Instance().current_device_id_;
+  auto current_device_id = MinervaSystem::Instance().current_device_id();
   auto rst_data_nodes = Map<PhysicalDataNode*>(result_sizes, [&](const Scale& size) {
     return dag_->NewDataNode(PhysicalData(size, current_device_id, MinervaSystem::Instance().GenerateDataId()));
   });

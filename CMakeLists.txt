@@ -45,7 +45,8 @@ set(COMPILER_FLAGS "-Wall -m64 -fPIC -march=native")
 
 set(GENERAL_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0")
 set(CMAKE_CXX_FLAGS_DEBUG "${GENERAL_FLAGS_DEBUG} -std=c++11")
-set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11 -flto")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${GENERAL_FLAGS_RELEASE} -std=c++11 -flto")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DNDEBUG")
 
 set(Minerva_DEP_PATH "${Minerva_SOURCE_DIR}/deps")
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${Minerva_DEP_PATH})

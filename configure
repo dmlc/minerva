@@ -25,6 +25,8 @@ CXXFLAGS="$CXXFLAGS \
   -DEXTERN_INCLUDE_PATH=$EXTERN_INCLUDE_PATH \
   -DPython_ADDITIONAL_VERSIONS=$PYTHON_VERSION"
 
+RELEASE_TYPE=Release
+
 while [[ $# -gt 0 ]]; do
   case $1 in
     --help | -h)
@@ -37,6 +39,8 @@ while [[ $# -gt 0 ]]; do
       CXXFLAGS="$CXXFLAGS -DBUILD_CXX_APPS=ON";;
     --build-tests)
       CXXFLAGS="$CXXFLAGS -DBUILD_TESTS=ON";;
+    --enable-debug-info)
+      RELEASE_TYPE=RelWithDebInfo;;
     --enable-ps)
       CXXFLAGS="$CXXFLAGS -DENABLE_PS=ON";;
     --disable-cuda)
@@ -68,6 +72,7 @@ Configurations:
     --build-debug           Enable building debug version
     --build-apps            Enable building cxx applications
     --build-tests           Enable building unit tests
+    --enable-debug-info     Enable building with debug info even for release
     --enable-ps             Enable building with PS
     --disable-cuda          Disable building with CUDA
     --disable-owl           Disable building with OWL (python binding)
@@ -85,7 +90,7 @@ if [ ! -d $RELEASE_DIR ]; then
     mkdir $RELEASE_DIR
 fi
 cd $RELEASE_DIR
-CC=$C_COMPILER CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=Release $CXXFLAGS ..
+CC=$C_COMPILER CXX=$CXX_COMPILER cmake -DCMAKE_BUILD_TYPE=${RELEASE_TYPE} $CXXFLAGS ..
 cd ..
 
 if test "$BUILD_DEBUG" = ON; then

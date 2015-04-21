@@ -3,7 +3,7 @@ import sys
 import time
 import numpy as np
 import owl
-import owl.net as net
+import net
 from net_helper import CaffeNetBuilder
 
 def get_weights_id(owl_net):

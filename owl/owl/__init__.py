@@ -4,7 +4,7 @@
 The module encapsulates or directly maps some functions of Minerva's API to python.
 Only system APIs are defined here. For convolution APIs, please refer to conv.py.
 For element-wise operations, please refer to elewise.py. For other APIs such as member
-functions of ``owl.NArray``, please refer to the API document.
+functions of :py:class:`owl.NArray`, please refer to the API document.
 
 Note that Minerva is an dataflow system with lazy evaluation to construct dataflow graph
 to extract parallelism within codes. All the operations like ``+-*/`` of ``owl.NArray`` are
@@ -52,6 +52,10 @@ def wait_for_all():
 def create_cpu_device():
     """ Create device for running on CPU cores
 
+    .. note::
+        At least one of :py:func:`create_cpu_device` or :py:func:`create_gpu_device` should be called
+        before using any ``owl`` APIs.
+
     :return: A unique id for cpu device
     :rtype: int
     """
@@ -59,6 +63,10 @@ def create_cpu_device():
 
 def create_gpu_device(which):
     """ Create device for running on GPU card
+
+    .. note::
+        At least one of :py:func:`create_cpu_device` or :py:func:`create_gpu_device` should be called
+        before using any ``owl`` APIs.
 
     :param int which: which GPU card the code would be run on
     :return: A unique id for the device on that GPU card
@@ -68,9 +76,9 @@ def create_gpu_device(which):
 
 def get_gpu_device_count():
     """ Get the number of compute-capable GPU devices
-
+    
     :return: Number of compute-capable GPU devices
-    "rtype: int
+    :rtype: int
     """
     return _owl.get_gpu_device_count()
 
@@ -141,7 +149,9 @@ def from_numpy(nparr):
         >>> print b.shape
         [50, 300, 200]
 
-    .. seealso:: owl.NArray.to_numpy
+    .. seealso::
+        
+        :py:func:`owl.NArray.to_numpy`
 
     :param numpy.ndarray nparr: numpy ndarray
     :return: Minerva's ndarray

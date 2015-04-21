@@ -27,7 +27,7 @@ SimpleBackend::SimpleBackend(DeviceManager& dm): device_manager_(dm) {
 
 std::vector<BackendChunk*> SimpleBackend::Create(const std::vector<BackendChunk*>& input,
     const std::vector<Scale>& result_sizes, std::shared_ptr<ComputeFn> fn) {
-  auto current_device_id = MinervaSystem::Instance().current_device_id_;
+  auto current_device_id = MinervaSystem::Instance().current_device_id();
   std::vector<BackendChunk*> result_chunks;
   Task* task = new Task();
   task->light = true;

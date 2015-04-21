@@ -6,7 +6,7 @@ using namespace minerva;
 
 TEST(ArithmeticConst, CpuAdd) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale size{2, 3, 4, 5, 6};
 
   auto a = NArray::Randn(size, 0, 5);
@@ -21,11 +21,11 @@ TEST(ArithmeticConst, CpuAdd) {
 #ifdef HAS_CUDA
 TEST(ArithmeticConst, GpuAdd) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale size{2, 3, 4, 5, 6};
 
   auto a = NArray::Randn(size, 0, 5);
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   auto b = 32.9 + a;
   auto a_ptr = a.Get();
   auto b_ptr = b.Get();
@@ -37,7 +37,7 @@ TEST(ArithmeticConst, GpuAdd) {
 
 TEST(ArithmeticConst, CpuSub) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale size{2, 3, 4, 5, 6};
 
   auto a = NArray::Randn(size, 0, 5);
@@ -52,11 +52,11 @@ TEST(ArithmeticConst, CpuSub) {
 #ifdef HAS_CUDA
 TEST(ArithmeticConst, GpuSub) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale size{2, 3, 4, 5, 6};
 
   auto a = NArray::Randn(size, 0, 5);
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   auto b = 3.99 - a;
   auto a_ptr = a.Get();
   auto b_ptr = b.Get();
@@ -68,7 +68,7 @@ TEST(ArithmeticConst, GpuSub) {
 
 TEST(ArithmeticConst, CpuMult) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale size{2, 3, 4, 5, 6};
 
   auto a = NArray::Randn(size, 0, 5);
@@ -83,11 +83,11 @@ TEST(ArithmeticConst, CpuMult) {
 #ifdef HAS_CUDA
 TEST(ArithmeticConst, GpuMult) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale size{2, 3, 4, 5, 6};
 
   auto a = NArray::Randn(size, 0, 5);
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   auto b = 3.199 * a;
   auto a_ptr = a.Get();
   auto b_ptr = b.Get();
@@ -99,7 +99,7 @@ TEST(ArithmeticConst, GpuMult) {
 
 TEST(ArithmeticConst, CpuDiv) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale size{2, 3, 4, 5, 6};
 
   auto a = NArray::Randn(size, 0, 5);
@@ -114,11 +114,11 @@ TEST(ArithmeticConst, CpuDiv) {
 #ifdef HAS_CUDA
 TEST(ArithmeticConst, GpuDiv) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale size{2, 3, 4, 5, 6};
 
   auto a = NArray::Randn(size, 0, 5);
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   auto b = 3.331 / a;
   auto a_ptr = a.Get();
   auto b_ptr = b.Get();

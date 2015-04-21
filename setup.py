@@ -38,7 +38,7 @@ setup(name='owl',
     license='Apache 2.0',
     url='https://github.com/minerva-developers/minerva',
     package_dir={'':'owl'},
-    packages=['owl', 'owl.caffe'],
+    packages=['owl', 'owl.net', 'owl.net.caffe'],
     package_data=package_data,
     zip_safe=False
     )

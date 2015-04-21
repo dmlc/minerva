@@ -57,23 +57,23 @@ uint64_t CreateCpuDevice() {
 }
 
 void WaitForAll() {
-  m::MinervaSystem::Instance().backend().WaitForAll();
+  m::MinervaSystem::Instance().WaitForAll();
 }
 
 #ifdef HAS_CUDA
 
 uint64_t CreateGpuDevice(int id) {
-  return m::MinervaSystem::Instance().device_manager().CreateGpuDevice(id);
+  return m::MinervaSystem::Instance().CreateGpuDevice(id);
 }
 
 int GetGpuDeviceCount() {
-  return m::MinervaSystem::Instance().device_manager().GetGpuDeviceCount();
+  return m::MinervaSystem::Instance().CreateCpuDevice();
 }
 
 #endif
 
 void SetDevice(uint64_t id) {
-  m::MinervaSystem::Instance().current_device_id_ = id;
+  m::MinervaSystem::Instance().SetDevice(id);
 }
 
 m::Scale ToScale(const bp::list& l) {

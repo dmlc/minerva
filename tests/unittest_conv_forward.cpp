@@ -20,12 +20,12 @@ TEST(ConvForward, GpuWithoutPadding) {
   memcpy(input_ptr.get(), input_raw, input_size.Prod() * sizeof(float));
   memcpy(weight_ptr.get(), weight_raw, weight_size.Prod() * sizeof(float));
 
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
   Filter weight = NArray::MakeNArray(weight_size, weight_ptr);
   NArray bias = NArray::Zeros({5});
   ConvInfo conv_info(0, 0, 1, 1);
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   ImageBatch output = Convolution::ConvForward(input, weight, bias, conv_info);
   auto output_ptr = output.Get();
   for (int i = 0; i < correct_size.Prod(); ++i) {
@@ -54,12 +54,12 @@ TEST(ConvForward, GpuWithPadding) {
   memcpy(weight_ptr.get(), weight_raw, weight_size.Prod() * sizeof(float));
   memcpy(bias_ptr.get(), bias_raw, bias_size.Prod() * sizeof(float));
 
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
   Filter weight = NArray::MakeNArray(weight_size, weight_ptr);
   NArray bias = NArray::MakeNArray(bias_size, bias_ptr);
   ConvInfo conv_info(3, 2, 3, 2);
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   ImageBatch output = Convolution::ConvForward(input, weight, bias, conv_info);
   auto output_ptr = output.Get();
   for (int i = 0; i < correct_size.Prod(); ++i) {
@@ -84,7 +84,7 @@ TEST(ConvForward, DISABLED_CpuWithoutPadding) {
   memcpy(input_ptr.get(), input_raw, input_size.Prod() * sizeof(float));
   memcpy(weight_ptr.get(), weight_raw, weight_size.Prod() * sizeof(float));
 
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
   Filter weight = NArray::MakeNArray(weight_size, weight_ptr);
   NArray bias = NArray::Zeros({5});
@@ -117,7 +117,7 @@ TEST(ConvForward, DISABLED_CpuWithPadding) {
   memcpy(weight_ptr.get(), weight_raw, weight_size.Prod() * sizeof(float));
   memcpy(bias_ptr.get(), bias_raw, bias_size.Prod() * sizeof(float));
 
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
   Filter weight = NArray::MakeNArray(weight_size, weight_ptr);
   NArray bias = NArray::MakeNArray(bias_size, bias_ptr);

@@ -130,7 +130,9 @@ owl module
         >>> print b.shape
         [200, 300, 50]
 
-    .. seealso:: owl.from_numpy
+    .. seealso::
+
+        :py:func:`owl.from_numpy`
 
     :return: numpy's ndarray with the same contents
     :rtype: numpy::ndarray
@@ -152,16 +154,3 @@ owl.elewise module
     :members:
     :undoc-members:
     :show-inheritance:
-
-owl.net module
---------------
-
-.. automodule:: owl.net
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. Subpackage
- -----------
- .. toctree::
- owl.caffe: !!comment out
