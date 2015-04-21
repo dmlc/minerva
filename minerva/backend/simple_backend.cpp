@@ -20,7 +20,8 @@ class SimpleChunk : public BackendChunk {
   std::shared_ptr<PhysicalData> data_;
 };
 
-SimpleBackend::SimpleBackend(DeviceManager& dm): device_manager_(dm), finished_flag_(false) {
+SimpleBackend::SimpleBackend(DeviceManager& dm): device_manager_(dm) {
+  finished_flag_.store(false);
   device_manager_.RegisterListener(this);
 }
 
@@ -29,6 +30,7 @@ std::vector<BackendChunk*> SimpleBackend::Create(const std::vector<BackendChunk*
   auto current_device_id = MinervaSystem::Instance().current_device_id();
   std::vector<BackendChunk*> result_chunks;
   Task* task = new Task();
+  task->light = true;
   for (auto i : input) {
     auto c = CHECK_NOTNULL(dynamic_cast<SimpleChunk*>(i));
     task->inputs.emplace_back(c->data(), 0);
@@ -45,12 +47,12 @@ std::vector<BackendChunk*> SimpleBackend::Create(const std::vector<BackendChunk*
   task->id = 0;
   DLOG(INFO) << "executing task name=" << fn->Name() << " to device #" << current_device_id;
   // wait for finish
-  unique_lock<mutex> ul(finish_mutex_);
+//  unique_lock<mutex> ul(finish_mutex_);
+//  finished_flag_.store(false);;
   device_manager_.GetDevice(current_device_id)->PushTask(task);
-  finished_flag_ = false;
-  while(! finished_flag_) {
-    finish_cond_.wait(ul);
-  }
+//  while(! finished_flag_.load()) {
+//    finish_cond_.wait(ul);
+//  }
   return result_chunks;
 }
 
@@ -73,9 +75,10 @@ std::shared_ptr<float> SimpleBackend::GetValue(BackendChunk* chunk) {
 }
 
 void SimpleBackend::OnOperationComplete(Task* task) {
-  lock_guard<mutex> ul(finish_mutex_);
-  finished_flag_ = true;
-  finish_cond_.notify_all();
+  //lock_guard<mutex> ul(finish_mutex_);
+  //std::cout << "Callback flag=" << finished_flag_ << std::endl;
+//  finished_flag_.store(true);
+  //finish_cond_.notify_all();
   delete task;
 }
 

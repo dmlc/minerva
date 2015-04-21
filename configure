@@ -47,6 +47,8 @@ while [[ $# -gt 0 ]]; do
       CXXFLAGS="$CXXFLAGS -DENABLE_CUDA=OFF";;
     --disable-owl)
       CXXFLAGS="$CXXFLAGS -DBUILD_OWL=OFF";;
+    --with-blas)
+      CXXFLAGS="$CXXFLAGS -DENABLE_BLAS=ON";;
     --prefix=*)
       CXXFLAGS="$CXXFLAGS -DCMAKE_INSTALL_PREFIX=`expr "x$1" : "x--prefix=\(.*\)"`";;
     -D)
@@ -74,6 +76,7 @@ Configurations:
     --enable-ps             Enable building with PS
     --disable-cuda          Disable building with CUDA
     --disable-owl           Disable building with OWL (python binding)
+    --with-blas		    Use BLAS library for cpu operations
     --prefix                Specify install path
     -Dvar=value | -D value  Specify definitions to be passed on to CMake
 EOF
