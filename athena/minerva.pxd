@@ -57,6 +57,8 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
   NArray NArraySubNum 'operator-'(const NArray&, float) except +
   NArray NArrayMulNum 'operator*'(const NArray&, float) except +
   NArray NArrayDivNum 'operator/'(const NArray&, float) except +
+  NArray Concat(const vector[NArray]&, int) except +
+  NArray Slice(const NArray&, int, int, int) except +
 
   cppclass Scale:
     pass

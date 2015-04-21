@@ -406,6 +406,20 @@ cdef class NArray(object):
         return _wrap_cpp_narray(m.NArray.RandBernoulli(m.ToScale(&v), p))
 
     @staticmethod
+    def concat(arrays, int dim):
+        cdef vector[m.NArray] v
+        cdef NArray n
+        for i in arrays:
+            n = i
+            v.push_back(deref(n._d))
+        return _wrap_cpp_narray(m.Concat(v, dim))
+
+    @staticmethod
+    def slice(NArray n, int slice_dim, int st_off, int slice_count):
+        return _wrap_cpp_narray(
+                m.Slice(deref(n._d), slice_dim, st_off, slice_count))
+
+    @staticmethod
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def from_numpy(np.ndarray n):
