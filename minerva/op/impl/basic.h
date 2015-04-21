@@ -33,5 +33,6 @@ void TanhBackward(const DataList&, const DataList&, TanhBackwardClosure&);
 void ActivationForward(const DataList&, const DataList&, ActivationForwardClosure&);
 void ActivationBackward(const DataList&, const DataList&, ActivationBackwardClosure&);
 
+void SoftmaxForward(const DataList&, const DataList&, SoftmaxForwardClosure&);
 }  // end of namespace basic
 }  // end of namespace minerva

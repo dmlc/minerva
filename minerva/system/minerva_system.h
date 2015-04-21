@@ -25,6 +25,10 @@ class MinervaSystem :
   Backend& backend() {
     return *backend_;
   }
+  void wait_for_all()
+  {
+    backend_->WaitForAll();
+  }
   ExecutionProfiler& profiler() {
     return *profiler_;
   }
