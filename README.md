@@ -80,6 +80,11 @@ We also provide some end-to-end training codes in `owl` package, which could loa
 
 ![Error curve](https://cloud.githubusercontent.com/assets/4057701/6857873/454c44b2-d3e0-11e4-9010-9e62c6c94027.jpg)
 
+## Next Plan
+* Get rid of boost library dependency by using Cython.
+* Large scale [LSTM](http://en.wikipedia.org/wiki/Long_short_term_memory) example using Minerva.
+* Easy support for user-defined new operations.
+
 ## License and support
 
 Minerva is provided in the Apache V2 open source license.
