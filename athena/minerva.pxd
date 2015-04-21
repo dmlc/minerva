@@ -13,6 +13,7 @@ cdef extern from './minerva_utils.h' namespace 'athena':
   Scale ToScale(vector[int]*) except +
   vector[int] OfScale(const Scale&) except +
   NArray FromNumpy(const float*, const Scale&) except +
+  void ToNumpy(float*, const NArray&) except +
 
 cdef extern from '../minerva/minerva.h' namespace 'minerva::MinervaSystem':
   void Initialize(int*, char***) except +

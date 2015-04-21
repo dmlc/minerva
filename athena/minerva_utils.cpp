@@ -52,5 +52,11 @@ minerva::NArray FromNumpy(float const* data, minerva::Scale const& scale) {
   return minerva::NArray::MakeNArray(scale, ptr);
 }
 
+void ToNumpy(float* dst, minerva::NArray const& n) {
+  auto size = n.Size().Prod();
+  auto ptr = n.Get();
+  memcpy(dst, ptr.get(), size * sizeof(float));
+}
+
 }  // namespace athena
 

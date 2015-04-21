@@ -25,6 +25,7 @@ T ToEvilEnumClass(int a) {
 }
 
 minerva::NArray FromNumpy(float const*, minerva::Scale const&);
+void ToNumpy(float*, minerva::NArray const&);
 
 }  // namespace athena
 

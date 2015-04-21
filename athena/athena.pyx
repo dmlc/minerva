@@ -57,20 +57,24 @@ cdef class NArray(object):
     def __dealloc__(self):
         del self._d
 
-    def __add__(NArray self, rhs):
+    def __add__(self, rhs):
+        cdef NArray l
         cdef NArray r
         cdef float f
-        if isinstance(rhs, NArray):
-            r = rhs
-            return _wrap_cpp_narray(
-                m.NArrayAddNArray(deref(self._d), deref(r._d)))
+        if isinstance(self, NArray):
+            l = self
+            if isinstance(rhs, NArray):
+                r = rhs
+                return _wrap_cpp_narray(
+                    m.NArrayAddNArray(deref(l._d), deref(r._d)))
+            else:
+                f = rhs
+                return _wrap_cpp_narray(
+                    (m.NArrayAddNum(deref(l._d), f)))
         else:
-            f = rhs
-            return _wrap_cpp_narray(
-                (m.NArrayAddNum(deref(self._d), f)))
-
-    def __radd__(self, float lhs):
-        return _wrap_cpp_narray(m.NumAddNArray(lhs, deref(self._d)))
+            f = self
+            r = rhs
+            return _wrap_cpp_narray(m.NumAddNArray(f, deref(r._d)))
 
     def __iadd__(self, rhs):
         cdef NArray r
@@ -81,21 +85,26 @@ cdef class NArray(object):
         else:
             f = rhs
             self._d.AddAssignNum(f)
+        return self
 
-    def __sub__(NArray self, rhs):
+    def __sub__(self, rhs):
+        cdef NArray l
         cdef NArray r
         cdef float f
-        if isinstance(rhs, NArray):
-            r = rhs
-            return _wrap_cpp_narray(
-                m.NArraySubNArray(deref(self._d), deref(r._d)))
+        if isinstance(self, NArray):
+            l = self
+            if isinstance(rhs, NArray):
+                r = rhs
+                return _wrap_cpp_narray(
+                    m.NArraySubNArray(deref(l._d), deref(r._d)))
+            else:
+                f = rhs
+                return _wrap_cpp_narray(
+                    m.NArraySubNum(deref(l._d), f))
         else:
-            f = rhs
-            return _wrap_cpp_narray(
-                m.NArraySubNum(deref(self._d), f))
-
-    def __rsub__(self, float lhs):
-        return _wrap_cpp_narray(m.NumSubNArray(lhs, deref(self._d)))
+            f = self
+            r = rhs
+            return _wrap_cpp_narray(m.NumSubNArray(f, deref(r._d)))
 
     def __isub__(self, rhs):
         cdef NArray r
@@ -106,21 +115,26 @@ cdef class NArray(object):
         else:
             f = rhs
             self._d.SubAssignNum(f)
+        return self
 
-    def __mul__(NArray self, rhs):
+    def __mul__(self, rhs):
+        cdef NArray l
         cdef NArray r
         cdef float f
-        if isinstance(rhs, NArray):
-            r = rhs
-            return _wrap_cpp_narray(
-                m.NArrayMulNArray(deref(self._d), deref(r._d)))
+        if isinstance(self, NArray):
+            l = self
+            if isinstance(rhs, NArray):
+                r = rhs
+                return _wrap_cpp_narray(
+                    m.NArrayMulNArray(deref(l._d), deref(r._d)))
+            else:
+                f = rhs
+                return _wrap_cpp_narray(
+                    m.NArrayMulNum(deref(l._d), f))
         else:
-            f = rhs
-            return _wrap_cpp_narray(
-                m.NArrayMulNum(deref(self._d), f))
-
-    def __rmul__(self, float lhs):
-        return _wrap_cpp_narray(m.NumMulNArray(lhs, deref(self._d)))
+            f = self
+            r = rhs
+            return _wrap_cpp_narray(m.NumMulNArray(f, deref(r._d)))
 
     def __imul__(self, rhs):
         cdef NArray r
@@ -131,21 +145,26 @@ cdef class NArray(object):
         else:
             f = rhs
             self._d.MulAssignNum(f)
+        return self
 
-    def __div__(NArray self, rhs):
+    def __div__(self, rhs):
+        cdef NArray l
         cdef NArray r
         cdef float f
-        if isinstance(rhs, NArray):
-            r = rhs
-            return _wrap_cpp_narray(
-                m.NArrayDivNArray(deref(self._d), deref(r._d)))
+        if isinstance(self, NArray):
+            l = self
+            if isinstance(rhs, NArray):
+                r = rhs
+                return _wrap_cpp_narray(
+                    m.NArrayDivNArray(deref(l._d), deref(r._d)))
+            else:
+                f = rhs
+                return _wrap_cpp_narray(
+                    m.NArrayDivNum(deref(l._d), f))
         else:
-            f = rhs
-            return _wrap_cpp_narray(
-                m.NArrayDivNum(deref(self._d), f))
-
-    def __rdiv__(self, float lhs):
-        return _wrap_cpp_narray(m.NumDivNArray(lhs, deref(self._d)))
+            f = self
+            r = rhs
+            return _wrap_cpp_narray(m.NumDivNArray(f, deref(r._d)))
 
     def __idiv__(self, rhs):
         cdef NArray r
@@ -156,6 +175,7 @@ cdef class NArray(object):
         else:
             f = rhs
             self._d.DivAssignNum(f)
+        return self
 
     @staticmethod
     def mult(NArray lhs, NArray rhs):
@@ -284,6 +304,15 @@ cdef class NArray(object):
     def _from_numpy(np.ndarray[np.float32_t, ndim=1, mode='c'] n, list s):
         cdef vector[int] shape = _list_to_vector(reversed(s))
         return _wrap_cpp_narray(m.FromNumpy(&n[0], m.ToScale(&shape)))
+
+    def to_numpy(self):
+        cdef int size = 1
+        for i in self.shape:
+            size *= i
+        cdef np.ndarray[np.float32_t, ndim=1, mode='c'] dest
+        dest = np.empty(size, dtype=np.float32, order='c')
+        m.ToNumpy(&dest[0], deref(self._d))
+        return dest.reshape(tuple(reversed(self.shape)))
 
 cdef class PoolingAlgorithmWrapper(object):
     cdef int _d
