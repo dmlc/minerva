@@ -6,7 +6,7 @@ using namespace minerva;
 
 TEST(sgemm, CpuSgemm) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale sizeA{3, 2};
   Scale sizeB{2, 5};
   auto a = NArray::Randn(sizeA, 0, 5);
@@ -30,13 +30,13 @@ TEST(sgemm, CpuSgemm) {
 #ifdef HAS_CUDA
 TEST(sgemm, CpuGpuCrossCheck) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale sizeA{3, 2};
   Scale sizeB{2, 3};
   auto a = NArray::Randn(sizeA, 0, 5);
   auto b = NArray::Randn(sizeB, 0, 5);
   auto cc = a * b;
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   auto cg = a * b;
 
   auto cc_ptr = cc.Get();
