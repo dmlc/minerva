@@ -40,7 +40,9 @@ class MinervaSystem :
 
   // device
   uint64_t CreateCpuDevice();
+#ifdef HAS_CUDA
   uint64_t CreateGpuDevice(int );
+#endif
   void SetDevice(uint64_t );
   uint64_t current_device_id() const { return current_device_id_; }
   // system
