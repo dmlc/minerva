@@ -6,11 +6,11 @@ using namespace std;
 #ifdef HAS_CUDA
 TEST(LeftConst, GpuLeftConst) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   int m = 8;
   int k = 100;
   NArray a = NArray::Randn({m, k}, 0.0, 1.0);
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   NArray b = 1 - a;
   NArray b1 = 1 - b;
   NArray b2 = 2 - b1;
@@ -29,7 +29,7 @@ TEST(LeftConst, GpuLeftConst) {
 
 TEST(LeftConst, CpuLeftConst) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   int m = 8;
   int k = 100;
   NArray a = NArray::Randn({m, k}, 0.0, 1.0);

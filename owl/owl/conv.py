@@ -1,18 +1,14 @@
 #!/usr/bin/env python
 """ This module contains operations for convolution, pooling and softmax
-
-:ivar enum soft_op: Same enum type as cudnn's ``cudnnSoftmaxMode_t``. Either ``soft_op.instance``
-    or ``soft_op.channel``.
-:ivar enum pool_op: Same enum type as cudnn's ``cudnnPoolingMode_t``. Either ``pool_op.max`` 
-    or ``pool_op.avg``.
 """
 import libowl as _owl
 
-""" Same enum type as cudnn's ``cudnnSoftmaxMode_t``. Either ``soft_op.instance`` or ``soft_op.channel``."""
 soft_op = _owl.softmax_algo
-""" Same enum type as cudnn's ``cudnnPoolingMode_t``. Either ``pool_op.max`` or ``pool_op.avg``.
+""" Same enum type as cudnn's ``cudnnSoftmaxMode_t``. Either ``soft_op.instance`` or ``soft_op.channel``.
 """
 pool_op = _owl.pooling_algo
+""" Same enum type as cudnn's ``cudnnPoolingMode_t``. Either ``pool_op.max`` or ``pool_op.avg``.
+"""
 
 def softmax(x, op = soft_op.instance):
     """ Perform softmax on the given ndarray.
@@ -36,49 +32,41 @@ def softmax(x, op = soft_op.instance):
 class Lrner:
     """ Wrapper class for LRN.
 
-    Attributes:
-      local_size (int) : the size of lrn across channel
-      alpha (float) : lrn parameters
-      beta (float) : lrn parameters
-
+    :ivar int local_size: the size of lrn across channel
+    :ivar float alpha: lrn parameters
+    :ivar float beta: lrn parameters
     """
     def __init__(self, local_size, alpha, beta):
         """ Constructor for Convolver class
         
-        Args:
-          local_size (int) : the size of lrn across channel
-          alpha (float) : lrn parameters
-          beta (float) : lrn parameters
-
+        :param int local_size: the size of lrn across channel
+        :param float alpha: lrn parameters
+        :param float beta: lrn parameters
         """
         self.local_size = local_size
         self.alpha = alpha
         self.beta = beta
     
-    def ff(self, x, s):
+    def ff(self, x, scale):
         """ Feed-forward local response norm
 
-        Args:
-          x (owl.NArray): input of the lrn
-          s (owl.NArray): auxiliary matrix to help computing
-
-        Returns:
-          owl.NArray: result ndarray after forward lrn
+        :param owl.NArray x: input of the lrn
+        :param owl.NArray scale: auxiliary matrix to help computing
+        :return: result ndarray after forward lrn
+        :rtype: owl.NArray
         """
         #print np.reshape(x.to_numpy(), np.prod(np.shape(x.to_numpy()))).tolist()[0:100] 
-        return _owl.lrn_forward(x, s, self.local_size, self.alpha, self.beta)
+        return _owl.lrn_forward(x, scale, self.local_size, self.alpha, self.beta)
     
     def bp(self, bottom_data, top_data, scale, top_diff):
         """ Backward local response norm
 
-        Args:
-          bottom_data (owl.NArray): activation before lrn
-          top_data (owl.NArray): activation after lrn
-          scale (owl.NArray): auxiliary matrix to help computing
-          top_diff (owl.NArray): error derivative
-
-        Returns:
-          owl.NArray: result ndarray after backward lrn
+        :param owl.NArray bottom_data: activation before lrn
+        :param owl.NArray top_data: activation after lrn
+        :param owl.NArray scale: auxiliary matrix to help computing
+        :param owl.NArray top_diff: error derivative
+        :return: result ndarray after backward lrn
+        :rtype: owl.NArray
         """      
         return _owl.lrn_backward(bottom_data, top_data, scale, top_diff, self.local_size, self.alpha, self.beta)
 
@@ -106,7 +94,7 @@ class Convolver:
     def ff(self, x, w, b):
         """ Feed-forward convolution
 
-        :param owl.NArray x : input of the convolution
+        :param owl.NArray x: input of the convolution
         :param owl.NArray w: filters
         :param owl.NArray b: bias of the convolution
         :return: result ndarray after forward convolution

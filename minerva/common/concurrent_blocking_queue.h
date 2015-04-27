@@ -2,33 +2,54 @@
 #include <list>
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 #include <thread>
 #include <cstdio>
 #include "bool_flag.h"
 #include "common.h"
 
 template<typename T> class ConcurrentBlockingQueue {
+  const static int BUSY_LOOP = 1000;
  public:
-  ConcurrentBlockingQueue() : exit_now_(false) {
+  ConcurrentBlockingQueue() : has_elmt_(false), exit_now_(false) {
   }
   void Push(const T& e) {
     std::lock_guard<std::mutex> lock(mutex_);
+    has_elmt_ = true;
     queue_.push_back(e);
     if (queue_.size() == 1) {
       cv_.notify_all();
     }
   }
   bool Pop(T& rv) {
-    std::unique_lock<std::mutex> lock(mutex_);
-    while (queue_.empty() && !exit_now_.Read()) {
-      cv_.wait(lock);
+    for (int i = 0; i < BUSY_LOOP; i++) {
+      if (has_elmt_) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!has_elmt_) {
+          assert(queue_.empty());
+          continue;
+        }
+        rv = queue_.front();
+        queue_.pop_front();
+        if (queue_.empty())
+          has_elmt_ = false;
+        return false;
+      }
     }
-    if (!exit_now_.Read()) {
-      rv = queue_.front();
-      queue_.pop_front();
-      return false;
-    } else {
-      return true;
+    {
+      std::unique_lock<std::mutex> lock(mutex_);
+      while (queue_.empty() && !exit_now_.Read()) {
+        cv_.wait(lock);
+      }
+      if (!exit_now_.Read()) {
+        rv = queue_.front();
+        queue_.pop_front();
+        if (queue_.empty())
+          has_elmt_ = false;
+        return false;
+      } else {
+        return true;        
+      }
     }
   }
   std::list<T> PopAll() {
@@ -49,6 +70,7 @@ template<typename T> class ConcurrentBlockingQueue {
   }
 
  private:
+  std::atomic<bool> has_elmt_;
   std::list<T> queue_;
   std::mutex mutex_;
   std::condition_variable cv_;

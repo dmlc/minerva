@@ -51,7 +51,11 @@ ThreadedDevice::ThreadedDevice(uint64_t device_id, DeviceListener* l, size_t par
 }
 
 void ThreadedDevice::PushTask(Task* task) {
-  pool_.Push(bind(&ThreadedDevice::Execute, this, task, placeholders::_1));
+  if (!task->light)
+    pool_.Push(bind(&ThreadedDevice::Execute, this, task, placeholders::_1));
+  else
+    // light weight tasks are executed directly to avoid thread switching
+    Execute(task, 0);
 }
 
 void ThreadedDevice::FreeDataIfExist(uint64_t data_id) {
@@ -61,11 +65,11 @@ void ThreadedDevice::FreeDataIfExist(uint64_t data_id) {
 
 void ThreadedDevice::Execute(Task* task, int thrid) {
   PreExecute();
-  DataList input_shards;
 #ifndef NDEBUG
   WallTimer memory_timer;
   memory_timer.Start();
 #endif
+  DataList input_shards;
   for (auto& i : task->inputs) {
     auto& input_data = i.physical_data;
     if (input_data.device_id == device_id_) {  // Input is local

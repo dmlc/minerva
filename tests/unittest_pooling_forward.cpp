@@ -12,7 +12,7 @@ TEST(PoolingForward, GpuWithoutPadding) {
   Scale correct_size{2, 2, 1, 1};
   shared_ptr<float> input_ptr(new float[input_size.Prod()], [](float* ptr) { delete[] ptr; });
   memcpy(input_ptr.get(), input_raw, input_size.Prod() * sizeof(float));
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
   PoolingInfo pooling_info(PoolingInfo::Algorithm::kMax, 3, 3, 1, 1);
   ImageBatch output = Convolution::PoolingForward(input, pooling_info);
@@ -31,7 +31,7 @@ TEST(PoolingForward, GpuWithExactPadding) {
   Scale correct_size{4, 4, 1, 1};
   shared_ptr<float> input_ptr(new float[input_size.Prod()], [](float* ptr) { delete[] ptr; });
   memcpy(input_ptr.get(), input_raw, input_size.Prod() * sizeof(float));
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
   PoolingInfo pooling_info(PoolingInfo::Algorithm::kMax, 3, 3, 1, 1, 1, 1);
   ImageBatch output = Convolution::PoolingForward(input, pooling_info);
@@ -50,7 +50,7 @@ TEST(PoolingForward, GpuWithInsufficientPadding) {
   Scale correct_size{3, 3, 1, 1};
   shared_ptr<float> input_ptr(new float[input_size.Prod()], [](float* ptr) { delete[] ptr; });
   memcpy(input_ptr.get(), input_raw, input_size.Prod() * sizeof(float));
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
   PoolingInfo pooling_info(PoolingInfo::Algorithm::kMax, 3, 3, 2, 2, 1, 1);
   ImageBatch output = Convolution::PoolingForward(input, pooling_info);
@@ -69,7 +69,7 @@ TEST(PoolingForward, GpuWithTooMuchPadding) {
   Scale correct_size{2, 2, 1, 1};
   shared_ptr<float> input_ptr(new float[input_size.Prod()], [](float* ptr) { delete[] ptr; });
   memcpy(input_ptr.get(), input_raw, input_size.Prod() * sizeof(float));
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   ImageBatch input = NArray::MakeNArray(input_size, input_ptr);
   PoolingInfo pooling_info(PoolingInfo::Algorithm::kMax, 4, 4, 3, 3, 2, 2);
   ImageBatch output = Convolution::PoolingForward(input, pooling_info);

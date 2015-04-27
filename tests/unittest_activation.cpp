@@ -9,9 +9,9 @@ TEST(Activation, GpuSigmoidForward) {
   auto& ms = MinervaSystem::Instance();
   Scale input_size{7, 6, 3, 2};
 
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   ImageBatch input = NArray::Randn(input_size, 0, 1);
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   ImageBatch output = Convolution::ActivationForward(input, ActivationAlgorithm::kSigmoid);
   auto input_ptr = input.Get();
   auto output_ptr = output.Get();
@@ -24,9 +24,9 @@ TEST(Activation, GpuReluForward) {
   auto& ms = MinervaSystem::Instance();
   Scale input_size{7, 6, 3, 2};
 
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   ImageBatch input = NArray::Randn(input_size, 0, 1);
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   ImageBatch output = Convolution::ActivationForward(input, ActivationAlgorithm::kRelu);
   auto input_ptr = input.Get();
   auto output_ptr = output.Get();
@@ -39,9 +39,9 @@ TEST(Activation, GpuTanhForward) {
   auto& ms = MinervaSystem::Instance();
   Scale input_size{7, 6, 3, 2};
 
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   ImageBatch input = NArray::Randn(input_size, 0, 1);
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   ImageBatch output = Convolution::ActivationForward(input, ActivationAlgorithm::kTanh);
   auto input_ptr = input.Get();
   auto output_ptr = output.Get();
@@ -55,7 +55,7 @@ TEST(Activation, CpuSigmoidForward) {
   auto& ms = MinervaSystem::Instance();
   Scale input_size{7, 6, 3, 2};
 
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   ImageBatch input = NArray::Randn(input_size, 0, 1);
   ImageBatch output = Convolution::ActivationForward(input, ActivationAlgorithm::kSigmoid);
   auto input_ptr = input.Get();
@@ -69,7 +69,7 @@ TEST(Activation, CpuReluForward) {
   auto& ms = MinervaSystem::Instance();
   Scale input_size{7, 6, 3, 2};
 
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   ImageBatch input = NArray::Randn(input_size, 0, 1);
   ImageBatch output = Convolution::ActivationForward(input, ActivationAlgorithm::kRelu);
   auto input_ptr = input.Get();
@@ -83,7 +83,7 @@ TEST(Activation, CpuTanhForward) {
   auto& ms = MinervaSystem::Instance();
   Scale input_size{7, 6, 3, 2};
 
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   ImageBatch input = NArray::Randn(input_size, 0, 1);
   ImageBatch output = Convolution::ActivationForward(input, ActivationAlgorithm::kTanh);
   auto input_ptr = input.Get();

@@ -84,7 +84,7 @@ def LSTM_init():
 		test_sents.append(wordlist_id)
 
 	# Define input-dependent variables
-	N = 10 # hidden units
+	N = 100 # hidden units
 	D = N # embedding
 	vocab_size = len(wids)       # Vocabulary size
 	print "K", vocab_size, "words", train_words, test_words
@@ -382,8 +382,9 @@ def LSTM_test(model, sents, words, tanhC_version = 1):
 
 if __name__ == '__main__':
 	owl.initialize(sys.argv)
-	gpu = owl.create_gpu_device(1)
-	owl.set_device(gpu)
+	#gpu = owl.create_gpu_device(1)
+	cpu = owl.create_cpu_device()
+	owl.set_device(cpu)
 	model, train_sents, test_sents, train_words, test_words = LSTM_init()
 	learning_rate = 0.1
 	for i in range(5):

@@ -1,6 +1,7 @@
 #pragma once
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 
 #include "backend.h"
 #include "device/device_listener.h"
@@ -23,7 +24,7 @@ class SimpleBackend : public Backend, public DeviceListener {
   DeviceManager& device_manager_;
 
   std::mutex finish_mutex_;
-  bool finished_flag_;
+  std::atomic<bool> finished_flag_;
   std::condition_variable finish_cond_;
 
   DISALLOW_COPY_AND_ASSIGN(SimpleBackend);
