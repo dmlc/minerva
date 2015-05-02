@@ -9,7 +9,7 @@ int main(int argc, char** argv) {
   MinervaSystem::Initialize(&argc, &argv);
   auto& ms = MinervaSystem::Instance();
   auto gpu_device = ms.device_manager().CreateGpuDevice(0);
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   vector<NArray> narrs;
   for (int i = 0; i < 10000; ++i) {
     narrs.push_back(NArray::Constant({1, 1}, i));

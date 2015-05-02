@@ -12,6 +12,9 @@ struct Task {
   PhysicalOp op;
   // `id` is only meaningful to the issuer of the task
   uint64_t id;
+  // is this a light weight op? light weight op will be executed by the 
+  // main thread to avoid thread switching
+  bool light = false;
 };
 
 }  // namespace minerva

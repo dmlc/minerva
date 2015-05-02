@@ -4,7 +4,7 @@ using namespace minerva;
 using namespace std;
 
 TEST(Reduction, CpuMaxOnFirstDimension) {
-  MinervaSystem::Instance().current_device_id_ = cpu_device;
+  MinervaSystem::Instance().SetDevice(cpu_device);
   Scale size{5, 3};
   shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
     delete[] ptr;
@@ -22,7 +22,7 @@ TEST(Reduction, CpuMaxOnFirstDimension) {
 }
 
 TEST(Reduction, CpuMaxOnSecondDimension) {
-  MinervaSystem::Instance().current_device_id_ = cpu_device;
+  MinervaSystem::Instance().SetDevice(cpu_device);
   Scale size{5, 3};
   shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
     delete[] ptr;
@@ -40,7 +40,7 @@ TEST(Reduction, CpuMaxOnSecondDimension) {
 }
 
 TEST(Reduction, CpuSumOnFirstDimension) {
-  MinervaSystem::Instance().current_device_id_ = cpu_device;
+  MinervaSystem::Instance().SetDevice(cpu_device);
   Scale size{5, 3};
   shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
     delete[] ptr;
@@ -58,7 +58,7 @@ TEST(Reduction, CpuSumOnFirstDimension) {
 }
 
 TEST(Reduction, CpuSumOnSecondDimension) {
-  MinervaSystem::Instance().current_device_id_ = cpu_device;
+  MinervaSystem::Instance().SetDevice(cpu_device);
   Scale size{5, 3};
   shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
     delete[] ptr;
@@ -77,7 +77,7 @@ TEST(Reduction, CpuSumOnSecondDimension) {
 
 #ifdef HAS_CUDA
 TEST(Reduction, GpuMaxOnFirstDimension) {
-  MinervaSystem::Instance().current_device_id_ = gpu_device;
+  MinervaSystem::Instance().SetDevice(gpu_device);
   Scale size{5, 3};
   shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
     delete[] ptr;
@@ -95,7 +95,7 @@ TEST(Reduction, GpuMaxOnFirstDimension) {
 }
 
 TEST(Reduction, GpuMaxOnSecondDimension) {
-  MinervaSystem::Instance().current_device_id_ = gpu_device;
+  MinervaSystem::Instance().SetDevice(gpu_device);
   Scale size{5, 3};
   shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
     delete[] ptr;
@@ -113,7 +113,7 @@ TEST(Reduction, GpuMaxOnSecondDimension) {
 }
 
 TEST(Reduction, GpuSumOnFirstDimension) {
-  MinervaSystem::Instance().current_device_id_ = gpu_device;
+  MinervaSystem::Instance().SetDevice(gpu_device);
   Scale size{5, 3};
   shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
     delete[] ptr;
@@ -131,7 +131,7 @@ TEST(Reduction, GpuSumOnFirstDimension) {
 }
 
 TEST(Reduction, GpuSumOnSecondDimension) {
-  MinervaSystem::Instance().current_device_id_ = gpu_device;
+  MinervaSystem::Instance().SetDevice(gpu_device);
   Scale size{5, 3};
   shared_ptr<float> data(new float[size.Prod()], [](float* ptr) {
     delete[] ptr;

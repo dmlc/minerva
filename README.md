@@ -2,6 +2,7 @@
 
 ## Latest News
 
+* Minerva's Tutorial and API documents are released!
 * Minerva had migrated to [dmlc](https://github.com/dmlc), where you could find many awesome machine learning repositories!
 * Minerva now evolves to use cudnn_v2. Please download and use the new [library](https://developer.nvidia.com/cuDNN).
 
@@ -9,11 +10,55 @@
 
 Minerva is a fast and flexible tool for deep learning. It provides NDarray programming interface, just like Numpy. Python bindings and C++ bindings are both available. The resulting code can be run on CPU or GPU. Multi-GPU support is very easy. Please refer to the examples to see how multi-GPU setting is used.Minerva is a fast and flexible tool for deep learning. It provides NDarray programming interface, just like Numpy. Python bindings and C++ bindings are both available. The resulting code can be run on CPU or GPU. Multi-GPU support is very easy. Please refer to the examples to see how multi-GPU setting is used.
 
-## Features
+## Quick try
 
-* N-D array programming interface (similar to numpy)
-* Easy interaction with NumPy
-* Multi-GPU, multi-CPU support
+After building and installing Minerva and Owl package (python binding) as in [**Install Minerva**](https://github.com/dmlc/minerva/wiki/Install-Minerva). Try run `./run_owl_shell.sh` in Minerva's root directory. And enter:
+```python
+>>> x = owl.ones([10, 5])
+>>> y = owl.ones([10, 5])
+>>> z = x + y
+>>> z.to_numpy()
+```
+The result will be a 10x5 array filled by value 2. Minerva supports many `numpy` style ndarray operations. Please see the API [document](http://minerva-developers.github.io/minerva-doc/) for more information.
+
+## Features
+* N-D array programming interface and easy integration with `numpy`
+
+  ```python
+  >>> import numpy as np
+  >>> x = np.array([1, 2, 3])
+  >>> y = owl.from_numpy(x)
+  >>> y += 1
+  >>> y.to_numpy()
+  array([ 2., 3., 4., ], dtype=float32)
+  ```
+  More is in the [**API cheatsheet**](http://minerva-developers.github.io/minerva-doc/cheatsheet.html)
+* Automatically parallel execution
+
+  ```python
+  >>> x = owl.zeros([256, 128])
+  >>> y = owl.randn([1024, 32], 0.0, 0.01)
+  ```
+  The above `x` and `y` will be executed **concurrently**. How is this achieved?
+  
+  See [**Feature Highlight: Data-flow and lazy evaluation**](https://github.com/dmlc/minerva/wiki/Feature-Highlight:-Dataflow-engine)
+* Multi-GPU, multi-CPU support:
+
+  ```python
+  >>> owl.set_device(gpu0)
+  >>> x = owl.zeros([256, 128])
+  >>> owl.set_device(gpu1)
+  >>> y = owl.randn([1024, 32], 0.0, 0.01)
+  ```
+  The above `x` and `y` will be executed on two cards **simultaneously**. How is this achieved?
+  
+  See [**Feature Highlight: Multi GPU Training**](https://github.com/dmlc/minerva/wiki/Feature-Highlight:-Multi-GPU-Training)
+
+## Tutorial and Documents
+* Tutorials and high-level concepts could be found in [our wiki page](https://github.com/dmlc/minerva/wiki)
+* A step-by-step walk through on MNIST example could be found [here](https://github.com/dmlc/minerva/wiki/Walkthrough:-MNIST)
+* We also built a tool to directly read Caffe's configure file and train. See [document](https://github.com/dmlc/minerva/wiki/Walkthrough:-AlexNet).
+* API documents could be found [here](http://minerva-developers.github.io/minerva-doc/index.html)
 
 ## Performance
 
@@ -34,6 +79,11 @@ We will keep updating the latest performance we could achieve in this section.
 We also provide some end-to-end training codes in `owl` package, which could load Caffe's model file and perform training. Note that, Minerva is *not* the same tool as Caffe. We are not focusing on this part of logic. In fact, we implement these just to play with the Minerva's powerful and flexible programming interface (we could implement a Caffe-like network trainer in around 700~800 lines of python codes). Here is the training error with time compared with Caffe. Note that Minerva could finish GoogleNet training in less than four days with four GPU cards.
 
 ![Error curve](https://cloud.githubusercontent.com/assets/4057701/6857873/454c44b2-d3e0-11e4-9010-9e62c6c94027.jpg)
+
+## Next Plan
+* Get rid of boost library dependency by using Cython.
+* Large scale [LSTM](http://en.wikipedia.org/wiki/Long_short_term_memory) example using Minerva.
+* Easy support for user-defined new operations.
 
 ## License and support
 

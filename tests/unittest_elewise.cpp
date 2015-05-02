@@ -6,7 +6,7 @@ using namespace minerva;
 
 TEST(Elewise, CpuExp) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale size{2, 3, 4, 5, 6};
 
   auto a = NArray::Randn(size, 0, 5);
@@ -21,11 +21,11 @@ TEST(Elewise, CpuExp) {
 #ifdef HAS_CUDA
 TEST(Elewise, GpuExp) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale size{2, 3, 4, 5, 6};
 
   auto a = NArray::Randn(size, 0, 5);
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   auto b = Elewise::Exp(a);
   auto a_ptr = a.Get();
   auto b_ptr = b.Get();
@@ -37,7 +37,7 @@ TEST(Elewise, GpuExp) {
 
 TEST(Elewise, CpuLn) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale size{2, 3, 4, 5, 6};
 
   auto a = NArray::Randn(size, 500, 1);
@@ -52,11 +52,11 @@ TEST(Elewise, CpuLn) {
 #ifdef HAS_CUDA
 TEST(Elewise, GpuLn) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale size{2, 3, 4, 5, 6};
 
   auto a = NArray::Randn(size, 500, 1);
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   auto b = Elewise::Ln(a);
   auto a_ptr = a.Get();
   auto b_ptr = b.Get();
@@ -66,7 +66,7 @@ TEST(Elewise, GpuLn) {
 }
 
 TEST(Elewise, GpuSigmoidForward) {
-  MinervaSystem::Instance().current_device_id_ = gpu_device;
+  MinervaSystem::Instance().SetDevice(gpu_device);
   Scale size{2, 3, 4, 5, 6};
   auto a = NArray::Randn(size, 0, 1);
   auto b = Elewise::SigmoidForward(a);
@@ -81,7 +81,7 @@ TEST(Elewise, GpuSigmoidForward) {
 }
 
 TEST(Elewise, GpuSigmoidBackward) {
-  MinervaSystem::Instance().current_device_id_ = gpu_device;
+  MinervaSystem::Instance().SetDevice(gpu_device);
   Scale size{2, 3, 4, 5, 6};
   auto top_diff = NArray::Randn(size, 0, 1);
   auto top = NArray::Randn(size, 0, 1);
@@ -96,7 +96,7 @@ TEST(Elewise, GpuSigmoidBackward) {
 }
 
 TEST(Elewise, GpuReluForward) {
-  MinervaSystem::Instance().current_device_id_ = gpu_device;
+  MinervaSystem::Instance().SetDevice(gpu_device);
   Scale size{2, 3, 4, 5, 6};
   auto a = NArray::Randn(size, 0, 1);
   auto b = Elewise::ReluForward(a);
@@ -111,7 +111,7 @@ TEST(Elewise, GpuReluForward) {
 }
 
 TEST(Elewise, GpuReluBackward) {
-  MinervaSystem::Instance().current_device_id_ = gpu_device;
+  MinervaSystem::Instance().SetDevice(gpu_device);
   Scale size{2, 3, 4, 5, 6};
   auto top_diff = NArray::Randn(size, 0, 1);
   auto top = NArray::Randn(size, 0, 1);
@@ -126,7 +126,7 @@ TEST(Elewise, GpuReluBackward) {
 }
 
 TEST(Elewise, GpuTanhForward) {
-  MinervaSystem::Instance().current_device_id_ = gpu_device;
+  MinervaSystem::Instance().SetDevice(gpu_device);
   Scale size{2, 3, 4, 5, 6};
   auto a = NArray::Randn(size, 0, 1);
   auto b = Elewise::TanhForward(a);
@@ -141,7 +141,7 @@ TEST(Elewise, GpuTanhForward) {
 }
 
 TEST(Elewise, GpuTanhBackward) {
-  MinervaSystem::Instance().current_device_id_ = gpu_device;
+  MinervaSystem::Instance().SetDevice(gpu_device);
   Scale size{2, 3, 4, 5, 6};
   auto top_diff = NArray::Randn(size, 0, 1);
   auto top = NArray::Randn(size, 0, 1);
@@ -158,7 +158,7 @@ TEST(Elewise, GpuTanhBackward) {
 
 TEST(Elewise, CpuNegative) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale size{2, 3, 4, 5, 6};
 
   auto a = NArray::Randn(size, 0, 5);
@@ -173,11 +173,11 @@ TEST(Elewise, CpuNegative) {
 #ifdef HAS_CUDA
 TEST(Elewise, GpuDiv) {
   auto& ms = MinervaSystem::Instance();
-  ms.current_device_id_ = cpu_device;
+  ms.SetDevice(cpu_device);
   Scale size{2, 3, 4, 5, 6};
 
   auto a = NArray::Randn(size, 0, 5);
-  ms.current_device_id_ = gpu_device;
+  ms.SetDevice(gpu_device);
   auto b = -a;
   auto a_ptr = a.Get();
   auto b_ptr = b.Get();

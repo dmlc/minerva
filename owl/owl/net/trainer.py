@@ -9,21 +9,31 @@ from caffe import *
 from PIL import Image
 
 class NetTrainer:
-    ''' Class for DNN training.
+    ''' Class for training neural network
 
-    :ivar str solver_file: name of the solver_file, it will tell Minerva the network configuration and model saving path 
-    :ivar snapshot: continue training from the snapshot under model saving path. If no model is saved under that snapshot folder, Minerva will randomly initial the weights according to configure file and training from scratch
-    :ivar num_gpu: Minerva support training with multiple gpus and update weights synchronously
-    
+    Allows user to train using Caffe's network configure format but on multiple GPUs. One
+    could use NetTrainer as follows:
+
+        >>> trainer = NetTrainer(solver_file, snapshot, num_gpu)
+        >>> trainer.build_net()
+        >>> trainer.run()
+
+    :ivar str solver_file: path of the solver file in Caffe's proto format
+    :ivar int snapshot: the idx of snapshot to start with
+    :ivar int num_gpu: the number of gpu to use
     '''
-    
-    def __init__(self, solver_file, snapshot, num_gpu = 1):
+    def __init__(self, solver_file, snapshot = 0, num_gpu = 1):
         self.solver_file = solver_file
         self.snapshot = snapshot
         self.num_gpu = num_gpu
         self.gpu = [owl.create_gpu_device(i) for i in range(num_gpu)]
 
     def build_net(self):
+        ''' Build network structure using Caffe's proto definition. It will also initialize
+        the network either from given snapshot or from scratch (using proper initializer). 
+        During initialization, it will first try to load weight from snapshot. If failed, it
+        will then initialize the weight accordingly.
+        '''
         self.owl_net = Net()
         self.builder = CaffeNetBuilder(self.solver_file)
         self.snapshot_dir = self.builder.snapshot_dir
@@ -32,6 +42,56 @@ class NetTrainer:
         self.builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
 
     def run(s):
+        ''' Run the training algorithm on multiple GPUs
+
+        The basic logic is similar to the traditional single GPU training code as follows (pseudo-code)::
+
+            for epoch in range(MAX_EPOCH):
+                for i in range(NUM_MINI_BATCHES):
+                    # load i^th minibatch
+                    minibatch = loader.load(i, MINI_BATCH_SIZE)
+                    net.ff(minibatch.data)
+                    net.bp(minibatch.label)
+                    grad = net.gradient()
+                    net.update(grad, MINI_BATCH_SIZE)
+
+        With Minerva's lazy evaluation and dataflow engine, we are able to modify the above logic
+        to perform data parallelism on multiple GPUs (pseudo-code)::
+
+            for epoch in range(MAX_EPOCH):
+                for i in range(0, NUM_MINI_BATCHES, NUM_GPU):
+                    gpu_grad = [None for i in range(NUM_GPU)]
+                    for gpuid in range(NUM_GPU):
+                        # specify which gpu following codes are running on
+                        owl.set_device(gpuid)
+                        # each minibatch is split among GPUs
+                        minibatch = loader.load(i + gpuid, MINI_BATCH_SIZE / NUM_GPU)
+                        net.ff(minibatch.data)
+                        net.bp(minibatch.label)
+                        gpu_grad[gpuid] = net.gradient()
+                    net.accumulate_and_update(gpu_grad, MINI_BATCH_SIZE)
+
+        So each GPU will take charge of one *mini-mini batch* training, and since all their ``ff``, ``bp`` and ``gradient``
+        calculations are independent among each others, they could be paralleled naturally using Minerva's DAG engine.
+
+        The only problem let is ``accumulate_and_update`` of the the gradient from all GPUs. If we do it on one GPU,
+        that GPU would become a bottleneck. The solution is to also partition the workload to different GPUs (pseudo-code)::
+
+            def accumulate_and_update(gpu_grad, MINI_BATCH_SIZE):
+                num_layers = len(gpu_grad[0])
+                for layer in range(num_layers):
+                    upd_gpu = layer * NUM_GPU / num_layers
+                    # specify which gpu to update the layer
+                    owl.set_device(upd_gpu)
+                    for gid in range(NUM_GPU):
+                        if gid != upd_gpu:
+                            gpu_grad[upd_gpu][layer] += gpu_grad[gid][layer]
+                    net.update_layer(layer, gpu_grad[upd_gpu][layer], MINI_BATCH_SIZE)
+
+        Since the update of each layer is independent among each others, the update could be paralleled affluently. Minerva's
+        dataflow engine transparently handles the dependency resolving, scheduling and memory copying among different devices,
+        so users don't need to care about that.
+        '''
         wgrad = [[] for i in range(s.num_gpu)]
         bgrad = [[] for i in range(s.num_gpu)]
         last = time.time()
@@ -105,17 +165,18 @@ class NetTrainer:
             sys.stdout.flush()
 
 class MultiviewTester:
-    ''' Class for multiview testing.
+    ''' Class for performing multi-view testing
 
-    Multiview testing will get better accuracy than single view testing. For each image, it will crop out the left-top, right-top, left-down, right-down, central patches and their hirizontal flipped version. The final prediction is averaged according to the 10 views.
+    Run it as::
+        >>> tester = MultiviewTester(solver_file, softmax_layer, snapshot, gpu_idx)
+        >>> tester.build_net()
+        >>> tester.run()
 
-    :ivar str solver_file: name of the solver_file, it will tell Minerva the network configuration and model saving path 
+    :ivar str solver_file: path of the solver file in Caffe's proto format
+    :ivar int snapshot: the snapshot for testing
     :ivar str softmax_layer_name: name of the softmax layer that produce prediction 
-    :ivar snapshot: saved model snapshot index
-    :ivar gpu: the gpu to run testing
-
+    :ivar int gpu_idx: which gpu to perform the test
     '''
-    
     def __init__(self, solver_file, softmax_layer_name, snapshot, gpu_idx = 0):
         self.solver_file = solver_file
         self.softmax_layer_name = softmax_layer_name
@@ -156,23 +217,22 @@ class MultiviewTester:
         print "Testing Accuracy: %f" % (float(acc_num)/test_num)
 
 class FeatureExtractor:
-    ''' Class of feature extractor.
+    ''' Class for extracting trained features
     Feature will be stored in a txt file as a matrix. The size of the feature matrix is [num_img, feature_dimension]
 
-    :ivar str solver_file: name of the solver_file, it will tell Minerva the network configuration and model saving path 
-    :ivar snapshot: saved model snapshot index
-    :ivar str layer_name: name of the ayer that produce feature 
-    :ivar str feature_path: the file path to save feature
-    :ivar gpu: the gpu to run testing
+    Run it as::
+        >>> extractor = FeatureExtractor(solver_file, snapshot, gpu_idx)
+        >>> extractor.build_net()
+        >>> extractor.run(layer_name, feature_path)
 
+    :ivar str solver_file: path of the solver file in Caffe's proto format
+    :ivar int snapshot: the snapshot for testing
+    :ivar str layer_name: name of the ayer that produce feature 
+    :ivar int gpu_idx: which gpu to perform the test
     '''
-    
-    
-    def __init__(self, solver_file, snapshot, layer_name, feature_path, gpu_idx = 0):
+    def __init__(self, solver_file, snapshot, gpu_idx = 0):
         self.solver_file = solver_file
         self.snapshot = snapshot
-        self.layer_name = layer_name
-        self.feature_path = feature_path
         self.gpu = owl.create_gpu_device(gpu_idx)
         owl.set_device(self.gpu)
 
@@ -184,9 +244,14 @@ class FeatureExtractor:
         self.owl_net.compute_size('TEST')
         self.builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
 
-    def run(s):
-        feature_unit = s.owl_net.units[s.owl_net.name_to_uid[s.layer_name][0]] 
-        feature_file = open(s.feature_path, 'w')
+    def run(s, layer_name, feature_path):
+        ''' Run feature extractor
+
+        :param str layer_name: the layer to extract feature from
+        :param str feature_path: feature output path
+        '''
+        feature_unit = s.owl_net.units[s.owl_net.name_to_uid[layer_name][0]] 
+        feature_file = open(feature_path, 'w')
         batch_dir = 0
         for testiteridx in range(s.owl_net.solver.test_iter[0]):
             s.owl_net.forward('TEST')
