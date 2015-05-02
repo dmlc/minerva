@@ -271,12 +271,12 @@ class FeatureExtractor:
 
 class FilterVisualizer:
     ''' Class of filter visualizer.
-    Find the most interested patches of a filter to demostrate pattern that filter insterested in. 
+    Find the most interested patches of a filter to demostrate the pattern that filter insterested in. It first read in several images to conduct feed-forward and find the patches have the biggest activation value for a filter. Those patches usually contains the pattern of that filter. 
 
     :ivar str solver_file: name of the solver_file, it will tell Minerva the network configuration and model saving path 
     :ivar snapshot: saved model snapshot index
-    :ivar str layer_name: name of the ayer that produce feature 
-    :ivar str result_path: path for the result of visualization
+    :ivar str layer_name: name of the layer that will be viusualized, we will visualize all the filters in that layer in one time
+    :ivar str result_path: path for the result of visualization, filtervisualizer will generate a jpg contains the nine selected patches for each filter in layer_name and save the image under result path. 
     :ivar gpu: the gpu to run testing
 
     '''
@@ -328,29 +328,28 @@ class FilterVisualizer:
 
         feature_unit = s.owl_net.units[s.owl_net.name_to_uid[s.layer_name][0]] 
         batch_dir = 0
-        all_data = None
-        all_feature = None
+        #we use 10000 images to conduct visualization
+        all_data = np.zeros([10000, 3, crop_size, crop_size], dtype=np.float32)
+        feature_shape = feature_unit.out_shape
+        all_feature = np.zeros([10000, feature_shape[2], feature_shape[1], feature_shape[0]], dtype=np.float32) 
+        
+        print 'Begin Generating Activations from Testing Set'
+        curimg = 0
         for testiteridx in range(s.owl_net.solver.test_iter[0]):
-            print batch_dir
             s.owl_net.forward('TEST')
             feature = feature_unit.out.to_numpy()
-            if all_feature == None:
-                all_feature = feature
-            else:
-                all_feature = np.concatenate((all_feature, feature), axis=0)
+            batch_size = np.shape(feature)[0]
+            all_feature[curimg:curimg+batch_size,:] = feature
             data = data_unit.out.to_numpy()
-            if all_data == None:
-                all_data = data
-            else:
-                all_data = np.concatenate((all_data, data), axis=0)
-            batch_dir += 1
+            all_data[curimg:curimg+batch_size,:] = data
+            curimg += batch_size
             #HACK TODO: only take 10000 images
-            if np.shape(all_feature)[0] >= 10000:
+            if curimg >= 10000:
                 break
-
-
+            info = 'Now Processed %d images' % (curimg)
+            print info
+        print 'Begin Selecting Patches'
         #get the result 
-        feature_shape = feature_unit.out_shape
         patch_shape = feature_unit.rec_on_ori
         min_val = -float('inf') 
         
@@ -397,9 +396,36 @@ class FilterVisualizer:
                 res_path = '%s/%d.jpg' % (s.result_path, i)
                 print res_path
                 res_img.save(res_path, format = 'JPEG')
-
         else:
-            assert(False)
+            #Fully Layers
+            #iter for each filter, for each filter, we choose nine patch from different image
+            print feature_shape
+            for i in range(feature_shape[0]):
+                #create the result image for nine patches
+                res_img = np.zeros([data_unit.crop_size * 3, data_unit.crop_size * 3, 3])
+                filter_feature = np.copy(all_feature[:,i])
+                for patchidx in range(9):
+                    maxidx = np.argmax(filter_feature)
+                    imgidx = maxidx
+                    filter_feature[imgidx] = min_val
+
+                    #save img to image
+                    row_in_res = patchidx / 3
+                    col_in_res = patchidx % 3
+                    st_row = row_in_res * data_unit.crop_size 
+                    st_col = col_in_res * data_unit.crop_size
+                    #turn gbr into rgb
+                    patch = all_data[imgidx,:,:,:]
+                    res_img[st_row:st_row+data_unit.crop_size,st_col:st_col+data_unit.crop_size, 2] = patch[0,:,:]
+                    res_img[st_row:st_row+data_unit.crop_size,st_col:st_col+data_unit.crop_size, 1] = patch[1,:,:]
+                    res_img[st_row:st_row+data_unit.crop_size,st_col:st_col+data_unit.crop_size, 0] = patch[2,:,:]
+                #save img
+                res_img = Image.fromarray(res_img.astype(np.uint8))
+                res_path = '%s/%d.jpg' % (s.result_path, i)
+                print res_path
+                res_img.save(res_path, format = 'JPEG')
+
+
 
 
 
