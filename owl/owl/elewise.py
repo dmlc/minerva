@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """ This module contains element-wise operations on ndarray
 """
-import libowl as _owl
+import athena as _athena
 
 def mult(x, y):
     """ Element-wise multiplication
@@ -11,7 +11,7 @@ def mult(x, y):
     :return: result after element-wise multiplication
     :rtype: owl.NArray
     """
-    return _owl.mult(x, y)
+    return _athena.NArray.mult(x, y)
 
 def exp(x):
     """ Exponential function
@@ -20,7 +20,7 @@ def exp(x):
     :return: result ndarray
     :rtype: owl.NArray
     """
-    return _owl.exp(x)
+    return _athena.NArray.exp(x)
 
 def ln(x):
     """ Ln function
@@ -29,7 +29,7 @@ def ln(x):
     :return: result ndarray
     :rtype: owl.NArray
     """
-    return _owl.ln(x)
+    return _athena.NArray.ln(x)
 
 def sigm(x):
     """ Sigmoid function: 1 / (1 + exp(-x))
@@ -38,7 +38,7 @@ def sigm(x):
     :return: result ndarray
     :rtype: owl.NArray
     """
-    return _owl.sigm(x)
+    return _athena.NArray.sigm(x)
 
 def relu(x):
     """ REctified Linear Unit: y = x if x >= 0; y = 0 if x < 0;
@@ -47,7 +47,7 @@ def relu(x):
     :return: result ndarray
     :rtype: owl.NArray
     """
-    return _owl.relu(x)
+    return _athena.NArray.relu(x)
 
 def tanh(x):
     """ Hyperbolic tangent function
@@ -56,7 +56,7 @@ def tanh(x):
     :return: result ndarray
     :rtype: owl.NArray
     """
-    return _owl.tanh(x)
+    return _athena.NArray.tanh(x)
 
 def sigm_back(y):
     """ Derivative of sigmoid function: y * (1 - y)
@@ -65,7 +65,7 @@ def sigm_back(y):
     :return: result ndarray
     :rtype: owl.NArray
     """
-    return _owl.sigm_back(y)
+    return _athena.NArray.sigm_back(y)
 
 def relu_back(y, x):
     """ Derivative of RELU function
@@ -75,7 +75,7 @@ def relu_back(y, x):
     :return: result ndarray
     :rtype: owl.NArray
     """
-    return _owl.relu_back(y, x, x)
+    return _athena.NArray.relu_back(y, x, x)
 
 def tanh_back(y):
     """ Derivative of tanh function: sech^2(y)
@@ -84,4 +84,4 @@ def tanh_back(y):
     :return: result ndarray
     :rtype: owl.NArray
     """
-    return _owl.tanh_back(y, y, y)
+    return _athena.NArray.tanh_back(y, y, y)
