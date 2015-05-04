@@ -7,6 +7,10 @@ import os
 os.environ['CC'] = 'clang++'
 os.environ['OPT'] = ''
 
+def relative_path(to):
+    base = os.path.dirname(os.path.realpath(__file__))
+    return os.path.join(base, to)
+
 extensions = [
     Extension(
         '*',
@@ -33,9 +37,9 @@ extensions = [
         library_dirs=[
             'release/lib'
         ],
-        runtime_library_dirs=[
+        runtime_library_dirs=map(relative_path, [
             'release/lib'
-        ],
+        ]),
     )
 ]
 
