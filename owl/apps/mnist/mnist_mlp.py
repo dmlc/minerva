@@ -60,7 +60,7 @@ class MnistTrainer:
                 self.b2 -= self.eps_b * gb2
 
                 if (count % 40 == 0):
-                    correct = out.argmax(0) - target.argmax(0)
+                    correct = out.max_index(0) - target.max_index(0)
                     val = correct.to_numpy()
                     print 'Training error:', float(np.count_nonzero(val)) / num_samples
                 count = count + 1
@@ -69,13 +69,13 @@ class MnistTrainer:
             a1 = test_samples
             a2 = ele.relu(self.w1 * a1 + self.b1)
             a3 = self.w2 * a2 + self.b2
-            correct = a3.argmax(0) - test_labels.argmax(0)
+            correct = a3.max_index(0) - test_labels.max_index(0)
             val = correct.to_numpy()
             #print val
             print 'Testing error:', float(np.count_nonzero(val)) / num_test_samples
             print '---Finish epoch #%d' % epoch
 
 if __name__ == '__main__':
-    owl.initialize(sys.argv)
+    owl.initialize()
     trainer = MnistTrainer(num_epochs = 10)
     trainer.run()

@@ -193,7 +193,7 @@ def check_weight_2gpu(owl_net, checklayer, gpu):
 
 
 if __name__ == "__main__":
-    owl.initialize(sys.argv)
+    owl.initialize()
     gpu = []
     gpu.append(owl.create_gpu_device(0))
     gpu1 = owl.create_gpu_device(1)

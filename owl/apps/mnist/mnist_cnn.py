@@ -43,8 +43,8 @@ class MNISTCNNModel:
         ];
 
 def print_training_accuracy(o, t, mbsize, prefix):
-    predict = o.reshape([10, mbsize]).argmax(0)
-    ground_truth = t.reshape([10, mbsize]).argmax(0)
+    predict = o.reshape([10, mbsize]).max_index(0)
+    ground_truth = t.reshape([10, mbsize]).max_index(0)
     correct = (predict - ground_truth).count_zero()
     print prefix, 'error: {}'.format((mbsize - correct) * 1.0 / mbsize)
 
@@ -128,7 +128,7 @@ if __name__ == '__main__':
     (args, remain) = parser.parse_known_args()
     assert(1 <= args.num)
     print 'Using %d GPU(s)' % args.num
-    owl.initialize(sys.argv)
+    owl.initialize()
     gpu = [owl.create_gpu_device(i) for i in range(args.num)]
     owl.set_device(gpu[0])
     model = MNISTCNNModel()

@@ -11,8 +11,8 @@ from alexnet import AlexModel
 from imageio import ImageNetDataProvider
 
 def print_training_accuracy(o, t, minibatch_size):
-    predict = o.argmax(0)
-    ground_truth = t.argmax(0)
+    predict = o.max_index(0)
+    ground_truth = t.max_index(0)
     correct = (predict - ground_truth).count_zero()
     print 'Training error: {}'.format((minibatch_size - correct) * 1.0 / minibatch_size)
     sys.stdout.flush()
@@ -84,7 +84,7 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             bgrad = [None] * 2
 
 if __name__ == '__main__':
-    owl.initialize(sys.argv)
+    owl.initialize()
     cpu = owl.create_cpu_device()
     owl.set_device(cpu)
     model = AlexModel()

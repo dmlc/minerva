@@ -1,7 +1,7 @@
 import owl
 import owl.conv
 import sys
-owl.initialize(sys.argv)
+owl.initialize()
 cpu = owl.create_cpu_device()
 gpu = [owl.create_gpu_device(i) for i in range(owl.get_gpu_device_count())]
 print '''

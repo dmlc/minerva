@@ -206,8 +206,8 @@ class MultiviewTester:
                     softmax_val = softmax_val + loss_unit.ff_y
             
             test_num += batch_size
-            predict = softmax_val.argmax(0)
-            truth = softmax_label.argmax(0)
+            predict = softmax_val.max_index(0)
+            truth = softmax_label.max_index(0)
             correct = (predict - truth).count_zero()
             acc_num += correct
             print "Accuracy the %d mb: %f, batch_size: %d" % (testiteridx, correct, batch_size)

@@ -69,7 +69,7 @@ class MnistTrainer:
                 self.b2 -= self.eps_b * gb2
 
                 if (count % 40 == 0):
-                    correct = np.argmax(out, axis=0) - np.argmax(target, axis=0)
+                    correct = np.max_index(out, axis=0) - np.max_index(target, axis=0)
                     print 'Training error:', float(np.count_nonzero(correct)) / num_samples
                 count = count + 1
 
@@ -77,7 +77,7 @@ class MnistTrainer:
             a1 = test_samples.T
             a2 = relu(np.dot(self.w1, a1) + self.b1)
             a3 = np.dot(self.w2, a2) + self.b2
-            correct = np.argmax(a3, axis=0) - np.argmax(test_labels.T, axis=0)
+            correct = np.max_index(a3, axis=0) - np.max_index(test_labels.T, axis=0)
             #print correct
             print 'Testing error:', float(np.count_nonzero(correct)) / num_test_samples
             print '---Finish epoch #%d' % epoch

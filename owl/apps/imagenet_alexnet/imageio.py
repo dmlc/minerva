@@ -75,7 +75,7 @@ if __name__ == '__main__':
         print count, ':', samples.shape
         #print labels.shape
         #print samples[0,0:10]
-        #print np.argmax(labels, axis=1)
+        #print np.max_index(labels, axis=1)
         # training
         count = count + 1
         if count % 10 == 0:
