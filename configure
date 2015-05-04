@@ -45,8 +45,6 @@ while [[ $# -gt 0 ]]; do
       CXXFLAGS="$CXXFLAGS -DENABLE_PS=ON";;
     --disable-cuda)
       CXXFLAGS="$CXXFLAGS -DENABLE_CUDA=OFF";;
-    --disable-owl)
-      CXXFLAGS="$CXXFLAGS -DBUILD_OWL=OFF";;
     --with-blas)
       CXXFLAGS="$CXXFLAGS -DENABLE_BLAS=ON";;
     --prefix=*)
@@ -60,7 +58,6 @@ while [[ $# -gt 0 ]]; do
   esac
   shift
 done
-#CXXFLAGS="${CXXFLAGS} -DDISABLE_PS=${DISABLE_PS} -DDISABLE_CUDA=${DISABLE_CUDA}"
 
 #================================ help description =============================
 if test "x$WANT_HELP" = xyes; then
@@ -75,8 +72,7 @@ Configurations:
     --enable-debug-info     Enable building with debug info even for release
     --enable-ps             Enable building with PS
     --disable-cuda          Disable building with CUDA
-    --disable-owl           Disable building with OWL (python binding)
-    --with-blas		    Use BLAS library for cpu operations
+    --with-blas		        Use BLAS library for cpu operations
     --prefix                Specify install path
     -Dvar=value | -D value  Specify definitions to be passed on to CMake
 EOF

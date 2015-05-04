@@ -24,7 +24,6 @@ project(Minerva)
 
 option(BUILD_CXX_APPS "build C++ applications"                OFF)
 option(BUILD_TESTS    "build all unittests"                   OFF)
-option(BUILD_OWL      "build Python wrapper -- Owl package"   ON )
 option(ENABLE_CUDA    "enable CUDA"                           ON )
 option(ENABLE_PS      "enable Parameter Server"               OFF)
 option(ENABLE_BLAS    "use BLAS library for CPU operations"   OFF)
@@ -73,7 +72,6 @@ endif()
 
 if(ENABLE_PS)
   add_definitions(-DHAS_PS)
-  set(BUILD_OWL OFF)
 endif()
 
 if(ENABLE_BLAS)
@@ -83,7 +81,6 @@ endif()
 add_subdirectory(minerva)
 
 message(STATUS "building C++ applications             -- ${BUILD_CXX_APPS}")
-message(STATUS "building Owl package (Python binding) -- ${BUILD_OWL}")
 message(STATUS "building unit tests                   -- ${BUILD_TESTS}")
 message(STATUS "enable CUDA                           -- ${ENABLE_CUDA}")
 message(STATUS "enable Parameter Server               -- ${ENABLE_PS}")
@@ -91,10 +88,6 @@ message(STATUS "use BLAS library for CPU operations   -- ${ENABLE_BLAS}")
 
 if(BUILD_CXX_APPS)
   add_subdirectory(apps)
-endif()
-
-if(BUILD_OWL)
-  add_subdirectory(owl)
 endif()
 
 if(BUILD_TESTS)

@@ -39,4 +39,3 @@ endif ()
 
 set(LIBRARY_OUTPUT_PATH ${Minerva_BINARY_DIR}/lib)
 
-install(TARGETS minerva DESTINATION lib)
