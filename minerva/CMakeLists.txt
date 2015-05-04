@@ -14,7 +14,7 @@ if (CUDA_FOUND)
     CUDA_ADD_LIBRARY(minerva SHARED ${src_file_list} ${cuda_src_file_list})
   endif ()
   CUDA_ADD_CUBLAS_TO_TARGET(minerva)
-  target_link_libraries(minerva cudnn cudart)
+  target_link_libraries(minerva ${CUDNN_LIBRARIES} ${CUDA_curand_LIBRARY})
 else (CUDA_FOUND)
   if (ENABLE_PS)
     add_library(minerva STATIC ${src_file_list})
@@ -23,7 +23,11 @@ else (CUDA_FOUND)
   endif ()
 endif (CUDA_FOUND)
 
-target_link_libraries(minerva glog gflags)
+target_link_libraries(
+  minerva
+  "${Minerva_SOURCE_DIR}/third_party/lib/libglog.so"
+  "${Minerva_SOURCE_DIR}/third_party/lib/libgflags.so"
+)
 
 if (ENABLE_BLAS)
   target_link_libraries(minerva openblas)
