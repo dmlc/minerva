@@ -434,5 +434,3 @@ class FilterVisualizer:
 
 
 
-
-
