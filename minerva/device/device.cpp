@@ -1,5 +1,6 @@
 #include <utility>
 #include <cstdlib>
+#include <array>
 #include <mutex>
 #include <sstream>
 
@@ -16,6 +17,8 @@
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #include <cudnn.h>
+#include <cuda.h>
+#include <cublas_v2.h>
 #endif
 
 #define DEFAULT_POOL_SIZE ((size_t) 5.8 * 1024 * 1024 * 1024)
@@ -123,7 +126,17 @@ void ThreadedDevice::Barrier(int) {
 }
 
 #ifdef HAS_CUDA
-GpuDevice::GpuDevice(uint64_t device_id, DeviceListener* l, int gpu_id) : ThreadedDevice(device_id, l, kParallelism), device_(gpu_id) {
+
+struct GpuDevice::Impl {
+  Impl();
+  static size_t constexpr kParallelism = 4;
+  int const device;
+  array<cudaStream_t, kParallelism> stream;
+  array<cublasHandle_t, kParallelism> handle;
+  array<cudnnHandle_t, kParallelism> cudnn_handle;
+};
+
+GpuDevice::GpuDevice(uint64_t device_id, DeviceListener* l, int gpu_id) : ThreadedDevice{device_id, l, Impl::kParallelism}, impl_{gpu_id} {
   CUDA_CALL(cudaSetDevice(device_));
   cudaFree(0);  // Initialize
   auto allocator = [this](size_t len) -> void* {
