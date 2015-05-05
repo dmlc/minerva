@@ -4,6 +4,7 @@
 #include <set>
 #include <unordered_set>
 #include <algorithm>
+#include "./make_unique.h"
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&) = delete; \
