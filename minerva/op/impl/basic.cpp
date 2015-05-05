@@ -12,10 +12,6 @@ using namespace std;
 #include "op/impl/ps.h"
 #endif
 
-#ifdef HAS_CBLAS
-#include <cblas.h>
-#endif
-
 namespace minerva {
 namespace basic {
 
@@ -140,10 +136,6 @@ void MatMult(const DataList& inputs, const DataList& outputs, MatMultClosure& cl
   int n = outputs[0].size_[1];
   int o = inputs[0].size_[1];
   // ATTENTION: the data is column major !!
-#ifdef HAS_CBLAS
-  memset(res_data, 0, sizeof(float) * m * n);
-  cblas_sgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, m, n, o, 1.0, left_data, m, right_data, o, 0.0, res_data, m);
-#else
   for (int i = 0; i < m; ++i) {
     for (int j = 0; j < n; ++j) {
       res_data[i + j * m] = 0;
@@ -152,7 +144,6 @@ void MatMult(const DataList& inputs, const DataList& outputs, MatMultClosure& cl
       }
     }
   }
-#endif
 }
 
 void Transpose(const DataList& inputs, const DataList& outputs, TransposeClosure& closure) {
@@ -198,52 +189,6 @@ void Reduction(const DataList& inputs, const DataList& outputs, ReductionClosure
     res_data[res_range.Flatten(accumulator)] = tmp;
   } while (accumulator.IncrWithDimensionsFixed(res_max, closure.dims_to_reduce));
 }
-
-void SoftmaxForward(const DataList& inputs, const DataList& outputs, SoftmaxForwardClosure& closure) {
-  //TODO: Currently CPU only support kInstance softmax 
-  CHECK_EQ(inputs.size(), 1) << "(reduction) #inputs is wrong!";
-  CHECK_EQ(outputs.size(), 1) << "(reduction) #outputs is wrong!";
-  float* in_data = inputs[0].data_;
-  float* res_data = outputs[0].data_;
-  auto in_max = inputs[0].size_;
-  auto in_range = ScaleRange::MakeRangeFromOrigin(in_max);
-  auto res_max = outputs[0].size_;
-  auto res_range = ScaleRange::MakeRangeFromOrigin(res_max);
-  auto accumulator = Scale::Origin(in_max.NumDims());
- 
-  //normalize according to batch dimension
-  std::vector<int> batchdim(1,0);
-  auto dim_to_norm = Scale(batchdim);
-
-  //sub the max to prevent numerical problem
-  do {
-    auto cur = accumulator;
-    float tmp = in_data[in_range.Flatten(cur)];
-    //get max
-    while (cur.IncrDimensions(in_max, dim_to_norm)) {
-      float tmp2 = in_data[in_range.Flatten(cur)];
-      if (tmp < tmp2) {
-        tmp = tmp2;
-      }
-    }
-    //exp(x - max), also sum the result
-    cur = accumulator;
-    float sum_exp = 0;
-    while (cur.IncrDimensions(in_max, dim_to_norm)) {
-      res_data[in_range.Flatten(cur)] = expf(in_data[in_range.Flatten(cur)] - tmp);
-      sum_exp += res_data[in_range.Flatten(cur)];
-    }
-    //devide the sum
-    cur = accumulator;
-    while (cur.IncrDimensions(in_max, dim_to_norm)) {
-      res_data[in_range.Flatten(cur)] /= sum_exp; 
-    }
-  } while (accumulator.IncrWithDimensionsFixed(res_max, dim_to_norm));
-}
-
-
-
-
 
 void ArrayLoader(const DataList& outputs, ArrayLoaderClosure& closure) {
   CHECK_EQ(outputs.size(), 1) << "(array loader) #outputs wrong";
@@ -456,21 +401,25 @@ void ActivationForward(const DataList& inputs, const DataList& outputs, Activati
 
 
 void Index(const DataList& inputs, const DataList& outputs, IndexClosure& closure) {
-	CHECK_EQ(inputs.size(), 1) << "(activation forward) #inputs wrong";
-	CHECK_EQ(outputs.size(), 1) << "(activation forward) #outputs wrong";
+	CHECK_GE(inputs.size(), 1) << "(indexing) #inputs wrong";
+	CHECK_LE(inputs.size(), 2) << "(indexing) #inputs wrong";
+	CHECK_EQ(outputs.size(), 1) << "(indexing) #outputs wrong";
 	float* input_data = inputs[0].data_;
 	float* output_data = outputs[0].data_;
 
-	auto input_length = inputs[0].size_.Prod();
-	auto output_length = outputs[0].size_.Prod();
-	auto idx = closure.idx;
+	size_t output_length = outputs[0].size_.Prod();
+	int idx = closure.idx;
 
-	memcpy(output_data, input_data + idx * output_length, output_length * sizeof(input_data[0]));
-	for (size_t i = 0; i < output_length; ++ i)
-		cout << output_data[i] << endl;
-
-	for (size_t i = 0; i < output_length; ++ i)
-		output_data[i] = input_data[i + idx * output_length];
+	if (idx >= 0) // integer index
+		memcpy(output_data, input_data + idx * output_length, output_length * sizeof(input_data[0]));
+	else
+	{
+		CHECK_EQ(idx, -1) << "(indexing) #inputs wrong";
+		float* index_data = inputs[1].data_;
+		auto block_length = output_length / inputs[1].size_.Prod();
+		for (size_t i = 0; i < inputs[1].size_.Prod(); ++ i)
+			memcpy(output_data + block_length * i, input_data + block_length * int(index_data[i] + 0.01), block_length * sizeof(input_data[0]));
+	}
 }
 
 }  // end of namespace basic
