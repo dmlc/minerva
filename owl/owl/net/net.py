@@ -46,7 +46,11 @@ class ComputeUnit(object):
         self.name = params.name
         self.btm_names = []
         self.top_names = []
+        self.out = None
         self.out_shape = None
+        self.rec_on_ori = None
+        self.stride_on_ori = None
+        self.start_on_ori = None
     def __str__(self):
         return 'N/A unit'
     def compute_size(self, from_btm, to_top):
@@ -113,8 +117,15 @@ class ComputeUnitSimple(ComputeUnit):
     def compute_size(self, from_btm, to_top):
         ''' Set the ``out_shape`` as the same shape of the input. Inherited classes could override this function.
         '''
-        to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
-        self.out_shape = to_top[self.top_names[0]][:]
+        to_top[self.top_names[0]] = dict()
+        to_top[self.top_names[0]]['out_shape'] = from_btm[self.btm_names[0]]['out_shape'][:]
+        to_top[self.top_names[0]]['rec_on_ori'] = from_btm[self.btm_names[0]]['rec_on_ori']
+        to_top[self.top_names[0]]['stride_on_ori'] = from_btm[self.btm_names[0]]['stride_on_ori']
+        to_top[self.top_names[0]]['start_on_ori'] = from_btm[self.btm_names[0]]['start_on_ori']
+        self.out_shape = to_top[self.top_names[0]]['out_shape'][:]
+        self.rec_on_ori = to_top[self.top_names[0]]['rec_on_ori']
+        self.stride_on_ori = to_top[self.top_names[0]]['stride_on_ori']
+        self.start_on_ori = to_top[self.top_names[0]]['start_on_ori']
     def forward(self, from_btm, to_top, phase):
         ''' Transform the interface from multiple input/output to only one input/output function :py:meth:`ff`.
         '''
@@ -304,7 +315,7 @@ class PoolingUnit(ComputeUnitSimple):
                                 pool_ty)
         
     def compute_size(self, from_btm, to_top):
-        self.out_shape = from_btm[self.btm_names[0]][:]
+        self.out_shape = from_btm[self.btm_names[0]]['out_shape'][:]
         ori_height = self.out_shape[0]
         ori_width = self.out_shape[1]
         self.out_shape[0] = int(np.ceil(float(self.out_shape[0] + 2 * self.ppa.pad - self.ppa.kernel_size) / self.ppa.stride)) + 1
@@ -313,7 +324,14 @@ class PoolingUnit(ComputeUnitSimple):
             if (self.out_shape[0] - 1) * self.ppa.stride >= ori_height + self.ppa.pad:
                 self.out_shape[0] = self.out_shape[0] - 1
                 self.out_shape[1] = self.out_shape[1] - 1
-        to_top[self.top_names[0]] = self.out_shape[:]
+        to_top[self.top_names[0]] = dict()
+        to_top[self.top_names[0]]['out_shape'] = self.out_shape[:]
+        to_top[self.top_names[0]]['stride_on_ori'] = from_btm[self.btm_names[0]]['stride_on_ori'] * self.ppa.stride
+        to_top[self.top_names[0]]['rec_on_ori'] = from_btm[self.btm_names[0]]['rec_on_ori'] + (self.ppa.kernel_size - 1) * from_btm[self.btm_names[0]]['stride_on_ori']
+        to_top[self.top_names[0]]['start_on_ori'] = from_btm[self.btm_names[0]]['start_on_ori'] - self.ppa.pad * from_btm[self.btm_names[0]]['stride_on_ori']
+        self.rec_on_ori = to_top[self.top_names[0]]['rec_on_ori']
+        self.stride_on_ori = to_top[self.top_names[0]]['stride_on_ori']
+        self.start_on_ori = to_top[self.top_names[0]]['start_on_ori']
 
     def ff(self, x, phase):
         self.ff_x = x
@@ -358,8 +376,16 @@ class SoftmaxUnit(ComputeUnit):
         self.loss_weight = params.loss_weight
     
     def compute_size(self, from_btm, to_top):
-        to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
-        self.out_shape = to_top[self.top_names[0]][:]
+        to_top[self.top_names[0]] = dict()
+        to_top[self.top_names[0]]['out_shape'] = from_btm[self.btm_names[0]]['out_shape'][:]
+        to_top[self.top_names[0]]['rec_on_ori'] = from_btm[self.btm_names[0]]['rec_on_ori']
+        to_top[self.top_names[0]]['stride_on_ori'] = from_btm[self.btm_names[0]]['stride_on_ori']       
+        to_top[self.top_names[0]]['start_on_ori'] = from_btm[self.btm_names[0]]['start_on_ori']       
+        
+        self.out_shape = to_top[self.top_names[0]]['out_shape'][:]
+        self.stride_on_ori = to_top[self.top_names[0]]['stride_on_ori']
+        self.start_on_ori = to_top[self.top_names[0]]['start_on_ori']
+        self.rec_on_ori = to_top[self.top_names[0]]['rec_on_ori']
     
     def forward(self, from_btm, to_top, phase):
         to_top[self.top_names[0]] = co.softmax(from_btm[self.btm_names[0]], co.soft_op.instance)
@@ -401,8 +427,16 @@ class AccuracyUnit(ComputeUnit):
         self.batch_size = 0
 
     def compute_size(self, from_btm, to_top):
-        to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
-        self.out_shape = to_top[self.top_names[0]][:]
+        to_top[self.top_names[0]] = dict()
+        to_top[self.top_names[0]]['out_shape'] = from_btm[self.btm_names[0]]['out_shape'][:]
+        to_top[self.top_names[0]]['rec_on_ori'] = from_btm[self.btm_names[0]]['rec_on_ori']
+        to_top[self.top_names[0]]['stride_on_ori'] = from_btm[self.btm_names[0]]['stride_on_ori']             
+        to_top[self.top_names[0]]['start_on_ori'] = from_btm[self.btm_names[0]]['start_on_ori']             
+        
+        self.out_shape = to_top[self.top_names[0]]['out_shape'][:]
+        self.stride_on_ori = to_top[self.top_names[0]]['stride_on_ori']
+        self.start_on_ori = to_top[self.top_names[0]]['start_on_ori']
+        self.rec_on_ori = to_top[self.top_names[0]]['rec_on_ori']
     
     def forward(self, from_btm, to_top, phase):
         predict = from_btm[self.btm_names[0]].argmax(0)
@@ -445,11 +479,19 @@ class ConcatUnit(ComputeUnit):
         self.slice_count = []
 
     def compute_size(self, from_btm, to_top):
-        to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
-        self.concat_dim = len(from_btm[self.btm_names[0]]) - 1 - self.concat_dim_caffe
+        to_top[self.top_names[0]] = dict()
+        to_top[self.top_names[0]]['out_shape'] = from_btm[self.btm_names[0]]['out_shape'][:]
+        to_top[self.top_names[0]]['rec_on_ori'] = from_btm[self.btm_names[0]]['rec_on_ori']
+        to_top[self.top_names[0]]['stride_on_ori'] = from_btm[self.btm_names[0]]['stride_on_ori'] 
+        to_top[self.top_names[0]]['start_on_ori'] = from_btm[self.btm_names[0]]['start_on_ori'] 
+        
+        self.concat_dim = len(from_btm[self.btm_names[0]]['out_shape']) - 1 - self.concat_dim_caffe
         for i in range(1, len(self.btm_names)):
-            to_top[self.top_names[0]][self.concat_dim] = to_top[self.top_names[0]][self.concat_dim] + from_btm[self.btm_names[i]][self.concat_dim]
-        self.out_shape = to_top[self.top_names[0]][:]
+            to_top[self.top_names[0]]['out_shape'][self.concat_dim] = to_top[self.top_names[0]]['out_shape'][self.concat_dim] + from_btm[self.btm_names[i]]['out_shape'][self.concat_dim]
+        self.out_shape = to_top[self.top_names[0]]['out_shape'][:]
+        self.stride_on_ori = to_top[self.top_names[0]]['stride_on_ori']
+        self.start_on_ori = to_top[self.top_names[0]]['start_on_ori']
+        self.rec_on_ori = to_top[self.top_names[0]]['rec_on_ori']
 
     def forward(self, from_btm, to_top, phase):
         narrays = []
@@ -458,6 +500,7 @@ class ConcatUnit(ComputeUnit):
             narrays.append(from_btm[self.btm_names[i]])
             self.slice_count.append(from_btm[self.btm_names[i]].shape[self.concat_dim])
         to_top[self.top_names[0]] = owl.concat(narrays, self.concat_dim)
+    
     def backward(self, from_top, to_btm, phase):
         st_off = 0
         for i in range(len(self.btm_names)):
@@ -483,17 +526,31 @@ class FullyConnection(WeightedComputeUnit):
         The weight size is ``[top_shape[0], btm_shape[0]]``; the bias size is ``[top_shape[0], 1]``
         (assume both ``top`` and ``btm`` are 2-dimensional array)
         '''
-        shp = from_btm[self.btm_names[0]][:]
+        shp = from_btm[self.btm_names[0]]['out_shape'][:]
         if len(shp) > 2:
             self.in_shape = [np.prod(shp[0:-1], dtype=np.int32), shp[-1]]
         else:
             self.in_shape = shp
-        to_top[self.top_names[0]] = self.in_shape[:]
-        to_top[self.top_names[0]][0] = self.inner_product_param.num_output
-        to_top[self.top_names[0]][1] = 1 
-        self.out_shape = to_top[self.top_names[0]][:]
+        to_top[self.top_names[0]] = dict() 
+        to_top[self.top_names[0]]['out_shape'] = self.in_shape[:]
+        to_top[self.top_names[0]]['out_shape'][0] = self.inner_product_param.num_output
+        to_top[self.top_names[0]]['out_shape'][1] = 1 
+        self.out_shape = to_top[self.top_names[0]]['out_shape'][:]
         self.wshape = [self.out_shape[0], self.in_shape[0]]
         self.bshape = [self.out_shape[0], 1]
+
+        if len(shp) > 2:
+            #last layer is conv layer
+            self.rec_on_ori = from_btm[self.btm_names[0]]['rec_on_ori'] + (shp[0] - 1) * from_btm[self.btm_names[0]]['stride_on_ori']
+            self.stride_on_ori = self.rec_on_ori
+        else:
+            self.rec_on_ori = from_btm[self.btm_names[0]]['rec_on_ori']
+            self.stride_on_ori = from_btm[self.btm_names[0]]['stride_on_ori']
+
+        to_top[self.top_names[0]]['rec_on_ori'] = self.rec_on_ori
+        to_top[self.top_names[0]]['stride_on_ori'] = self.stride_on_ori
+        to_top[self.top_names[0]]['start_on_ori'] = from_btm[self.btm_names[0]]['start_on_ori']
+        self.start_on_ori = to_top[self.top_names[0]]['start_on_ori']
     
     def ff(self, act, phase):
         shp = act.shape
@@ -558,18 +615,26 @@ class ConvConnection(WeightedComputeUnit):
             - ``Ci``: number of input channels
             - ``Co``: number of output channels
         '''
-        self.in_shape = from_btm[self.btm_names[0]][:]
-        to_top[self.top_names[0]] = from_btm[self.btm_names[0]][:]
-        to_top[self.top_names[0]][0] = (to_top[self.top_names[0]][0] + 2 * self.conv_params.pad - self.conv_params.kernel_size) / self.conv_params.stride + 1
-        to_top[self.top_names[0]][1] = (to_top[self.top_names[0]][1] + 2 * self.conv_params.pad - self.conv_params.kernel_size) / self.conv_params.stride + 1
-        to_top[self.top_names[0]][2] = self.num_output
-        self.out_shape = to_top[self.top_names[0]][:]
+        self.in_shape = from_btm[self.btm_names[0]]['out_shape'][:]
+        to_top[self.top_names[0]] = dict()
+        to_top[self.top_names[0]]['out_shape'] = from_btm[self.btm_names[0]]['out_shape'][:]
+        to_top[self.top_names[0]]['out_shape'][0] = (to_top[self.top_names[0]]['out_shape'][0] + 2 * self.conv_params.pad - self.conv_params.kernel_size) / self.conv_params.stride + 1
+        to_top[self.top_names[0]]['out_shape'][1] = (to_top[self.top_names[0]]['out_shape'][1] + 2 * self.conv_params.pad - self.conv_params.kernel_size) / self.conv_params.stride + 1
+        to_top[self.top_names[0]]['out_shape'][2] = self.num_output
+        self.out_shape = to_top[self.top_names[0]]['out_shape'][:]
         self.wshape = [self.conv_params.kernel_size,
                        self.conv_params.kernel_size,
                        self.in_shape[2],
                        self.num_output]
         self.bshape = [self.out_shape[2]]
-    
+        
+        to_top[self.top_names[0]]['stride_on_ori'] = from_btm[self.btm_names[0]]['stride_on_ori'] * self.conv_params.stride
+        to_top[self.top_names[0]]['rec_on_ori'] = from_btm[self.btm_names[0]]['rec_on_ori'] + (self.conv_params.kernel_size - 1) * from_btm[self.btm_names[0]]['stride_on_ori']
+        to_top[self.top_names[0]]['start_on_ori'] = from_btm[self.btm_names[0]]['start_on_ori'] - self.conv_params.pad * from_btm[self.btm_names[0]]['stride_on_ori']
+        self.stride_on_ori = to_top[self.top_names[0]]['stride_on_ori']
+        self.start_on_ori = to_top[self.top_names[0]]['start_on_ori']
+        self.rec_on_ori = to_top[self.top_names[0]]['rec_on_ori']
+
     def ff(self, act, phase):
         ''' Feed-forward of convolution
 
@@ -645,6 +710,10 @@ class DataUnit(ComputeUnit):
         #may have multiplier labels
         for i in range (1, len(self.top_names)):
             to_top[self.top_names[i]] = labels[:,i - 1]
+
+        #the output of datalayer is the data not label
+        self.out = to_top[self.top_names[0]]
+
     def backward(self, from_top, to_btm, phase):
         # no bp pass
         pass
@@ -668,12 +737,21 @@ class LMDBDataUnit(DataUnit):
         self.params = params
         self.crop_size = params.transform_param.crop_size
         self.generator = None
+        self.out = None
 
     def compute_size(self, from_btm, to_top):
         self.out_shape = [self.params.transform_param.crop_size,
                           self.params.transform_param.crop_size,
                           3, 1]
-        to_top[self.top_names[0]] = self.out_shape[:]
+        to_top[self.top_names[0]] = dict()
+        to_top[self.top_names[0]]['out_shape'] = self.out_shape[:]
+        to_top[self.top_names[0]]['rec_on_ori'] = 1
+        to_top[self.top_names[0]]['stride_on_ori'] = 1 
+        to_top[self.top_names[0]]['start_on_ori'] = 0
+        self.rec_on_ori = 1
+        self.stride_on_ori = 1
+        self.start_on_ori = 0
+
    
     def forward(self, from_btm, to_top, phase):
         ''' Feed-forward operation may vary according to phase. 
@@ -702,6 +780,7 @@ class LMDBDataUnit(DataUnit):
                 [self.crop_size, self.crop_size, 3, samples.shape[0]])
         for i in range (1, len(self.top_names)):
             to_top[self.top_names[i]] = labels[:,i - 1]
+        self.out = to_top[self.top_names[0]]
 
     def __str__(self):
         return 'lmdb_data'
@@ -725,7 +804,14 @@ class ImageDataUnit(DataUnit):
         self.out_shape = [self.params.transform_param.crop_size,
                           self.params.transform_param.crop_size,
                           3, 1]
-        to_top[self.top_names[0]] = self.out_shape[:]
+        to_top[self.top_names[0]] = dict()
+        to_top[self.top_names[0]]['out_shape'] = self.out_shape[:]
+        to_top[self.top_names[0]]['rec_on_ori'] = 1
+        to_top[self.top_names[0]]['stride_on_ori'] = 1 
+        to_top[self.top_names[0]]['start_on_ori'] = 0
+        self.rec_on_ori = 1
+        self.stride_on_ori = 1
+        self.start_on_ori = 0
 
     def __str__(self):
         return 'image_data'
@@ -757,7 +843,14 @@ class ImageWindowDataUnit(DataUnit):
         self.out_shape = [self.params.window_data_param.crop_size,
                           self.params.window_data_param.crop_size,
                           3, 1]
-        to_top[self.top_names[0]] = self.out_shape[:]
+        to_top[self.top_names[0]] = dict()
+        to_top[self.top_names[0]]['out_shape'] = self.out_shape[:]
+        to_top[self.top_names[0]]['rec_on_ori'] = 1
+        to_top[self.top_names[0]]['stride_on_ori'] = 1 
+        to_top[self.top_names[0]]['start_on_ori'] = 0 
+        self.rec_on_ori = 1
+        self.stride_on_ori = 1
+        self.start_on_ori = 0
     
     def __str__(self):
         return 'window_data'
@@ -923,10 +1016,16 @@ class Net:
             for btm in self.reverse_adjacent[u]:
                 from_btm.update(unit_to_tops[btm])
             self.units[u].compute_size(from_btm, unit_to_tops[u])
-        #for u in self._toporder(phase):
-            #print self.units[u].name
-            #print self.units[u].out_shape
-    
+        '''
+        for u in self._toporder(phase):
+            print self.units[u].name
+            print self.units[u].out_shape
+            print self.units[u].rec_on_ori
+            print self.units[u].stride_on_ori
+            print self.units[u].start_on_ori
+        exit(0)
+        '''
+
     def forward(self, phase = 'TRAIN'):
         ''' Perform the forward pass
         '''

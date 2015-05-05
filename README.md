@@ -89,7 +89,7 @@ We also provide some end-to-end training codes in `owl` package, which could loa
 
 Minerva is provided in the Apache V2 open source license.
 
-You can use the "issues" tab in github to report bugs. For non-bug issues, please send up an email at minerva-support@googlegroups.com.
+You can use the "issues" tab in github to report bugs. For non-bug issues, please send up an email at minerva-support@googlegroups.com. You can subscribe to the discussion group: https://groups.google.com/forum/#!forum/minerva-support.
 
 ## Wiki
 
