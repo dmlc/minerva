@@ -43,6 +43,7 @@ void LRNForward(const DataList&, const DataList&, LRNForwardClosure&, const Cont
 void LRNBackward(const DataList&, const DataList&, LRNBackwardClosure&, const Context&);
 void Concat(const DataList&, const DataList&, ConcatClosure&, const Context&);
 void Slice(const DataList&, const DataList&, SliceClosure&, const Context&);
+void Index(const DataList&, const DataList&, IndexClosure&, const Context&);
 
 }
 #endif

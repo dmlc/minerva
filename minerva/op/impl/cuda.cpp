@@ -637,6 +637,10 @@ void SyncWithPS(const DataList& inputs, const DataList& outputs, SyncWithPSClosu
 #endif
 }
 
+void Index(const DataList& inputs, const DataList& outputs, IndexClosure& closure, const Context& context) {
+	cout << "a" << endl;
+}
+
 }
 #endif
 }
