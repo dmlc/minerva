@@ -1,7 +1,9 @@
 project(MinervaOwl)
 
 find_package(PythonLibs REQUIRED)
+find_package(NumPy REQUIRED)
 message(STATUS "Found python libs, version: ${PYTHONLIBS_VERSION_STRING}")
+message(STATUS "Found numpy libs, version: ${NUMPY_VERSION}")
 
 include_directories(
   ${MinervaLib_SOURCE_DIR}
