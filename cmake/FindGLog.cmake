@@ -89,6 +89,7 @@ ENDMACRO(GLOG_REPORT_NOT_FOUND)
 #
 # TODO: Add standard Windows search locations for glog.
 LIST(APPEND GLOG_CHECK_INCLUDE_DIRS
+  ${CMAKE_PREFIX_PATH}/include
   ${CMAKE_INSTALL_PREFIX}/include
   /usr/local/include
   /usr/local/homebrew/include # Mac OS X
@@ -96,6 +97,7 @@ LIST(APPEND GLOG_CHECK_INCLUDE_DIRS
   /opt/local/include
   /usr/include)
 LIST(APPEND GLOG_CHECK_LIBRARY_DIRS
+  ${CMAKE_PREFIX_PATH}/lib
   ${CMAKE_INSTALL_PREFIX}/lib
   /usr/local/lib
   /usr/local/homebrew/lib # Mac OS X.
