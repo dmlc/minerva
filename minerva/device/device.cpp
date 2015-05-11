@@ -28,7 +28,7 @@ using namespace std;
 
 namespace minerva {
 
-Device::Device(uint64_t device_id, DeviceListener* l) : device_id_(device_id), data_store_(0), listener_(l) {
+Device::Device(uint64_t device_id, DeviceListener* l) : device_id_(device_id), data_store_{unique_ptr<DataStore>(nullptr)}, listener_(l) {
 }
 
 pair<Device::MemType, float*> Device::GetPtr(uint64_t data_id) {
@@ -45,9 +45,7 @@ void Device::FreeDataIfExist(uint64_t data_id) {
 }
 
 string Device::GetMemUsage() const {
-  stringstream ss;
-  ss << "device #" << device_id_ << " used " << data_store_->GetTotalBytes() << "B";
-  return ss.str();
+  return common::FString("device #%d used %dB", device_id_, data_store_->GetTotalBytes());
 }
 
 ThreadedDevice::ThreadedDevice(uint64_t device_id, DeviceListener* l, size_t parallelism) : Device(device_id, l), pool_(parallelism) {
@@ -131,7 +129,7 @@ struct GpuDevice::Impl {
   Impl(int);
   DISALLOW_COPY_AND_ASSIGN(Impl);
   ~Impl();
-  void ActivateDevice() const;
+  inline void ActivateDevice() const;
 
   static size_t constexpr kParallelism = 4;
   int const device;
@@ -177,13 +175,14 @@ GpuDevice::GpuDevice(uint64_t device_id, DeviceListener* l, int gpu_id) : Thread
     impl_->ActivateDevice();
     CUDA_CALL(cudaFree(ptr));
   };
-  data_store_ = new PooledDataStore(DEFAULT_POOL_SIZE, allocator, deallocator);
+  data_store_ = common::MakeUnique<PooledDataStore>(DEFAULT_POOL_SIZE, allocator, deallocator);
 }
 
 GpuDevice::~GpuDevice() {
   impl_->ActivateDevice();
   pool_.WaitForAllFinished();
-  delete data_store_;
+  // `data_store_` has to be deallocated before `impl_` does, because the `deallocator` of `data_store_` depends on `impl_`
+  data_store_.reset();
 }
 
 Device::MemType GpuDevice::GetMemType() const {
@@ -191,9 +190,7 @@ Device::MemType GpuDevice::GetMemType() const {
 }
 
 string GpuDevice::Name() const {
-  stringstream ss;
-  ss << "GPU device #" << device_id_;
-  return ss.str();
+  return common::FString("GPU device #%d", device_id_);
 }
 
 void GpuDevice::PreExecute() {
@@ -229,12 +226,11 @@ CpuDevice::CpuDevice(uint64_t device_id, DeviceListener* l) : ThreadedDevice(dev
   auto deallocator = [](void* ptr) {
     free(ptr);
   };
-  data_store_ = new DataStore(allocator, deallocator);
+  data_store_ = common::MakeUnique<DataStore>(allocator, deallocator);
 }
 
 CpuDevice::~CpuDevice() {
   pool_.WaitForAllFinished();
-  delete data_store_;
 }
 
 Device::MemType CpuDevice::GetMemType() const {
@@ -242,9 +238,7 @@ Device::MemType CpuDevice::GetMemType() const {
 }
 
 string CpuDevice::Name() const {
-  stringstream ss;
-  ss << "CPU device #" << device_id_;
-  return ss.str();
+  return common::FString("CPU device #%d", device_id_);
 }
 
 void CpuDevice::DoCopyRemoteData(float* dst, float* src, size_t size, int) {

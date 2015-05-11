@@ -2,6 +2,8 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <string>
+#include <cstdio>
 #include <unordered_set>
 #include <algorithm>
 #include "./make_unique.h"
@@ -60,5 +62,16 @@ void Iter(const Iterable& original, Fn fn) {
   std::for_each(original.begin(), original.end(), fn);
 }
 
+namespace common {
+
+template<typename... Args>
+std::string FString(char const* format, Args&&... args) {
+  size_t constexpr buffer_size = 1024;
+  char buffer[buffer_size];
+  snprintf(buffer, buffer_size, format, std::forward<Args>(args)...);
+  return std::string(buffer);
+}
+
+}  // namespace common
 }  // namespace minerva
 

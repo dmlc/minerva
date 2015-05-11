@@ -36,7 +36,7 @@ class Device {
   ConcurrentUnorderedSet<uint64_t> local_data_;
   ConcurrentUnorderedSet<uint64_t> remote_data_;
   uint64_t device_id_;
-  DataStore* data_store_;
+  std::unique_ptr<DataStore> data_store_;
   DeviceListener* listener_;
 };
 
@@ -87,7 +87,7 @@ class CpuDevice : public ThreadedDevice {
   std::string Name() const override;
 
  private:
-  static const size_t kDefaultThreadNum = 4;
+  static size_t constexpr kDefaultThreadNum = 4;
   void DoCopyRemoteData(float*, float*, size_t, int) override;
   void DoExecute(const DataList&, const DataList&, PhysicalOp&, int) override;
 };

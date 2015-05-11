@@ -11,7 +11,7 @@
         ], 
         "language": "c++", 
         "runtime_library_dirs": [
-            "../release/lib"
+            "/home/yutian/cpp/minerva/release/lib"
         ], 
         "libraries": [
             "minerva"
@@ -24,11 +24,11 @@
             "-g"
         ], 
         "library_dirs": [
-            "../release/lib"
+            "release/lib"
         ], 
         "include_dirs": [
-            "../minerva", 
-            "../deps", 
+            "minerva", 
+            "third_party", 
             "/usr/local/cuda/include", 
             "/home/yutian/cpp/cudnn-6.5-linux-x64-v2"
         ]

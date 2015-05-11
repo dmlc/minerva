@@ -4,7 +4,7 @@ from Cython.Build import cythonize
 import os
 
 # Hack to use specified compiler
-os.environ['CC'] = 'clang++'
+os.environ['CC'] = 'g++-4.8'
 os.environ['OPT'] = ''
 
 def relative_path(to):
