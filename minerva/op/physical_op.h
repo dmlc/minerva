@@ -361,9 +361,16 @@ class SliceOp : public ComputeFnWithClosure<SliceClosure> {
 };
 
 class IndexOp : public ComputeFnWithClosure<IndexClosure> {
-  public:
-	std::string Name() const {
-	  return "Index";
+ public:
+  std::string Name() const {
+    return "Index";
+  }
+};
+
+class SelectOp : public ComputeFnWithClosure<SelectClosure> {
+ public:
+  std::string Name() const {
+    return "Select";
   }
 };
 
