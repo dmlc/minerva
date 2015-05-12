@@ -82,15 +82,17 @@ We also provide some end-to-end training codes in `owl` package, which could loa
 
 ### Testing error rate
 We trained several models using Minerva from scratch to show the correctness. The following table shows the error rate of different network under different testing settings.
+
 | Testing error rate | AlexNet | VGGNet | GoogLeNet |
 |:------------------------------:|:-------:|:------:|:---------:|
 | single view top-1 | 41.6% | 31.6% | 32.7% |
 | multi view top-1 | 39.7% | 30.1% | 31.3% |
 | single view top-5 | 18.8% | 11.4% | 11.8% |
 | multi view top-5 | 17.5% | 10.8% | 11.0% |
-AlexNet is trained with the [solver](https://github.com/BVLC/caffe/blob/master/models/bvlc_alexnet/solver.prototxt) except for we didn't use multi-group convolution.
-GoogLeNet is trained with the [quick_solver](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/quick_solver.prototxt).
-We didn't train VGGNet from scratch. We just transform the model into Minerva format and testing.
+
+* AlexNet is trained with the [solver](https://github.com/BVLC/caffe/blob/master/models/bvlc_alexnet/solver.prototxt) except for we didn't use multi-group convolution.
+* GoogLeNet is trained with the [quick_solver](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/quick_solver.prototxt).
+* We didn't train VGGNet from scratch. We just transform the model into Minerva format and testing.
 
 The models can be found in the following link:
 [AlexNet](http://pan.baidu.com/s/1bnAT10b) [GoogLeNet](http://pan.baidu.com/s/1df67G) [VGGNet]
