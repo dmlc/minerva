@@ -52,6 +52,8 @@ class CaffeNetBuilder:
         stacked_layers = {}
         rev_stacked_layers = {}
         top_name_to_layer = {}
+
+        owl_net.data_layers = []
         # 1. record name and its caffe.V1LayerParameter data in a map
         # 2. some layers is stacked into one in caffe's configure format
         for l in self.netconfig.layers:
@@ -63,12 +65,15 @@ class CaffeNetBuilder:
                 #handle IO. XXX: hard-coded
                 ty = l.type
                 if ty == V1LayerParameter.LayerType.Value('DATA'):
+                    owl_net.data_layers.append(l.name)
                     if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
                         owl_net.batch_size = l.data_param.batch_size
                 elif ty == V1LayerParameter.LayerType.Value('IMAGE_DATA'):
+                    owl_net.data_layers.append(l.name)
                     if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
                         owl_net.batch_size = l.image_data_param.batch_size
                 elif ty == V1LayerParameter.LayerType.Value('WINDOW_DATA'):
+                    owl_net.data_layers.append(l.name)
                     if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
                         owl_net.batch_size = l.window_data_param.batch_size
                 elif ty == V1LayerParameter.LayerType.Value('SOFTMAX_LOSS'):
