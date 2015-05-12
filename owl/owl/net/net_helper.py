@@ -317,7 +317,7 @@ class CaffeModelLoader:
                 np.array(netparam.layers[i].blobs[1].data, dtype=np.float32).tofile(filename)
               
 if __name__ == "__main__":
-    CaffeModelLoader('/home/tianjun/caffe/caffe/models/bvlc_googlenet/bvlc_googlenet_quick_iter_40.caffemodel', '/home/tianjun/caffe/caffe/models/bvlc_googlenet/bvlc_googlenet_quick_iter_40.solverstate', '/home/tianjun/models/GoogModel/', 0)
+    CaffeModelLoader('/home/tianjun/caffe/models/bvlc_googlenet/bvlc_googlenet.caffemodel', '/home/tianjun/models/newGoogmodel/', 0)
     #CaffeModelLoader('/home/tianjun/caffe/caffe/models/bvlc_alexnet/caffe_alexnet_train_iter_20.caffemodel', '/home/tianjun/caffe/caffe/models/bvlc_alexnet/Minervamodel/')
     '''
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])

@@ -244,7 +244,7 @@ class NetTester:
                 test_num += batch_size
                 acc_num += (batch_size * accunit.acc)
                 correct = batch_size * accunit.acc
-            print "Accuracy of the %d mb: %f, batch_size: %d" % (testiteridx, (correct * 1.0)/batch_size, batch_size)
+            print "Accuracy of the %d mb: %f, batch_size: %d, current mean accuracy: %f" % (testiteridx, (correct * 1.0)/batch_size, batch_size, float(acc_num)/test_num)
             sys.stdout.flush()
         print "Testing Accuracy: %f" % (float(acc_num)/test_num)
 
