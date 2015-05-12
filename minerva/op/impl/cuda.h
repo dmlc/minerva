@@ -45,6 +45,8 @@ void Concat(const DataList&, const DataList&, ConcatClosure&, const Context&);
 void Slice(const DataList&, const DataList&, SliceClosure&, const Context&);
 void Index(const DataList&, const DataList&, IndexClosure&, const Context&);
 
+void Select(DataList const&, DataList const&, SelectClosure&, Context const&);
+
 }
 #endif
 }

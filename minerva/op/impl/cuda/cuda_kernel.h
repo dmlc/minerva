@@ -335,8 +335,8 @@ __global__ void SelectKernel(float const* dst, float* src, int* indices, size_t 
   int step = blockDim.x * gridDim.x;
   int end = dst_cols * rows;
   while (loc < end) {
-    int current_row = loc / index_size;
-    dst[loc] = src[current_row * cols + indices[loc % index_size]];
+    int current_row = loc % rows;
+    dst[loc] = src[current_row + indices[loc / rows] * rows];
     loc += step;
   }
 }

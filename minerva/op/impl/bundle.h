@@ -52,4 +52,5 @@ INSTALL_COMPUTE_FN(LRNBackwardClosure, NO_IMPL, NO_IMPL, cuda::LRNBackward);
 INSTALL_COMPUTE_FN(ConcatClosure, NO_IMPL, NO_IMPL, cuda::Concat);
 INSTALL_COMPUTE_FN(SliceClosure, NO_IMPL, NO_IMPL, cuda::Slice);
 INSTALL_COMPUTE_FN(IndexClosure, basic::Index, NO_IMPL, NO_IMPL);
+INSTALL_COMPUTE_FN(SelectClosure, NO_IMPL, NO_IMPL, cuda::Select);
 }  // namespace minerva
