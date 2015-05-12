@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser.add_argument('solver_file', help='caffe solver configure file')
     parser.add_argument('softmax_layer_name', help='softmax_layer_name')
     parser.add_argument('accuracy_layer_name', help='accuracy_layer_name')
-    parser.add_argument('snapshot', help='the snapshot idx for test', action='store', type=int, default=0)
+    parser.add_argument('-s', '--snapshot', help='the snapshot idx for test', action='store', type=int, default=0)
     parser.add_argument('-g', '--gpu_idx', help='the gpu id to use', action='store', type=int, default=1)
     parser.add_argument('-m', '--multiview', help='whether to use multiview', action='store', type=int, default=False)
 

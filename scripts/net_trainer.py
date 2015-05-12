@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('solver_file', help='caffe solver configure file')
     parser.add_argument('-n', '--num_gpu', help='number of gpus to use', action='store', type=int, default=1)
-    parser.add_argument('--snapshot', help='the snapshot idx to start from', action='store', type=int, default=0)
+    parser.add_argument('-s', '--snapshot', help='the snapshot idx to start from', action='store', type=int, default=0)
 
     (args, remain) = parser.parse_known_args()
     solver_file = args.solver_file
