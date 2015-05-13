@@ -95,7 +95,7 @@ We trained several models using Minerva from scratch to show the correctness. Th
 * We didn't train VGGNet from scratch. We just transform the model into Minerva format and testing.
 
 The models can be found in the following link:
-[AlexNet](http://pan.baidu.com/s/1bnAT10b) [GoogLeNet](http://pan.baidu.com/s/1df67G) [VGGNet]
+[AlexNet](http://pan.baidu.com/s/1bnAT10b) [GoogLeNet](http://pan.baidu.com/s/1df67G) [VGGNet](http://pan.baidu.com/s/1pJIC5sf)
 
 You can try then on your own machine.
 
