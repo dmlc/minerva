@@ -90,14 +90,14 @@ We trained several models using Minerva from scratch to show the correctness. Th
 | single view top-5 | 18.8% | 11.4% | 11.8% |
 | multi view top-5 | 17.5% | 10.8% | 11.0% |
 
-* AlexNet is trained with the [solver](https://github.com/BVLC/caffe/blob/master/models/bvlc_alexnet/solver.prototxt) except for we didn't use multi-group convolution.
+* AlexNet is trained with the [solver](https://github.com/BVLC/caffe/blob/master/models/bvlc_alexnet/solver.prototxt) except that we didn't use multi-group convolution.
 * GoogLeNet is trained with the [quick_solver](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/quick_solver.prototxt).
 * We didn't train VGGNet from scratch. We just transform the model into Minerva format and testing.
 
 The models can be found in the following link:
 [AlexNet](http://pan.baidu.com/s/1bnAT10b) [GoogLeNet](http://pan.baidu.com/s/1df67G) [VGGNet](http://pan.baidu.com/s/1pJIC5sf)
 
-You can try then on your own machine.
+You can try them on your own machine.
 
 ## Next Plan
 * Get rid of boost library dependency by using Cython.
