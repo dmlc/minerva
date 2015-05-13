@@ -425,6 +425,7 @@ class AccuracyUnit(ComputeUnit):
         super(AccuracyUnit, self).__init__(params)
         self.acc = 0
         self.batch_size = 0
+        self.top_k = params.accuracy_param.top_k
 
     def compute_size(self, from_btm, to_top):
         to_top[self.top_names[0]] = dict()
@@ -439,11 +440,26 @@ class AccuracyUnit(ComputeUnit):
         self.rec_on_ori = to_top[self.top_names[0]]['rec_on_ori']
     
     def forward(self, from_btm, to_top, phase):
-        predict = from_btm[self.btm_names[0]].argmax(0)
-        ground_truth = owl.from_numpy(from_btm[self.btm_names[1]]).reshape(predict.shape)
-        self.batch_size = from_btm[self.btm_names[0]].shape[1]
-        correct = (predict - ground_truth).count_zero()
-        self.acc = correct * 1.0 / self.batch_size
+        if self.top_k == 1:
+            predict = from_btm[self.btm_names[0]].argmax(0)
+            ground_truth = owl.from_numpy(from_btm[self.btm_names[1]]).reshape(predict.shape)
+            self.batch_size = from_btm[self.btm_names[0]].shape[1]
+            correct = (predict - ground_truth).count_zero()
+            self.acc = correct * 1.0 / self.batch_size
+        elif self.top_k == 5:
+            predict = from_btm[self.btm_names[0]].to_numpy()
+            top_5 = np.argsort(predict, axis=1)[:,::-1]
+            ground_truth = from_btm[self.btm_names[1]]
+            self.batch_size = np.shape(ground_truth)[0]
+            correct = 0
+            for i in range(self.batch_size):
+                for t in range(5):
+                    if ground_truth[i] == top_5[i,t]:
+                        correct += 1
+                        break
+            self.acc = correct * 1.0 / self.batch_size
+        else:
+            assert(FALSE)
 
     def backward(self, from_top, to_btm, phase):
         pass
@@ -738,6 +754,7 @@ class LMDBDataUnit(DataUnit):
         self.crop_size = params.transform_param.crop_size
         self.generator = None
         self.out = None
+        self.multiview = False
 
     def compute_size(self, from_btm, to_top):
         self.out_shape = [self.params.transform_param.crop_size,
@@ -758,10 +775,10 @@ class LMDBDataUnit(DataUnit):
 
         .. note::
 
-            LMDB data provider now support multi-view testing, if phase is "MULTI_VIEW", it will produce concequtive 10 batches of different views of the same original image     
+            LMDB data provider now support multi-view testing, if multiview == True, it will produce concequtive 10 batches of different views of the same original image     
         '''
         if self.generator == None:
-            if phase == 'TRAIN' or phase == 'TEST':
+            if self.multiview == False:
                 self.generator = self.dp.get_mb(phase)
             #multiview test
             else:
@@ -773,7 +790,11 @@ class LMDBDataUnit(DataUnit):
                     (samples, labels) = next(self.generator)
             except StopIteration:
                 print 'Have scanned the whole dataset; start from the begginning agin'
-                self.generator = self.dp.get_mb(phase)
+                if self.multiview == False:
+                    self.generator = self.dp.get_mb(phase)
+                #multiview test
+                else:
+                    self.generator = self.dp.get_multiview_mb()
                 continue
             break
         to_top[self.top_names[0]] = owl.from_numpy(samples).reshape(

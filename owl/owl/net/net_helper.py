@@ -52,6 +52,8 @@ class CaffeNetBuilder:
         stacked_layers = {}
         rev_stacked_layers = {}
         top_name_to_layer = {}
+
+        owl_net.data_layers = []
         # 1. record name and its caffe.V1LayerParameter data in a map
         # 2. some layers is stacked into one in caffe's configure format
         for l in self.netconfig.layers:
@@ -63,12 +65,15 @@ class CaffeNetBuilder:
                 #handle IO. XXX: hard-coded
                 ty = l.type
                 if ty == V1LayerParameter.LayerType.Value('DATA'):
+                    owl_net.data_layers.append(l.name)
                     if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
                         owl_net.batch_size = l.data_param.batch_size
                 elif ty == V1LayerParameter.LayerType.Value('IMAGE_DATA'):
+                    owl_net.data_layers.append(l.name)
                     if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
                         owl_net.batch_size = l.image_data_param.batch_size
                 elif ty == V1LayerParameter.LayerType.Value('WINDOW_DATA'):
+                    owl_net.data_layers.append(l.name)
                     if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
                         owl_net.batch_size = l.window_data_param.batch_size
                 elif ty == V1LayerParameter.LayerType.Value('SOFTMAX_LOSS'):
@@ -312,7 +317,7 @@ class CaffeModelLoader:
                 np.array(netparam.layers[i].blobs[1].data, dtype=np.float32).tofile(filename)
               
 if __name__ == "__main__":
-    CaffeModelLoader('/home/tianjun/caffe/caffe/models/bvlc_googlenet/bvlc_googlenet_quick_iter_40.caffemodel', '/home/tianjun/caffe/caffe/models/bvlc_googlenet/bvlc_googlenet_quick_iter_40.solverstate', '/home/tianjun/models/GoogModel/', 0)
+    CaffeModelLoader('/home/tianjun/caffe/models/bvlc_googlenet/bvlc_googlenet.caffemodel', '/home/tianjun/models/newGoogmodel/', 0)
     #CaffeModelLoader('/home/tianjun/caffe/caffe/models/bvlc_alexnet/caffe_alexnet_train_iter_20.caffemodel', '/home/tianjun/caffe/caffe/models/bvlc_alexnet/Minervamodel/')
     '''
     builder = CaffeNetBuilder(sys.argv[1], sys.argv[2])

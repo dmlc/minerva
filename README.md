@@ -80,6 +80,25 @@ We also provide some end-to-end training codes in `owl` package, which could loa
 
 ![Error curve](https://cloud.githubusercontent.com/assets/4057701/6857873/454c44b2-d3e0-11e4-9010-9e62c6c94027.jpg)
 
+### Testing error rate
+We trained several models using Minerva from scratch to show the correctness. The following table shows the error rate of different network under different testing settings.
+
+| Testing error rate | AlexNet | VGGNet | GoogLeNet |
+|:------------------------------:|:-------:|:------:|:---------:|
+| single view top-1 | 41.6% | 31.6% | 32.7% |
+| multi view top-1 | 39.7% | 30.1% | 31.3% |
+| single view top-5 | 18.8% | 11.4% | 11.8% |
+| multi view top-5 | 17.5% | 10.8% | 11.0% |
+
+* AlexNet is trained with the [solver](https://github.com/BVLC/caffe/blob/master/models/bvlc_alexnet/solver.prototxt) except that we didn't use multi-group convolution.
+* GoogLeNet is trained with the [quick_solver](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/quick_solver.prototxt).
+* We didn't train VGGNet from scratch. We just transform the model into Minerva format and testing.
+
+The models can be found in the following link:
+[AlexNet](http://pan.baidu.com/s/1bnAT10b) [GoogLeNet](http://pan.baidu.com/s/1df67G) [VGGNet](http://pan.baidu.com/s/1pJIC5sf)
+
+You can try them on your own machine.
+
 ## Next Plan
 * Get rid of boost library dependency by using Cython.
 * Large scale [LSTM](http://en.wikipedia.org/wiki/Long_short_term_memory) example using Minerva.

@@ -91,7 +91,7 @@ class NetTrainer:
         Since the update of each layer is independent among each others, the update could be paralleled affluently. Minerva's
         dataflow engine transparently handles the dependency resolving, scheduling and memory copying among different devices,
         so users don't need to care about that.
-        '''
+        '''       
         wgrad = [[] for i in range(s.num_gpu)]
         bgrad = [[] for i in range(s.num_gpu)]
         last = time.time()
@@ -164,22 +164,25 @@ class NetTrainer:
                 s.builder.save_net_to_file(s.owl_net, s.snapshot_dir, (iteridx + 1) / (s.owl_net.solver.snapshot))
             sys.stdout.flush()
 
-class MultiviewTester:
-    ''' Class for performing multi-view testing
+class NetTester:
+    ''' Class for performing testing, it can be single-view or multi-view, can be top-1 or top-5
 
     Run it as::
-        >>> tester = MultiviewTester(solver_file, softmax_layer, snapshot, gpu_idx)
+        >>> tester = NetTester(solver_file, softmax_layer, accuracy_layer, snapshot, gpu_idx)
         >>> tester.build_net()
-        >>> tester.run()
+        >>> tester.run(multiview)
 
     :ivar str solver_file: path of the solver file in Caffe's proto format
     :ivar int snapshot: the snapshot for testing
     :ivar str softmax_layer_name: name of the softmax layer that produce prediction 
+    :ivar str accuracy_layer_name: name of the accuracy layer that produce prediction 
     :ivar int gpu_idx: which gpu to perform the test
+    :ivar bool multiview: whether to use multiview tester
     '''
-    def __init__(self, solver_file, softmax_layer_name, snapshot, gpu_idx = 0):
+    def __init__(self, solver_file, softmax_layer_name, accuracy_layer_name, snapshot, gpu_idx = 0):
         self.solver_file = solver_file
         self.softmax_layer_name = softmax_layer_name
+        self.accuracy_layer_name = accuracy_layer_name
         self.snapshot = snapshot
         self.gpu = owl.create_gpu_device(gpu_idx)
         owl.set_device(self.gpu)
@@ -189,30 +192,59 @@ class MultiviewTester:
         self.builder = CaffeNetBuilder(self.solver_file)
         self.snapshot_dir = self.builder.snapshot_dir
         self.builder.build_net(self.owl_net)
-        self.owl_net.compute_size('MULTI_VIEW')
+        self.owl_net.compute_size('TEST')
         self.builder.init_net_from_file(self.owl_net, self.snapshot_dir, self.snapshot)
 
-    def run(s):
+    def run(s, multiview):
         #multi-view test
         acc_num = 0
         test_num = 0
         loss_unit = s.owl_net.units[s.owl_net.name_to_uid[s.softmax_layer_name][0]] 
+        accunit = s.owl_net.units[s.owl_net.name_to_uid[s.accuracy_layer_name][0]] 
+        data_unit = None
+        for data_idx in range(len(s.owl_net.data_layers)):
+            for i in range(len(s.owl_net.name_to_uid[s.owl_net.data_layers[data_idx]])):
+                if s.owl_net.units[s.owl_net.name_to_uid[s.owl_net.data_layers[data_idx]][i]].params.include[0].phase == 1:
+                    data_unit = s.owl_net.units[s.owl_net.name_to_uid[s.owl_net.data_layers[data_idx]][i]]
+        assert(data_unit)
+        if multiview == True:
+            data_unit.multiview = True
+
         for testiteridx in range(s.owl_net.solver.test_iter[0]):
-            for i in range(10): 
-                s.owl_net.forward('MULTI_VIEW')
-                if i == 0:
-                    softmax_val = loss_unit.ff_y
-                    batch_size = softmax_val.shape[1]
-                    softmax_label = loss_unit.y
+            if multiview == True:
+                for i in range(10): 
+                    s.owl_net.forward('TEST')
+                    if i == 0:
+                        softmax_val = loss_unit.ff_y
+                        batch_size = softmax_val.shape[1]
+                        softmax_label = loss_unit.y
+                    else:
+                        softmax_val = softmax_val + loss_unit.ff_y
+                test_num += batch_size
+                if accunit.top_k == 5:
+                    predict = softmax_val.to_numpy()
+                    top_5 = np.argsort(predict, axis=1)[:,::-1]
+                    ground_truth = softmax_label.argmax(0).to_numpy()
+                    correct = 0
+                    for i in range(batch_size):
+                        for t in range(5):
+                            if ground_truth[i] == top_5[i,t]:
+                                correct += 1
+                                break
+                    acc_num += correct
                 else:
-                    softmax_val = softmax_val + loss_unit.ff_y
-            
-            test_num += batch_size
-            predict = softmax_val.argmax(0)
-            truth = softmax_label.argmax(0)
-            correct = (predict - truth).count_zero()
-            acc_num += correct
-            print "Accuracy the %d mb: %f, batch_size: %d" % (testiteridx, correct, batch_size)
+                    predict = softmax_val.argmax(0)
+                    truth = softmax_label.argmax(0)
+                    correct = (predict - truth).count_zero()
+                    acc_num += correct
+            else:
+                s.owl_net.forward('TEST')
+                all_accunits = s.owl_net.get_accuracy_units()
+                batch_size = accunit.batch_size
+                test_num += batch_size
+                acc_num += (batch_size * accunit.acc)
+                correct = batch_size * accunit.acc
+            print "Accuracy of the %d mb: %f, batch_size: %d, current mean accuracy: %f" % (testiteridx, (correct * 1.0)/batch_size, batch_size, float(acc_num)/test_num)
             sys.stdout.flush()
         print "Testing Accuracy: %f" % (float(acc_num)/test_num)
 
@@ -301,9 +333,10 @@ class FilterVisualizer:
     def run(s):
         #Need Attention, here we may have multiple data layer, just choose the TEST layer
         data_unit = None
-        for i in range(len(s.owl_net.name_to_uid['data'])):
-            if s.owl_net.units[s.owl_net.name_to_uid['data'][i]].params.include[0].phase == 1:
-                data_unit = s.owl_net.units[s.owl_net.name_to_uid['data'][i]]
+        for data_idx in range(len(s.owl_net.data_layers)):
+            for i in range(len(s.owl_net.name_to_uid[s.owl_net.data_layers[data_idx]])):
+                if s.owl_net.units[s.owl_net.name_to_uid[s.owl_net.data_layers[data_idx]][i]].params.include[0].phase == 1:
+                    data_unit = s.owl_net.units[s.owl_net.name_to_uid[s.owl_net.data_layers[data_idx]][i]]
         assert(data_unit)
        
         bp = BlobProto()
