@@ -21,7 +21,7 @@ Test network
 
 Use following command to perform testing on the given trained network. We could get top-1 or top-5 accuracy under single view or multiview
 ```bash
-./net_tester.py <solver_file> <softmax_layer_name> <accuracy_layer_name> [-s SNAPSHOT] [-g GPU_IDX]
+./net_tester.py <solver_file> <softmax_layer_name> <accuracy_layer_name> [-s SNAPSHOT] [-g GPU_IDX] [-m MULTIVIEW]
 ```
 * `solver_file` is caffe solver configure file.
 * `softmax_layer_name` indicate the layer to produce softmax distribution.
@@ -39,7 +39,7 @@ Feature extracting
 
 Use following command to extract the feature of a certain layer from the given trained network
 ```bash
-./feature_extractor.py <solver_file> <feature_path> [-s SNAPSHOT] [-g GPU_IDX]
+./feature_extractor.py <solver_file> <layer_name> <feature_path> [-s SNAPSHOT] [-g GPU_IDX]
 ```
 * `solver_file` is caffe solver configure file.
 * `layer_name` is the name of the layer to extract feature
@@ -48,7 +48,7 @@ Use following command to extract the feature of a certain layer from the given t
 * `GPU_IDX` is the id of the gpu on which you want the testing to be performed (default: 0).
 Example:
 ```bash
-./feature_extractor.py /path/to/solver.txt fc6 -s=60 -g=1
+./feature_extractor.py /path/to/solver.txt fc6 /path/to/save/feature.txt -s=60 -g=1
 ```
 
 Filter Visualizer
