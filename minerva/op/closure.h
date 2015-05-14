@@ -154,17 +154,21 @@ typedef LRNClosure<0> LRNForwardClosure;
 typedef LRNClosure<1> LRNBackwardClosure;
 
 struct ConcatClosure {
-	int catdim;
+  int catdim;
 };
 
 struct SliceClosure {
-	int slice_dim;
-	int st_off;
-	int slice_count;
+  int slice_dim;
+  int st_off;
+  int slice_count;
 };
 
 struct IndexClosure {
-	int idx;
+  int idx;
+};
+
+struct SelectClosure {
+  std::vector<int> indices;
 };
 
 }  // end of namespace minerva

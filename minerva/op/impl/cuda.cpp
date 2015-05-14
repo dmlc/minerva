@@ -641,6 +641,18 @@ void Index(const DataList& inputs, const DataList& outputs, IndexClosure& closur
 	cout << "a" << endl;
 }
 
+void Select(DataList const& inputs, DataList const& outputs, SelectClosure& closure, Context const& context) {
+  CHECK_EQ(inputs.size(), 1);
+  CHECK_EQ(outputs.size(), 1);
+  CHECK_EQ(inputs[0].size_.NumDims(), 2);
+  CHECK_EQ(outputs[0].size_.NumDims(), 2);
+  CHECK_EQ(inputs[0].size_[0], outputs[0].size_[0]);
+  for (auto i : closure.indices) {
+    CHECK_LT(i, inputs[0].size_[1]);
+  }
+  CudaPerformSelect(outputs[0].data_, inputs[0].data_, closure.indices, inputs[0].size_[1], inputs[0].size_[0], context.stream);
+}
+
 }
 #endif
 }

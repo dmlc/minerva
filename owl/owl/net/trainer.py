@@ -376,9 +376,18 @@ class FilterVisualizer:
                     #get the patch place
                     patch_start_row = max(0,feature_unit.start_on_ori + rowidx * feature_unit.stride_on_ori)
                     patch_end_row = min(feature_unit.start_on_ori + rowidx * feature_unit.stride_on_ori + feature_unit.rec_on_ori, data_unit.crop_size)
+                    if patch_start_row == 0:
+                        patch_end_row = feature_unit.rec_on_ori
+                    if patch_end_row == data_unit.crop_size:
+                        patch_start_row = data_unit.crop_size - feature_unit.rec_on_ori
 
                     patch_start_col = max(0,feature_unit.start_on_ori + colidx * feature_unit.stride_on_ori)
                     patch_end_col = min(feature_unit.start_on_ori + colidx * feature_unit.stride_on_ori + feature_unit.rec_on_ori, data_unit.crop_size)
+                    if patch_start_col == 0:
+                        patch_end_col = feature_unit.rec_on_ori
+                    if patch_end_col == data_unit.crop_size:
+                        patch_start_col = data_unit.crop_size - feature_unit.rec_on_ori
+                    
                     patch = all_data[imgidx, :, patch_start_row:patch_end_row, patch_start_col:patch_end_col]
 
                     #save img to image
