@@ -188,6 +188,7 @@ NArray NArray::Select(std::vector<int> const& indices) const {
   }
   Scale new_size = {Size(0), static_cast<int>(indices.size())};
   auto op = new SelectOp();
+  op->closure.indices = indices;
   return NArray::ComputeOne({*this}, new_size, op);
 }
 
