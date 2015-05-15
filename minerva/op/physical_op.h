@@ -374,5 +374,12 @@ class SelectOp : public ComputeFnWithClosure<SelectClosure> {
   }
 };
 
+class SelectiveSubOp : public ComputeFnWithClosure<SelectiveSubClosure> {
+ public:
+  std::string Name() const {
+    return "SelectiveSub";
+  }
+};
+
 }  // namespace minerva
 

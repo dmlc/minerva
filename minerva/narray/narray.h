@@ -81,6 +81,7 @@ class NArray {
   NArray Reshape(const Scale& dims) const;
   NArray Trans() const;
   NArray Select(std::vector<int> const&) const;
+  NArray SelectiveSub(NArray const&, std::vector<int> const&) const;
   // Lazy reductions
   NArray Sum(int dim) const;
   NArray Sum(const Scale& dims) const;

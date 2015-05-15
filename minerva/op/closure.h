@@ -171,6 +171,10 @@ struct SelectClosure {
   std::vector<int> indices;
 };
 
+struct SelectiveSubClosure {
+  std::vector<int> indices;
+};
+
 }  // end of namespace minerva
 
 

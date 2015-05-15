@@ -341,3 +341,15 @@ __global__ void SelectKernel(float* dst, float* src, int* indices, size_t cols, 
   }
 }
 
+__global__ void SelectiveSubKernel(float* minuend, float* subtrahend,
+    int* indices, size_t cols, size_t rows, size_t dst_cols) {
+  int loc = threadIdx.x + blockIdx.x * blockDim.x;
+  int step = blockDim.x * gridDim.x;
+  int end = dst_cols * rows;
+  while (loc < end) {
+    int current_row = loc % rows;
+    minuend[current_row + indices[loc / rows] * rows] -= subtrahend[loc];
+    loc += step;
+  }
+}
+

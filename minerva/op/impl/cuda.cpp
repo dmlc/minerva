@@ -653,6 +653,19 @@ void Select(DataList const& inputs, DataList const& outputs, SelectClosure& clos
   CudaPerformSelect(outputs[0].data_, inputs[0].data_, closure.indices, inputs[0].size_[1], inputs[0].size_[0], context.stream);
 }
 
+void SelectiveSub(DataList const& inputs, DataList const& outputs, SelectiveSubClosure& closure, Context const& context) {
+  CHECK_EQ(inputs.size(), 2);
+  CHECK_EQ(outputs.size(), 1);
+  CHECK_EQ(inputs[0].size_.NumDims(), 2);
+  CHECK_EQ(inputs[0].size_, outputs[0].size_);
+  CHECK_EQ(inputs[0].size_[0], inputs[1].size_[0]);
+  CHECK_EQ(inputs[1].size_[1], closure.indices.size());
+  for (auto i : closure.indices) {
+    CHECK_LT(i, inputs[0].size_[1]);
+  }
+  CudaPerformSelectiveSub(outputs[0].data_, inputs[0].data_, inputs[1].data_, closure.indices, inputs[0].size_[1], inputs[0].size_[0], context.stream);
+}
+
 }
 #endif
 }

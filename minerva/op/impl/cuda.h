@@ -46,6 +46,7 @@ void Slice(const DataList&, const DataList&, SliceClosure&, const Context&);
 void Index(const DataList&, const DataList&, IndexClosure&, const Context&);
 
 void Select(DataList const&, DataList const&, SelectClosure&, Context const&);
+void SelectiveSub(DataList const&, DataList const&, SelectiveSubClosure&, Context const&);
 
 }
 #endif

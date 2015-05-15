@@ -665,12 +665,27 @@ void CudaPerformLRNBackward(float* bottom_data, float* top_data, float* scale, f
 
 void CudaPerformSelect(float* dst, float* src, std::vector<int> indices, size_t cols, size_t rows, cudaStream_t stream) {
   int block, thread;
-  int size = cols * rows;
+  int size = indices.size() * rows;
   int* indices_ptr;
   FindConfiguration(size, block, thread);
   CUDA_CALL(cudaMalloc(&indices_ptr, indices.size() * sizeof(int)));
   CUDA_CALL(cudaMemcpyAsync(indices_ptr, &indices[0], indices.size() * sizeof(int), cudaMemcpyDefault, stream));
   SelectKernel<<<block, thread, 0, stream>>>(dst, src, indices_ptr, cols, rows, indices.size());
+  CUDA_CALL(cudaFree(indices_ptr));
+  CheckCudaError("Select");
+}
+
+void CudaPerformSelectiveSub(float* dst, float* src, float* subtrahend,
+    std::vector<int> indices, size_t cols, size_t rows, cudaStream_t stream) {
+  int block, thread;
+  int size = indices.size() * rows;
+  int* indices_ptr;
+  FindConfiguration(size, block, thread);
+  CUDA_CALL(cudaMalloc(&indices_ptr, indices.size() * sizeof(int)));
+  CUDA_CALL(cudaMemcpyAsync(indices_ptr, &indices[0], indices.size() * sizeof(int), cudaMemcpyDefault, stream));
+  CUDA_CALL(cudaMemcpyAsync(dst, src, cols * rows * sizeof(float), cudaMemcpyDefault, stream));
+  SelectiveSubKernel<<<block, thread, 0, stream>>>(dst, subtrahend, indices_ptr, cols, rows, indices.size());
+  CUDA_CALL(cudaFree(indices_ptr));
   CheckCudaError("Select");
 }
 

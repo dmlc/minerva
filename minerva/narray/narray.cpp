@@ -192,6 +192,20 @@ NArray NArray::Select(std::vector<int> const& indices) const {
   return NArray::ComputeOne({*this}, new_size, op);
 }
 
+NArray NArray::SelectiveSub(NArray const& subtrahend,
+    std::vector<int> const& indices) const {
+  CHECK_EQ(Size().NumDims() , 2);
+  CHECK_EQ(subtrahend.Size().NumDims(), 2);
+  CHECK_EQ(Size(0), subtrahend.Size(0));
+  CHECK_EQ(subtrahend.Size(1), indices.size());
+  for (auto i : indices) {
+    CHECK_LT(i, Size(1));
+  }
+  auto op = new SelectiveSubOp();
+  op->closure.indices = indices;
+  return NArray::ComputeOne({*this, subtrahend}, Size(), op);
+}
+
 // Replicate matrix
 NArray NArray::NormArithmetic(const NArray& rhs, ArithmeticType type) const {
   auto& lhs = *this;

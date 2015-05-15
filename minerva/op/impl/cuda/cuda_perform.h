@@ -74,6 +74,7 @@ void CudaPerformLRNForward(float* bottom, float* scale, float* res, int local_si
 void CudaPerformLRNBackward(float* bottom_data, float* top_data, float* scale, float* top_diff, float* bottom_diff, int local_size, float alpha, float beta, int num_img, int channel, int width, int height, cudaStream_t stream);
 
 void CudaPerformSelect(float* dst, float* src, std::vector<int> indices, size_t cols, size_t rows, cudaStream_t stream);
+void CudaPerformSelectiveSub(float* dst, float* src, float* subtrahend, std::vector<int> indices, size_t cols, size_t rows, cudaStream_t stream);
 
 } // end of namespace cuda
 } // end of namespace minerva
