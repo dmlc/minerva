@@ -23,13 +23,9 @@ else (CUDA_FOUND)
   endif ()
 endif (CUDA_FOUND)
 
-add_dependencies(minerva third_party)
+add_dependencies(minerva third-party)
 
-target_link_libraries(
-  minerva
-  "${Minerva_SOURCE_DIR}/third_party/lib/libglog.so"
-  "${Minerva_SOURCE_DIR}/third_party/lib/libgflags.so"
-)
+target_link_libraries(minerva ${THIRD_LIBS})
 
 if (ENABLE_BLAS)
   target_link_libraries(minerva openblas)

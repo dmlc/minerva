@@ -74,7 +74,6 @@ set(THIRD_PARTY_INCLUDE "${Minerva_SOURCE_DIR}/third_party/include")
 set(THIRD_PARTY_LIB "${Minerva_SOURCE_DIR}/third_party/lib")
 add_subdirectory(third_party)
 include_directories(SYSTEM ${THIRD_PARTY_INCLUDE})
-
 ############################################# macros
 
 if(ENABLE_PS)
