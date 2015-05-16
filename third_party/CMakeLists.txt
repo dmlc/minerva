@@ -12,9 +12,9 @@ add_custom_target(third-party)
 ExternalProject_Add(gflags
   SOURCE_DIR ${THIRD_SRC}/gflags-2.1.2
   PREFIX ${THIRD_PREFIX}
-  CMAKE_ARGS -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=${THIRD_PREFIX}
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${THIRD_PREFIX}
 )
-set(THIRD_LIBS ${THIRD_LIBS} ${THIRD_LIB_PATH}/libgflags.so)
+set(THIRD_LIBS ${THIRD_LIBS} ${THIRD_LIB_PATH}/libgflags.a)
 add_dependencies(third-party gflags)
 
 ExternalProject_Add(glog
@@ -22,7 +22,7 @@ ExternalProject_Add(glog
   PREFIX ${THIRD_PREFIX}
   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${THIRD_PREFIX}
 )
-set(THIRD_LIBS ${THIRD_LIBS} ${THIRD_LIB_PATH}/libglog.so)
+set(THIRD_LIBS ${THIRD_LIBS} ${THIRD_LIB_PATH}/libglog.a)
 add_dependencies(third-party glog)
 
 # dmlc-core
@@ -47,12 +47,11 @@ if(BUILD_TESTS)
   ExternalProject_Add(gtest
     SOURCE_DIR ${THIRD_SRC}/gtest-1.7.0
     PREFIX ${THIRD_PREFIX}
-    CMAKE_ARGS -DBUILD_SHARED_LIBS=ON
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libgtest.so <INSTALL_DIR>/lib/ &&
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${THIRD_PREFIX}
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libgtest.a <INSTALL_DIR>/lib/ &&
                     ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/include/gtest <INSTALL_DIR>/include/gtest
   )
-#set(THIRD_LIBS ${THIRD_LIBS} ${THIRD_LIB_PATH}/libgtest.so)
-  set(THIRD_PARTY_GTEST_LIB ${THIRD_LIB_PATH}/libgtest.so PARENT_SCOPE)
+  set(THIRD_PARTY_GTEST_LIB ${THIRD_LIB_PATH}/libgtest.a PARENT_SCOPE)
   add_dependencies(third-party gtest)
 endif(BUILD_TESTS)
 

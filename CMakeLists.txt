@@ -42,10 +42,14 @@ check_cxx_compiler_flag("-ftree-vectorize" SUPPORTS_VECTORIZE)
 set(COMPILER_FLAGS "-Wall -fPIC -march=native")
 set(GENERAL_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0")
 set(CMAKE_CXX_FLAGS_DEBUG "${GENERAL_FLAGS_DEBUG} -std=c++11")
-set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11 -flto -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11 -DNDEBUG")
 
 ############################################# find packages
+set(CORE_DEPS "")
+
 find_package(Threads REQUIRED)
+set(CORE_DEPS ${CORE_DEPS} ${CMAKE_THREAD_LIBS_INIT})
+
 if (ENABLE_CUDA)
   set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_ROOT})
   find_package(CUDA)
@@ -71,6 +75,7 @@ endif()
 ############################################# third party libraries
 add_subdirectory(third_party)
 include_directories(SYSTEM ${THIRD_INCLUDE_PATH})
+set(CORE_DEPS ${CORE_DEPS} ${THIRD_LIBS})
 ############################################# macros
 
 if(ENABLE_PS)
