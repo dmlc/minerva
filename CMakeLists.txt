@@ -72,19 +72,8 @@ endif()
 set(THIRD_PARTY_ROOT "${Minerva_SOURCE_DIR}/third_party")
 set(THIRD_PARTY_INCLUDE "${Minerva_SOURCE_DIR}/third_party/include")
 set(THIRD_PARTY_LIB "${Minerva_SOURCE_DIR}/third_party/lib")
-include(ExternalProject)
-# dmlc-core
-set(DMLC_CORE_CONFIGURE_CMD
-  ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/make/config.mk <SOURCE_DIR>)
-
-ExternalProject_Add(dmlc-core
-  PREFIX ${THIRD_PARTY_ROOT}/dmlc
-  GIT_REPOSITORY "https://github.com/dmlc/dmlc-core.git"
-  BUILD_IN_SOURCE 1
-  CONFIGURE_COMMAND ${DMLC_CORE_CONFIGURE_CMD})
-
+add_subdirectory(third_party)
 include_directories(SYSTEM ${THIRD_PARTY_INCLUDE})
-set(CORE_DEPS dmlc-core)
 
 ############################################# macros
 

@@ -27,9 +27,6 @@ lib
 tags
 vendor
 
-# Freeze third party dependencies
-third_party
-
 # Cmake files
 cmake_install.cmake
 CMakeCache.txt
@@ -54,9 +51,6 @@ Vagrantfile
 
 # configure file
 configure.in
-
-# doc files
-doc/_build
 
 # data files
 *.mat

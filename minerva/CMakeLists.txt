@@ -23,7 +23,7 @@ else (CUDA_FOUND)
   endif ()
 endif (CUDA_FOUND)
 
-add_dependencies(minerva ${CORE_DEPS})
+add_dependencies(minerva third_party)
 
 target_link_libraries(
   minerva
