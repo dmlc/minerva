@@ -51,5 +51,3 @@ add_dependencies(third-party glog)
 #  INSTALL_COMMAND ${DMLC_CORE_INSTALL_CMD}
 #)
 #
-
-include_directories(SYSTEM ${THIRD_INCLUDE_INCLUDE})
