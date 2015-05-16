@@ -5,8 +5,8 @@ include(ExternalProject)
 set(THIRD_SRC ${Minerva_third_party_SOURCE_DIR})
 set(THIRD_PREFIX ${Minerva_third_party_BINARY_DIR})
 set(THIRD_LIB_PATH ${THIRD_PREFIX}/lib)
-set(THIRD_INCLUDE_PATH ${THIRD_PREFIX}/include)
-set(THIRD_LIBS "")
+set(THIRD_INCLUDE_PATH ${THIRD_PREFIX}/include PARENT_SCOPE)
+set(THIRD_LIBS "" PARENT_SCOPE)
 add_custom_target(third-party)
 
 ExternalProject_Add(gflags
@@ -51,3 +51,5 @@ add_dependencies(third-party glog)
 #  INSTALL_COMMAND ${DMLC_CORE_INSTALL_CMD}
 #)
 #
+
+include_directories(SYSTEM ${THIRD_INCLUDE_INCLUDE})

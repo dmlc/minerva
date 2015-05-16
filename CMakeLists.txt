@@ -69,11 +69,8 @@ if (ENABLE_CUDA)
 endif()
 
 ############################################# third party libraries
-set(THIRD_PARTY_ROOT "${Minerva_SOURCE_DIR}/third_party")
-set(THIRD_PARTY_INCLUDE "${Minerva_SOURCE_DIR}/third_party/include")
-set(THIRD_PARTY_LIB "${Minerva_SOURCE_DIR}/third_party/lib")
 add_subdirectory(third_party)
-include_directories(SYSTEM ${THIRD_PARTY_INCLUDE})
+include_directories(SYSTEM ${THIRD_INCLUDE_PATH})
 ############################################# macros
 
 if(ENABLE_PS)
