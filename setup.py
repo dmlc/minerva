@@ -2,9 +2,10 @@
 from setuptools import setup, Extension
 from Cython.Build import cythonize
 import os
+import numpy
 
 # Hack to use specified compiler
-os.environ['CC'] = 'g++-4.8'
+os.environ['CC'] = 'g++'
 os.environ['OPT'] = ''
 
 def relative_path(to):
@@ -18,9 +19,10 @@ extensions = [
         language='c++',
         include_dirs=[
             'minerva',
-            'third_party',
-            '/usr/local/cuda/include',
-            '/home/yutian/cpp/cudnn-6.5-linux-x64-v2'
+            numpy.get_include()
+            #'third_party',
+            #'/usr/local/cuda/include',
+            #'/home/yutian/cpp/cudnn-6.5-linux-x64-v2'
         ],
         extra_compile_args=[
             '-std=c++11',
