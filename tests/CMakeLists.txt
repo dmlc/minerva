@@ -25,7 +25,7 @@ foreach(test_src ${test_file_list})
       target_link_libraries(
         ${test_name}
         minerva
-        "${Minerva_SOURCE_DIR}/third_party/lib/libgtest.so"
+        "${THIRD_PARTY_GTEST_LIB}"
       )
       list(APPEND unittest_list ${test_name})
       add_test(${test_name} ${test_name})
@@ -35,7 +35,6 @@ foreach(test_src ${test_file_list})
     target_link_libraries(
       ${test_name}
       minerva
-      "${Minerva_SOURCE_DIR}/third_party/lib/libgtest.so"
     )
     list(APPEND test_list ${test_name})
   endif()
