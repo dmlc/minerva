@@ -17,9 +17,9 @@ They are ``from_numpy`` and ``to_numpy``. So you could still use any existing co
 on numpy such as IO and visualization.
 """
 import numpy as np
-import athena as _athena
+import athena as _owl
 
-NArray = _athena.NArray
+NArray = _owl.NArray
 
 def initialize():
     """ Initialize Minerva System with `sys.argv`
@@ -27,14 +27,14 @@ def initialize():
     .. note::
         Must be called before calling any owl's API
     """
-    _athena.initialize()
+    _owl.initialize()
 
 def finalize():
     """ Finalize Minerva System
 
     :return: None
     """
-    _athena.finalize()
+    _owl.finalize()
 
 def wait_for_all():
     """ Wait for all evaluation to complete
@@ -44,7 +44,7 @@ def wait_for_all():
 
     :return: None
     """
-    _athena.wait_for_all()
+    _owl.wait_for_all()
 
 def create_cpu_device():
     """ Create device for running on CPU cores
@@ -56,7 +56,7 @@ def create_cpu_device():
     :return: A unique id for cpu device
     :rtype: int
     """
-    return _athena.create_cpu_device()
+    return _owl.create_cpu_device()
 
 def create_gpu_device(which):
     """ Create device for running on GPU card
@@ -69,7 +69,7 @@ def create_gpu_device(which):
     :return: A unique id for the device on that GPU card
     :rtype: int
     """
-    return _athena.create_gpu_device(which)
+    return _owl.create_gpu_device(which)
 
 def get_gpu_device_count():
     """ Get the number of compute-capable GPU devices
@@ -77,7 +77,7 @@ def get_gpu_device_count():
     :return: Number of compute-capable GPU devices
     :rtype: int
     """
-    return _athena.get_gpu_device_count()
+    return _owl.get_gpu_device_count()
 
 def set_device(dev):
     """ Switch to the given device for running computations
@@ -87,7 +87,7 @@ def set_device(dev):
 
     :param int dev: the id of the device (usually returned by create_xxx_device)
     """
-    _athena.set_device(dev)
+    _owl.set_device(dev)
 
 def zeros(shape):
     """ Create ndarray of zero values
@@ -191,14 +191,14 @@ def slice(src, slice_dim, st_off, slice_count):
 #
 #     :return: None
 #     """
-#     _athena.print_profiler_result()
+#     _owl.print_profiler_result()
 #
 # def reset_profiler_result():
 #     """ Reset execution profiler
 #
 #     :return: None
 #     """
-#     _athena.reset_profiler_result()
+#     _owl.reset_profiler_result()
 #
 # def print_dag_to_file(fname):
 #     """ Print the current generated dag into the give filename
@@ -207,7 +207,7 @@ def slice(src, slice_dim, st_off, slice_count):
 #     :type fname: str
 #     :return: None
 #     """
-#     _athena.print_dag_to_file(fname)
+#     _owl.print_dag_to_file(fname)
 #
 # def print_dot_dag_to_file(fname):
 #     """ Print the current generated dag into the give filename in dot format
@@ -216,4 +216,4 @@ def slice(src, slice_dim, st_off, slice_count):
 #     :type fname: str
 #     :return: None
 #     """
-#     _athena.print_dot_dag_to_file(fname)
+#     _owl.print_dot_dag_to_file(fname)

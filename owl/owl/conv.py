@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """ This module contains operations for convolution, pooling and softmax
 """
-import athena as _athena
+import athena as _owl
 
-soft_op = _athena.softmax_algo
+soft_op = _owl.softmax_algo
 """ Same enum type as cudnn's ``cudnnSoftmaxMode_t``. Either ``soft_op.instance`` or ``soft_op.channel``.
 """
-pool_op = _athena.pooling_algo
+pool_op = _owl.pooling_algo
 """ Same enum type as cudnn's ``cudnnPoolingMode_t``. Either ``pool_op.max`` or ``pool_op.avg``.
 """
 
@@ -23,11 +23,11 @@ def softmax(x, op = soft_op.instance):
     :rtype: owl.NArray
     """
     if len(x.shape) == 4:
-        return _athena.NArray.softmax_forward(x, op)
+        return _owl.NArray.softmax_forward(x, op)
     else:
         ori_shape = list(x.shape)
         soft_shape = x.shape[0:-1] + [1 for i in range(4 - len(ori_shape))] + [x.shape[-1]]
-        return _athena.NArray.softmax_forward(x.reshape(soft_shape), op).reshape(ori_shape)
+        return _owl.NArray.softmax_forward(x.reshape(soft_shape), op).reshape(ori_shape)
 
 class Lrner:
     """ Wrapper class for LRN.
@@ -56,7 +56,7 @@ class Lrner:
         :rtype: owl.NArray
         """
         #print np.reshape(x.to_numpy(), np.prod(np.shape(x.to_numpy()))).tolist()[0:100]
-        return _athena.NArray.lrn_forward(x, scale, self.local_size, self.alpha, self.beta)
+        return _owl.NArray.lrn_forward(x, scale, self.local_size, self.alpha, self.beta)
 
     def bp(self, bottom_data, top_data, scale, top_diff):
         """ Backward local response norm
@@ -68,7 +68,7 @@ class Lrner:
         :return: result ndarray after backward lrn
         :rtype: owl.NArray
         """
-        return _athena.NArray.lrn_backward(bottom_data, top_data, scale, top_diff, self.local_size, self.alpha, self.beta)
+        return _owl.NArray.lrn_backward(bottom_data, top_data, scale, top_diff, self.local_size, self.alpha, self.beta)
 
 
 class Convolver:
@@ -84,7 +84,7 @@ class Convolver:
         :param int stride_v: vertical stride length
         :param int stride_h: horizontal stride length
         """
-        ci = _athena.ConvInfo()
+        ci = _owl.ConvInfo()
         ci.pad_height = pad_h
         ci.pad_width = pad_w
         ci.stride_vertical = stride_v
@@ -100,7 +100,7 @@ class Convolver:
         :return: result ndarray after forward convolution
         :rtype: owl.NArray
         """
-        return _athena.NArray.conv_forward(x, w, b, self.param)
+        return _owl.NArray.conv_forward(x, w, b, self.param)
 
     def bp(self, y, x, w):
         """ Backward convolution
@@ -111,7 +111,7 @@ class Convolver:
         :return: result ndarray after backward convolution
         :rtype: owl.NArray
         """
-        return _athena.NArray.conv_backward_data(y, x, w, self.param)
+        return _owl.NArray.conv_backward_data(y, x, w, self.param)
 
     def weight_grad(self, y, x, w):
         """ Compute the gradient of filters
@@ -122,7 +122,7 @@ class Convolver:
         :return: the gradient of filters
         :rtype: owl.NArray
         """
-        return _athena.NArray.conv_backward_filter(y, x, w, self.param)
+        return _owl.NArray.conv_backward_filter(y, x, w, self.param)
 
     def bias_grad(self, y):
         """ Compute the gradient of bias
@@ -131,7 +131,7 @@ class Convolver:
         :return: the gradient of bias
         :rtype: owl.NArray
         """
-        return _athena.NArray.conv_backward_bias(y)
+        return _owl.NArray.conv_backward_bias(y)
 
 class Pooler:
     """ Wrapper class for pooling operations
@@ -149,7 +149,7 @@ class Pooler:
         :param int pad_w: padding width
         :param owl.conv.pool_op op: pooling type
         """
-        pi = _athena.PoolingInfo()
+        pi = _owl.PoolingInfo()
         pi.height = h
         pi.width = w
         pi.stride_vertical = stride_v
@@ -168,7 +168,7 @@ class Pooler:
         """
 
         #print "%d %d %d %d" % (self.param.height, self.param.width, self.param.stride_vertical, self.param.stride_horizontal)
-        return _athena.NArray.pooling_forward(x, self.param)
+        return _owl.NArray.pooling_forward(x, self.param)
 
     def bp(self, y, ff_y, ff_x):
         """ Backward propagation for pooling
@@ -179,4 +179,4 @@ class Pooler:
         :return: output after backward pooling
         :rtype: owl.NArray
         """
-        return _athena.NArray.pooling_backward(y, ff_y, ff_x, self.param)
+        return _owl.NArray.pooling_backward(y, ff_y, ff_x, self.param)

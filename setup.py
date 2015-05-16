@@ -20,9 +20,6 @@ extensions = [
         include_dirs=[
             'minerva',
             numpy.get_include()
-            #'third_party',
-            #'/usr/local/cuda/include',
-            #'/home/yutian/cpp/cudnn-6.5-linux-x64-v2'
         ],
         extra_compile_args=[
             '-std=c++11',
