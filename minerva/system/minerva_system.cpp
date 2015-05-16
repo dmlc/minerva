@@ -4,7 +4,7 @@
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #endif
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include <gflags/gflags.h>
 #include "backend/dag/dag_scheduler.h"
 #include "backend/simple_backend.h"
@@ -36,7 +36,7 @@ MinervaSystem::~MinervaSystem() {
   delete device_manager_;
   delete profiler_;
   delete physical_dag_;
-  google::ShutdownGoogleLogging();
+  //google::ShutdownGoogleLogging(); //XXX comment out since we switch to dmlc/logging
 }
 
 pair<Device::MemType, float*> MinervaSystem::GetPtr(uint64_t device_id, uint64_t data_id) {
@@ -69,7 +69,7 @@ MinervaSystem::MinervaSystem(int* argc, char*** argv)
   // glog is initialized in PS::main, and also here, so we will hit a
   // double-initalize error when compiling with PS
   if (!FLAGS_no_init_glog) {
-    google::InitGoogleLogging((*argv)[0]);
+    //google::InitGoogleLogging((*argv)[0]); // XXX comment out since we switch to dmlc/logging
   }
 #endif
   physical_dag_ = new PhysicalDag();

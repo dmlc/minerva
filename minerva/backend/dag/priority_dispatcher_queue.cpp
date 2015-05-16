@@ -1,6 +1,6 @@
 #include "priority_dispatcher_queue.h"
 #include <thread>
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 
 using namespace std;
 

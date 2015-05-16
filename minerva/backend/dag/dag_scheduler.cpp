@@ -2,7 +2,7 @@
 #include <vector>
 #include <set>
 #include <memory>
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include "system/minerva_system.h"
 #include "backend/dag/dag_chunk.h"
 #include "backend/dag/multi_node_lock.h"

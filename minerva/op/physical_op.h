@@ -5,7 +5,7 @@
 #include "op/impl/bundle.h"
 #include <sstream>
 #include <vector>
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 
 namespace minerva {
 

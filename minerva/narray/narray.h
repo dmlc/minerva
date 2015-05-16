@@ -1,7 +1,7 @@
 #pragma once
 #include <initializer_list>
 #include <memory>
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include "op/closure.h"
 #include "common/scale.h"
 #include "backend/backend.h"

@@ -1,6 +1,6 @@
 #include "narray/image_batch.h"
 #include <memory>
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 
 namespace minerva {
 

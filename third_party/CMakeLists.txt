@@ -17,13 +17,13 @@ ExternalProject_Add(gflags
 set(THIRD_LIBS ${THIRD_LIBS} ${THIRD_LIB_PATH}/libgflags.a)
 add_dependencies(third-party gflags)
 
-ExternalProject_Add(glog
-  SOURCE_DIR ${THIRD_SRC}/glog-0.3.3
-  PREFIX ${THIRD_PREFIX}
-  CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${THIRD_PREFIX}
-)
-set(THIRD_LIBS ${THIRD_LIBS} ${THIRD_LIB_PATH}/libglog.a)
-add_dependencies(third-party glog)
+#ExternalProject_Add(glog
+#  SOURCE_DIR ${THIRD_SRC}/glog-0.3.3
+#  PREFIX ${THIRD_PREFIX}
+#  CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${THIRD_PREFIX}
+#)
+#set(THIRD_LIBS ${THIRD_LIBS} ${THIRD_LIB_PATH}/libglog.a)
+#add_dependencies(third-party glog)
 
 # dmlc-core
 set(DMLC_CORE_CONFIGURE_CMD

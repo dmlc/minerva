@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 
 namespace minerva {
 namespace common {

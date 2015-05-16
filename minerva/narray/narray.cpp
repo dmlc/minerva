@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iomanip>
 #include <memory>
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include "op/physical_op.h"
 #include "common/common.h"
 #include "system/minerva_system.h"

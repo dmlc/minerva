@@ -6,7 +6,7 @@
 #include <sstream>
 #include <functional>
 #include <atomic>
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include <string>
 #include "dag/dag_node.h"
 #include "common/common.h"

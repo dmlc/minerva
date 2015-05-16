@@ -1,5 +1,5 @@
 #include "common/scale.h"
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include <algorithm>
 
 using namespace std;

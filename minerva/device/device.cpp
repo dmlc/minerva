@@ -4,7 +4,7 @@
 #include <mutex>
 #include <sstream>
 
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include <gflags/gflags.h>
 
 #include "device.h"

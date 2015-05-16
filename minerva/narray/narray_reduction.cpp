@@ -1,6 +1,6 @@
 #include "narray/narray.h"
 #include "op/physical_op.h"
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 
 using namespace std;
 

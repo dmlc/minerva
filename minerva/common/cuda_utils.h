@@ -5,7 +5,7 @@
 #include <cublas_v2.h>
 #include <cudnn.h>
 #include <curand.h>
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include <string>
 #include <algorithm>
 

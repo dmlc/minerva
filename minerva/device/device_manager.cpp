@@ -1,5 +1,5 @@
 #include "device_manager.h"
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include "device/device.h"
 #include "common/cuda_utils.h"
 #ifdef HAS_CUDA
