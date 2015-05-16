@@ -32,6 +32,7 @@ message(STATUS "cmake generator: ${CMAKE_GENERATOR}")
 message(STATUS "cmake build tool: ${CMAKE_BUILD_TOOL}")
 message(STATUS "cmake build type: ${CMAKE_BUILD_TYPE}")
 
+############################################# compiler flags
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-std=c++11"       SUPPORTS_CXX11)
 check_cxx_compiler_flag("-flto"            SUPPORTS_LTO)
@@ -39,15 +40,12 @@ check_cxx_compiler_flag("-mssse3"          SUPPORTS_MSSSE3)
 check_cxx_compiler_flag("-ftree-vectorize" SUPPORTS_VECTORIZE)
 
 set(COMPILER_FLAGS "-Wall -fPIC -march=native")
-
 set(GENERAL_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0")
 set(CMAKE_CXX_FLAGS_DEBUG "${GENERAL_FLAGS_DEBUG} -std=c++11")
 set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11 -flto -DNDEBUG")
 
+############################################# find packages
 find_package(Threads REQUIRED)
-
-include_directories(SYSTEM "${Minerva_SOURCE_DIR}/third_party/include")
-
 if (ENABLE_CUDA)
   set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_ROOT})
   find_package(CUDA)
@@ -70,6 +68,26 @@ if (ENABLE_CUDA)
   endif ()
 endif()
 
+############################################# third party libraries
+set(THIRD_PARTY_ROOT "${Minerva_SOURCE_DIR}/third_party")
+set(THIRD_PARTY_INCLUDE "${Minerva_SOURCE_DIR}/third_party/include")
+set(THIRD_PARTY_LIB "${Minerva_SOURCE_DIR}/third_party/lib")
+include(ExternalProject)
+# dmlc-core
+set(DMLC_CORE_CONFIGURE_CMD
+  ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/make/config.mk <SOURCE_DIR>)
+
+ExternalProject_Add(dmlc-core
+  PREFIX ${THIRD_PARTY_ROOT}/dmlc
+  GIT_REPOSITORY "https://github.com/dmlc/dmlc-core.git"
+  BUILD_IN_SOURCE 1
+  CONFIGURE_COMMAND ${DMLC_CORE_CONFIGURE_CMD})
+
+include_directories(SYSTEM ${THIRD_PARTY_INCLUDE})
+set(CORE_DEPS dmlc-core)
+
+############################################# macros
+
 if(ENABLE_PS)
   add_definitions(-DHAS_PS)
 endif()
@@ -78,13 +96,13 @@ if(ENABLE_BLAS)
   add_definitions(-DHAS_CBLAS)
 endif()
 
-add_subdirectory(minerva)
-
 message(STATUS "building C++ applications             -- ${BUILD_CXX_APPS}")
 message(STATUS "building unit tests                   -- ${BUILD_TESTS}")
 message(STATUS "enable CUDA                           -- ${ENABLE_CUDA}")
 message(STATUS "enable Parameter Server               -- ${ENABLE_PS}")
 message(STATUS "use BLAS library for CPU operations   -- ${ENABLE_BLAS}")
+
+add_subdirectory(minerva)
 
 if(BUILD_CXX_APPS)
   add_subdirectory(apps)

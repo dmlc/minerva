@@ -23,6 +23,8 @@ else (CUDA_FOUND)
   endif ()
 endif (CUDA_FOUND)
 
+add_dependencies(minerva ${CORE_DEPS})
+
 target_link_libraries(
   minerva
   "${Minerva_SOURCE_DIR}/third_party/lib/libglog.so"
