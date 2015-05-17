@@ -19,7 +19,8 @@ extensions = [
         language='c++',
         include_dirs=[
             'minerva',
-            numpy.get_include()
+            numpy.get_include(),
+            'release/third_party/include',
         ],
         extra_compile_args=[
             '-std=c++11',
