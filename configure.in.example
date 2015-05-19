@@ -1,12 +1,10 @@
-# Debug build directory
-DEBUG_DIR=debug
-
-# Release build directory
-RELEASE_DIR=release
+# build directory
+BUILD_DIR=release
 
 # Compilers
-CXX_COMPILER=g++-4.8
-C_COMPILER=gcc-4.8
+CXX=g++
+
+CC=gcc
 
 # Flags passed to C++ compiler
 CXXFLAGS=
@@ -17,3 +15,23 @@ CUDA_ROOT=
 # Root path to find cudnn
 CUDNN_ROOT=
 
+# build type: (Release | Debug | RelWithDebInfo)
+BUILD_TYPE=Release
+
+# whether building python binding (cython needed)
+BUILD_OWL=1
+
+# whether building cxx applications
+BUILD_CXX_APPS=0
+
+# whether building unit tests
+BUILD_TESTS=0
+
+# whether building with PS
+BUILD_WITH_PS=0
+
+# whether build cpu-only version
+BUILD_CPU_ONLY=0
+
+# whether build with blas support on cpu
+BUILD_WITH_BLAS=0
