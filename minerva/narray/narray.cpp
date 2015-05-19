@@ -180,6 +180,17 @@ NArray NArray::Trans() const {
   return NArray::ComputeOne({*this}, newsize, trans_op);
 }
 
+NArray NArray::Select(std::vector<int> const& indices) const {
+  CHECK_EQ(Size().NumDims() , 2);
+  CHECK_LT(0, indices.size());
+  for (auto i : indices) {
+    CHECK_LT(i, Size(1));
+  }
+  Scale new_size = {Size(0), static_cast<int>(indices.size())};
+  auto op = new SelectOp();
+  return NArray::ComputeOne({*this}, new_size, op);
+}
+
 // Replicate matrix
 NArray NArray::NormArithmetic(const NArray& rhs, ArithmeticType type) const {
   auto& lhs = *this;

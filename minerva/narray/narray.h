@@ -79,6 +79,7 @@ class NArray {
   int Size(int dim) const { return CHECK_NOTNULL(data_)->shape()[dim]; }
   NArray Reshape(const Scale& dims) const;
   NArray Trans() const;
+  NArray Select(std::vector<int> const&) const;
   // Lazy reductions
   NArray Sum(int dim) const;
   NArray Sum(const Scale& dims) const;
