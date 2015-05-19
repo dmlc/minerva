@@ -252,6 +252,23 @@ void ArrayLoader(const DataList& outputs, ArrayLoaderClosure& closure) {
   closure.data.reset();
 }
 
+void DataProvider(const DataList& outputs, DataProviderClosure& closure) {
+  CHECK_EQ(outputs.size(), 2) << "(data provider) #outputs wrong, one data, one label";
+  CHECK(closure.itr) << "iterator ready";
+  if(!closure.itr->Next())
+  {
+	closure.itr->BeforeFirst();
+	closure.itr->Next();
+  }
+  const cxxnet::DataBatch& batch = closure.itr->Value();
+  mshadow::Tensor<mshadow::cpu, 2> label = batch.label;
+  mshadow::Tensor<mshadow::cpu, 4> image = batch.data;
+  memcpy(outputs[0].data_, image.dptr_, outputs[0].size_.Prod() * sizeof(float));
+  memcpy(outputs[1].data_, label.dptr_, outputs[1].size_.Prod() * sizeof(float));
+}
+
+
+
 void Randn(const DataList& output, RandnClosure& closure) {
   CHECK_EQ(output.size(), 1) << "wrong number of randn output";
   int length = output[0].size_.Prod();

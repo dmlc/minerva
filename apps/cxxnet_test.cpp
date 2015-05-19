@@ -12,6 +12,7 @@ void InitIter(IIterator<DataBatch>* itr,
 					const std::vector< std::pair< std::string, std::string> > &defcfg) {
 	for (size_t i = 0; i < defcfg.size(); ++ i) {
 	  itr->SetParam(defcfg[i].first.c_str(), defcfg[i].second.c_str());
+
 	}
 	itr->Init();
 }

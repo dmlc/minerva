@@ -18,6 +18,14 @@ class ArrayLoaderOp : public PhyDataGenFnWithClosure<ArrayLoaderClosure> {
   }
 };
 
+class DataProviderOp : public PhyDataGenFnWithClosure<DataProviderClosure> {
+ public:
+  std::string Name() const {
+    return ":data provider loader";
+  }
+};
+
+
 class RandnOp : public PhyDataGenFnWithClosure<RandnClosure> {
  public:
   std::string Name() const {
