@@ -3,6 +3,7 @@
 #include <array>
 #include <mutex>
 #include <sstream>
+#include <cstring>
 
 #include <dmlc/logging.h>
 #include <gflags/gflags.h>

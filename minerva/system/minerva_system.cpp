@@ -1,6 +1,7 @@
 #include "minerva_system.h"
 #include <cstdlib>
 #include <mutex>
+#include <cstring>
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #endif
