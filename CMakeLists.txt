@@ -22,7 +22,7 @@ endfunction()
 
 project(Minerva)
 
-option(BUILD_CXX_APPS "build cxx applications"                OFF)
+option(BUILD_CXX_APPS "build cxx applications"                ON )
 option(BUILD_TESTS    "build all unittests"                   OFF)
 option(BUILD_OWL      "build python wrapper -- owl package"   ON )
 option(ENABLE_CUDA    "enable cuda"                           ON )
@@ -43,10 +43,29 @@ check_cxx_compiler_flag("-ftree-vectorize" SUPPORTS_VECTORIZE)
 
 set(COMPILER_FLAGS "-Wall -m64 -fPIC -march=native")
 
+# Set mshadow flags
+message(STATUS "mshadow flag mshadow_use_cblas: ${MSHADOW_USE_CBLAS}")
+message(STATUS "mshadow flag mshadow_use_mkl: ${MSHADOW_USE_MKL}")
+message(STATUS "mshadow flag mshadow_use_cuda: ${MSHADOW_USE_CUDA}")
+set(COMPILER_FLAGS "${COMPILER_FLAGS} -DMSHADOW_USE_CBLAS=${MSHADOW_USE_CBLAS} -DMSHADOW_USE_MKL=${MSHADOW_USE_MKL} -DMSHADOW_USE_CUDA=${MSHADOW_USE_CUDA}")
+
+#Set cxxnet flags
+message(STATUS "cxxnet flag cxxnet_use_opencv: ${CXXNET_USE_OPENCV}")
+message(STATUS "cxxnet flag cxxnet_use_opencv_decoder: ${CXXNET_USE_OPENCV_DECODER}")
+
+#TODO: hack libdmlc.a
+set(DMLC_LIB "/home/tianjun/dmlc/cxxnet/dmlc-core/libdmlc.a")
+
+
+#openmp
+set(COMPILER_FLAGS "${COMPILER_FLAGS} -fopenmp")
+
 set(GENERAL_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0")
 set(CMAKE_CXX_FLAGS_DEBUG "${GENERAL_FLAGS_DEBUG} -std=c++11")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${GENERAL_FLAGS_RELEASE} -std=c++11 -flto")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DNDEBUG")
+
+
 
 set(Minerva_DEP_PATH "${Minerva_SOURCE_DIR}/deps")
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${Minerva_DEP_PATH})
@@ -55,14 +74,18 @@ find_package(Threads REQUIRED)
 find_package(GLog REQUIRED)
 find_package(GFlags REQUIRED)
 find_package(Boost COMPONENTS thread system REQUIRED)
+find_package(OpenCV REQUIRED)
+
 
 message(STATUS "Found GLog libraries: ${GLOG_LIBRARIES}")
 message(STATUS "Found GFlags libraries: ${GFLAGS_LIBRARIES}")
 message(STATUS "Found Boost libraries: ${Boost_LIBRARIES}")
+message(STATUS "Found OpenCV libraries: ${OpenCV_LIBRARIES}")
 
 include_directories(SYSTEM ${GLOG_INCLUDE_DIR})
 include_directories(SYSTEM ${GFLAGS_INCLUDE_DIRS})
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
+include_directories(SYSTEM ${OpenCV_INCLUDE_DIR})
 
 if (ENABLE_CUDA)
   set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_ROOT})
@@ -95,9 +118,13 @@ if(ENABLE_BLAS)
   add_definitions(-DHAS_CBLAS)
 endif()
 
+
+
 # TODO should get rid of these two
 include_directories(SYSTEM ${EXTERN_INCLUDE_PATH})
 link_directories(${EXTERN_LIB_PATH})
+
+
 
 add_subdirectory(minerva)
 

@@ -24,7 +24,8 @@ else (CUDA_FOUND)
   endif ()
 endif (CUDA_FOUND)
 
-target_link_libraries(minerva ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${Boost_LIBRARIES})
+
+target_link_libraries(minerva ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV_LIBRARIES} ${DMLC_LIB})
 
 if (ENABLE_BLAS)
   target_link_libraries(minerva openblas)
@@ -33,7 +34,6 @@ endif ()
 if (ENABLE_PS)
   target_link_libraries(minerva minervaps)
 endif ()
-target_link_libraries(minerva ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES} ${Boost_LIBRARIES})
 
 set(LIBRARY_OUTPUT_PATH ${Minerva_BINARY_DIR}/lib)
 

@@ -25,6 +25,7 @@ CXXFLAGS="$CXXFLAGS \
   -DEXTERN_INCLUDE_PATH=$EXTERN_INCLUDE_PATH \
   -DPython_ADDITIONAL_VERSIONS=$PYTHON_VERSION"
 
+
 RELEASE_TYPE=Release
 
 while [[ $# -gt 0 ]]; do
@@ -60,6 +61,10 @@ while [[ $# -gt 0 ]]; do
   esac
   shift
 done
+
+
+echo $CXXFLAGS
+
 #CXXFLAGS="${CXXFLAGS} -DDISABLE_PS=${DISABLE_PS} -DDISABLE_CUDA=${DISABLE_CUDA}"
 
 #================================ help description =============================
