@@ -88,10 +88,11 @@ class LSTMModel
 			for (int t = 1; t < Tau; ++ t)
 			{
 				data[t] = emb_weight[sent[t - 1]];
-				float *target_ptr = new float[K];
-				memset(target_ptr, 0, K * sizeof(float));
-				target_ptr[sent[t]] = 1;
-				NArray target = NArray::MakeNArray({K, 1}, shared_ptr<float> (target_ptr));
+				//float *target_ptr = new float[K];
+				//memset(target_ptr, 0, K * sizeof(float));
+				//target_ptr[sent[t]] = 1;
+				//NArray target = NArray::MakeNArray({K, 1}, shared_ptr<float> (target_ptr));
+				NArray target = NArray::Zeros({K, 1});
 
 				act_ig[t] = ig_weight_data * data[t] + ig_weight_prev * Hout[t - 1] + Elewise::Mult(ig_weight_cell, C[t - 1]) + ig_weight_bias;
 				act_ig[t] = Elewise::SigmoidForward(act_ig[t]);
@@ -208,7 +209,7 @@ class LSTMModel
 			return res;
 		}
 
-		void train(vector<vector<int> > sents, int words, int num_epochs, int num_gpu = 1, float learning_rate = 0.1)
+		void train(vector<vector<int> > sents, int words, int num_epochs, int num_gpu = 2, float learning_rate = 0.1)
 		{
 			MinervaSystem& ms = MinervaSystem::Instance();
 			int E = Layers[0];
@@ -295,13 +296,11 @@ class LSTMModel
 					}
 				}
 
-				decoder_weights.Wait();
-				decoder_bias.Wait();
-
-				float epoch_ent = epoch_ll * (-1) / words;
-				float epoch_ppl = exp2(epoch_ent);
+				//float epoch_ent = epoch_ll * (-1) / words;
+				//float epoch_ppl = exp2(epoch_ent);
+				ms.wait_for_all();
 				auto current_time = time(NULL);
-				printf("Epoch %d PPL = %f\n", epoch_id + 1, epoch_ppl);
+				printf("Epoch %d\n", epoch_id + 1);
 				cout << "time consumed: " << difftime(current_time, last_time) << " seconds" << endl;
 				current_time = last_time;
 			}
@@ -390,7 +389,7 @@ void ReadData(int &train_words, int &test_words)
 	wids[eos] = 1;
 	wids[unk] = 2;
 
-	freopen("/home/cs_user/minerva/owl/apps/train1", "r", stdin);
+	freopen("/home/cs_user/minerva/owl/apps/train", "r", stdin);
 	char s[500];
 	int pointer = 2;
 
@@ -426,7 +425,7 @@ void ReadData(int &train_words, int &test_words)
 		train_words += sent.size() - 1;
 	}
 
-	freopen("/home/cs_user/minerva/owl/apps/test1", "r", stdin);
+	freopen("/home/cs_user/minerva/owl/apps/test", "r", stdin);
 	for (; gets(s); )
 	{
 		int L = strlen(s);
@@ -473,7 +472,7 @@ int main(int argc, char** argv)
 	LSTMModel model(wids.size(), H, H);
 	for (int i = 0; i < 10; ++ i)
 	{
-		model.train(train_sents, train_words, 1, 2);
+		model.train(train_sents, train_words, 1);
 		model.test(test_sents, test_words);
 	}
 }
