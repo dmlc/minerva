@@ -22,11 +22,11 @@ endfunction()
 
 project(Minerva)
 
-option(BUILD_CXX_APPS "build C++ applications"                OFF)
-option(BUILD_TESTS    "build all unittests"                   OFF)
-option(ENABLE_CUDA    "enable CUDA"                           ON )
-option(ENABLE_PS      "enable Parameter Server"               OFF)
-option(ENABLE_BLAS    "use BLAS library for CPU operations"   OFF)
+option(BUILD_CXX_APPS    "build C++ applications"                OFF)
+option(BUILD_TESTS       "build all unittests"                   OFF)
+option(BUILD_CPU_ONLY    "build cpu-only version"                OFF)
+option(BUILD_WITH_PS     "build with parameter server support"   OFF)
+option(BUILD_WITH_BLAS   "build with BLAS library for CPU"       OFF)
 
 message(STATUS "cmake generator: ${CMAKE_GENERATOR}")
 message(STATUS "cmake build tool: ${CMAKE_BUILD_TOOL}")
@@ -50,7 +50,9 @@ set(CORE_DEPS "")
 find_package(Threads REQUIRED)
 set(CORE_DEPS ${CORE_DEPS} ${CMAKE_THREAD_LIBS_INIT})
 
-if (ENABLE_CUDA)
+if (BUILD_CPU_ONLY)
+  message(STATUS "build cpu-only version; cuda is not enabled!")
+else(BUILD_CPU_ONLY)
   set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_ROOT})
   find_package(CUDA)
   if (CUDA_FOUND)
@@ -70,7 +72,7 @@ if (ENABLE_CUDA)
   else ()
     message(FATAL_ERROR "CUDA enabled but not found")
   endif ()
-endif()
+endif(BUILD_CPU_ONLY)
 
 ############################################# third party libraries
 add_subdirectory(third_party)
@@ -78,19 +80,19 @@ include_directories(SYSTEM ${THIRD_INCLUDE_PATH})
 set(CORE_DEPS ${CORE_DEPS} ${THIRD_LIBS})
 ############################################# macros
 
-if(ENABLE_PS)
+if(BUILD_WITH_PS)
   add_definitions(-DHAS_PS)
 endif()
 
-if(ENABLE_BLAS)
+if(BUILD_WITH_BLAS)
   add_definitions(-DHAS_CBLAS)
 endif()
 
-message(STATUS "building C++ applications             -- ${BUILD_CXX_APPS}")
-message(STATUS "building unit tests                   -- ${BUILD_TESTS}")
-message(STATUS "enable CUDA                           -- ${ENABLE_CUDA}")
-message(STATUS "enable Parameter Server               -- ${ENABLE_PS}")
-message(STATUS "use BLAS library for CPU operations   -- ${ENABLE_BLAS}")
+message(STATUS "build C++ applications              -- ${BUILD_CXX_APPS}")
+message(STATUS "build unit tests                    -- ${BUILD_TESTS}")
+message(STATUS "build cpu-only version              -- ${BUILD_CPU_ONLY}")
+message(STATUS "build with parameter server support -- ${BUILD_WITH_PS}")
+message(STATUS "build with BLAS library for CPU     -- ${BUILD_WITH_BLAS}")
 
 add_subdirectory(minerva)
 
@@ -101,4 +103,3 @@ endif()
 if(BUILD_TESTS)
   add_subdirectory(tests)
 endif()
-

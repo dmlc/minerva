@@ -18,11 +18,11 @@ endif (CUDA_FOUND)
 add_dependencies(minerva third-party)
 target_link_libraries(minerva ${CORE_DEPS})
 
-if (ENABLE_BLAS)
+if (BUILD_WITH_BLAS)
   target_link_libraries(minerva openblas)
 endif ()
 
-if (ENABLE_PS)
+if (BUILD_WITH_PS)
   target_link_libraries(minerva minervaps)
 endif ()
 
