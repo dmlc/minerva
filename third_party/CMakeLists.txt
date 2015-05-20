@@ -10,11 +10,12 @@ set(THIRD_LIBS "")
 add_custom_target(third-party)
 
 ExternalProject_Add(gflags
-  SOURCE_DIR ${THIRD_SRC}/gflags-2.1.2
+  SOURCE_DIR ${THIRD_SRC}/gflags-2.1.1
   PREFIX ${THIRD_PREFIX}
-  CMAKE_ARGS -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=${THIRD_PREFIX}
+  #CMAKE_ARGS -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=${THIRD_PREFIX}
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${THIRD_PREFIX} -DCMAKE_CXX_FLAGS=-fPIC
 )
-set(THIRD_LIBS ${THIRD_LIBS} ${THIRD_LIB_PATH}/libgflags.so) # XXX use shared lib since the static lib is not compiled with -fPIC
+set(THIRD_LIBS ${THIRD_LIBS} ${THIRD_LIB_PATH}/libgflags.a) # XXX use shared lib since the static lib is not compiled with -fPIC
 add_dependencies(third-party gflags)
 
 #ExternalProject_Add(glog

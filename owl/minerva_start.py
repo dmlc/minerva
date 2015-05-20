@@ -20,4 +20,4 @@ else:
     print '[INFO] CUDA disabled'
     print '[INFO] Set device to cpu'
     owl.set_device(cpu)
-import IPython; IPython.start_ipython(argv=[])
+#import IPython; IPython.start_ipython(argv=[])
