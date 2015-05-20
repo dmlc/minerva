@@ -381,7 +381,6 @@ def LSTM_test(model, sents, words, tanhC_version = 1):
 	print "Test PPL =", test_ppl
 
 if __name__ == '__main__':
-	owl.initialize()
 	#gpu = owl.create_gpu_device(1)
 	cpu = owl.create_cpu_device()
 	owl.set_device(cpu)

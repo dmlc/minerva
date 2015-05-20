@@ -128,7 +128,6 @@ if __name__ == '__main__':
     (args, remain) = parser.parse_known_args()
     assert(1 <= args.num)
     print 'Using %d GPU(s)' % args.num
-    owl.initialize()
     gpu = [owl.create_gpu_device(i) for i in range(args.num)]
     owl.set_device(gpu[0])
     model = MNISTCNNModel()

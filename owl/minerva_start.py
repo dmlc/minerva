@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 import owl
 import owl.conv
-import sys
 
-owl.initialize()
 cpu = owl.create_cpu_device()
 print '''
      __   __   _   __   _   _____   ____    _    _   ___

@@ -20,14 +20,15 @@ import numpy as np
 import libowl as _owl
 
 NArray = _owl.NArray
+_owl.initialize()
 
-def initialize():
-    """ Initialize Minerva System with `sys.argv`
-
-    .. note::
-        Must be called before calling any owl's API
-    """
-    _owl.initialize()
+# def initialize():
+#     """ Initialize Minerva System with `sys.argv`
+#
+#     .. note::
+#         Must be called before calling any owl's API
+#     """
+#     _owl.initialize()
 
 def has_cuda():
     """ Check if CUDA is enabled

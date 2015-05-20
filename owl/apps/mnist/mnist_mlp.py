@@ -76,6 +76,5 @@ class MnistTrainer:
             print '---Finish epoch #%d' % epoch
 
 if __name__ == '__main__':
-    owl.initialize()
     trainer = MnistTrainer(num_epochs = 10)
     trainer.run()

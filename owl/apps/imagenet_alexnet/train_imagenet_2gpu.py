@@ -84,7 +84,6 @@ def train_network(model, num_epochs = 100, minibatch_size=256,
             bgrad = [None] * 2
 
 if __name__ == '__main__':
-    owl.initialize()
     cpu = owl.create_cpu_device()
     owl.set_device(cpu)
     model = AlexModel()
