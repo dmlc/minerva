@@ -74,7 +74,7 @@ flags = [
 '-isystem',
 '/usr/local/cuda/include',
 '-isystem',
-'./third_party/include',
+'./release/third_party/include',
 '-DHAS_CUDA'
 ]
 
