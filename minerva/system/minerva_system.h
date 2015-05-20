@@ -16,6 +16,11 @@ class MinervaSystem :
 
  public:
   static void UniversalMemcpy(std::pair<Device::MemType, float*>, std::pair<Device::MemType, float*>, size_t);
+#ifdef HAS_CUDA
+  static constexpr int has_cuda = 1;
+#else
+  static constexpr int has_cuda = 0;
+#endif
   MinervaSystem() = delete;
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
   ~MinervaSystem();
@@ -40,9 +45,7 @@ class MinervaSystem :
 
   // device
   uint64_t CreateCpuDevice();
-#ifdef HAS_CUDA
-  uint64_t CreateGpuDevice(int );
-#endif
+  uint64_t CreateGpuDevice(int);
   void SetDevice(uint64_t );
   uint64_t current_device_id() const { return current_device_id_; }
   // system

@@ -2,6 +2,7 @@
 #include <dmlc/logging.h>
 #include "device/device.h"
 #include "common/cuda_utils.h"
+#include "common/common.h"
 #ifdef HAS_CUDA
 #include <cuda.h>
 #endif
@@ -25,22 +26,26 @@ uint64_t DeviceManager::CreateCpuDevice() {
   return id;
 }
 
-#ifdef HAS_CUDA
-
 uint64_t DeviceManager::CreateGpuDevice(int gid) {
+#ifdef HAS_CUDA
   auto id = GenerateDeviceId();
   Device* d = new GpuDevice(id, listener_, gid);
   CHECK(device_storage_.emplace(id, d).second);
   return id;
+#else
+  common::FatalError("please recompile with macro HAS_CUDA");
+#endif
 }
 
 int DeviceManager::GetGpuDeviceCount() {
+#ifdef _HAS_CUDA
   int ret;
   CUDA_CALL(cudaGetDeviceCount(&ret));
   return ret;
-}
-
+#else
+  common::FatalError("please recompile with macro HAS_CUDA");
 #endif
+}
 
 Device* DeviceManager::GetDevice(uint64_t id) {
   return device_storage_.at(id);

@@ -51,11 +51,9 @@ uint64_t MinervaSystem::GenerateDataId() {
 uint64_t MinervaSystem::CreateCpuDevice() {
   return MinervaSystem::Instance().device_manager().CreateCpuDevice();
 }
-#ifdef HAS_CUDA
 uint64_t MinervaSystem::CreateGpuDevice(int id) {
   return MinervaSystem::Instance().device_manager().CreateGpuDevice(id);
 }
-#endif
 void MinervaSystem::SetDevice(uint64_t id) {
   current_device_id_ = id;
 }

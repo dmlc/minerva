@@ -11,10 +11,8 @@ class DeviceManager {
   DeviceManager();
   ~DeviceManager();
   uint64_t CreateCpuDevice();
-#ifdef HAS_CUDA
   uint64_t CreateGpuDevice(int gid);
   int GetGpuDeviceCount();
-#endif
   Device* GetDevice(uint64_t id);
   void FreeData(uint64_t id);
   void RegisterListener(DeviceListener* l) { listener_ = l; }

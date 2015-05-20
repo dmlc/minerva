@@ -28,9 +28,6 @@ extensions = [
             '-O2',
             '-g'
         ],
-        define_macros=[
-            ('HAS_CUDA', None),
-        ],
         libraries=[
             'minerva'
         ],
