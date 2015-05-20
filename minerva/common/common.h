@@ -72,6 +72,9 @@ std::string FString(char const* format, Args&&... args) {
   return std::string(buffer);
 }
 
+void FatalError(char const* format, ...)
+    __attribute__((format(printf, 1, 2), noreturn));
+
 }  // namespace common
 }  // namespace minerva
 
