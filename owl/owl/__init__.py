@@ -29,13 +29,6 @@ def initialize():
     """
     _owl.initialize()
 
-def finalize():
-    """ Finalize Minerva System
-
-    :return: None
-    """
-    _owl.finalize()
-
 def has_cuda():
     """ Check if CUDA is enabled
 

@@ -2,10 +2,8 @@
 import owl
 import owl.conv
 import sys
-import atexit
 
 owl.initialize()
-atexit.register(owl.finalize)
 cpu = owl.create_cpu_device()
 print '''
      __   __   _   __   _   _____   ____    _    _   ___

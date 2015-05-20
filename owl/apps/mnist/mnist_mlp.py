@@ -79,4 +79,3 @@ if __name__ == '__main__':
     owl.initialize()
     trainer = MnistTrainer(num_epochs = 10)
     trainer.run()
-    owl.finalize()

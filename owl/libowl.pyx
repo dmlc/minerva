@@ -45,9 +45,6 @@ def initialize():
         free(argv[i])
     free(argv)
 
-def finalize():
-    m.Finalize()
-
 def has_cuda():
     return m.has_cuda_
 
