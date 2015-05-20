@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 
-namespace athena {
+namespace libowl {
 
 uint64_t CreateCpuDevice();
 uint64_t CreateGpuDevice(int);
@@ -27,6 +27,6 @@ T ToEvilEnumClass(int a) {
 minerva::NArray FromNumpy(float const*, minerva::Scale const&);
 void ToNumpy(float*, minerva::NArray const&);
 
-}  // namespace athena
+}  // namespace libowl
 
 

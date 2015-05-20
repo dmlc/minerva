@@ -9,10 +9,10 @@ function unknown_option {
 }
 
 function run_clean {
-  read -n 1 -s -p "Are you sure to delete release/debug builds? [y/n]
+  read -n 1 -s -p "Are you sure to delete builds? [y/n]
 " yesorno;
   if [ "$yesorno" == "y" ]; then
-      echo "Removing release and debug builds"
+      echo "Removing builds"
       rm -rf $BUILD_DIR
       python setup.py clean --all
   fi

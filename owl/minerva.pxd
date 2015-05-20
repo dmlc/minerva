@@ -2,7 +2,7 @@ from libc.stdint cimport *
 from libcpp cimport bool
 from libcpp.vector cimport vector
 
-cdef extern from './minerva_utils.h' namespace 'athena':
+cdef extern from './minerva_utils.h' namespace 'libowl':
   uint64_t CreateCpuDevice() except +
   uint64_t CreateGpuDevice(int) except +
   int GetGpuDeviceCount() except +
@@ -96,25 +96,25 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
   ctypedef enum PoolingAlgorithm 'minerva::PoolingInfo::Algorithm':
     kPoolingAlgorithmMax 'minerva::PoolingInfo::Algorithm::kMax'
     kPoolingAlgorithmAverage 'minerva::PoolingInfo::Algorithm::kAverage'
-  int OfPoolingAlgorithm 'athena::OfEvilEnumClass'(PoolingAlgorithm) except +
+  int OfPoolingAlgorithm 'libowl::OfEvilEnumClass'(PoolingAlgorithm) except +
   PoolingAlgorithm ToPoolingAlgorithm\
-    'athena::ToEvilEnumClass<minerva::PoolingInfo::Algorithm>'(int) except +
+    'libowl::ToEvilEnumClass<minerva::PoolingInfo::Algorithm>'(int) except +
 
   ctypedef enum SoftmaxAlgorithm 'minerva::SoftmaxAlgorithm':
     kSoftmaxAlgorithmInstance 'minerva::SoftmaxAlgorithm::kInstance'
     kSoftmaxAlgorithmChannel 'minerva::SoftmaxAlgorithm::kChannel'
-  int OfSoftmaxAlgorithm 'athena::OfEvilEnumClass'(SoftmaxAlgorithm) except +
+  int OfSoftmaxAlgorithm 'libowl::OfEvilEnumClass'(SoftmaxAlgorithm) except +
   SoftmaxAlgorithm ToSoftmaxAlgorithm\
-    'athena::ToEvilEnumClass<minerva::SoftmaxAlgorithm>'(int) except +
+    'libowl::ToEvilEnumClass<minerva::SoftmaxAlgorithm>'(int) except +
 
   ctypedef enum ActivationAlgorithm 'minerva::ActivationAlgorithm':
     kActivationAlgorithmSigmoid 'minerva::ActivationAlgorithm::kSigmoid'
     kActivationAlgorithmRelu 'minerva::ActivationAlgorithm::kRelu'
     kActivationAlgorithmTanh 'minerva::ActivationAlgorithm::kTanh'
   int OfActivationAlgorithm\
-    'athena::OfEvilEnumClass'(ActivationAlgorithm) except +
+    'libowl::OfEvilEnumClass'(ActivationAlgorithm) except +
   ActivationAlgorithm ToActivationAlgorithm\
-    'athena::ToEvilEnumClass<minerva::ActivationAlgorithm>'(int) except +
+    'libowl::ToEvilEnumClass<minerva::ActivationAlgorithm>'(int) except +
 
   cppclass ConvInfo:
     ConvInfo(int, int, int, int)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """ This module contains element-wise operations on ndarray
 """
-import athena as _owl
+import libowl as _owl
 
 def mult(x, y):
     """ Element-wise multiplication

@@ -3,7 +3,7 @@
 #include <cstring>
 #include <iostream>
 
-namespace athena {
+namespace libowl {
 
 uint64_t CreateCpuDevice() {
   auto&& ms = minerva::MinervaSystem::Instance();
@@ -58,5 +58,5 @@ void ToNumpy(float* dst, minerva::NArray const& n) {
   memcpy(dst, ptr.get(), size * sizeof(float));
 }
 
-}  // namespace athena
+}  // namespace libowl
 

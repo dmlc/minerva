@@ -17,7 +17,7 @@ They are ``from_numpy`` and ``to_numpy``. So you could still use any existing co
 on numpy such as IO and visualization.
 """
 import numpy as np
-import athena as _owl
+import libowl as _owl
 
 NArray = _owl.NArray
 

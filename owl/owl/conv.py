@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """ This module contains operations for convolution, pooling and softmax
 """
-import athena as _owl
+import libowl as _owl
 
 soft_op = _owl.softmax_algo
 """ Same enum type as cudnn's ``cudnnSoftmaxMode_t``. Either ``soft_op.instance`` or ``soft_op.channel``.
