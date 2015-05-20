@@ -67,5 +67,5 @@ CC=$CC CXX=$CXX cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CXXFLAGS .. && make
 cd ..
 
 if [ $BUILD_OWL -eq 1 ]; then
-  python setup.py build_ext --inplace
+  python setup.py build_ext --inplace --force
 fi
