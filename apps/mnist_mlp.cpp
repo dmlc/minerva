@@ -49,7 +49,6 @@ int main(int argc, char** argv) {
     NArray label = mlp_algo.BP(label_ptr, true);
     PrintAccuracy(predict, label, param, true);
   }
-  MinervaSystem::Finalize();
   cout << "Training finished" << endl;
   return 0;
 }
