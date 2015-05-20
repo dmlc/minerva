@@ -48,6 +48,9 @@ def initialize():
 def finalize():
     m.Finalize()
 
+def has_cuda():
+    return m.has_cuda
+
 cdef class NArray(object):
     cdef m.NArray* _d
 

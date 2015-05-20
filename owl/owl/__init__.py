@@ -36,6 +36,14 @@ def finalize():
     """
     _owl.finalize()
 
+def has_cuda():
+    """ Check if CUDA is enabled
+
+    :return: CUDA status
+    :rtype: int
+    """
+    return _owl.has_cuda()
+
 def wait_for_all():
     """ Wait for all evaluation to complete
 
