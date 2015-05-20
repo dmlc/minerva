@@ -16,11 +16,7 @@ class MinervaSystem :
 
  public:
   static void UniversalMemcpy(std::pair<Device::MemType, float*>, std::pair<Device::MemType, float*>, size_t);
-#ifdef HAS_CUDA
-  static constexpr int has_cuda = 1;
-#else
-  static constexpr int has_cuda = 0;
-#endif
+  static int const has_cuda_;
   MinervaSystem() = delete;
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
   ~MinervaSystem();

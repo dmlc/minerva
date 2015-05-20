@@ -32,6 +32,14 @@ void MinervaSystem::UniversalMemcpy(
 #endif
 }
 
+int const MinervaSystem::has_cuda_ =
+#ifdef HAS_CUDA
+1
+#else
+0
+#endif
+;
+
 MinervaSystem::~MinervaSystem() {
   delete backend_;
   delete device_manager_;

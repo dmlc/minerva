@@ -16,7 +16,7 @@ cdef extern from './minerva_utils.h' namespace 'libowl':
 cdef extern from '../minerva/minerva.h' namespace 'minerva::MinervaSystem':
   void Initialize(int*, char***) except +
   void Finalize() except +
-  int has_cuda
+  int has_cuda_
 
 cdef extern from '../minerva/minerva.h' namespace 'minerva::Elewise':
   NArray Mult(const NArray&, const NArray&) except +

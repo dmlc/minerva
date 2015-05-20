@@ -49,7 +49,7 @@ def finalize():
     m.Finalize()
 
 def has_cuda():
-    return m.has_cuda
+    return m.has_cuda_
 
 cdef class NArray(object):
     cdef m.NArray* _d

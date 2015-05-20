@@ -787,7 +787,7 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
 
 /* "libowl.pyx":54
- *     return m.has_cuda
+ *     return m.has_cuda_
  * 
  * cdef class NArray(object):             # <<<<<<<<<<<<<<
  *     cdef m.NArray* _d
@@ -2737,7 +2737,7 @@ static PyObject *__pyx_pf_6libowl_12finalize(CYTHON_UNUSED PyObject *__pyx_self)
  *     m.Finalize()
  * 
  * def has_cuda():             # <<<<<<<<<<<<<<
- *     return m.has_cuda
+ *     return m.has_cuda_
  * 
  */
 
@@ -2767,12 +2767,12 @@ static PyObject *__pyx_pf_6libowl_14has_cuda(CYTHON_UNUSED PyObject *__pyx_self)
   /* "libowl.pyx":52
  * 
  * def has_cuda():
- *     return m.has_cuda             # <<<<<<<<<<<<<<
+ *     return m.has_cuda_             # <<<<<<<<<<<<<<
  * 
  * cdef class NArray(object):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_From_int(minerva::MinervaSystem::has_cuda); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 52; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyInt_From_int(minerva::MinervaSystem::has_cuda_); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 52; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -2782,7 +2782,7 @@ static PyObject *__pyx_pf_6libowl_14has_cuda(CYTHON_UNUSED PyObject *__pyx_self)
  *     m.Finalize()
  * 
  * def has_cuda():             # <<<<<<<<<<<<<<
- *     return m.has_cuda
+ *     return m.has_cuda_
  * 
  */
 
@@ -17014,7 +17014,7 @@ static int __Pyx_InitCachedConstants(void) {
  *     m.Finalize()
  * 
  * def has_cuda():             # <<<<<<<<<<<<<<
- *     return m.has_cuda
+ *     return m.has_cuda_
  * 
  */
   __pyx_codeobj__21 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_yutian_cpp_minerva_owl_lib, __pyx_n_s_has_cuda, 51, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__21)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 51; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -17771,7 +17771,7 @@ PyMODINIT_FUNC PyInit_libowl(void)
  *     m.Finalize()
  * 
  * def has_cuda():             # <<<<<<<<<<<<<<
- *     return m.has_cuda
+ *     return m.has_cuda_
  * 
  */
   __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_6libowl_15has_cuda, NULL, __pyx_n_s_libowl); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 51; __pyx_clineno = __LINE__; goto __pyx_L1_error;}

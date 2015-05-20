@@ -38,7 +38,7 @@ uint64_t DeviceManager::CreateGpuDevice(int gid) {
 }
 
 int DeviceManager::GetGpuDeviceCount() {
-#ifdef _HAS_CUDA
+#ifdef HAS_CUDA
   int ret;
   CUDA_CALL(cudaGetDeviceCount(&ret));
   return ret;
