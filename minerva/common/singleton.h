@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <cstdlib>
 #include <dmlc/logging.h>
 
 namespace minerva {
@@ -15,17 +16,18 @@ class EverlastingSingleton {
   static void Initialize(int* argc, char*** argv) {
     CHECK(!data_) << "already initialized";
     data_.reset(new T(argc, argv));
-  }
-  static void Finalize() {
-    CHECK(data_) << "not alive";
-    data_.release();
+    atexit(Finalize);
   }
   static bool IsAlive() {
     return static_cast<bool>(data_);
   }
-
  private:
   static std::unique_ptr<T> data_;
+  static void Finalize() {
+    CHECK(data_) << "not alive";
+    data_.reset();
+  }
+
 };
 
 template<typename T> std::unique_ptr<T> EverlastingSingleton<T>::data_{};

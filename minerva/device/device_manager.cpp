@@ -11,7 +11,11 @@ using namespace std;
 
 namespace minerva {
 
-DeviceManager::DeviceManager() { }
+DeviceManager::DeviceManager() {
+#ifdef HAS_CUDA
+  GetGpuDeviceCount();  // initialize driver, ensure correct `atexit` order
+#endif
+}
 
 DeviceManager::~DeviceManager() {
   for (auto i : device_storage_) {
