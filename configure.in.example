@@ -35,3 +35,4 @@ BUILD_CPU_ONLY=0
 
 # whether build with blas support on cpu
 BUILD_WITH_BLAS=0
+BLAS_ROOT=

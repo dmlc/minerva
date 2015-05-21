@@ -19,7 +19,7 @@ add_dependencies(minerva third-party)
 target_link_libraries(minerva ${CORE_DEPS})
 
 if (BUILD_WITH_BLAS)
-  target_link_libraries(minerva openblas)
+  target_link_libraries(minerva ${CBLAS_LIBRARIES})
 endif ()
 
 if (BUILD_WITH_PS)

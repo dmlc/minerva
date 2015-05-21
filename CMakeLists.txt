@@ -20,6 +20,26 @@ function(find_cudnn)
   endif()
 endfunction()
 
+function(find_blas)
+  set(BLAS_ROOT "" CACHE PATH "BLAS root path")
+  find_path(CBLAS_INCLUDE_DIRS cblas.h
+    PATHS ${BLAS_ROOT}
+          ${BLAS_ROOT}/include
+    DOC "BLAS include path")
+  find_library(CBLAS_LIBRARIES NAMES libcblas.so
+    PATHS ${BLAS_ROOT}
+          ${BLAS_ROOT}/lib
+          ${BLAS_ROOT}/lib64
+    DOC "BLAS library path")
+  if(CBLAS_INCLUDE_DIRS AND CBLAS_LIBRARIES)
+    set(CBLAS_FOUND TRUE PARENT_SCOPE)
+    message(STATUS "Found BLAS (include: ${CBLAS_INCLUDE_DIRS}, library: ${CBLAS_LIBRARIES})")
+    mark_as_advanced(CBLAS_INCLUDE_DIRS CBLAS_LIBRARIES)
+  else()
+    MESSAGE(FATAL_ERROR "Failed to find BLAS in path: ${BLAS_ROOT}. If you are using other BLAS than cBLAS, please link your .so into libcblas.so.")
+  endif()
+endfunction()
+
 project(Minerva)
 
 option(BUILD_CXX_APPS    "build C++ applications"                OFF)
@@ -87,6 +107,8 @@ endif()
 
 if(BUILD_WITH_BLAS)
   add_definitions(-DHAS_CBLAS)
+  find_blas()
+  include_directories(SYSTEM ${CBLAS_INCLUDE_DIRS})
 endif()
 
 message(STATUS "build C++ applications              -- ${BUILD_CXX_APPS}")
