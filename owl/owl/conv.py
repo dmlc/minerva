@@ -23,11 +23,11 @@ def softmax(x, op = soft_op.instance):
     :rtype: owl.NArray
     """
     if len(x.shape) == 4:
-        return _owl.softmax_forward(x, op)
+        return _owl.NArray.softmax_forward(x, op)
     else:
         ori_shape = list(x.shape)
         soft_shape = x.shape[0:-1] + [1 for i in range(4 - len(ori_shape))] + [x.shape[-1]]
-        return _owl.softmax_forward(x.reshape(soft_shape), op).reshape(ori_shape)
+        return _owl.NArray.softmax_forward(x.reshape(soft_shape), op).reshape(ori_shape)
 
 class Lrner:
     """ Wrapper class for LRN.
@@ -38,7 +38,7 @@ class Lrner:
     """
     def __init__(self, local_size, alpha, beta):
         """ Constructor for Convolver class
-        
+
         :param int local_size: the size of lrn across channel
         :param float alpha: lrn parameters
         :param float beta: lrn parameters
@@ -46,7 +46,7 @@ class Lrner:
         self.local_size = local_size
         self.alpha = alpha
         self.beta = beta
-    
+
     def ff(self, x, scale):
         """ Feed-forward local response norm
 
@@ -55,9 +55,9 @@ class Lrner:
         :return: result ndarray after forward lrn
         :rtype: owl.NArray
         """
-        #print np.reshape(x.to_numpy(), np.prod(np.shape(x.to_numpy()))).tolist()[0:100] 
-        return _owl.lrn_forward(x, scale, self.local_size, self.alpha, self.beta)
-    
+        #print np.reshape(x.to_numpy(), np.prod(np.shape(x.to_numpy()))).tolist()[0:100]
+        return _owl.NArray.lrn_forward(x, scale, self.local_size, self.alpha, self.beta)
+
     def bp(self, bottom_data, top_data, scale, top_diff):
         """ Backward local response norm
 
@@ -67,18 +67,18 @@ class Lrner:
         :param owl.NArray top_diff: error derivative
         :return: result ndarray after backward lrn
         :rtype: owl.NArray
-        """      
-        return _owl.lrn_backward(bottom_data, top_data, scale, top_diff, self.local_size, self.alpha, self.beta)
+        """
+        return _owl.NArray.lrn_backward(bottom_data, top_data, scale, top_diff, self.local_size, self.alpha, self.beta)
 
 
 class Convolver:
     """ Wrapper class for convolution.
-    
+
     :ivar libowl.ConvInfo param: convolution parameters
     """
     def __init__(self, pad_h, pad_w, stride_v, stride_h):
         """ Constructor for Convolver class
-        
+
         :param int pad_h: padding height
         :param int pad_w: padding width
         :param int stride_v: vertical stride length
@@ -100,7 +100,7 @@ class Convolver:
         :return: result ndarray after forward convolution
         :rtype: owl.NArray
         """
-        return _owl.conv_forward(x, w, b, self.param)
+        return _owl.NArray.conv_forward(x, w, b, self.param)
 
     def bp(self, y, x, w):
         """ Backward convolution
@@ -111,7 +111,7 @@ class Convolver:
         :return: result ndarray after backward convolution
         :rtype: owl.NArray
         """
-        return _owl.conv_backward_data(y, x, w, self.param)
+        return _owl.NArray.conv_backward_data(y, x, w, self.param)
 
     def weight_grad(self, y, x, w):
         """ Compute the gradient of filters
@@ -122,7 +122,7 @@ class Convolver:
         :return: the gradient of filters
         :rtype: owl.NArray
         """
-        return _owl.conv_backward_filter(y, x, w, self.param)
+        return _owl.NArray.conv_backward_filter(y, x, w, self.param)
 
     def bias_grad(self, y):
         """ Compute the gradient of bias
@@ -131,7 +131,7 @@ class Convolver:
         :return: the gradient of bias
         :rtype: owl.NArray
         """
-        return _owl.conv_backward_bias(y)
+        return _owl.NArray.conv_backward_bias(y)
 
 class Pooler:
     """ Wrapper class for pooling operations
@@ -168,7 +168,7 @@ class Pooler:
         """
 
         #print "%d %d %d %d" % (self.param.height, self.param.width, self.param.stride_vertical, self.param.stride_horizontal)
-        return _owl.pooling_forward(x, self.param)
+        return _owl.NArray.pooling_forward(x, self.param)
 
     def bp(self, y, ff_y, ff_x):
         """ Backward propagation for pooling
@@ -179,4 +179,4 @@ class Pooler:
         :return: output after backward pooling
         :rtype: owl.NArray
         """
-        return _owl.pooling_backward(y, ff_y, ff_x, self.param)
+        return _owl.NArray.pooling_backward(y, ff_y, ff_x, self.param)

@@ -1,70 +1,59 @@
 cmake_minimum_required(VERSION 2.8)
 
 function(find_cudnn)
-  set(CUDNN_ROOT "" CACHE PATH "CUDNN root path")
+  set(CUDNN_ROOT "" CACHE PATH "cuDNN root path")
   find_path(CUDNN_INCLUDE_DIRS cudnn.h
-    PATHS ${CUDNN_ROOT} 
+    PATHS ${CUDNN_ROOT}
           ${CUDNN_ROOT}/include
-    DOC "CUDNN include path")
+    DOC "cuDNN include path")
   find_library(CUDNN_LIBRARIES NAMES libcudnn.so
-    PATHS ${CUDNN_ROOT} 
+    PATHS ${CUDNN_ROOT}
           ${CUDNN_ROOT}/lib
           ${CUDNN_ROOT}/lib64
-    DOC "CUDNN library path")
+    DOC "cuDNN library path")
   if(CUDNN_INCLUDE_DIRS AND CUDNN_LIBRARIES)
     set(CUDNN_FOUND TRUE PARENT_SCOPE)
-    message(STATUS "Found CUDNN (include: ${CUDNN_INCLUDE_DIRS}, library: ${CUDNN_LIBRARIES})")
+    message(STATUS "Found cuDNN (include: ${CUDNN_INCLUDE_DIRS}, library: ${CUDNN_LIBRARIES})")
     mark_as_advanced(CUDNN_INCLUDE_DIRS CUDNN_LIBRARIES)
   else()
-    MESSAGE(FATAL_ERROR "Failed to find CUDNN in path: ${CUDNN_ROOT}")
+    MESSAGE(FATAL_ERROR "Failed to find cuDNN in path: ${CUDNN_ROOT}")
   endif()
 endfunction()
 
 project(Minerva)
 
-option(BUILD_CXX_APPS "build cxx applications"                OFF)
-option(BUILD_TESTS    "build all unittests"                   OFF)
-option(BUILD_OWL      "build python wrapper -- owl package"   ON )
-option(ENABLE_CUDA    "enable cuda"                           ON )
-option(ENABLE_PS      "enable parameter server"               OFF)
-option(ENABLE_BLAS    "use BLAS library for cpu operations"   OFF)
+option(BUILD_CXX_APPS    "build C++ applications"                OFF)
+option(BUILD_TESTS       "build all unittests"                   OFF)
+option(BUILD_CPU_ONLY    "build cpu-only version"                OFF)
+option(BUILD_WITH_PS     "build with parameter server support"   OFF)
+option(BUILD_WITH_BLAS   "build with BLAS library for CPU"       OFF)
 
 message(STATUS "cmake generator: ${CMAKE_GENERATOR}")
 message(STATUS "cmake build tool: ${CMAKE_BUILD_TOOL}")
 message(STATUS "cmake build type: ${CMAKE_BUILD_TYPE}")
 
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-
+############################################# compiler flags
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-std=c++11"       SUPPORTS_CXX11)
 check_cxx_compiler_flag("-flto"            SUPPORTS_LTO)
 check_cxx_compiler_flag("-mssse3"          SUPPORTS_MSSSE3)
 check_cxx_compiler_flag("-ftree-vectorize" SUPPORTS_VECTORIZE)
 
-set(COMPILER_FLAGS "-Wall -m64 -fPIC -march=native")
-
+set(COMPILER_FLAGS "-Wall -fPIC -march=native")
+set(GENERAL_FLAGS_DEBUG "${COMPILER_FLAGS} -O0 -g")
 set(GENERAL_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -mtune=native -mssse3 -ftree-vectorize -funswitch-loops -ftree-vectorizer-verbose=0")
 set(CMAKE_CXX_FLAGS_DEBUG "${GENERAL_FLAGS_DEBUG} -std=c++11")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${GENERAL_FLAGS_RELEASE} -std=c++11 -flto")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11 -DNDEBUG")
 
-set(Minerva_DEP_PATH "${Minerva_SOURCE_DIR}/deps")
-set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${Minerva_DEP_PATH})
-message(STATUS "Search dependencies in path: ${CMAKE_PREFIX_PATH}")
+############################################# find packages
+set(CORE_DEPS "")
+
 find_package(Threads REQUIRED)
-find_package(GLog REQUIRED)
-find_package(GFlags REQUIRED)
-find_package(Boost COMPONENTS thread system REQUIRED)
+set(CORE_DEPS ${CORE_DEPS} ${CMAKE_THREAD_LIBS_INIT})
 
-message(STATUS "Found GLog libraries: ${GLOG_LIBRARIES}")
-message(STATUS "Found GFlags libraries: ${GFLAGS_LIBRARIES}")
-message(STATUS "Found Boost libraries: ${Boost_LIBRARIES}")
-
-include_directories(SYSTEM ${GLOG_INCLUDE_DIR})
-include_directories(SYSTEM ${GFLAGS_INCLUDE_DIRS})
-include_directories(SYSTEM ${Boost_INCLUDE_DIR})
-
-if (ENABLE_CUDA)
+if (BUILD_CPU_ONLY)
+  message(STATUS "build cpu-only version; cuda is not enabled!")
+else(BUILD_CPU_ONLY)
   set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_ROOT})
   find_package(CUDA)
   if (CUDA_FOUND)
@@ -84,36 +73,32 @@ if (ENABLE_CUDA)
   else ()
     message(FATAL_ERROR "CUDA enabled but not found")
   endif ()
-endif()
+endif(BUILD_CPU_ONLY)
 
-if(ENABLE_PS)
+############################################# third party libraries
+add_subdirectory(third_party)
+include_directories(SYSTEM ${THIRD_INCLUDE_PATH})
+set(CORE_DEPS ${CORE_DEPS} ${THIRD_LIBS})
+############################################# macros
+
+if(BUILD_WITH_PS)
   add_definitions(-DHAS_PS)
-  set(BUILD_OWL OFF)
 endif()
 
-if(ENABLE_BLAS)
+if(BUILD_WITH_BLAS)
   add_definitions(-DHAS_CBLAS)
 endif()
 
-# TODO should get rid of these two
-include_directories(SYSTEM ${EXTERN_INCLUDE_PATH})
-link_directories(${EXTERN_LIB_PATH})
+message(STATUS "build C++ applications              -- ${BUILD_CXX_APPS}")
+message(STATUS "build unit tests                    -- ${BUILD_TESTS}")
+message(STATUS "build cpu-only version              -- ${BUILD_CPU_ONLY}")
+message(STATUS "build with parameter server support -- ${BUILD_WITH_PS}")
+message(STATUS "build with BLAS library for CPU     -- ${BUILD_WITH_BLAS}")
 
 add_subdirectory(minerva)
 
-message(STATUS "Building cxx applications             -- ${BUILD_CXX_APPS}")
-message(STATUS "Building owl package (python binding) -- ${BUILD_OWL}")
-message(STATUS "Building unit tests                   -- ${BUILD_TESTS}")
-message(STATUS "enable cuda                           -- ${ENABLE_CUDA}")
-message(STATUS "enable parameter server               -- ${ENABLE_PS}")
-message(STATUS "use BLAS library for cpu operations   -- ${ENABLE_BLAS}")
-
 if(BUILD_CXX_APPS)
   add_subdirectory(apps)
-endif()
-
-if(BUILD_OWL)
-  add_subdirectory(owl)
 endif()
 
 if(BUILD_TESTS)

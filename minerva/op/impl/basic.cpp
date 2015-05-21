@@ -1,10 +1,11 @@
 #include "basic.h"
 #include "op/closure.h"
 #include <cmath>
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include <chrono>
 #include <algorithm>
 #include <random>
+#include <cstring>
 
 using namespace std;
 
@@ -297,7 +298,7 @@ void SyncWithPS(const DataList& inputs, const DataList& outputs, SyncWithPSClosu
     PushGradAndPullWeight(inputs[0].data_, outputs[0].data_, inputs[0].size_.Prod(), closure.layer_name);
   }
 #else
-  LOG_ASSERT(0) << "HAS_PS is not enabled when you compile minerva, please enable it";
+  LOG(FATAL) << "HAS_PS is not enabled when you compile minerva, please enable it";
 #endif
 }
 

@@ -1,6 +1,6 @@
 #include <memory>
 
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include "simple_backend.h"
 #include "device/device_manager.h"
 #include "op/physical.h"

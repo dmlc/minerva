@@ -1,7 +1,7 @@
 #include <string>
 #include <sstream>
 #include "op/physical.h"
-#include "op/physical_fn.h"
+#include "op/compute_fn.h"
 
 namespace minerva {
 

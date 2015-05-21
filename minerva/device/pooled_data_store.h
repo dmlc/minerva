@@ -4,7 +4,7 @@
 
 namespace minerva {
 
-class PooledDataStore : public DataStore {
+class PooledDataStore final : public DataStore {
  public:
   PooledDataStore(size_t threshold, std::function<void*(size_t)> a, std::function<void(void*)> d);
   DISALLOW_COPY_AND_ASSIGN(PooledDataStore);

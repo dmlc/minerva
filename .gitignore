@@ -52,8 +52,5 @@ Vagrantfile
 # configure file
 configure.in
 
-# doc files
-doc/_build
-
 # data files
 *.mat

@@ -19,7 +19,6 @@ class MinervaTestEnvironment : public testing::Environment {
 #endif
   }
   void TearDown() {
-    MinervaSystem::Finalize();
   }
 
  private:

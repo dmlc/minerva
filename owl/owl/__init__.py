@@ -20,24 +20,23 @@ import numpy as np
 import libowl as _owl
 
 NArray = _owl.NArray
+_owl.initialize()
 
-def initialize(argv):
-    """ Initialize Minerva System
+# def initialize():
+#     """ Initialize Minerva System with `sys.argv`
+#
+#     .. note::
+#         Must be called before calling any owl's API
+#     """
+#     _owl.initialize()
 
-    .. note::
-        Must be called before calling any owl's API
+def has_cuda():
+    """ Check if CUDA is enabled
 
-    :param argv: commandline arguments
-    :type argv: list str
+    :return: CUDA status
+    :rtype: int
     """
-    _owl.initialize(argv)
-
-def finalize():
-    """ Finalize Minerva System
-
-    :return: None
-    """
-    _owl.finalize()
+    return _owl.has_cuda()
 
 def wait_for_all():
     """ Wait for all evaluation to complete
@@ -76,7 +75,7 @@ def create_gpu_device(which):
 
 def get_gpu_device_count():
     """ Get the number of compute-capable GPU devices
-    
+
     :return: Number of compute-capable GPU devices
     :rtype: int
     """
@@ -100,7 +99,7 @@ def zeros(shape):
     :return: result ndarray
     :rtype: owl.NArray
     """
-    return _owl.zeros(shape)
+    return NArray.zeros(shape)
 
 def ones(shape):
     """ Create ndarray of one values
@@ -110,7 +109,7 @@ def ones(shape):
     :return: result ndarray
     :rtype: owl.NArray
     """
-    return _owl.ones(shape)
+    return NArray.ones(shape)
 
 def randn(shape, mu, var):
     """ Create a random ndarray using normal distribution
@@ -122,7 +121,7 @@ def randn(shape, mu, var):
     :return: result ndarray
     :rtype: owl.NArray
     """
-    return _owl.randn(shape, mu, var)
+    return NArray.randn(shape, mu, var)
 
 def randb(shape, prob):
     """ Create a random ndarray using bernoulli distribution
@@ -133,7 +132,7 @@ def randb(shape, prob):
     :return: result ndarray
     :rtype: owl.NArray
     """
-    return _owl.randb(shape, prob)
+    return NArray.randb(shape, prob)
 
 def from_numpy(nparr):
     """ Create an owl.NArray from numpy.ndarray
@@ -150,14 +149,14 @@ def from_numpy(nparr):
         [50, 300, 200]
 
     .. seealso::
-        
+
         :py:func:`owl.NArray.to_numpy`
 
     :param numpy.ndarray nparr: numpy ndarray
     :return: Minerva's ndarray
     :rtype: owl.NArray
     """
-    return _owl.from_numpy(np.require(nparr, dtype=np.float32, requirements=['C']))
+    return NArray.from_numpy(np.require(nparr, dtype=np.float32, requirements=['C']))
 
 def concat(narrays, concat_dim):
     """  Concatenate NArrays according to concat_dim
@@ -170,7 +169,7 @@ def concat(narrays, concat_dim):
     :return: result of concatenation
     :rtype: owl.NArray
     """
-    return _owl.concat(narrays, concat_dim)
+    return NArray.concat(narrays, concat_dim)
 
 def slice(src, slice_dim, st_off, slice_count):
     """  Slice NArrays according to slice_dim
@@ -187,36 +186,36 @@ def slice(src, slice_dim, st_off, slice_count):
     :return: result of slicer
     :rtype: owl.NArray
     """
-    return _owl.slice(src, slice_dim, st_off, slice_count)
+    return NArray.slice(src, slice_dim, st_off, slice_count)
 
-def print_profiler_result():
-    """ Print result from execution profiler
-
-    :return: None
-    """
-    _owl.print_profiler_result()
-
-def reset_profiler_result():
-    """ Reset execution profiler
-
-    :return: None
-    """
-    _owl.reset_profiler_result()
-
-def print_dag_to_file(fname):
-    """ Print the current generated dag into the give filename
-
-    :param fname: filename for printing the dag
-    :type fname: str
-    :return: None
-    """
-    _owl.print_dag_to_file(fname)
-
-def print_dot_dag_to_file(fname):
-    """ Print the current generated dag into the give filename in dot format
-
-    :param fname: filename for printing the dag
-    :type fname: str
-    :return: None
-    """
-    _owl.print_dot_dag_to_file(fname)
+# def print_profiler_result():
+#     """ Print result from execution profiler
+#
+#     :return: None
+#     """
+#     _owl.print_profiler_result()
+#
+# def reset_profiler_result():
+#     """ Reset execution profiler
+#
+#     :return: None
+#     """
+#     _owl.reset_profiler_result()
+#
+# def print_dag_to_file(fname):
+#     """ Print the current generated dag into the give filename
+#
+#     :param fname: filename for printing the dag
+#     :type fname: str
+#     :return: None
+#     """
+#     _owl.print_dag_to_file(fname)
+#
+# def print_dot_dag_to_file(fname):
+#     """ Print the current generated dag into the give filename in dot format
+#
+#     :param fname: filename for printing the dag
+#     :type fname: str
+#     :return: None
+#     """
+#     _owl.print_dot_dag_to_file(fname)

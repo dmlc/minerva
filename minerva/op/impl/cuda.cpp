@@ -3,7 +3,7 @@
 #include "op/context.h"
 #include "op/closure.h"
 #include "common/cuda_utils.h"
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include <chrono>
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
@@ -633,7 +633,7 @@ void SyncWithPS(const DataList& inputs, const DataList& outputs, SyncWithPSClosu
   }
   CUDA_CALL(cudaMemcpyAsync(outputs[0].data_, &weight[0], size, cudaMemcpyDefault, context.stream));
 #else
-  LOG_ASSERT(0) << "HAS_PS is not enabled when you compile minerva, please enable it";
+  LOG(FATAL) << "HAS_PS is not enabled when you compile minerva, please enable it";
 #endif
 }
 

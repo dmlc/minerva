@@ -74,7 +74,7 @@ flags = [
 '-isystem',
 '/usr/local/cuda/include',
 '-isystem',
-'/usr/include/python2.7/',
+'./release/third_party/include',
 '-DHAS_CUDA'
 ]
 
@@ -145,7 +145,7 @@ def FlagsForFile(filename):
     config_file_path = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'configure.in')
     with open(config_file_path) as config_file:
       for line in config_file.readlines():
-        if line.find('INCLUDE') >= 0:
+        if line.find('CUDNN_ROOT') >= 0:
           ex_in_path_list = re.sub(r'(^")|("$)', '', line.split('=')[-1]).replace(r'$(pwd)/', '').split(';')
           for ex_in_path in ex_in_path_list:
               if (len(ex_in_path)):

@@ -2,6 +2,7 @@
 #include <string>
 #include <utility>
 #include <mutex>
+#include <memory>
 #include "device/task.h"
 #include "device/data_store.h"
 #include "device/device_listener.h"
@@ -11,11 +12,6 @@
 #include "common/concurrent_blocking_queue.h"
 #include "common/concurrent_unordered_set.h"
 #include "common/concurrent_unordered_map.h"
-#ifdef HAS_CUDA
-#include <cuda.h>
-#include <cublas_v2.h>
-#include <cudnn.h>
-#endif
 
 namespace minerva {
 
@@ -40,7 +36,7 @@ class Device {
   ConcurrentUnorderedSet<uint64_t> local_data_;
   ConcurrentUnorderedSet<uint64_t> remote_data_;
   uint64_t device_id_;
-  DataStore* data_store_;
+  std::unique_ptr<DataStore> data_store_;
   DeviceListener* listener_;
 };
 
@@ -73,11 +69,8 @@ class GpuDevice : public ThreadedDevice {
   std::string Name() const override;
 
  private:
-  static const size_t kParallelism = 4;  // TODO change me
-  const int device_;
-  cudaStream_t stream_[kParallelism];
-  cublasHandle_t cublas_handle_[kParallelism];
-  cudnnHandle_t cudnn_handle_[kParallelism];
+  struct Impl;
+  std::unique_ptr<Impl> impl_;
   void PreExecute() override;
   void Barrier(int) override;
   void DoCopyRemoteData(float*, float*, size_t, int) override;
@@ -94,7 +87,7 @@ class CpuDevice : public ThreadedDevice {
   std::string Name() const override;
 
  private:
-  static const size_t kDefaultThreadNum = 4;
+  static size_t constexpr kDefaultThreadNum = 4;
   void DoCopyRemoteData(float*, float*, size_t, int) override;
   void DoExecute(const DataList&, const DataList&, PhysicalOp&, int) override;
 };

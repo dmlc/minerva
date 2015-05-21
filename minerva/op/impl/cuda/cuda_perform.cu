@@ -1,7 +1,6 @@
 #include "op/impl/cuda/cuda_kernel.h"
 #include "op/impl/cuda/cuda_perform.h"
-#include "common/cuda_utils.h"
-#include <glog/logging.h>
+#include "./cuda_perform_system_include.h"
 #include <cublas_v2.h>
 #include <cudnn.h>
 #include <curand.h>

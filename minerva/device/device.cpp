@@ -1,9 +1,11 @@
 #include <utility>
 #include <cstdlib>
+#include <array>
 #include <mutex>
 #include <sstream>
+#include <cstring>
 
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include <gflags/gflags.h>
 
 #include "device.h"
@@ -16,6 +18,8 @@
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #include <cudnn.h>
+#include <cuda.h>
+#include <cublas_v2.h>
 #endif
 
 #define DEFAULT_POOL_SIZE ((size_t) 5.8 * 1024 * 1024 * 1024)
@@ -25,7 +29,7 @@ using namespace std;
 
 namespace minerva {
 
-Device::Device(uint64_t device_id, DeviceListener* l) : device_id_(device_id), data_store_(0), listener_(l) {
+Device::Device(uint64_t device_id, DeviceListener* l) : device_id_(device_id), data_store_{unique_ptr<DataStore>(nullptr)}, listener_(l) {
 }
 
 pair<Device::MemType, float*> Device::GetPtr(uint64_t data_id) {
@@ -42,9 +46,7 @@ void Device::FreeDataIfExist(uint64_t data_id) {
 }
 
 string Device::GetMemUsage() const {
-  stringstream ss;
-  ss << "device #" << device_id_ << " used " << data_store_->GetTotalBytes() << "B";
-  return ss.str();
+  return common::FString("device #%d used %dB", device_id_, data_store_->GetTotalBytes());
 }
 
 ThreadedDevice::ThreadedDevice(uint64_t device_id, DeviceListener* l, size_t parallelism) : Device(device_id, l), pool_(parallelism) {
@@ -123,38 +125,65 @@ void ThreadedDevice::Barrier(int) {
 }
 
 #ifdef HAS_CUDA
-GpuDevice::GpuDevice(uint64_t device_id, DeviceListener* l, int gpu_id) : ThreadedDevice(device_id, l, kParallelism), device_(gpu_id) {
-  CUDA_CALL(cudaSetDevice(device_));
+
+struct GpuDevice::Impl {
+  Impl(int);
+  DISALLOW_COPY_AND_ASSIGN(Impl);
+  ~Impl();
+  inline void ActivateDevice() const;
+
+  static size_t constexpr kParallelism = 4;
+  int const device;
+  array<cudaStream_t, kParallelism> stream;
+  array<cublasHandle_t, kParallelism> cublas_handle;
+  array<cudnnHandle_t, kParallelism> cudnn_handle;
+};
+
+GpuDevice::Impl::Impl(int d) : device(d) {
+  ActivateDevice();
+  for (size_t i = 0; i < kParallelism; ++i) {
+    CUDA_CALL(cudaStreamCreate(&stream[i]));
+    CUBLAS_CALL(cublasCreate(&cublas_handle[i]));
+    CUBLAS_CALL(cublasSetStream(cublas_handle[i], stream[i]));
+    CUDNN_CALL(cudnnCreate(&cudnn_handle[i]));
+    CUDNN_CALL(cudnnSetStream(cudnn_handle[i], stream[i]));
+  }
+}
+
+GpuDevice::Impl::~Impl() {
+  ActivateDevice();
+  for (size_t i = 0; i < kParallelism; ++i) {
+    CUDNN_CALL(cudnnDestroy(cudnn_handle[i]));
+    CUBLAS_CALL(cublasDestroy(cublas_handle[i]));
+    CUDA_CALL(cudaStreamDestroy(stream[i]));
+  }
+}
+
+void GpuDevice::Impl::ActivateDevice() const {
+  CUDA_CALL(cudaSetDevice(device));
+}
+
+GpuDevice::GpuDevice(uint64_t device_id, DeviceListener* l, int gpu_id) : ThreadedDevice{device_id, l, Impl::kParallelism}, impl_{common::MakeUnique<Impl>(gpu_id)} {
+  impl_->ActivateDevice();
   cudaFree(0);  // Initialize
   auto allocator = [this](size_t len) -> void* {
     void* ret;
-    CUDA_CALL(cudaSetDevice(device_));
+    impl_->ActivateDevice();
     CUDA_CALL(cudaMalloc(&ret, len));
     return ret;
   };
   auto deallocator = [this](void* ptr) {
-    CUDA_CALL(cudaSetDevice(device_));
+    impl_->ActivateDevice();
     CUDA_CALL(cudaFree(ptr));
   };
-  data_store_ = new PooledDataStore(DEFAULT_POOL_SIZE, allocator, deallocator);
-  for (size_t i = 0; i < kParallelism; ++i) {
-    CUDA_CALL(cudaStreamCreate(&stream_[i]));
-    CUBLAS_CALL(cublasCreate(&cublas_handle_[i]));
-    CUBLAS_CALL(cublasSetStream(cublas_handle_[i], stream_[i]));
-    CUDNN_CALL(cudnnCreate(&cudnn_handle_[i]));
-    CUDNN_CALL(cudnnSetStream(cudnn_handle_[i], stream_[i]));
-  }
+  data_store_ = common::MakeUnique<PooledDataStore>(DEFAULT_POOL_SIZE, allocator, deallocator);
 }
 
 GpuDevice::~GpuDevice() {
-  CUDA_CALL(cudaSetDevice(device_));
+  impl_->ActivateDevice();
   pool_.WaitForAllFinished();
-  for (size_t i = 0; i < kParallelism; ++i) {
-    CUDNN_CALL(cudnnDestroy(cudnn_handle_[i]));
-    CUBLAS_CALL(cublasDestroy(cublas_handle_[i]));
-    CUDA_CALL(cudaStreamDestroy(stream_[i]));
-  }
-  delete data_store_;
+  // `data_store_` has to be deallocated before `impl_` does, because the `deallocator` of `data_store_` depends on `impl_`
+  data_store_.reset();
 }
 
 Device::MemType GpuDevice::GetMemType() const {
@@ -162,32 +191,30 @@ Device::MemType GpuDevice::GetMemType() const {
 }
 
 string GpuDevice::Name() const {
-  stringstream ss;
-  ss << "GPU device #" << device_id_;
-  return ss.str();
+  return common::FString("GPU device #%d", device_id_);
 }
 
 void GpuDevice::PreExecute() {
-  CUDA_CALL(cudaSetDevice(device_));
+  impl_->ActivateDevice();
 }
 
 void GpuDevice::Barrier(int thrid) {
-  CUDA_CALL(cudaStreamSynchronize(stream_[thrid]));
+  CUDA_CALL(cudaStreamSynchronize(impl_->stream[thrid]));
 }
 
 void GpuDevice::DoCopyRemoteData(float* dst, float* src, size_t size, int thrid) {
-  CUDA_CALL(cudaMemcpyAsync(dst, src, size, cudaMemcpyDefault, stream_[thrid]));
-  CUDA_CALL(cudaStreamSynchronize(stream_[thrid]));
+  CUDA_CALL(cudaMemcpyAsync(dst, src, size, cudaMemcpyDefault, impl_->stream[thrid]));
+  CUDA_CALL(cudaStreamSynchronize(impl_->stream[thrid]));
 }
 
 void GpuDevice::DoExecute(const DataList& in, const DataList& out, PhysicalOp& op, int thrid) {
   Context ctx;
   ctx.impl_type = ImplType::kCuda;
-  ctx.stream = stream_[thrid];
-  ctx.cublas_handle = cublas_handle_[thrid];
-  ctx.cudnn_handle = cudnn_handle_[thrid];
+  ctx.stream = impl_->stream[thrid];
+  ctx.cublas_handle = impl_->cublas_handle[thrid];
+  ctx.cudnn_handle = impl_->cudnn_handle[thrid];
   op.compute_fn->Execute(in, out, ctx);
-  CUDA_CALL_MSG(op.compute_fn->Name(), cudaStreamSynchronize(stream_[thrid]));
+  CUDA_CALL_MSG(op.compute_fn->Name(), cudaStreamSynchronize(impl_->stream[thrid]));
 }
 
 #endif
@@ -200,12 +227,11 @@ CpuDevice::CpuDevice(uint64_t device_id, DeviceListener* l) : ThreadedDevice(dev
   auto deallocator = [](void* ptr) {
     free(ptr);
   };
-  data_store_ = new DataStore(allocator, deallocator);
+  data_store_ = common::MakeUnique<DataStore>(allocator, deallocator);
 }
 
 CpuDevice::~CpuDevice() {
   pool_.WaitForAllFinished();
-  delete data_store_;
 }
 
 Device::MemType CpuDevice::GetMemType() const {
@@ -213,9 +239,7 @@ Device::MemType CpuDevice::GetMemType() const {
 }
 
 string CpuDevice::Name() const {
-  stringstream ss;
-  ss << "CPU device #" << device_id_;
-  return ss.str();
+  return common::FString("CPU device #%d", device_id_);
 }
 
 void CpuDevice::DoCopyRemoteData(float* dst, float* src, size_t size, int) {

@@ -30,13 +30,13 @@ class Scale {
   static Scale Constant(size_t ndims, int val) {
     return Scale(std::vector<int>(ndims, val));
   }
-  Scale() {}
+  Scale();
+  ~Scale();
   Scale(const std::initializer_list<int>& lst) : vec_(lst) {}
-  Scale(const std::vector<int>& sc) : vec_(sc) {}
-  Scale(std::vector<int>&& sc) : vec_(std::move(sc)) {}
+  Scale(std::vector<int>);
   template<typename Iter> Scale(const Iter& begin, const Iter& end) {
     for (Iter it = begin; it != end; ++it) {
-      vec_.push_back(*it);
+      vec_.emplace_back(*it);
     }
   }
   Scale(const Scale& other) : vec_(other.vec_) {}

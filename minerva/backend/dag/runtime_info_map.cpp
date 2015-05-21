@@ -1,5 +1,5 @@
 #include "runtime_info_map.h"
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 
 using namespace std;
 

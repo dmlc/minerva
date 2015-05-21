@@ -1,4 +1,4 @@
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include "profiler/wall_timer.h"
 
 namespace minerva {

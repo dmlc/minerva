@@ -2,7 +2,7 @@
 #include "op/impl/basic.h"
 #include "op/impl/cuda.h"
 #include "op/impl/impl.h"
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 
 namespace minerva {
 

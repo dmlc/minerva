@@ -466,13 +466,3 @@ class FilterVisualizer:
                 res_path = '%s/%d.jpg' % (s.result_path, i)
                 print res_path
                 res_img.save(res_path, format = 'JPEG')
-
-
-
-
-
-
-
-
-
-

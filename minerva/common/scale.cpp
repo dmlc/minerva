@@ -1,5 +1,5 @@
 #include "common/scale.h"
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include <algorithm>
 
 using namespace std;
@@ -75,6 +75,13 @@ Scale operator/(const Scale& sc1, int val) {
 }
 
 const Scale Scale::kNullScale;
+
+Scale::Scale() = default;
+
+Scale::~Scale() = default;
+
+Scale::Scale(vector<int> other) : vec_(move(other)) {
+}
 
 bool Scale::IncrOne(const Scale& max) {
   for (size_t i = 0; i < NumDims(); ++i) {

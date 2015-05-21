@@ -1,10 +1,11 @@
 #include "minerva_system.h"
 #include <cstdlib>
 #include <mutex>
+#include <cstring>
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #endif
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include <gflags/gflags.h>
 #include "backend/dag/dag_scheduler.h"
 #include "backend/simple_backend.h"
@@ -17,22 +18,34 @@ using namespace std;
 
 namespace minerva {
 
-void MinervaSystem::UniversalMemcpy(pair<Device::MemType, float*> to, pair<Device::MemType, float*> from, size_t size) {
+void MinervaSystem::UniversalMemcpy(
+    pair<Device::MemType, float*> to,
+    pair<Device::MemType, float*> from,
+    size_t size) {
 #ifdef HAS_CUDA
   CUDA_CALL(cudaMemcpy(to.second, from.second, size, cudaMemcpyDefault));
 #else
   CHECK_EQ(static_cast<int>(to.first), static_cast<int>(Device::MemType::kCpu));
-  CHECK_EQ(static_cast<int>(from.first), static_cast<int>(Device::MemType::kCpu));
+  CHECK_EQ(static_cast<int>(from.first),
+      static_cast<int>(Device::MemType::kCpu));
   memcpy(to.second, from.second, size);
 #endif
 }
+
+int const MinervaSystem::has_cuda_ =
+#ifdef HAS_CUDA
+1
+#else
+0
+#endif
+;
 
 MinervaSystem::~MinervaSystem() {
   delete backend_;
   delete device_manager_;
   delete profiler_;
   delete physical_dag_;
-  google::ShutdownGoogleLogging();
+  //google::ShutdownGoogleLogging(); //XXX comment out since we switch to dmlc/logging
 }
 
 pair<Device::MemType, float*> MinervaSystem::GetPtr(uint64_t device_id, uint64_t data_id) {
@@ -46,11 +59,9 @@ uint64_t MinervaSystem::GenerateDataId() {
 uint64_t MinervaSystem::CreateCpuDevice() {
   return MinervaSystem::Instance().device_manager().CreateCpuDevice();
 }
-#ifdef HAS_CUDA
 uint64_t MinervaSystem::CreateGpuDevice(int id) {
   return MinervaSystem::Instance().device_manager().CreateGpuDevice(id);
 }
-#endif
 void MinervaSystem::SetDevice(uint64_t id) {
   current_device_id_ = id;
 }
@@ -58,13 +69,15 @@ void MinervaSystem::WaitForAll() {
   backend_->WaitForAll();
 }
 
-MinervaSystem::MinervaSystem(int* argc, char*** argv): data_id_counter_(0), current_device_id_(0) {
+MinervaSystem::MinervaSystem(int* argc, char*** argv)
+  : data_id_counter_(0), current_device_id_(0) {
   gflags::ParseCommandLineFlags(argc, argv, true);
 #ifndef HAS_PS
   // glog is initialized in PS::main, and also here, so we will hit a
   // double-initalize error when compiling with PS
-  if (!FLAGS_no_init_glog)
-    google::InitGoogleLogging((*argv)[0]);
+  if (!FLAGS_no_init_glog) {
+    //google::InitGoogleLogging((*argv)[0]); // XXX comment out since we switch to dmlc/logging
+  }
 #endif
   physical_dag_ = new PhysicalDag();
   profiler_ = new ExecutionProfiler();

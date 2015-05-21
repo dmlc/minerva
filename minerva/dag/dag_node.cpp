@@ -1,6 +1,6 @@
 #include "dag/dag_node.h"
 #include <algorithm>
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 
 using namespace std;
 

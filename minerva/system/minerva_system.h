@@ -11,11 +11,12 @@
 namespace minerva {
 
 class MinervaSystem :
-  public EverlastingSingleton<MinervaSystem> {
-  friend class EverlastingSingleton<MinervaSystem>;
+  public common::EverlastingSingleton<MinervaSystem> {
+  friend class common::EverlastingSingleton<MinervaSystem>;
 
  public:
   static void UniversalMemcpy(std::pair<Device::MemType, float*>, std::pair<Device::MemType, float*>, size_t);
+  static int const has_cuda_;
   MinervaSystem() = delete;
   DISALLOW_COPY_AND_ASSIGN(MinervaSystem);
   ~MinervaSystem();
@@ -40,9 +41,7 @@ class MinervaSystem :
 
   // device
   uint64_t CreateCpuDevice();
-#ifdef HAS_CUDA
-  uint64_t CreateGpuDevice(int );
-#endif
+  uint64_t CreateGpuDevice(int);
   void SetDevice(uint64_t );
   uint64_t current_device_id() const { return current_device_id_; }
   // system

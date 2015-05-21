@@ -1,33 +1,32 @@
 #pragma once
 #include <unordered_set>
-#include <boost/thread/locks.hpp>
-#include <boost/thread/shared_mutex.hpp>
 #include "common/common.h"
+#include "common/shared_mutex.h"
 
 template<typename T>
 class ConcurrentUnorderedSet {
  public:
   ConcurrentUnorderedSet() = default;
-  DISALLOW_COPY_AND_ASSIGN(ConcurrentUnorderedSet);
+  DISALLOW_COPY_AND_MOVE(ConcurrentUnorderedSet);
   ~ConcurrentUnorderedSet() = default;
   size_t Erase(const T& k) {
-    WriteLock lock(l_);
+    WriterLock lock(m_);
     return set_.erase(k);
   }
   size_t Count(const T& k) {
-    ReadLock lock(l_);
+    ReaderLock lock(m_);
     return set_.count(k);
   }
   bool Insert(const T& k) {
-    WriteLock lock(l_);
+    WriterLock lock(m_);
     return set_.insert(k).second;
   }
 
  private:
-  typedef boost::shared_mutex Lock;
-  typedef boost::unique_lock<Lock> WriteLock;
-  typedef boost::shared_lock<Lock> ReadLock;
-  Lock l_;
+  using Mutex = minerva::common::SharedMutex;
+  using ReaderLock = minerva::common::ReaderLock<Mutex>;
+  using WriterLock = minerva::common::WriterLock<Mutex>;
+  mutable Mutex m_;
   std::unordered_set<T> set_;
 };
 

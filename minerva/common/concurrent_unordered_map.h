@@ -1,43 +1,43 @@
 #pragma once
 #include <unordered_map>
-#include <boost/thread/locks.hpp>
-#include <boost/thread/shared_mutex.hpp>
+#include "common/shared_mutex.h"
 #include "common/common.h"
 
-template<typename K, typename V> class ConcurrentUnorderedMap {
+template<typename K, typename V>
+class ConcurrentUnorderedMap {
  public:
   ConcurrentUnorderedMap() = default;
-  DISALLOW_COPY_AND_ASSIGN(ConcurrentUnorderedMap);
+  DISALLOW_COPY_AND_MOVE(ConcurrentUnorderedMap);
   ~ConcurrentUnorderedMap() = default;
   V& operator[](const K& k) {
-    WriteLock lock(l_);
+    WriterLock lock(m_);
     return map_[k];
   }
   size_t Erase(const K& k) {
-    WriteLock lock(l_);
+    WriterLock lock(m_);
     return map_.erase(k);
   }
   size_t Insert(const typename std::unordered_map<K, V>::value_type& v) {
-    WriteLock lock(l_);
+    WriterLock lock(m_);
     return map_.insert(v).second;
   }
   V& At(const K& k) {
-    ReadLock lock(l_);
+    ReaderLock lock(m_);
     return map_.at(k);
   }
   const V& At(const K& k) const {
-    ReadLock lock(l_);
+    ReaderLock lock(m_);
     return map_.at(k);
   }
   size_t Size() const {
-    ReadLock lock(l_);
+    ReaderLock lock(m_);
     return map_.size();
   }
   void LockRead() const {
-    l_.lock_shared();
+    ReaderLock::Lock(m_);
   }
   void UnlockRead() const {
-    l_.unlock_shared();
+    ReaderLock::Unlock(m_);
   }
   std::unordered_map<K, V>& VolatilePayload() {
     return map_;
@@ -47,10 +47,10 @@ template<typename K, typename V> class ConcurrentUnorderedMap {
   }
 
  private:
-  typedef boost::shared_mutex Lock;
-  typedef boost::unique_lock<Lock> WriteLock;
-  typedef boost::shared_lock<Lock> ReadLock;
-  mutable Lock l_;
+  using Mutex = minerva::common::SharedMutex;
+  using ReaderLock = minerva::common::ReaderLock<Mutex>;
+  using WriterLock = minerva::common::WriterLock<Mutex>;
+  mutable Mutex m_;
   std::unordered_map<K, V> map_;
 };
 

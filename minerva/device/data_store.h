@@ -4,7 +4,7 @@
 #include <mutex>
 #include <cstdint>
 #include <cstddef>
-#include <glog/logging.h>
+#include <dmlc/logging.h>
 #include "common/common.h"
 
 namespace minerva {
