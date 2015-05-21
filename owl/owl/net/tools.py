@@ -114,11 +114,8 @@ class HeatmapVisualizer:
                 fig.savefig(info)
                 plt.close('all')
                 cur_img += 1
-                if cur_img == 100:
-                    exit(0)
             
-            print "Finish One Batch %d" % (batch_dir)
-            batch_dir += 1
+            print "Finish One Batch %d" % (testiteridx)
         feature_file.close()
 
 

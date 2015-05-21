@@ -13,9 +13,9 @@ if __name__ == "__main__":
     parser.add_argument('solver_file', help='caffe solver configure file')
     parser.add_argument('softmax_layer_name', help='softmax_layer_name')
     parser.add_argument('accuracy_layer_name', help='accuracy_layer_name')
-    parser.add_argument('-s', '--snapshot', help='the snapshot idx for test', action='store', type=int, default=0)
-    parser.add_argument('-g', '--gpu_idx', help='the gpu id to use', action='store', type=int, default=1)
-    parser.add_argument('-m', '--multiview', help='whether to use multiview', action='store', type=int, default=False)
+    parser.add_argument('snapshot', help='the snapshot idx for test', type=int, default=0)
+    parser.add_argument('gpu_idx', help='gpu to use', type=int, default=0)
+    parser.add_argument('multiview', help='whether to use multiview', type=int, default=0)
 
     (args, remain) = parser.parse_known_args()
     solver_file = args.solver_file
@@ -28,7 +28,6 @@ if __name__ == "__main__":
     print ' === "Test for snapshot %d, using gpu #%d=== ' % (snapshot, gpu_idx)
 
     sys_args = [sys.argv[0]] + remain
-    owl.initialize(sys_args)
     tester = NetTester(solver_file, softmax_layer_name, accuracy_layer_name, snapshot, gpu_idx)
     tester.build_net()
     tester.run(multiview)

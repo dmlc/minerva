@@ -5,7 +5,7 @@ import sys, argparse
 import time
 import numpy as np
 import owl
-from owl.net.tools import HeatmapVisualizer
+from owl.net.trainer import FilterVisualizer
 
 if __name__ == "__main__":
     # parse command line arguments
@@ -13,8 +13,8 @@ if __name__ == "__main__":
     parser.add_argument('solver_file', help='caffe solver configure file')
     parser.add_argument('layer_name', help='layer_name')
     parser.add_argument('result_path', help='result_path')
-    parser.add_argument('-s', '--snapshot', help='the snapshot idx for test', action='store', type=int, default=0)
-    parser.add_argument('-g', '--gpu_idx', help='gpu to use', action='store', type=int, default=0)
+    parser.add_argument('snapshot', help='the snapshot idx for test', type=int, default=0)
+    parser.add_argument('gpu_idx', help='gpu to use', type=int, default=0)
 
     (args, remain) = parser.parse_known_args()
     solver_file = args.solver_file
@@ -23,11 +23,10 @@ if __name__ == "__main__":
     gpu_idx = args.gpu_idx
     snapshot = args.snapshot
 
-    print ' == Visualizing heatmap of snapshot %d, using gpu #%d === ' % (snapshot, gpu_idx)
+    print ' == Visualizing filter of snapshot %d, using gpu #%d === ' % (snapshot, gpu_idx)
 
     sys_args = [sys.argv[0]] + remain
-    owl.initialize(sys_args)
 
-    visualizer = HeatmapVisualizer(solver_file, snapshot, gpu_idx)
+    visualizer = FilterVisualizer(solver_file, snapshot, layer_name, result_path, gpu_idx)
     visualizer.build_net()
-    visualizer.run(layer_name, result_path)
+    visualizer.run()

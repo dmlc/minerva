@@ -441,7 +441,7 @@ class AccuracyUnit(ComputeUnit):
     
     def forward(self, from_btm, to_top, phase):
         if self.top_k == 1:
-            predict = from_btm[self.btm_names[0]].argmax(0)
+            predict = from_btm[self.btm_names[0]].max_index(0)
             ground_truth = owl.from_numpy(from_btm[self.btm_names[1]]).reshape(predict.shape)
             self.batch_size = from_btm[self.btm_names[0]].shape[1]
             correct = (predict - ground_truth).count_zero()

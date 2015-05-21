@@ -224,7 +224,7 @@ class NetTester:
                 if accunit.top_k == 5:
                     predict = softmax_val.to_numpy()
                     top_5 = np.argsort(predict, axis=1)[:,::-1]
-                    ground_truth = softmax_label.argmax(0).to_numpy()
+                    ground_truth = softmax_label.max_index(0).to_numpy()
                     correct = 0
                     for i in range(batch_size):
                         for t in range(5):
@@ -233,8 +233,8 @@ class NetTester:
                                 break
                     acc_num += correct
                 else:
-                    predict = softmax_val.argmax(0)
-                    truth = softmax_label.argmax(0)
+                    predict = softmax_val.max_index(0)
+                    truth = softmax_label.max_index(0)
                     correct = (predict - truth).count_zero()
                     acc_num += correct
             else:
@@ -397,7 +397,7 @@ class FilterVisualizer:
                 res_img = np.zeros([feature_unit.rec_on_ori * 3, feature_unit.rec_on_ori * 3, 3])
                 filter_feature = np.copy(all_feature[:,i,:,:])
                 for patchidx in range(9):
-                    maxidx = np.argmax(filter_feature)
+                    maxidx = np.max_index(filter_feature)
                     colidx = maxidx % feature_shape[0]
                     maxidx = (maxidx - colidx) / feature_shape[0]
                     rowidx = maxidx % feature_shape[1]
@@ -447,7 +447,7 @@ class FilterVisualizer:
                 res_img = np.zeros([data_unit.crop_size * 3, data_unit.crop_size * 3, 3])
                 filter_feature = np.copy(all_feature[:,i])
                 for patchidx in range(9):
-                    maxidx = np.argmax(filter_feature)
+                    maxidx = np.max_index(filter_feature)
                     imgidx = maxidx
                     filter_feature[imgidx] = min_val
 
