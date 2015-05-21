@@ -462,8 +462,7 @@ void Index(const DataList& inputs, const DataList& outputs, IndexClosure& closur
 	float* input_data = inputs[0].data_;
 	float* output_data = outputs[0].data_;
 
-	auto input_length = inputs[0].size_.Prod();
-	auto output_length = outputs[0].size_.Prod();
+	size_t output_length = outputs[0].size_.Prod();
 	auto idx = closure.idx;
 
 	memcpy(output_data, input_data + idx * output_length, output_length * sizeof(input_data[0]));

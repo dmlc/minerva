@@ -662,14 +662,14 @@ void CudaPerformLRNBackward(float* bottom_data, float* top_data, float* scale, f
   CheckCudaError("LRNBackward");
 }
 
-void CudaPerformSelect(float* dst, float* src, std::vector<int> indices, size_t cols, size_t rows) {
+void CudaPerformSelect(float* dst, float* src, std::vector<int> indices, size_t cols, size_t rows, cudaStream_t stream) {
   int block, thread;
   int size = cols * rows;
   int* indices_ptr;
   FindConfiguration(size, block, thread);
   CUDA_CALL(cudaMalloc(&indices_ptr, indices.size() * sizeof(int)));
   CUDA_CALL(cudaMemcpyAsync(indices_ptr, &indices[0], indices.size() * sizeof(int), cudaMemcpyDefault, stream));
-  SelectKernel<<<block, thread, 0, stream>>>(dst, src, indices, cols, rows, indices.size());
+  SelectKernel<<<block, thread, 0, stream>>>(dst, src, &indices[0], cols, rows, indices.size());
   CheckCudaError("Select");
 }
 

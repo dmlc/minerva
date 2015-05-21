@@ -330,7 +330,7 @@ __global__ static void LRNComputeDiff(const int nthreads, const float* bottom_da
   }
 }
 
-__global__ void SelectKernel(float const* dst, float* src, int* indices, size_t cols, size_t rows, size_t dst_cols) {
+__global__ void SelectKernel(float * dst, float* src, int* indices, size_t cols, size_t rows, size_t dst_cols) {
   int loc = threadIdx.x + blockIdx.x * blockDim.x;
   int step = blockDim.x * gridDim.x;
   int end = dst_cols * rows;
