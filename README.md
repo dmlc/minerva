@@ -2,6 +2,7 @@
 
 ## Latest News
 
+* We've cleared quite a lot of Minerva's dependencies and made it easier to build. Please see [here](https://github.com/dmlc/minerva/wiki/Install-Minerva).
 * Minerva's Tutorial and API documents are released!
 * Minerva had migrated to [dmlc](https://github.com/dmlc), where you could find many awesome machine learning repositories!
 * Minerva now evolves to use cudnn_v2. Please download and use the new [library](https://developer.nvidia.com/cuDNN).
@@ -100,7 +101,7 @@ The models can be found in the following link:
 You can download the trained models and try them on your own machine using [net_tester](https://github.com/dmlc/minerva/tree/master/scripts) script.
 
 ## Next Plan
-* Get rid of boost library dependency by using Cython.
+* Get rid of boost library dependency by using Cython. (DONE)
 * Large scale [LSTM](http://en.wikipedia.org/wiki/Long_short_term_memory) example using Minerva.
 * Easy support for user-defined new operations.
 
