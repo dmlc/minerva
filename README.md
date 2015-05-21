@@ -2,7 +2,12 @@
 
 ## Latest News
 
-* We've cleared quite a lot of Minerva's dependencies and made it easier to build. Please see [here](https://github.com/dmlc/minerva/wiki/Install-Minerva).
+* We've cleared quite a lot of Minerva's dependencies and made it easier to build. Basically, almost all needed are:
+
+  ```bash
+  ./build.sh
+  ```
+  Please see [the wiki page](https://github.com/dmlc/minerva/wiki/Install-Minerva) for more information.
 * Minerva's Tutorial and API documents are released!
 * Minerva had migrated to [dmlc](https://github.com/dmlc), where you could find many awesome machine learning repositories!
 * Minerva now evolves to use cudnn_v2. Please download and use the new [library](https://developer.nvidia.com/cuDNN).
