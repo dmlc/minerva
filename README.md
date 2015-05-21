@@ -103,7 +103,7 @@ We trained several models using Minerva from scratch to show the correctness. Th
 The models can be found in the following link:
 [AlexNet](http://pan.baidu.com/s/1bnAT10b) [GoogLeNet](http://pan.baidu.com/s/1df67G) [VGGNet](http://pan.baidu.com/s/1pJIC5sf)
 
-You can download the trained models and try them on your own machine using [net_tester](https://github.com/dmlc/minerva/tree/master/scripts) script.
+You can download the trained models and try them on your own machine using [net_tester](https://github.com/dmlc/minerva/tree/master/scripts/learning) script.
 
 ## Next Plan
 * Get rid of boost library dependency by using Cython. (DONE)
