@@ -23,6 +23,18 @@ NArray Softmax(NArray m)
 	return e / e.Sum(0);
 }
 
+static void tic(string msg = "")
+{
+	static double last = clock();
+	double cut = clock();
+	cout << "time to last tic: " << (cut - last) / CLOCKS_PER_SEC;
+	if (msg.length())
+		cout << " msg: " << msg << endl;
+	else
+		cout << endl;
+	last = cut;
+}
+
 class LSTMModel
 {
 	public:
@@ -61,60 +73,56 @@ class LSTMModel
 			printf("model size: [%d %d %d].\n", Layers[0], Layers[1], Layers[2]);
 		}
 
-		float train_step(vector<int> sent, int words,
-			NArray &weight_update_ig_data, NArray &weight_update_ig_prev, NArray &weight_update_ig_cell, NArray &weight_update_ig_bias,
-			NArray &weight_update_fg_data, NArray &weight_update_fg_prev, NArray &weight_update_fg_cell, NArray &weight_update_fg_bias,
-			NArray &weight_update_og_data, NArray &weight_update_og_prev, NArray &weight_update_og_cell, NArray &weight_update_og_bias,
-			NArray &weight_update_ff_data, NArray &weight_update_ff_prev, NArray &weight_update_ff_bias,
-			NArray &dBd, NArray &dWd, vector<NArray> &dEmb)
+		float train_step(vector<int> sent, int words, int i, int fake_batch_size = 512)
 		{
 			int E = Layers[0];
 			int N = Layers[1];
 			int K = Layers[2];
 
 			NArray data[MaxL], Hout[MaxL];
-			Hout[0] = NArray::Zeros({N, 1});
 			NArray act_ig[MaxL], act_fg[MaxL], act_og[MaxL], act_ff[MaxL];
 			NArray C[MaxL], dY[MaxL];
-			C[0] = NArray::Zeros({N, 1});
-
-			dBd = NArray::Zeros({K, 1});
-			dWd = NArray::Zeros({K, N});
 			NArray dHout[MaxL];
+
+			Hout[0] = NArray::Zeros({N, fake_batch_size});
+			C[0] = NArray::Zeros({N, fake_batch_size});
+			dBd[i] = NArray::Zeros({K, 1});
+			dWd[i] = NArray::Zeros({K, N});
 
 			float sent_ll = 0;
 			int Tau = sent.size();
 
 			for (int t = 1; t < Tau; ++ t)
 			{
-				data[t] = emb_weight[sent[t - 1]];
+				//data[t] = emb_weight[sent[t - 1]];
+				data[t] = NArray::Zeros({E, fake_batch_size});
 				//float *target_ptr = new float[K];
 				//memset(target_ptr, 0, K * sizeof(float));
 				//target_ptr[sent[t]] = 1;
 				//NArray target = NArray::MakeNArray({K, 1}, shared_ptr<float> (target_ptr));
-				NArray target = NArray::Zeros({K, 1});
+				NArray target = NArray::Zeros({K, fake_batch_size});
 
-				act_ig[t] = ig_weight_data * data[t] + ig_weight_prev * Hout[t - 1] + Elewise::Mult(ig_weight_cell, C[t - 1]) + ig_weight_bias;
+				act_ig[t] = ig_weight_data * data[t] + ig_weight_prev * Hout[t - 1] + Elewise::Mult(C[t - 1], ig_weight_cell) + ig_weight_bias;
 				act_ig[t] = Elewise::SigmoidForward(act_ig[t]);
 
-				act_fg[t] = fg_weight_data * data[t] + fg_weight_prev * Hout[t - 1] + Elewise::Mult(fg_weight_cell, C[t - 1]) + fg_weight_bias;
+				act_fg[t] = fg_weight_data * data[t] + fg_weight_prev * Hout[t - 1] + Elewise::Mult(C[t - 1], fg_weight_cell) + fg_weight_bias;
 				act_fg[t] = Elewise::SigmoidForward(act_fg[t]);
 
 				act_ff[t] = ff_weight_data * data[t] + ff_weight_prev * Hout[t - 1] + ff_weight_bias;
 				act_ff[t] = Elewise::TanhForward(act_ff[t]);
 
-				C[t] = Elewise::Mult(act_ig[t], act_ff[t]) + Elewise::Mult(act_fg[t], C[t - 1]);
+				C[t] = Elewise::Mult(act_ig[t], act_ff[t]) + Elewise::Mult(C[t - 1], act_fg[t]);
 
-				act_og[t] = og_weight_data * data[t] + og_weight_prev * Hout[t - 1] + Elewise::Mult(og_weight_cell, C[t]) + og_weight_bias;
+				act_og[t] = og_weight_data * data[t] + og_weight_prev * Hout[t - 1] + Elewise::Mult(C[t], og_weight_cell) + og_weight_bias;
 				act_og[t] = Elewise::SigmoidForward(act_og[t]);
 
-				Hout[t] = Elewise::Mult(act_og[t], Elewise::TanhForward(C[t]));
+				Hout[t] = Elewise::Mult(Elewise::TanhForward(C[t]), act_og[t]);
 
 				NArray Y = Softmax(decoder_weights * Hout[t] + decoder_bias);
 
 				dY[t] = Y - target;
-				dBd += dY[t];
-				dWd += dY[t] * Hout[t].Trans();
+				dBd[i] += dY[t].Sum(1);
+				dWd[i] += dY[t] * Hout[t].Trans();
 
 				//auto y_ptr = Y.Get();
 				//float *output_ptr = y_ptr.get();
@@ -123,27 +131,27 @@ class LSTMModel
 				//sent_ll += log2(output);
 			}
 
-			weight_update_ig_data = NArray::Zeros({N, E});
-			weight_update_ig_prev = NArray::Zeros({N, N});
-			weight_update_ig_cell = NArray::Zeros({N, 1});
-			weight_update_ig_bias = NArray::Zeros({N, 1});
+			weight_update_ig_data[i] = NArray::Zeros({N, E});
+			weight_update_ig_prev[i] = NArray::Zeros({N, N});
+			weight_update_ig_cell[i] = NArray::Zeros({N, 1});
+			weight_update_ig_bias[i] = NArray::Zeros({N, 1});
 
-			weight_update_fg_data = NArray::Zeros({N, E});
-			weight_update_fg_prev = NArray::Zeros({N, N});
-			weight_update_fg_cell = NArray::Zeros({N, 1});
-			weight_update_fg_bias = NArray::Zeros({N, 1});
+			weight_update_fg_data[i] = NArray::Zeros({N, E});
+			weight_update_fg_prev[i] = NArray::Zeros({N, N});
+			weight_update_fg_cell[i] = NArray::Zeros({N, 1});
+			weight_update_fg_bias[i] = NArray::Zeros({N, 1});
 
-			weight_update_og_data = NArray::Zeros({N, E});
-			weight_update_og_prev = NArray::Zeros({N, N});
-			weight_update_og_cell = NArray::Zeros({N, 1});
-			weight_update_og_bias = NArray::Zeros({N, 1});
+			weight_update_og_data[i] = NArray::Zeros({N, E});
+			weight_update_og_prev[i] = NArray::Zeros({N, N});
+			weight_update_og_cell[i] = NArray::Zeros({N, 1});
+			weight_update_og_bias[i] = NArray::Zeros({N, 1});
 
-			weight_update_ff_data = NArray::Zeros({N, E});
-			weight_update_ff_prev = NArray::Zeros({N, N});
-			weight_update_ff_bias = NArray::Zeros({N, 1});
+			weight_update_ff_data[i] = NArray::Zeros({N, E});
+			weight_update_ff_prev[i] = NArray::Zeros({N, N});
+			weight_update_ff_bias[i] = NArray::Zeros({N, 1});
 
-			NArray last_dHout = NArray::Zeros({N, 1});
-			dEmb = initw(Tau, {E, 1});
+			NArray last_dHout = NArray::Zeros({N, fake_batch_size});
+			dEmb[i] = initw(Tau, {E, fake_batch_size});
 
 			for (int t = Tau - 1; t; -- t)
 			{
@@ -154,7 +162,7 @@ class LSTMModel
 
 				// BP from og
 				sen_og = Elewise::Mult(Elewise::Mult(act_og[t], (1.0 - act_og[t])), sen_og);
-				dEmb[t] = og_weight_data.Trans() * sen_og;
+				dEmb[i][t] = og_weight_data.Trans() * sen_og;
 				dC += og_weight_cell.Trans() * sen_og;
 
 				// BP from fg controled gate
@@ -164,35 +172,35 @@ class LSTMModel
 				NArray sen_ig = Elewise::Mult(act_ff[t], dC);
 				NArray sen_ff = Elewise::Mult((1 - Elewise::Mult(act_ff[t], act_ff[t])), Elewise::Mult(act_ig[t], dC));
 				last_dHout = ff_weight_prev.Trans() * sen_ff;
-				dEmb[t] += ff_weight_data.Trans() * sen_ff;
+				dEmb[i][t] += ff_weight_data.Trans() * sen_ff;
 
 				// BP from fg
 				sen_fg = Elewise::Mult(Elewise::Mult(act_fg[t], (1.0 - act_fg[t])), sen_fg);
-				dEmb[t] += fg_weight_data.Trans() * sen_fg;
+				dEmb[i][t] += fg_weight_data.Trans() * sen_fg;
 
 				// BP from ig
 				sen_ig = Elewise::Mult(Elewise::Mult(act_ig[t], (1.0 - act_ig[t])), sen_ig);
-				dEmb[t] += ig_weight_data.Trans() * sen_ig;
+				dEmb[i][t] += ig_weight_data.Trans() * sen_ig;
 
 				// derivatives on weight matrix and bias
-				weight_update_ig_data += sen_ig * data[t].Trans();
-				weight_update_ig_prev += sen_ig * Hout[t - 1].Trans();
-				weight_update_ig_cell += Elewise::Mult(sen_ig, C[t - 1]);
-				weight_update_ig_bias += sen_ig;
+				weight_update_ig_data[i] += sen_ig * data[t].Trans();
+				weight_update_ig_prev[i] += sen_ig * Hout[t - 1].Trans();
+				weight_update_ig_cell[i] += Elewise::Mult(sen_ig, C[t - 1]).Sum(1);
+				weight_update_ig_bias[i] += sen_ig.Sum(1);
 
-				weight_update_fg_data += sen_fg * data[t].Trans();
-				weight_update_fg_prev += sen_fg * Hout[t - 1].Trans();
-				weight_update_fg_cell += Elewise::Mult(sen_fg, C[t - 1]);
-				weight_update_fg_bias += sen_fg;
+				weight_update_fg_data[i] += sen_fg * data[t].Trans();
+				weight_update_fg_prev[i] += sen_fg * Hout[t - 1].Trans();
+				weight_update_fg_cell[i] += Elewise::Mult(sen_fg, C[t - 1]).Sum(1);
+				weight_update_fg_bias[i] += sen_fg.Sum(1);
 
-				weight_update_og_data += sen_og * data[t].Trans();
-				weight_update_og_prev += sen_og * Hout[t - 1].Trans();
-				weight_update_og_cell += Elewise::Mult(sen_og, C[t]);
-				weight_update_og_bias += sen_og;
+				weight_update_og_data[i] += sen_og * data[t].Trans();
+				weight_update_og_prev[i] += sen_og * Hout[t - 1].Trans();
+				weight_update_og_cell[i] += Elewise::Mult(sen_og, C[t]).Sum(1);
+				weight_update_og_bias[i] += sen_og.Sum(1);
 
-				weight_update_ff_data += sen_ff * data[t].Trans();
-				weight_update_ff_prev += Elewise::Mult(sen_ff, Hout[t - 1]);
-				weight_update_ff_bias += sen_ff;
+				weight_update_ff_data[i] += sen_ff * data[t].Trans();
+				weight_update_ff_prev[i] += sen_ff * Hout[t - 1].Trans();
+				weight_update_ff_bias[i] += sen_ff.Sum(1);
 			}
 
 			return sent_ll;
@@ -211,35 +219,34 @@ class LSTMModel
 
 		void train(vector<vector<int> > sents, int words, int num_epochs, int num_gpu = 2, float learning_rate = 0.1)
 		{
-			MinervaSystem& ms = MinervaSystem::Instance();
 			int E = Layers[0];
 			int N = Layers[1];
 			int K = Layers[2];
+			ms.wait_for_all();
 			time_t last_time = time(NULL);
 			for (int epoch_id = 0; epoch_id < num_epochs; ++ epoch_id)
 			{
-				vector<NArray> weight_update_ig_data = initw(num_gpu, {N, E});
-				vector<NArray> weight_update_ig_prev = initw(num_gpu, {N, N});
-				vector<NArray> weight_update_ig_cell = initw(num_gpu, {N, 1});
-				vector<NArray> weight_update_ig_bias = initw(num_gpu, {N, 1});
+				weight_update_ig_data = initw(num_gpu, {N, E});
+				weight_update_ig_prev = initw(num_gpu, {N, N});
+				weight_update_ig_cell = initw(num_gpu, {N, 1});
+				weight_update_ig_bias = initw(num_gpu, {N, 1});
 
-				vector<NArray> weight_update_fg_data = initw(num_gpu, {N, E});
-				vector<NArray> weight_update_fg_prev = initw(num_gpu, {N, N});
-				vector<NArray> weight_update_fg_cell = initw(num_gpu, {N, 1});
-				vector<NArray> weight_update_fg_bias = initw(num_gpu, {N, 1});
+				weight_update_fg_data = initw(num_gpu, {N, E});
+				weight_update_fg_prev = initw(num_gpu, {N, N});
+				weight_update_fg_cell = initw(num_gpu, {N, 1});
+				weight_update_fg_bias = initw(num_gpu, {N, 1});
 
-				vector<NArray> weight_update_og_data = initw(num_gpu, {N, E});
-				vector<NArray> weight_update_og_prev = initw(num_gpu, {N, N});
-				vector<NArray> weight_update_og_cell = initw(num_gpu, {N, 1});
-				vector<NArray> weight_update_og_bias = initw(num_gpu, {N, 1});
+				weight_update_og_data = initw(num_gpu, {N, E});
+				weight_update_og_prev = initw(num_gpu, {N, N});
+				weight_update_og_cell = initw(num_gpu, {N, 1});
+				weight_update_og_bias = initw(num_gpu, {N, 1});
 
-				vector<NArray> weight_update_ff_data = initw(num_gpu, {N, E});
-				vector<NArray> weight_update_ff_prev = initw(num_gpu, {N, N});
-				vector<NArray> weight_update_ff_bias = initw(num_gpu, {N, 1});
+				weight_update_ff_data = initw(num_gpu, {N, E});
+				weight_update_ff_prev = initw(num_gpu, {N, N});
+				weight_update_ff_bias = initw(num_gpu, {N, 1});
 
-				vector<NArray> dBd = initw(num_gpu, {K, 1});
-				vector<NArray> dWd = initw(num_gpu, {K, N});
-				vector<vector<NArray> > dEmb;
+				dBd = initw(num_gpu, {K, 1});
+				dWd = initw(num_gpu, {K, N});
 				float sent_ll[5];
 
 				for (int i = 0; i < num_gpu; ++ i)
@@ -252,15 +259,17 @@ class LSTMModel
 				float epoch_ll = 0;
 				for (unsigned int s = 0; s < sents.size(); ++ s)
 				{
+					if (s == 1000) break;
 					int i = s & 1;
 					ms.SetDevice(gpu[i]);
 
-					sent_ll[i] = train_step(sents[s], words,
-						weight_update_ig_data[i], weight_update_ig_prev[i], weight_update_ig_cell[i], weight_update_ig_bias[i],
-						weight_update_fg_data[i], weight_update_fg_prev[i], weight_update_fg_cell[i], weight_update_fg_bias[i],
-						weight_update_og_data[i], weight_update_og_prev[i], weight_update_og_cell[i], weight_update_og_bias[i],
-						weight_update_ff_data[i], weight_update_ff_prev[i], weight_update_ff_bias[i],
-						dBd[i], dWd[i], dEmb[i]);
+					sent_ll[i] = train_step(sents[s], words, i);
+
+					if (s % 2 == 0)
+					{
+						MinervaSystem& ms = MinervaSystem::Instance();
+						ms.wait_for_all();
+					}
 
 					if (!i) continue;
 
@@ -291,14 +300,14 @@ class LSTMModel
 						decoder_bias -= rate * dBd[j];
 
 						vector<int> sen = sents[s - num_gpu + j + 1];
-						for (int t = 1; t < dEmb[j].size(); ++ t)
-							emb_weight[sen[t - 1]] -= rate * dEmb[j][t];
+						//for (int t = 1; t < dEmb[j].size(); ++ t)
+						//	emb_weight[sen[t - 1]] -= rate * dEmb[j][t];
 					}
 				}
 
 				//float epoch_ent = epoch_ll * (-1) / words;
 				//float epoch_ppl = exp2(epoch_ent);
-				ms.wait_for_all();
+				//ms.wait_for_all();
 				auto current_time = time(NULL);
 				printf("Epoch %d\n", epoch_id + 1);
 				cout << "time consumed: " << difftime(current_time, last_time) << " seconds" << endl;
@@ -375,6 +384,15 @@ class LSTMModel
 		NArray ig_weight_bias, fg_weight_bias, og_weight_bias, ff_weight_bias;
 		NArray decoder_weights, decoder_bias;
 		NArray emb_weight[MaxV];
+
+		vector<NArray> weight_update_ig_data, weight_update_ig_prev, weight_update_ig_cell, weight_update_ig_bias;
+		vector<NArray> weight_update_fg_data, weight_update_fg_prev, weight_update_fg_cell, weight_update_fg_bias;
+		vector<NArray> weight_update_og_data, weight_update_og_prev, weight_update_og_cell, weight_update_og_bias;
+		vector<NArray> weight_update_ff_data, weight_update_ff_prev, weight_update_ff_bias;
+		vector<NArray> dWd, dBd;
+		vector<vector<NArray> > dEmb;
+
+		MinervaSystem& ms = MinervaSystem::Instance();
 };
 
 void ReadData(int &train_words, int &test_words)
