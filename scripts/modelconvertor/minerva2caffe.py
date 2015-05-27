@@ -1,5 +1,7 @@
+#!/usr/bin/env python
+
 import os
-import sys
+import sys, argparse
 import owl
 from owl.net.caffe import *
 from google.protobuf import text_format
@@ -39,9 +41,6 @@ class Minerva2CaffeConvertor:
                 thisblob.height = kernelsize
                 thisblob.width = kernelsize
 
-
-
-
                 filename = '%s/snapshot%d/%s_bias.dat' % (weightdir, snapshot, layername)                
                 theweight = np.fromfile(filename, dtype=np.float32)
                 thisblob = netparam.layers[i].blobs.add()
@@ -68,6 +67,7 @@ class Minerva2CaffeConvertor:
                 thisblob.width = input_dim
                
                 filename = '%s/snapshot%d/%s_bias.dat' % (weightdir, snapshot, layername)                
+                print filename
                 theweight = np.fromfile(filename, dtype=np.float32)
                 thisblob = netparam.layers[i].blobs.add()
                 thisblob.data.extend(theweight.tolist())
@@ -81,7 +81,15 @@ class Minerva2CaffeConvertor:
     
 
 if __name__ == "__main__":
-    Minerva2CaffeConvertor('/home/tianjun/configfile/Googmodel/train_val_128mb.prototxt', '/home/tianjun/models/newGoogmodel_script/', 0, '/home/tianjun/tmp/cafmodel/new.caffemodel')
+    # parse command line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('config_file', help='caffe configure file')
+    parser.add_argument('minerva_model_dir', help='minerva model dir')
+    parser.add_argument('snapshot', help='the model snapshot to be converted', type=int, default=0)
+    parser.add_argument('caffe_model', help='path of the converted caffe model')
+    
+    (args, remain) = parser.parse_known_args()
+    Minerva2CaffeConvertor(args.config_file, args.minerva_model_dir, args.snapshot, args.caffe_model)
  
 
 

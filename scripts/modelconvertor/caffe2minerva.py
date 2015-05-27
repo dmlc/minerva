@@ -1,5 +1,7 @@
+#!/usr/bin/env python
+
 import os
-import sys
+import sys, argparse
 import owl
 from owl.net.caffe import *
 from google.protobuf import text_format
@@ -50,8 +52,6 @@ class Caffe2MinervaConvertor:
                     input_dim = np.shape(np.array(netparam.layers[i].blobs[0].data, dtype=np.float32))[0] / num_output
                     theweight = np.transpose(np.array(netparam.layers[i].blobs[0].data, dtype=np.float32).reshape([num_output, input_dim]))
                     theweight.tofile(filename)
-                    print netparam.layers[i].blobs[0]
-                    exit(0)
 
                 filename = '%s/snapshot%d/%s_bias.dat' % (weightdir, snapshot, layername)
                 print filename
@@ -59,7 +59,14 @@ class Caffe2MinervaConvertor:
                 
 
 if __name__ == "__main__":
-    Caffe2MinervaConvertor('/home/tianjun/caffe/models/bvlc_googlenet/bvlc_googlenet.caffemodel', '/home/tianjun/models/newGoogmodel_script/', 0)
+    # parse command line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('caffe_model', help='caffe model to be converted')
+    parser.add_argument('minerva_model_dir', help='minerva model dir')
+    parser.add_argument('snapshot', help='the snapshot idx to be saved as', type=int, default=0)
+    
+    (args, remain) = parser.parse_known_args()
+    Caffe2MinervaConvertor(args.caffe_model, args.minerva_model_dir, args.snapshot)
  
 
 
