@@ -208,7 +208,9 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
         bias[k] = NArray::PushGradAndPullWeight(sens[k + 1].Sum(1) / mb_size, GetBiasName(k));
         weights[k] = NArray::PushGradAndPullWeight(sens[k + 1] * acts[k].Trans() / mb_size, GetWeightName(k));
       }
+#ifdef HAS_CUDA
       ms.SetDevice(gpuDevice);
+#endif
 
       if ((mb - rank) % 20 == 0) {
         ms.SetDevice(cpuDevice);
