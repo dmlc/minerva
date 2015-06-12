@@ -14,7 +14,9 @@ function run_clean {
   if [ "$yesorno" == "y" ]; then
       echo "Removing builds"
       rm -rf $BUILD_DIR
+      python setup.py clean --all
       rm -rf build
+      rm -rf dist
       rm -rf owl/libowl.so
   fi
   exit 0
