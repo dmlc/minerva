@@ -14,8 +14,8 @@ def relative_path(to):
 
 extensions = [
     Extension(
-        '*',
-        ['owl/*.pyx', 'owl/minerva_utils.cpp'],
+        'libowl',
+        ['owl/libowl.pyx', 'owl/minerva_utils.cpp'],
         language='c++',
         include_dirs=[
             'minerva',
