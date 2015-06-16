@@ -254,6 +254,13 @@ class LSTMModel
 
 					//epoch_ll += sent_ll;
 
+					if (s % 2 == 0)
+					{
+						MinervaSystem& ms = MinervaSystem::Instance();
+						ms.wait_for_all();
+					}
+					continue;
+
 					float rate = learning_rate;
 					ig_weight_prev -= rate * weight_update_ig_prev;
 					ig_weight_data -= rate * weight_update_ig_data;
@@ -280,11 +287,6 @@ class LSTMModel
 					//for (int t = 1; t < dEmb.size(); ++ t)
 					//	emb_weight[sents[s][t - 1]] -= rate * dEmb[t];
 
-					if (s % 1 == 0)
-					{
-						MinervaSystem& ms = MinervaSystem::Instance();
-						ms.wait_for_all();
-					}
 				}
 
 				//float epoch_ent = epoch_ll * (-1) / words;

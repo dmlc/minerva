@@ -61,7 +61,7 @@ class LSTMModel
 			printf("model size: [%d %d %d].\n", Layers[0], Layers[1], Layers[2]);
 		}
 
-		float train_step(vector<int> sent, int words,
+		void train_step(vector<int> sent, int words,
 			NArray &weight_update_ig_data, NArray &weight_update_ig_prev, NArray &weight_update_ig_cell, NArray &weight_update_ig_bias,
 			NArray &weight_update_fg_data, NArray &weight_update_fg_prev, NArray &weight_update_fg_cell, NArray &weight_update_fg_bias,
 			NArray &weight_update_og_data, NArray &weight_update_og_prev, NArray &weight_update_og_cell, NArray &weight_update_og_bias,
@@ -193,8 +193,6 @@ class LSTMModel
 				weight_update_ff_prev += Elewise::Mult(sen_ff, Hout[t - 1]);
 				weight_update_ff_bias += sen_ff;
 			}
-
-			return sent_ll;
 		}
 
 		vector<NArray> initw(int size, Scale scale)
@@ -210,98 +208,85 @@ class LSTMModel
 
 		void train(vector<vector<int> > sents, int words, int num_epochs, int num_gpu = 1, float learning_rate = 0.1)
 		{
-			MinervaSystem& ms = MinervaSystem::Instance();
 			int E = Layers[0];
 			int N = Layers[1];
 			int K = Layers[2];
+			ms.wait_for_all();
 			time_t last_time = time(NULL);
 			for (int epoch_id = 0; epoch_id < num_epochs; ++ epoch_id)
 			{
-				vector<NArray> weight_update_ig_data = initw(num_gpu, {N, E});
-				vector<NArray> weight_update_ig_prev = initw(num_gpu, {N, N});
-				vector<NArray> weight_update_ig_cell = initw(num_gpu, {N, 1});
-				vector<NArray> weight_update_ig_bias = initw(num_gpu, {N, 1});
+				NArray weight_update_ig_data = NArray::Zeros({N, E});
+				NArray weight_update_ig_prev = NArray::Zeros({N, N});
+				NArray weight_update_ig_cell = NArray::Zeros({N, 1});
+				NArray weight_update_ig_bias = NArray::Zeros({N, 1});
 
-				vector<NArray> weight_update_fg_data = initw(num_gpu, {N, E});
-				vector<NArray> weight_update_fg_prev = initw(num_gpu, {N, N});
-				vector<NArray> weight_update_fg_cell = initw(num_gpu, {N, 1});
-				vector<NArray> weight_update_fg_bias = initw(num_gpu, {N, 1});
+				NArray weight_update_fg_data = NArray::Zeros({N, E});
+				NArray weight_update_fg_prev = NArray::Zeros({N, N});
+				NArray weight_update_fg_cell = NArray::Zeros({N, 1});
+				NArray weight_update_fg_bias = NArray::Zeros({N, 1});
 
-				vector<NArray> weight_update_og_data = initw(num_gpu, {N, E});
-				vector<NArray> weight_update_og_prev = initw(num_gpu, {N, N});
-				vector<NArray> weight_update_og_cell = initw(num_gpu, {N, 1});
-				vector<NArray> weight_update_og_bias = initw(num_gpu, {N, 1});
+				NArray weight_update_og_data = NArray::Zeros({N, E});
+				NArray weight_update_og_prev = NArray::Zeros({N, N});
+				NArray weight_update_og_cell = NArray::Zeros({N, 1});
+				NArray weight_update_og_bias = NArray::Zeros({N, 1});
 
-				vector<NArray> weight_update_ff_data = initw(num_gpu, {N, E});
-				vector<NArray> weight_update_ff_prev = initw(num_gpu, {N, N});
-				vector<NArray> weight_update_ff_bias = initw(num_gpu, {N, 1});
+				NArray weight_update_ff_data = NArray::Zeros({N, E});
+				NArray weight_update_ff_prev = NArray::Zeros({N, N});
+				NArray weight_update_ff_bias = NArray::Zeros({N, 1});
 
-				vector<NArray> dBd = initw(num_gpu, {K, 1});
-				vector<NArray> dWd = initw(num_gpu, {K, N});
-				vector<vector<NArray> > dEmb;
-				float sent_ll[5];
-
-				for (int i = 0; i < num_gpu; ++ i)
-				{
-					vector<NArray> d;
-					d.clear();
-					dEmb.push_back(d);
-				}
+				NArray dBd = NArray::Zeros({K, 1});
+				NArray dWd = NArray::Zeros({K, N});
+				vector<NArray> dEmb;
 
 				float epoch_ll = 0;
 				for (unsigned int s = 0; s < sents.size(); ++ s)
 				{
-					int i = s & 1;
-					ms.SetDevice(gpu[i]);
+					train_step(sents[s], words,
+						weight_update_ig_data, weight_update_ig_prev, weight_update_ig_cell, weight_update_ig_bias,
+						weight_update_fg_data, weight_update_fg_prev, weight_update_fg_cell, weight_update_fg_bias,
+						weight_update_og_data, weight_update_og_prev, weight_update_og_cell, weight_update_og_bias,
+						weight_update_ff_data, weight_update_ff_prev, weight_update_ff_bias,
+						dBd, dWd, dEmb);
 
-					sent_ll[i] = train_step(sents[s], words,
-						weight_update_ig_data[i], weight_update_ig_prev[i], weight_update_ig_cell[i], weight_update_ig_bias[i],
-						weight_update_fg_data[i], weight_update_fg_prev[i], weight_update_fg_cell[i], weight_update_fg_bias[i],
-						weight_update_og_data[i], weight_update_og_prev[i], weight_update_og_cell[i], weight_update_og_bias[i],
-						weight_update_ff_data[i], weight_update_ff_prev[i], weight_update_ff_bias[i],
-						dBd[i], dWd[i], dEmb[i]);
+					//epoch_ll += sent_ll;
 
-					if (!i) continue;
+					float rate = learning_rate;
+					ig_weight_prev -= rate * weight_update_ig_prev;
+					ig_weight_data -= rate * weight_update_ig_data;
+					ig_weight_cell -= rate * weight_update_ig_cell;
+					ig_weight_bias -= rate * weight_update_ig_bias;
 
-					for (int j = 0; j < num_gpu; ++ j)
+					fg_weight_prev -= rate * weight_update_fg_prev;
+					fg_weight_data -= rate * weight_update_fg_data;
+					fg_weight_cell -= rate * weight_update_fg_cell;
+					fg_weight_bias -= rate * weight_update_fg_bias;
+
+					og_weight_prev -= rate * weight_update_og_prev;
+					og_weight_data -= rate * weight_update_og_data;
+					og_weight_cell -= rate * weight_update_og_cell;
+					og_weight_bias -= rate * weight_update_og_bias;
+
+					ff_weight_prev -= rate * weight_update_ff_prev;
+					ff_weight_data -= rate * weight_update_ff_data;
+					ff_weight_bias -= rate * weight_update_ff_bias;
+
+					decoder_weights -= rate * dWd;
+					decoder_bias -= rate * dBd;
+
+					for (int t = 1; t < dEmb.size(); ++ t)
+						emb_weight[sents[s][t - 1]] -= rate * dEmb[t];
+
+					if (s % 10 == 0)
 					{
-						epoch_ll += sent_ll[j];
-						float rate = learning_rate;
-						ig_weight_prev -= rate * weight_update_ig_prev[j];
-						ig_weight_data -= rate * weight_update_ig_data[j];
-						ig_weight_cell -= rate * weight_update_ig_cell[j];
-						ig_weight_bias -= rate * weight_update_ig_bias[j];
-
-						fg_weight_prev -= rate * weight_update_fg_prev[j];
-						fg_weight_data -= rate * weight_update_fg_data[j];
-						fg_weight_cell -= rate * weight_update_fg_cell[j];
-						fg_weight_bias -= rate * weight_update_fg_bias[j];
-
-						og_weight_prev -= rate * weight_update_og_prev[j];
-						og_weight_data -= rate * weight_update_og_data[j];
-						og_weight_cell -= rate * weight_update_og_cell[j];
-						og_weight_bias -= rate * weight_update_og_bias[j];
-
-						ff_weight_prev -= rate * weight_update_ff_prev[j];
-						ff_weight_data -= rate * weight_update_ff_data[j];
-						ff_weight_bias -= rate * weight_update_ff_bias[j];
-
-						decoder_weights -= rate * dWd[j];
-						decoder_bias -= rate * dBd[j];
-
-						vector<int> sen = sents[s - num_gpu + j + 1];
-						for (int t = 1; t < dEmb[j].size(); ++ t)
-							emb_weight[sen[t - 1]] -= rate * dEmb[j][t];
+						MinervaSystem& ms = MinervaSystem::Instance();
+						ms.wait_for_all();
 					}
 				}
 
-				decoder_weights.Wait();
-				decoder_bias.Wait();
-
-				float epoch_ent = epoch_ll * (-1) / words;
-				float epoch_ppl = exp2(epoch_ent);
+				//float epoch_ent = epoch_ll * (-1) / words;
+				//float epoch_ppl = exp2(epoch_ent);
 				auto current_time = time(NULL);
-				printf("Epoch %d PPL = %f\n", epoch_id + 1, epoch_ppl);
+				printf("Epoch %d\n", epoch_id + 1);
 				cout << "time consumed: " << difftime(current_time, last_time) << " seconds" << endl;
 				current_time = last_time;
 			}
@@ -376,6 +361,8 @@ class LSTMModel
 		NArray ig_weight_bias, fg_weight_bias, og_weight_bias, ff_weight_bias;
 		NArray decoder_weights, decoder_bias;
 		NArray emb_weight[MaxV];
+
+		MinervaSystem& ms = MinervaSystem::Instance();
 };
 
 void ReadData(int &train_words, int &test_words)
@@ -390,7 +377,7 @@ void ReadData(int &train_words, int &test_words)
 	wids[eos] = 1;
 	wids[unk] = 2;
 
-	freopen("/home/cs_user/minerva/owl/apps/train1", "r", stdin);
+	freopen("/home/cs_user/minerva/owl/apps/train", "r", stdin);
 	char s[500];
 	int pointer = 2;
 
@@ -426,7 +413,7 @@ void ReadData(int &train_words, int &test_words)
 		train_words += sent.size() - 1;
 	}
 
-	freopen("/home/cs_user/minerva/owl/apps/test1", "r", stdin);
+	freopen("/home/cs_user/minerva/owl/apps/test", "r", stdin);
 	for (; gets(s); )
 	{
 		int L = strlen(s);
@@ -464,16 +451,14 @@ int main(int argc, char** argv)
 {
 	MinervaSystem::Initialize(&argc, &argv);
 	MinervaSystem& ms = MinervaSystem::Instance();
-	for (int i = 0; i < 2; ++ i)
-		gpu.push_back(ms.device_manager().CreateGpuDevice(i));
-	ms.SetDevice(gpu[0]);
+	ms.SetDevice(ms.device_manager().CreateGpuDevice(0));
 	int train_words, test_words;
 	ReadData(train_words, test_words);
 	if (argc == 2) H = atoi(argv[1]);
 	LSTMModel model(wids.size(), H, H);
 	for (int i = 0; i < 10; ++ i)
 	{
-		model.train(train_sents, train_words, 1, 2);
+		model.train(train_sents, train_words, 1, 1);
 		model.test(test_sents, test_words);
 	}
 }

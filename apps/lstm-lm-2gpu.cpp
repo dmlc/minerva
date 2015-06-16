@@ -1,3 +1,4 @@
+#include <sys/time.h>
 #include <minerva.h>
 #include <iostream>
 #include <string>
@@ -22,6 +23,34 @@ NArray Softmax(NArray m)
 	NArray e = Elewise::Exp(m - maxes);
 	return e / e.Sum(0);
 }
+
+long long timeval_diff(struct timeval *difference,
+             struct timeval *end_time,
+             struct timeval *start_time
+            )
+{
+  struct timeval temp_diff;
+
+  if(difference==NULL)
+  {
+    difference=&temp_diff;
+  }
+
+  difference->tv_sec =end_time->tv_sec -start_time->tv_sec ;
+  difference->tv_usec=end_time->tv_usec-start_time->tv_usec;
+
+  /* Using while instead of if below makes the code slightly more robust. */
+
+  while(difference->tv_usec<0)
+  {
+    difference->tv_usec+=1000000;
+    difference->tv_sec -=1;
+  }
+
+  return 1000000LL*difference->tv_sec+
+                   difference->tv_usec;
+
+} /* timeval_diff() */
 
 static void tic(string msg = "")
 {
@@ -256,6 +285,8 @@ class LSTMModel
 					dEmb.push_back(d);
 				}
 
+				double step_time = 0;
+
 				float epoch_ll = 0;
 				for (unsigned int s = 0; s < sents.size(); ++ s)
 				{
@@ -263,13 +294,11 @@ class LSTMModel
 					int i = s & 1;
 					ms.SetDevice(gpu[i]);
 
+					struct timeval time1, time2, diff;
+					gettimeofday(&time1, NULL);
 					sent_ll[i] = train_step(sents[s], words, i);
-
-					if (s % 2 == 0)
-					{
-						MinervaSystem& ms = MinervaSystem::Instance();
-						ms.wait_for_all();
-					}
+					gettimeofday(&time2, NULL);
+					step_time += timeval_diff(&diff, &time2, &time1) * 1.0 / 1000000;
 
 					if (!i) continue;
 
@@ -303,6 +332,12 @@ class LSTMModel
 						//for (int t = 1; t < dEmb[j].size(); ++ t)
 						//	emb_weight[sen[t - 1]] -= rate * dEmb[j][t];
 					}
+
+					if (s % 4 == 3)
+					{
+						MinervaSystem& ms = MinervaSystem::Instance();
+						ms.wait_for_all();
+					}
 				}
 
 				//float epoch_ent = epoch_ll * (-1) / words;
@@ -311,6 +346,7 @@ class LSTMModel
 				auto current_time = time(NULL);
 				printf("Epoch %d\n", epoch_id + 1);
 				cout << "time consumed: " << difftime(current_time, last_time) << " seconds" << endl;
+				cout << "step time: " << step_time << " seconds" << endl;
 				current_time = last_time;
 			}
 		} // end of void train()
