@@ -3,22 +3,28 @@
 uint64_t cpu_device;
 #ifdef HAS_CUDA
 uint64_t gpu_device;
+std::vector<uint64_t> gpu_devices;
 #endif
 
 using namespace minerva;
 
-class MinervaTestEnvironment : public testing::Environment {
+class MinervaTestEnvironment final : public testing::Environment {
  public:
   MinervaTestEnvironment(int* argc, char*** argv) : argc(argc), argv(argv) {
   }
-  void SetUp() {
+  void SetUp() override {
     MinervaSystem::Initialize(argc, argv);
-    cpu_device = MinervaSystem::Instance().device_manager().CreateCpuDevice();
+    auto&& ms = MinervaSystem::Instance();
+    cpu_device = ms.device_manager().CreateCpuDevice();
 #ifdef HAS_CUDA
-    gpu_device = MinervaSystem::Instance().device_manager().CreateGpuDevice(0);
+    gpu_device = ms.device_manager().CreateGpuDevice(0);
+    gpu_devices = {gpu_device};
+    for (int i = 1; i < ms.device_manager().GetGpuDeviceCount(); ++i) {
+      gpu_devices.push_back(ms.device_manager().CreateGpuDevice(i));
+    }
 #endif
   }
-  void TearDown() {
+  void TearDown() override {
   }
 
  private:
