@@ -15,7 +15,7 @@ def relative_path(to):
 extensions = [
     Extension(
         'libowl',
-        sources=['owl/libowl.pyx', 'owl/minerva_utils.cpp'],
+        sources=['owl/owl/libowl.pyx', 'owl/owl/minerva_utils.cpp'],
         language='c++',
         include_dirs=[
             'minerva',
@@ -42,6 +42,6 @@ extensions = [
 
 setup(
     name='owl',
-    package_dir={'': 'owl'},
+    package_dir={'': 'owl/owl'},
     ext_modules=cythonize(extensions)
 )
