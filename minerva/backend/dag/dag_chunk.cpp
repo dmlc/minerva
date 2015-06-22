@@ -41,6 +41,10 @@ const Scale& DagChunk::shape() const {
   return node_->data_.size;
 }
 
+uint64_t DagChunk::GetDeviceId() const {
+  return node_->data_.device_id;
+}
+
 PhysicalDataNode* DagChunk::node() const {
   return node_;
 }

@@ -218,6 +218,10 @@ void NArray::Wait() const {
   MinervaSystem::Instance().backend().Wait(CHECK_NOTNULL(data_));
 }
 
+uint64_t NArray::GetDeviceId() const {
+  return data_->GetDeviceId();
+}
+
 shared_ptr<float> NArray::Get() const {
   Wait();
   return MinervaSystem::Instance().backend().GetValue(CHECK_NOTNULL(data_));

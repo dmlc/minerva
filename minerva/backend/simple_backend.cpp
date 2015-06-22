@@ -10,12 +10,16 @@ using namespace std;
 
 namespace minerva {
 
-class SimpleChunk : public BackendChunk {
+class SimpleChunk final : public BackendChunk {
  public:
   SimpleChunk(std::shared_ptr<PhysicalData> data): data_(data) {}
   const Scale& shape() const override { return data_->size; }
   BackendChunk* ShallowCopy() const override { return new SimpleChunk(data_); }
   PhysicalData& data() { return *data_; }
+  uint64_t GetDeviceId() const override {
+    return data_->device_id;
+  }
+
  private:
   std::shared_ptr<PhysicalData> data_;
 };

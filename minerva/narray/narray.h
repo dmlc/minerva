@@ -95,6 +95,7 @@ class NArray {
   int CountZero() const;
   // System
   void Wait() const;
+  uint64_t GetDeviceId() const;
   std::shared_ptr<float> Get() const;
   void ToStream(std::ostream& out, const FileFormat& format) const;
   void ToFile(const std::string& filename, const FileFormat& format) const;

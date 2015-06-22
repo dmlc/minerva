@@ -4,7 +4,7 @@
 
 namespace minerva {
 
-class DagChunk : public BackendChunk {
+class DagChunk final : public BackendChunk {
  public:
   DagChunk() = delete;
   DagChunk(PhysicalDataNode*);
@@ -13,6 +13,7 @@ class DagChunk : public BackendChunk {
   ~DagChunk();
   DagChunk* ShallowCopy() const override;
   const Scale& shape() const override;
+  uint64_t GetDeviceId() const override;
   PhysicalDataNode* node() const;
 
  private:
