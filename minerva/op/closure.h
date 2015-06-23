@@ -57,6 +57,12 @@ struct ReductionClosure {
   Scale dims_to_reduce;
 };
 
+struct ReductionWithReshapeClosure {
+  ReductionType type;
+  Scale newshape;
+  int dims_to_reduce;
+};
+
 struct MaxIndexClosure {
   int dim;
 };

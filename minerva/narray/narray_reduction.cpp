@@ -7,26 +7,63 @@ using namespace std;
 namespace minerva {
 
 NArray NArray::SumAllExceptDim(const int dim) const {
-	//Reshape and reduction on Col
-	ReductionWithReshapeOp* reductionwithreshape_op = new ReductionWithReshapeOp();
-	reductionwithreshape_op->closure.type = ReductionType::kSum;
-	for (i = 0:dim)
-		a *= dim
-	for (i = dim:all)
-		b *= dim
-	std::vector<int> newshapevec;
-	newshapevec.push(a b)
-	Scale newshape(newshapevec);
-	reductionwithreshape_op->newshape = newshape;
-	auto size = (1, b)
-	NArray mid = NArray::ComputeOne((*this), size, reductionwithreshape_op);
+	auto size = Size();
+	//deprecated
+	if(size.NumDims() == 2)
+		return Sum(Scale{dim});
+   	
+	CHECK_LT(dims, size.NumDims()) << "reduce dim exceeds NArray dims";
 	
-	//Reshape and reduction on Row
-
-
+	//Phase1: Reshape and reduction on Col
+	NArray result_p1();
+	if(dim > 0){
+		ReductionWithReshapeOp* reductionwithreshape_op_p1 = new ReductionWithReshapeOp();
+		reductionwithreshape_op_p2->closure.type = ReductionType::kSum;
+		std::vector<int> reshape_vec_p1; 
+		std::vector<int> newshapevec_p1(2, 1);
+		for (int i = 0; i < size.NumDims(); i++){
+			if(i < dim){
+				newshapevec_p1[0] *= size[i];
+				size[i] = 1;
+			}
+			else{
+				newshapevec_p1[1] *= size[i];
+			}
+		}
+		Scale newshape_p1(newshapevec_p1);
+		reductionwithreshape_op_p1->newshape = newshape_p1;
+		reductionwithreshape_op_p1->dims_to_reduce = 0;
+		result_p1 = NArray::ComputeOne((*this), size, reductionwithreshape_op_p1);
+	}
+	else{
+		result_p1 = (*this);
+	}
+	
+	//Phase2: Reshape and reduction on Row
+	if(dim < size.NumDims()){
+		ReductionWithReshapeOp* reductionwithreshape_op_p2 = new ReductionWithReshapeOp();
+		reductionwithreshape_op_p2->closure.type = ReductionType::kSum;
+		std::vector<int> reshape_vec_p2; 
+		std::vector<int> newshapevec_p2(2, 1);
+		for (int i = dim; i < size.NumDims(); i++){
+			if(i == dim){
+				newshapevec_p2[0] = size[i];
+			}
+			else{
+				newshapevec_p2[1] *= size[i];
+				size[i] = 1;
+			}
+		}
+		Scale newshape_p2(newshapevec_p2);
+		reductionwithreshape_op->newshape = newshape_p2;
+		reductionwithreshape_op->dims_to_reduce = 1;
+		return NArray::ComputeOne(result_p1, size, reductionwithreshape_op);
+	}
+	else{
+		return result_p1;
+	}
 }
 
-	
 	
 // Lazy reductions
 NArray NArray::Sum(int dim) const {

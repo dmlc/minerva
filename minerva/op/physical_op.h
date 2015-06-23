@@ -76,6 +76,19 @@ class ReductionOp : public ComputeFnWithClosure<ReductionClosure> {
   }
 };
 
+class ReductionWithReshapeOp : public ComputeFnWithClosure<ReductionWithReshapeClosure> {
+ public:
+  std::string Name() const {
+   switch (closure.type) {
+     case ReductionType::kSum:
+       return "sum with reshape";
+     case ReductionType::kMax:
+       return "max with reshape";
+   }
+   return "reduction with reshape N/A";
+  }
+};
+
 class MaxIndexOp : public ComputeFnWithClosure<MaxIndexClosure> {
  public:
   std::string Name() const {

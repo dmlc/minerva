@@ -290,6 +290,45 @@ void Reduction(const DataList& inputs, const DataList& outputs,
   }
 }
 
+void ReductionWithReshape(const DataList& inputs, const DataList& outputs,
+  ReductionWithReshapeClosure& closure, const Context& context) {
+  CHECK_EQ(inputs.size(), 1) << "Reduction kernel wrong #input";
+  CHECK_EQ(outputs.size(), 1) << "Reduction kernel wrong #output";
+  auto in_size = inputs[0].size_;
+  auto out_size = outputs[0].size_;
+  auto in_data = inputs[0].data_;
+  auto out_data = outputs[0].data_;
+  //Check the reshape is reasonable
+  int total_dim = 1;
+  for (auto i : dim) {
+	total_dim *= in_size[i];
+  }
+  CHECK_EQ(closure.newshape.NumDims(), 2) << "Only Redhape to a 2-D NArray";
+  CHECK_EQ(total_dim, closure.newshape[0] * closure.newshape[1]) << "Reshape Dimension Mismatch";
+  
+  int m = closure.newshape[0];
+  int n = closure.newshape[1];
+  if (closure.dims_to_reduce == 0) {
+    switch (closure.type) {
+      case ReductionType::kSum:
+        CudaPerformReductionSumOnCol(in_data, out_data, m, n, context.stream);
+        break;
+      case ReductionType::kMax:
+        CudaPerformReductionMaxOnCol(in_data, out_data, m, n, context.stream);
+        break;
+    }
+  } else {
+    switch (closure.type) {
+      case ReductionType::kSum:
+        CudaPerformReductionSumOnRow(in_data, out_data, m, n, context.stream);
+        break;
+      case ReductionType::kMax:
+        CudaPerformReductionMaxOnRow(in_data, out_data, m, n, context.stream);
+        break;
+    }
+  }
+}
+
 void MaxIndex(const DataList& inputs, const DataList& outputs,
   MaxIndexClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "MaxIndex kernel wrong #input";

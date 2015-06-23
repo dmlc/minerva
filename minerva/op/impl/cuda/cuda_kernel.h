@@ -103,6 +103,24 @@ __global__ static void CudaPerformDotKernel(float* x, float* y, size_t size, Fun
   }
 }
 
+// res = NArray Norm on Dim
+template<typename Func>
+__global__ static void CudaPerformNormOnDimKernel(float* matrix, float* row, float * res, int dim_before, int dim_after, int dim_norm, Func func) {
+  int pos_id = threadIdx.x + blockIdx.x * blockDim.x;
+  int step = gridDim.x * blockDim.x;
+  int pos_all = dim_before * dim_after;
+  int pos_before = 0, pos_after = 0;
+
+  while (pos_id < pos_all) {
+	pos_before = pos_id % dim_before;
+	pos_after = pos_id / dim_before;
+    for (int i = 0; i < dim_norm; ++i) {
+      res[pos_before + i * dim_norm + pos_after * dim_norm * dim_after] = func(matrix[pos_before + i * dim_norm + pos_after * dim_norm * dim_after], row[i]);
+    }
+    pos_id += step;
+  }
+}
+
 // res = matrix Norm row
 template<typename Func>
 __global__ static void CudaPerformNormOnColKernel(float* matrix, float* row, float * res, int m, int n, Func func) {

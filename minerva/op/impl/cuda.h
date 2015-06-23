@@ -13,6 +13,7 @@ void ArithmeticConst(const DataList&, const DataList&, ArithmeticConstClosure&, 
 void Transpose(const DataList&, const DataList&, TransposeClosure&, const Context&);
 void NormArithmetic(const DataList&, const DataList&, NormArithmeticClosure&, const Context &);
 void Reduction(const DataList&, const DataList&, ReductionClosure&, const Context&);
+void ReductionWithReshape(const DataList&, const DataList&, ReductionWithReshapeClosure&, const Context&);
 void MaxIndex(const DataList&, const DataList&, MaxIndexClosure&, const Context&);
 void Reshape(const DataList&, const DataList&, ReshapeClosure&, const Context&);
 void Elewise(const DataList&, const DataList&, ElewiseClosure&, const Context&);
