@@ -6,6 +6,28 @@ using namespace std;
 
 namespace minerva {
 
+NArray NArray::SumAllExceptDim(const int dim) const {
+	//Reshape and reduction on Col
+	ReductionWithReshapeOp* reductionwithreshape_op = new ReductionWithReshapeOp();
+	reductionwithreshape_op->closure.type = ReductionType::kSum;
+	for (i = 0:dim)
+		a *= dim
+	for (i = dim:all)
+		b *= dim
+	std::vector<int> newshapevec;
+	newshapevec.push(a b)
+	Scale newshape(newshapevec);
+	reductionwithreshape_op->newshape = newshape;
+	auto size = (1, b)
+	NArray mid = NArray::ComputeOne((*this), size, reductionwithreshape_op);
+	
+	//Reshape and reduction on Row
+
+
+}
+
+	
+	
 // Lazy reductions
 NArray NArray::Sum(int dim) const {
   return Sum(Scale{dim});
