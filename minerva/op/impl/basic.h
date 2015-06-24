@@ -8,6 +8,7 @@ namespace basic {
 void Arithmetic(const DataList&, const DataList&, ArithmeticClosure&);
 void ArithmeticConst(const DataList&, const DataList&, ArithmeticConstClosure&);
 void Elewise(const DataList&, const DataList&, ElewiseClosure&);
+void ThresholdNorm(const DataList&, const DataList&, ThresholdNormClosure&);
 void MatMult(const DataList&, const DataList&, MatMultClosure&);
 void Transpose(const DataList&, const DataList&, TransposeClosure&);
 void Reduction(const DataList&, const DataList&, ReductionClosure&);

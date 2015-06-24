@@ -71,6 +71,10 @@ struct SigmoidForwardClosure {
 struct SigmoidBackwardClosure {
 };
 
+struct ThresholdNormClosure {
+	float threshold;
+};
+
 struct ReluForwardClosure {
 };
 

@@ -37,6 +37,12 @@ NArray Elewise::Mult(const NArray& lhs, const NArray& rhs) {
   return ArithmeticHelper(lhs, rhs, ArithmeticType::kMult);
 }
 
+NArray Elewise::ThresholdNorm(const NArray& narr, float threshold) {
+  ThresholdNormOp* threshold_op = new ThresholdNormOp();
+  threshold_op->closure = {threshold};
+  return NArray::ComputeOne({narr}, narr.Size(), threshold_op);
+}
+
 NArray Elewise::Exp(const NArray& narr) {
   return ElewiseHelper(narr, ElewiseType::kExp);
 }

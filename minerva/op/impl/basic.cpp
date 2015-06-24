@@ -106,6 +106,22 @@ void ArithmeticConst(const DataList& inputs, const DataList& outputs, Arithmetic
   }
 }
 
+
+void ThresholdNorm(const DataList& inputs, const DataList& outputs, ThresholdNormClosure& closure) {
+  CHECK_EQ(inputs.size(), 1) << "(elewise) #inputs is wrong!";
+  CHECK_EQ(outputs.size(), 1) << "(elewise) #outputs is wrong!";
+  float* in_data = inputs[0].data_;
+  float* res_data = outputs[0].data_;
+  int length = outputs[0].size_.Prod();
+  for (int i = 0; i < length; ++i) {
+	//Suppose threshold can't be zero
+	if(std::abs(in_data[i]) > closure.threshold)
+		res_data[i] = std::abs(in_data[i]) / in_data[i] * closure.threshold;
+	else
+		res_data[i] = in_data[i];
+  }
+}
+
 void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& closure) {
   CHECK_EQ(inputs.size(), 1) << "(elewise) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(elewise) #outputs is wrong!";
