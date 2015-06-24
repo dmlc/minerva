@@ -162,10 +162,10 @@ class WeightedComputeUnit(ComputeUnitSimple):
     :ivar owl.NArray bias: bias tensor
     :ivar owl.NArray biasdelta: momentum of bias
     :ivar owl.NArray biasgrad: gradient of bias
-    :ivar blobs_lr: learning rate specific for this unit; a list of float represents: [weight_lr, bias_lr]
-    :vartype blobs_lr: list float
-    :ivar weight_decay: weight decay specific for this unit; a list of float represents: [weight_wd, bias_wd]
-    :vartype weight_decay: list float
+    :ivar float lr_mult_w: learning rate multiplier for the weight of this unit
+    :ivar float lr_mult_b: bias learning rate multiplier for the bias of this unit
+    :ivar float decay_mult_w: decay multiplier for the weight of this unit
+    :ivar float decay_mult_b: decay multiplier for the bias of this unit
     '''
     def __init__(self, params):
         super(WeightedComputeUnit, self).__init__(params)
@@ -180,12 +180,26 @@ class WeightedComputeUnit(ComputeUnitSimple):
         self.in_shape = None
 
         # blob learning rate and weight decay
-        self.blobs_lr = params.blobs_lr
-        self.weight_decay = params.weight_decay
-        if len(self.blobs_lr) == 0:
-            self.blobs_lr = [1,1]
-        if len(self.weight_decay) == 0:
-            self.weight_decay = [1, 0]
+        if len(params.param) >= 1:
+            self.lr_mult_w = params.param[0].lr_mult
+            self.decay_mult_w = params.param[0].decay_mult
+        else:
+            self.lr_mult_w = 1
+            self.decay_mult_w = 1
+
+        if len(params.param) >= 2:
+            self.lr_mult_b = params.param[1].lr_mult
+            self.decay_mult_b = params.param[1].decay_mult
+        else:
+            self.lr_mult_b = 1
+            self.decay_mult_b = 0
+
+        #self.blobs_lr = params.blobs_lr
+        #self.weight_decay = params.weight_decay
+        #if len(self.blobs_lr) == 0:
+            #self.blobs_lr = [1,1]
+        #if len(self.weight_decay) == 0:
+            #self.weight_decay = [1, 0]
     
     def compute_size(self, from_btm, to_top):
         pass 
@@ -236,8 +250,8 @@ class WeightedComputeUnit(ComputeUnitSimple):
             self.weightdelta = owl.zeros(self.weightgrad.shape)
 
         self.weightdelta = momentum * self.weightdelta \
-                        - (base_lr * self.blobs_lr[0] / batch_size) * self.weightgrad \
-                        - (base_lr * self.blobs_lr[0] * base_weight_decay * self.weight_decay[0]) * self.weight
+                        - (base_lr * self.lr_mult_w / batch_size) * self.weightgrad \
+                        - (base_lr * self.lr_mult_w * base_weight_decay * self.decay_mult_w) * self.weight
         self.weight = self.weight + self.weightdelta
         self.weightgrad = None
 
@@ -245,8 +259,8 @@ class WeightedComputeUnit(ComputeUnitSimple):
             self.biasdelta = owl.zeros(self.biasgrad.shape)
 
         self.biasdelta = momentum * self.biasdelta \
-                        - (base_lr * self.blobs_lr[1] / batch_size) * self.biasgrad \
-                        - (base_lr * self.blobs_lr[1] * base_weight_decay * self.weight_decay[1]) * self.bias
+                        - (base_lr * self.lr_mult_b / batch_size) * self.biasgrad \
+                        - (base_lr * self.lr_mult_b * base_weight_decay * self.decay_mult_b) * self.bias
         self.bias = self.bias + self.biasdelta
         self.biasgrad = None
 
