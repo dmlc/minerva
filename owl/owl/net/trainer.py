@@ -21,11 +21,16 @@ class NetTrainer:
     :ivar str solver_file: path of the solver file in Caffe's proto format
     :ivar int snapshot: the idx of snapshot to start with
     :ivar int num_gpu: the number of gpu to use
+    :ivar int sync_freq: the frequency to stop lazy evaluation and print some information. The frequency means every how many
+                         minibatches will the trainer call ``owl.wait_for_all()``. Note that this will influence the training
+                         speed. Normally, the higher value is given, the faster the training speed but the more memory is used
+                         during execution.
     '''
-    def __init__(self, solver_file, snapshot = 0, num_gpu = 1):
+    def __init__(self, solver_file, snapshot = 0, num_gpu = 1, sync_freq=1):
         self.solver_file = solver_file
         self.snapshot = snapshot
         self.num_gpu = num_gpu
+        self.sync_freq = sync_freq
         self.gpu = [owl.create_gpu_device(i) for i in range(num_gpu)]
 
     def build_net(self):
@@ -98,7 +103,10 @@ class NetTrainer:
         wunits = s.owl_net.get_weighted_unit_ids()
         last_start = time.time()
 
-        for iteridx in range(s.snapshot * s.owl_net.solver.snapshot, s.owl_net.solver.max_iter):
+        start_idx = s.snapshot * s.owl_net.solver.snapshot
+        end_idx = s.owl_net.solver.max_iter
+
+        for iteridx in range(start_idx, end_idx):
             # get the learning rate
             if s.owl_net.solver.lr_policy == "poly":
                 s.owl_net.current_lr = s.owl_net.base_lr * pow(1 - float(iteridx) / s.owl_net.solver.max_iter, s.owl_net.solver.power)
@@ -128,10 +136,11 @@ class NetTrainer:
                 s.owl_net.units[wid].biasgrad = bgrad[upd_gpu][i]
                 s.owl_net.update(wid)
 
-            if iteridx % 2 == 0:
+            if iteridx % s.sync_freq == 0:
                 owl.wait_for_all()
                 thistime = time.time() - last
-                print "Finished training %d minibatch (time: %s)" % (iteridx, thistime)
+                speed = s.owl_net.batch_size * s.sync_freq / thistime
+                print "Finished training %d minibatch (time: %s; speed: %s img/s)" % (iteridx, thistime, speed)
                 last = time.time()
 
             wgrad = [[] for i in range(s.num_gpu)] # reset gradients

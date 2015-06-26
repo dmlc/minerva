@@ -818,6 +818,9 @@ class LMDBDataUnit(DataUnit):
                 [self.crop_size, self.crop_size, 3, samples.shape[0]])
         for i in range (1, len(self.top_names)):
             to_top[self.top_names[i]] = labels[:,i - 1]
+        #to_top[self.top_names[0]] = owl.zeros([self.crop_size, self.crop_size, 3, 256])
+        #for i in range (1, len(self.top_names)):
+            #to_top[self.top_names[i]] = np.ones(256)
         self.out = to_top[self.top_names[0]]
 
     def __str__(self):
