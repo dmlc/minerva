@@ -272,7 +272,7 @@ class LMDBDataProvider:
             self.mean_data[0] = transform_param.mean_value[0]
             self.mean_data[1] = transform_param.mean_value[1]
             self.mean_data[2] = transform_param.mean_value[2]           
-        else:    
+        else:
             with open(transform_param.mean_file, 'rb') as f:
                 bp.ParseFromString(f.read())
             mean_narray = np.array(bp.data, dtype=np.float32)

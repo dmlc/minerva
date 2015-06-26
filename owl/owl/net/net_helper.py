@@ -56,7 +56,7 @@ class CaffeNetBuilder:
         owl_net.data_layers = []
         # 1. record name and its caffe.V1LayerParameter data in a map
         # 2. some layers is stacked into one in caffe's configure format
-        for l in self.netconfig.layers:
+        for l in self.netconfig.layer:
             owl_struct = self._convert_type(l, num_gpu)
             
             if owl_struct != None:
@@ -64,21 +64,21 @@ class CaffeNetBuilder:
                 
                 #handle IO. XXX: hard-coded
                 ty = l.type
-                if ty == V1LayerParameter.LayerType.Value('DATA'):
+                if ty == 'Data':
                     owl_net.data_layers.append(l.name)
                     if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
                         owl_net.batch_size = l.data_param.batch_size
-                elif ty == V1LayerParameter.LayerType.Value('IMAGE_DATA'):
+                elif ty == 'ImageData':
                     owl_net.data_layers.append(l.name)
                     if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
                         owl_net.batch_size = l.image_data_param.batch_size
-                elif ty == V1LayerParameter.LayerType.Value('WINDOW_DATA'):
+                elif ty == 'WindowData':
                     owl_net.data_layers.append(l.name)
                     if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
                         owl_net.batch_size = l.window_data_param.batch_size
-                elif ty == V1LayerParameter.LayerType.Value('SOFTMAX_LOSS'):
+                elif ty == 'SoftmaxWithLoss':
                     owl_net.loss_uids.append(uid)
-                elif ty == V1LayerParameter.LayerType.Value('ACCURACY'):
+                elif ty == 'Accuracy':
                     owl_net.accuracy_uids.append(uid)
                 
                 # stack issues
@@ -121,36 +121,36 @@ class CaffeNetBuilder:
 
     def _convert_type(self, caffe_layer, num_gpu):
         ty = caffe_layer.type
-        if ty == V1LayerParameter.LayerType.Value('DATA'):
+        if ty == 'Data':
             return net.LMDBDataUnit(caffe_layer, num_gpu)
-        elif ty == V1LayerParameter.LayerType.Value('IMAGE_DATA'):
+        elif ty == 'ImageData':
             return net.ImageDataUnit(caffe_layer, num_gpu)
-        elif ty == V1LayerParameter.LayerType.Value('WINDOW_DATA'):
+        elif ty == 'WindowData':
             return net.ImageWindowDataUnit(caffe_layer, num_gpu)
-        elif ty == V1LayerParameter.LayerType.Value('INNER_PRODUCT'):
+        elif ty == 'InnerProduct':
             return net.FullyConnection(caffe_layer)
-        elif ty == V1LayerParameter.LayerType.Value('CONVOLUTION'):
+        elif ty == 'Convolution':
             return net.ConvConnection(caffe_layer)
-        elif ty == V1LayerParameter.LayerType.Value('POOLING'):
+        elif ty == 'Pooling':
             return net.PoolingUnit(caffe_layer)
-        elif ty == V1LayerParameter.LayerType.Value('RELU'):
+        elif ty == 'ReLU':
             return net.ReluUnit(caffe_layer)
-        elif ty == V1LayerParameter.LayerType.Value('SIGMOID'):
+        elif ty == 'Sigmoid':
             return net.SigmoidUnit(caffe_layer)
-        elif ty == V1LayerParameter.LayerType.Value('SOFTMAX_LOSS'):
+        elif ty == 'SoftmaxWithLoss':
             return net.SoftmaxUnit(caffe_layer)
-        elif ty == V1LayerParameter.LayerType.Value('TANH'):
+        elif ty == 'TanH':
             return net.TanhUnit(caffe_layer)
-        elif ty == V1LayerParameter.LayerType.Value('DROPOUT'):
+        elif ty == 'Dropout':
             return net.DropoutUnit(caffe_layer)
-        elif ty == V1LayerParameter.LayerType.Value('LRN'):
+        elif ty == 'LRN':
             return net.LRNUnit(caffe_layer)
-        elif ty == V1LayerParameter.LayerType.Value('CONCAT'):
+        elif ty == 'Concat':
             return net.ConcatUnit(caffe_layer)
-        elif ty == V1LayerParameter.LayerType.Value('ACCURACY'):
+        elif ty == 'Accuracy':
             return net.AccuracyUnit(caffe_layer)
         else:
-            print "Not implemented type:", V1LayerParameter.LayerType.Name(caffe_layer.type)
+            print "Not implemented type:", ty
             return None
     
     def init_net_from_file(self, owl_net, weightpath, snapshotidx):
