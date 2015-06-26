@@ -159,7 +159,7 @@ class CaffeNetBuilder:
         :ivar str weightpath: the folder storing parameters 
         :ivar int snapshotidx: the index of the snapshot
         '''
-        weightpath = "%ssnapshot%d/" % (weightpath, snapshotidx)
+        weightpath = "%s/snapshot%d/" % (weightpath, snapshotidx)
         for i in range(len(owl_net.units)):
             if isinstance(owl_net.units[i], net.FullyConnection):
                 #print owl_net.units[i].name
@@ -241,7 +241,7 @@ class CaffeNetBuilder:
         :ivar str weightpath: the folder storing parameters 
         :ivar int snapshotidx: the index of the snapshot
         '''
-        weightpath = "%ssnapshot%d/" % (weightpath, snapshotidx)
+        weightpath = "%s/snapshot%d/" % (weightpath, snapshotidx)
         cmd = "mkdir %s" % (weightpath)
         res = subprocess.call(cmd, shell=True)
         for i in range(len(owl_net.units)):

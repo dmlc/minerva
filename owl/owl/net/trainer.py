@@ -397,7 +397,7 @@ class FilterVisualizer:
                 res_img = np.zeros([feature_unit.rec_on_ori * 3, feature_unit.rec_on_ori * 3, 3])
                 filter_feature = np.copy(all_feature[:,i,:,:])
                 for patchidx in range(9):
-                    maxidx = np.max_index(filter_feature)
+                    maxidx = np.argmax(filter_feature)
                     colidx = maxidx % feature_shape[0]
                     maxidx = (maxidx - colidx) / feature_shape[0]
                     rowidx = maxidx % feature_shape[1]

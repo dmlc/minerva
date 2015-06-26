@@ -322,7 +322,7 @@ class PoolingUnit(ComputeUnitSimple):
         if self.ppa.pool == PoolingParameter.PoolMethod.Value('MAX'):
             pool_ty = co.pool_op.max
         elif self.ppa.pool == PoolingParameter.PoolMethod.Value('AVE'):
-            pool_ty = co.pool_op.avg
+            pool_ty = co.pool_op.average
         self.pooler = co.Pooler(self.ppa.kernel_size, self.ppa.kernel_size,
                                 self.ppa.stride, self.ppa.stride,
                                 self.ppa.pad, self.ppa.pad,
@@ -411,6 +411,8 @@ class SoftmaxUnit(ComputeUnit):
         for i in range(len(self.strlabel)):
             nplabel[i, self.strlabel[i]] = 1
         self.y = owl.from_numpy(nplabel)
+        self.out = self.ff_y
+
         
     def backward(self, from_top, to_btm, phase):
         if len(self.loss_weight) == 1:
@@ -530,6 +532,7 @@ class ConcatUnit(ComputeUnit):
             narrays.append(from_btm[self.btm_names[i]])
             self.slice_count.append(from_btm[self.btm_names[i]].shape[self.concat_dim])
         to_top[self.top_names[0]] = owl.concat(narrays, self.concat_dim)
+        self.out = to_top[self.top_names[0]] 
     
     def backward(self, from_top, to_btm, phase):
         st_off = 0
