@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #include <unordered_map>
 #include <functional>
 #include <mutex>
@@ -6,6 +7,7 @@
 #include <cstddef>
 #include <dmlc/logging.h>
 #include "common/common.h"
+#include "device/temporary_space_holder.h"
 
 namespace minerva {
 
@@ -19,6 +21,7 @@ class DataStore {
   virtual bool ExistData(uint64_t id) const;
   virtual void FreeData(uint64_t);
   virtual size_t GetTotalBytes() const;
+  virtual std::unique_ptr<TemporarySpaceHolder> GetTemporarySpace(size_t);
 
  protected:
   struct DataState {
@@ -27,8 +30,10 @@ class DataStore {
   };
   mutable std::mutex access_mutex_;
   std::unordered_map<uint64_t, DataState> data_states_;
+  std::map<uint64_t, DataState> temporary_space_;
   std::function<void*(size_t)> allocator_;
   std::function<void(void*)> deallocator_;
+  virtual void FreeTemporarySpace(uint64_t);
 };
 
 }  // namespace minerva

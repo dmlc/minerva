@@ -32,8 +32,7 @@ struct Context {
   cublasHandle_t cublas_handle;
   cudnnHandle_t cudnn_handle;
 #endif
-  virtual ~Context() {
-  };
+  virtual ~Context() = default;
 };
 
 }

@@ -1,4 +1,5 @@
-#include "data_store.h"
+#include "./data_store.h"
+#include "common/make_unique.h"
 
 using namespace std;
 
@@ -11,6 +12,7 @@ DataStore::~DataStore() {
   for (auto& i : data_states_) {
     deallocator_(i.second.ptr);
   }
+  CHECK_EQ(temporary_space_.size(), 0) << "temporary space not empty on exit";
 }
 
 float* DataStore::CreateData(uint64_t id, size_t length) {
@@ -51,4 +53,34 @@ size_t DataStore::GetTotalBytes() const {
   return total_bytes;
 }
 
+std::unique_ptr<TemporarySpaceHolder>
+DataStore::GetTemporarySpace(size_t length) {
+  lock_guard<mutex> lck(access_mutex_);
+  uint64_t id;
+  // allocate new id
+  if (temporary_space_.size() == 0) {
+    id = 0;
+  } else {
+    id = temporary_space_.rbegin()->first + 1;
+  }
+  DLOG(INFO) << "create temporary data #" << id << " length " << length;
+  auto&& it = temporary_space_.emplace(id, DataState());
+  auto&& ds = it.first->second;
+  ds.length = length;
+  ds.ptr = allocator_(length);
+  auto deallocator = [this, id]() {
+    FreeTemporarySpace(id);
+  };
+  return
+    common::MakeUnique<TemporarySpaceHolder>(ds.ptr, ds.length, deallocator);
+}
+
+void DataStore::FreeTemporarySpace(uint64_t id) {
+  lock_guard<mutex> lck(access_mutex_);
+  auto&& ds = temporary_space_.at(id);
+  deallocator_(ds.ptr);
+  CHECK_EQ(temporary_space_.erase(id), 1);
+}
+
 }  // namespace minerva
+
