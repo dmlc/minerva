@@ -47,7 +47,10 @@ void DataStore::FreeData(uint64_t id) {
 size_t DataStore::GetTotalBytes() const {
   lock_guard<mutex> lck(access_mutex_);
   size_t total_bytes = 0;
-  for (auto& it : data_states_) {
+  for (auto&& it : data_states_) {
+    total_bytes += it.second.length;
+  }
+  for(auto&& it : temporary_space_) {
     total_bytes += it.second.length;
   }
   return total_bytes;

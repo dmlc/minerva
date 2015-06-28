@@ -21,23 +21,8 @@ float* PooledDataStore::CreateData(uint64_t id, size_t length) {
   DLOG(INFO) << "create data #" << id << " length " << length;
   auto it = data_states_.emplace(id, DataState());
   CHECK(it.second) << "data already existed";
-  auto& ds = it.first->second;
-  ds.length = length;
-  auto find_free_space_ = free_space_.find(length);
-  if (find_free_space_ != free_space_.end()) {
-    // Reuse
-    ds.ptr = find_free_space_->second.front();
-    find_free_space_->second.pop();
-    if (!find_free_space_->second.size()) {
-      free_space_.erase(find_free_space_);
-    }
-  } else {
-    ds.ptr = allocator_(length);
-    total_ += length;
-    if (threshold_ < total_) {
-      ReleaseFreeSpace();
-    }
-  }
+  auto&& ds = it.first->second;
+  DoCreateData(&ds, length);
   return static_cast<float*>(ds.ptr);
 }
 
@@ -66,22 +51,7 @@ PooledDataStore::GetTemporarySpace(size_t length) {
   DLOG(INFO) << "create temporary data #" << id << " length " << length;
   auto&& it = temporary_space_.emplace(id, DataState{});
   auto&& ds = it.first->second;
-  ds.length = length;
-  auto find_free_space_ = free_space_.find(length);
-  if (find_free_space_ != free_space_.end()) {
-    // Reuse
-    ds.ptr = find_free_space_->second.front();
-    find_free_space_->second.pop();
-    if (!find_free_space_->second.size()) {
-      free_space_.erase(find_free_space_);
-    }
-  } else {
-    ds.ptr = allocator_(length);
-    total_ += length;
-    if (threshold_ < total_) {
-      ReleaseFreeSpace();
-    }
-  }
+  DoCreateData(&ds, length);
   auto deallocator = [this, id]() {
     FreeTemporarySpace(id);
   };
@@ -98,6 +68,25 @@ void PooledDataStore::ReleaseFreeSpace() {
     }
   }
   free_space_.clear();
+}
+
+void PooledDataStore::DoCreateData(DataState* ds, size_t length) {
+  ds->length = length;
+  auto&& find_free_space = free_space_.find(length);
+  if (find_free_space != free_space_.end()) {
+    // reuse
+    ds->ptr = find_free_space->second.front();
+    find_free_space->second.pop();
+    if (find_free_space->second.size() == 0) {
+      free_space_.erase(find_free_space);
+    }
+  } else {
+    ds->ptr = allocator_(length);
+    total_ += length;
+    if (threshold_ < total_) {
+      ReleaseFreeSpace();
+    }
+  }
 }
 
 void PooledDataStore::FreeTemporarySpace(uint64_t id) {
