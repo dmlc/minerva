@@ -220,8 +220,7 @@ class WeightedComputeUnit(ComputeUnitSimple):
         elif self.weight_filler.type == "uniform":
             npweights = np.random.uniform(self.weight_filler.min, self.weight_filler.max, self.wshape)
         elif self.weight_filler.type == "xavier":
-            fan_in = np.prod(self.in_shape[:])
-            scale = np.sqrt(float(3)/fan_in)
+            scale = np.sqrt(float(3)/self.fan_in)
             npweights = np.random.uniform(-scale, scale, self.wshape)
         self.weight = owl.from_numpy(npweights.astype(np.float32)).reshape(self.wshape)
       
@@ -589,7 +588,11 @@ class FullyConnection(WeightedComputeUnit):
         to_top[self.top_names[0]]['stride_on_ori'] = self.stride_on_ori
         to_top[self.top_names[0]]['start_on_ori'] = from_btm[self.btm_names[0]]['start_on_ori']
         self.start_on_ori = to_top[self.top_names[0]]['start_on_ori']
-    
+        #set fan_in fan_out
+        self.fan_out = self.inner_product_param.num_output
+        self.fan_in = from_btm[self.btm_names[0]]['out_shape'][0]
+
+
     def ff(self, act, phase):
         shp = act.shape
         if len(shp) > 2:
@@ -635,6 +638,8 @@ class ConvConnection(WeightedComputeUnit):
                 self.conv_params.pad, self.conv_params.stride, self.conv_params.stride)
         self.num_output = params.convolution_param.num_output
         self.group = params.convolution_param.group
+        
+
         #TODO: hack, we don't want to slice agian to use it into bp as a parameter
         self.group_data = []
         self.group_filter = []
@@ -672,6 +677,9 @@ class ConvConnection(WeightedComputeUnit):
         self.stride_on_ori = to_top[self.top_names[0]]['stride_on_ori']
         self.start_on_ori = to_top[self.top_names[0]]['start_on_ori']
         self.rec_on_ori = to_top[self.top_names[0]]['rec_on_ori']
+        #set fan_in fan_out
+        self.fan_out = self.conv_params.kernel_size * self.conv_params.kernel_size * self.conv_params.num_output
+        self.fan_in = self.conv_params.kernel_size * self.conv_params.kernel_size * from_btm[self.btm_names[0]]['out_shape'][2]
 
     def ff(self, act, phase):
         ''' Feed-forward of convolution
