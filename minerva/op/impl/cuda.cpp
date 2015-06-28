@@ -20,6 +20,55 @@ namespace minerva {
 #ifdef HAS_CUDA
 namespace cuda {
 
+namespace {
+
+cudnnConvolutionFwdAlgo_t ForwardAlgorithmToCuda(ConvInfo::ForwardAlgorithm d) {
+  switch (d) {
+    case ConvInfo::ForwardAlgorithm::kImplicitGemm:
+      return CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
+    case ConvInfo::ForwardAlgorithm::kImplicitPrecompGemm:
+      return CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
+    case ConvInfo::ForwardAlgorithm::kGemm:
+      return CUDNN_CONVOLUTION_FWD_ALGO_GEMM;
+    case ConvInfo::ForwardAlgorithm::kDirect:
+      return CUDNN_CONVOLUTION_FWD_ALGO_DIRECT;
+    case ConvInfo::ForwardAlgorithm::kFft:
+      return CUDNN_CONVOLUTION_FWD_ALGO_FFT;
+    default:
+      common::FatalError("unrecognized algorithm");
+  }
+}
+
+cudnnConvolutionBwdDataAlgo_t
+BackwardDataAlgorithmToCuda(ConvInfo::BackwardDataAlgorithm d) {
+  switch (d) {
+    case ConvInfo::BackwardDataAlgorithm::kAlgo0:
+      return CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
+    case ConvInfo::BackwardDataAlgorithm::kAlgo1:
+      return CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
+    case ConvInfo::BackwardDataAlgorithm::kFft:
+      return CUDNN_CONVOLUTION_BWD_DATA_ALGO_FFT;
+    default:
+      common::FatalError("unrecognized algorithm");
+  }
+}
+
+cudnnConvolutionBwdFilterAlgo_t
+BackwardFilterAlgorithmToCuda(ConvInfo::BackwardFilterAlgorithm d) {
+  switch (d) {
+    case ConvInfo::BackwardFilterAlgorithm::kAlgo0:
+      return CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
+    case ConvInfo::BackwardFilterAlgorithm::kAlgo1:
+      return CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
+    case ConvInfo::BackwardFilterAlgorithm::kFft:
+      return CUDNN_CONVOLUTION_BWD_FILTER_ALGO_FFT;
+    default:
+      common::FatalError("unrecognized algorithm");
+  }
+}
+
+}  // anonymous namespace
+
 void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 2) << "Arithmetic takes 2 inputs";
   CHECK_EQ(outputs.size(), 1) << "Arithmetic takes 1 output";
@@ -395,10 +444,10 @@ void TanhBackward(const DataList& inputs, const DataList& outputs, TanhBackwardC
 void ConvForward(const DataList& inputs, const DataList& outputs, ConvForwardClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 3) << "(conv forward) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(conv forward) #outputs wrong";
-  auto& bottom = inputs[0];
-  auto& filter = inputs[1];
-  auto& bias = inputs[2];
-  auto& top = outputs[0];
+  auto&& bottom = inputs[0];
+  auto&& filter = inputs[1];
+  auto&& bias = inputs[2];
+  auto&& top = outputs[0];
   int num_images = bottom.size_[3];
   int bottom_num_channels = bottom.size_[2];
   int top_num_channels = top.size_[2];
@@ -406,15 +455,55 @@ void ConvForward(const DataList& inputs, const DataList& outputs, ConvForwardClo
   int bottom_width = bottom.size_[0];
   int filter_height = filter.size_[1];
   int filter_width = filter.size_[0];
-  CudaPerformConvForward(bottom.data_, filter.data_, bias.data_, top.data_, num_images, bottom_num_channels, top_num_channels, bottom_height, bottom_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
+
+  cudnnTensorDescriptor_t bottom_desc;
+  cudnnFilterDescriptor_t filter_desc;
+  cudnnTensorDescriptor_t bias_desc;
+  cudnnConvolutionDescriptor_t conv_desc;
+  cudnnTensorDescriptor_t top_desc;
+
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&bottom_desc));
+  CUDNN_CALL(cudnnCreateFilterDescriptor(&filter_desc));
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&bias_desc));
+  CUDNN_CALL(cudnnCreateConvolutionDescriptor(&conv_desc));
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&top_desc));
+
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(bottom_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, bottom_num_channels, bottom_height, bottom_width));
+  CUDNN_CALL(cudnnSetFilter4dDescriptor(filter_desc, CUDNN_DATA_FLOAT, top_num_channels, bottom_num_channels, filter_height, filter_width));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(bias_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, top_num_channels, 1, 1));
+  CUDNN_CALL(cudnnSetConvolution2dDescriptor(conv_desc, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, 1, 1, CUDNN_CONVOLUTION));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(top_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, top_num_channels, (bottom_height + 2 * closure.pad_height - filter_height) / closure.stride_vertical + 1, (bottom_width + 2 * closure.pad_width - filter_width) / closure.stride_horizontal + 1));
+
+  float one = 1;
+  float zero = 0;
+  cudnnConvolutionFwdAlgo_t algorithm;
+  if (closure.algo == ConvInfo::ForwardAlgorithm::kAuto) {
+    CUDNN_CALL(cudnnGetConvolutionForwardAlgorithm(context.cudnn_handle, bottom_desc, filter_desc, conv_desc, top_desc, CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algorithm));
+  } else {
+    algorithm = ForwardAlgorithmToCuda(closure.algo);
+  }
+  size_t workspace_size;
+  void* workspace;
+  CUDNN_CALL(cudnnGetConvolutionForwardWorkspaceSize(context.cudnn_handle, bottom_desc, filter_desc, conv_desc, top_desc, algorithm, &workspace_size));
+  CUDA_CALL(cudaMalloc(&workspace, workspace_size));
+  CUDNN_CALL(cudnnConvolutionForward(context.cudnn_handle, &one, bottom_desc, bottom.data_, filter_desc, filter.data_, conv_desc, algorithm, workspace, workspace_size, &zero, top_desc, top.data_));
+  CUDNN_CALL(cudnnAddTensor(context.cudnn_handle, CUDNN_ADD_SAME_C, &one, bias_desc, bias.data_, &one, top_desc, top.data_));
+  CUDA_CALL(cudaStreamSynchronize(context.stream));  // Synchronize before destruction
+
+  CUDA_CALL(cudaFree(workspace));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(top_desc));
+  CUDNN_CALL(cudnnDestroyConvolutionDescriptor(conv_desc));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(bias_desc));
+  CUDNN_CALL(cudnnDestroyFilterDescriptor(filter_desc));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(bottom_desc));
 }
 
 void ConvBackwardData(const DataList& inputs, const DataList& outputs, ConvBackwardDataClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 2) << "(conv backward data) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(conv backward data) #outputs wrong";
-  auto& top_diff = inputs[0];
-  auto& filter = inputs[1];
-  auto& bottom_diff = outputs[0];
+  auto&& top_diff = inputs[0];
+  auto&& filter = inputs[1];
+  auto&& bottom_diff = outputs[0];
   int num_images = top_diff.size_[3];
   int bottom_num_channels = bottom_diff.size_[2];
   int top_num_channels = top_diff.size_[2];
@@ -422,15 +511,50 @@ void ConvBackwardData(const DataList& inputs, const DataList& outputs, ConvBackw
   int top_width = top_diff.size_[0];
   int filter_height = filter.size_[1];
   int filter_width = filter.size_[0];
-  CudaPerformConvBackwardData(top_diff.data_, filter.data_, bottom_diff.data_, num_images, bottom_num_channels, top_num_channels, top_height, top_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
+
+  cudnnTensorDescriptor_t bottom_diff_desc;
+  cudnnFilterDescriptor_t filter_desc;
+  cudnnConvolutionDescriptor_t conv_desc;
+  cudnnTensorDescriptor_t top_diff_desc;
+
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&bottom_diff_desc));
+  CUDNN_CALL(cudnnCreateFilterDescriptor(&filter_desc));
+  CUDNN_CALL(cudnnCreateConvolutionDescriptor(&conv_desc));
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&top_diff_desc));
+
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(bottom_diff_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, bottom_num_channels, (top_height - 1) * closure.stride_vertical + filter_height - 2 * closure.pad_height, (top_width - 1) * closure.stride_horizontal + filter_width - 2 * closure.pad_width));
+  CUDNN_CALL(cudnnSetFilter4dDescriptor(filter_desc, CUDNN_DATA_FLOAT, top_num_channels, bottom_num_channels, filter_height, filter_width));
+  CUDNN_CALL(cudnnSetConvolution2dDescriptor(conv_desc, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, 1, 1, CUDNN_CONVOLUTION));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(top_diff_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, top_num_channels, top_height, top_width));
+
+  float one = 1;
+  float zero = 0;
+  cudnnConvolutionBwdDataAlgo_t algorithm;
+  if (closure.algo == ConvInfo::BackwardDataAlgorithm::kAuto) {
+    CUDNN_CALL(cudnnGetConvolutionBackwardDataAlgorithm(context.cudnn_handle, filter_desc, top_diff_desc, conv_desc, bottom_diff_desc, CUDNN_CONVOLUTION_BWD_DATA_PREFER_FASTEST, 0, &algorithm));
+  } else {
+    algorithm = BackwardDataAlgorithmToCuda(closure.algo);
+  }
+  size_t workspace_size;
+  void* workspace;
+  CUDNN_CALL(cudnnGetConvolutionBackwardDataWorkspaceSize(context.cudnn_handle, filter_desc, top_diff_desc, conv_desc, bottom_diff_desc, algorithm, &workspace_size));
+  CUDA_CALL(cudaMalloc(&workspace, workspace_size));
+  CUDNN_CALL(cudnnConvolutionBackwardData_v3(context.cudnn_handle, &one, filter_desc, filter.data_, top_diff_desc, top_diff.data_, conv_desc, algorithm, workspace, workspace_size, &zero, bottom_diff_desc, bottom_diff.data_));
+  CUDA_CALL(cudaStreamSynchronize(context.stream));  // Synchronize before destruction
+
+  CUDA_CALL(cudaFree(workspace));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(top_diff_desc));
+  CUDNN_CALL(cudnnDestroyConvolutionDescriptor(conv_desc));
+  CUDNN_CALL(cudnnDestroyFilterDescriptor(filter_desc));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(bottom_diff_desc));
 }
 
 void ConvBackwardFilter(const DataList& inputs, const DataList& outputs, ConvBackwardFilterClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 2) << "(conv backward filter) #inputs wrong";
   CHECK_EQ(outputs.size(), 1) << "(conv backward filter) #outputs wrong";
-  auto& top_diff = inputs[0];
-  auto& bottom = inputs[1];
-  auto& filter_diff = outputs[0];
+  auto&& top_diff = inputs[0];
+  auto&& bottom = inputs[1];
+  auto&& filter_diff = outputs[0];
   int num_images = top_diff.size_[3];
   int bottom_num_channels = bottom.size_[2];
   int top_num_channels = top_diff.size_[2];
@@ -438,7 +562,42 @@ void ConvBackwardFilter(const DataList& inputs, const DataList& outputs, ConvBac
   int bottom_width = bottom.size_[0];
   int filter_height = filter_diff.size_[1];
   int filter_width = filter_diff.size_[0];
-  CudaPerformConvBackwardFilter(bottom.data_, top_diff.data_, filter_diff.data_, num_images, bottom_num_channels, top_num_channels, bottom_height, bottom_width, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, filter_height, filter_width, context.stream, context.cudnn_handle);
+
+  cudnnTensorDescriptor_t bottom_desc;
+  cudnnFilterDescriptor_t filter_diff_desc;
+  cudnnConvolutionDescriptor_t conv_desc;
+  cudnnTensorDescriptor_t top_diff_desc;
+
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&bottom_desc));
+  CUDNN_CALL(cudnnCreateFilterDescriptor(&filter_diff_desc));
+  CUDNN_CALL(cudnnCreateConvolutionDescriptor(&conv_desc));
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&top_diff_desc));
+
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(bottom_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, bottom_num_channels, bottom_height, bottom_width));
+  CUDNN_CALL(cudnnSetFilter4dDescriptor(filter_diff_desc, CUDNN_DATA_FLOAT, top_num_channels, bottom_num_channels, filter_height, filter_width));
+  CUDNN_CALL(cudnnSetConvolution2dDescriptor(conv_desc, closure.pad_height, closure.pad_width, closure.stride_vertical, closure.stride_horizontal, 1, 1, CUDNN_CONVOLUTION));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(top_diff_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, top_num_channels, (bottom_height + 2 * closure.pad_height - filter_height) / closure.stride_vertical + 1, (bottom_width + 2 * closure.pad_width - filter_width) / closure.stride_horizontal + 1));
+
+  float one = 1;
+  float zero = 0;
+  cudnnConvolutionBwdFilterAlgo_t algorithm;
+  if (closure.algo == ConvInfo::BackwardFilterAlgorithm::kAuto) {
+    CUDNN_CALL(cudnnGetConvolutionBackwardFilterAlgorithm(context.cudnn_handle, bottom_desc, top_diff_desc, conv_desc, filter_diff_desc, CUDNN_CONVOLUTION_BWD_FILTER_PREFER_FASTEST, 0, &algorithm));
+  } else {
+    algorithm = BackwardFilterAlgorithmToCuda(closure.algo);
+  }
+  size_t workspace_size;
+  void* workspace;
+  CUDNN_CALL(cudnnGetConvolutionBackwardFilterWorkspaceSize(context.cudnn_handle, bottom_desc, top_diff_desc, conv_desc, filter_diff_desc, algorithm, &workspace_size));
+  CUDA_CALL(cudaMalloc(&workspace, workspace_size));
+  CUDNN_CALL(cudnnConvolutionBackwardFilter_v3(context.cudnn_handle, &one, bottom_desc, bottom.data_, top_diff_desc, top_diff.data_, conv_desc, algorithm, workspace, workspace_size, &zero, filter_diff_desc, filter_diff.data_));
+  CUDA_CALL(cudaStreamSynchronize(context.stream));  // Synchronize before destruction
+
+  CUDA_CALL(cudaFree(workspace));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(top_diff_desc));
+  CUDNN_CALL(cudnnDestroyConvolutionDescriptor(conv_desc));
+  CUDNN_CALL(cudnnDestroyFilterDescriptor(filter_diff_desc));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(bottom_desc));
 }
 
 void ConvBackwardBias(const DataList& inputs, const DataList& outputs, ConvBackwardBiasClosure& closure, const Context& context) {
@@ -548,19 +707,19 @@ void ConvForwardFindAlgorithm(
     ConvFwdAlgoProfResult res;
     switch (cur.algo) {
       case CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM:
-        res.algo = ConvInfo::DataAlgorithm::kImplicitGemm;
+        res.algo = ConvInfo::ForwardAlgorithm::kImplicitGemm;
         break;
       case CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM:
-        res.algo = ConvInfo::DataAlgorithm::kImplicitPrecompGemm;
+        res.algo = ConvInfo::ForwardAlgorithm::kImplicitPrecompGemm;
         break;
       case CUDNN_CONVOLUTION_FWD_ALGO_GEMM:
-        res.algo = ConvInfo::DataAlgorithm::kGemm;
+        res.algo = ConvInfo::ForwardAlgorithm::kGemm;
         break;
       case CUDNN_CONVOLUTION_FWD_ALGO_DIRECT:
-        res.algo = ConvInfo::DataAlgorithm::kDirect;
+        res.algo = ConvInfo::ForwardAlgorithm::kDirect;
         break;
       case CUDNN_CONVOLUTION_FWD_ALGO_FFT:
-        res.algo = ConvInfo::DataAlgorithm::kFft;
+        res.algo = ConvInfo::ForwardAlgorithm::kFft;
         break;
       default:
         common::FatalError("unrecognized algorithm");

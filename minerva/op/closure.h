@@ -102,23 +102,30 @@ struct NormArithmeticClosure {
   Scale dims_to_replicate;
 };
 
-template<int i> struct ConvClosure {
+struct ConvClosure {
   int pad_height;
   int pad_width;
   int stride_vertical;
   int stride_horizontal;
 };
 
-typedef ConvClosure<0> ConvForwardClosure;
+struct ConvForwardClosure : public ConvClosure {
+  ConvInfo::ForwardAlgorithm algo;
+};
 
-typedef ConvClosure<1> ConvBackwardDataClosure;
+struct ConvBackwardDataClosure : public ConvClosure {
+  ConvInfo::BackwardDataAlgorithm algo;
+};
 
-typedef ConvClosure<2> ConvBackwardFilterClosure;
+
+struct ConvBackwardFilterClosure : public ConvClosure {
+  ConvInfo::BackwardFilterAlgorithm algo;
+};
 
 struct ConvBackwardBiasClosure {
 };
 
-struct ConvForwardFindAlgorithmClosure : public ConvForwardClosure {
+struct ConvForwardFindAlgorithmClosure : public ConvClosure {
   std::shared_ptr<std::vector<ConvFwdAlgoProfResult>> results;
 };
 

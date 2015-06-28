@@ -14,54 +14,33 @@ ImageBatch Convolution::ConvForward(ImageBatch src, Filter filter, NArray bias, 
     src.GetNumImages()
   };
   ConvForwardOp* op = new ConvForwardOp();
-  op->closure = {
-    info.pad_height,
-    info.pad_width,
-    info.stride_vertical,
-    info.stride_horizontal
-  };
+  op->closure.pad_height = info.pad_height;
+  op->closure.pad_width = info.pad_width;
+  op->closure.stride_vertical = info.stride_vertical;
+  op->closure.stride_horizontal = info.stride_horizontal;
+  op->closure.algo = info.forward_algorithm;
   return NArray::ComputeOne({src, filter, bias}, new_size, op);
 }
 
 ImageBatch Convolution::ConvBackwardData(ImageBatch diff, ImageBatch bottom, Filter filter, ConvInfo info) {
   CHECK_EQ(diff.GetNumFeatureMaps(), filter.GetNumOutputs()) << "#output channels mismatch";
-  /*
-   * We can't get filter size when (top + 2*pad) % stride != 0
-  Scale new_size {
-    (diff.GetWidth() - 1) * info.stride_horizontal + filter.GetWidth() - 2 * info.pad_width,
-    (diff.GetHeight() - 1) * info.stride_vertical + filter.GetHeight() - 2 * info.pad_height,
-    filter.GetNumInputs(),
-    diff.GetNumImages()
-  };
-  */
   ConvBackwardDataOp* op = new ConvBackwardDataOp();
-  op->closure = {
-    info.pad_height,
-    info.pad_width,
-    info.stride_vertical,
-    info.stride_horizontal
-  };
+  op->closure.pad_height = info.pad_height;
+  op->closure.pad_width = info.pad_width;
+  op->closure.stride_vertical = info.stride_vertical;
+  op->closure.stride_horizontal = info.stride_horizontal;
+  op->closure.algo = info.backward_data_algorithm;
   return NArray::ComputeOne({diff, filter}, bottom.Size(), op);
 }
 
 Filter Convolution::ConvBackwardFilter(ImageBatch diff, ImageBatch bottom, Filter filter, ConvInfo info) {
   CHECK_EQ(diff.GetNumImages(), bottom.GetNumImages()) << "#images mismatch";
-  /*
-   * We can't get filter size when (top + 2*pad) % stride != 0
-  Scale new_size {
-    -(diff.GetWidth() - 1) * info.stride_horizontal + bottom.GetWidth() + 2 * info.pad_width,
-    -(diff.GetHeight() - 1) * info.stride_vertical + bottom.GetHeight() + 2 * info.pad_height,
-    bottom.GetNumFeatureMaps(),
-    diff.GetNumFeatureMaps()
-  };
-  */
   ConvBackwardFilterOp* op = new ConvBackwardFilterOp();
-  op->closure = {
-    info.pad_height,
-    info.pad_width,
-    info.stride_vertical,
-    info.stride_horizontal
-  };
+  op->closure.pad_height = info.pad_height;
+  op->closure.pad_width = info.pad_width;
+  op->closure.stride_vertical = info.stride_vertical;
+  op->closure.stride_horizontal = info.stride_horizontal;
+  op->closure.algo = info.backward_filter_algorithm;
   return NArray::ComputeOne({diff, bottom}, filter.Size(), op);
 }
 
