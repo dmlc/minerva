@@ -256,6 +256,38 @@ void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithme
   }
 }
 
+void ReductionOnDim(const DataList& inputs, const DataList& outputs,
+  ReductionOnDimClosure& closure, const Context& context) {
+  CHECK_EQ(inputs.size(), 1) << "Reduction kernel wrong #input";
+  CHECK_EQ(outputs.size(), 1) << "Reduction kernel wrong #output";
+  auto in_size = inputs[0].size_;
+  auto out_size = outputs[0].size_;
+  auto in_data = inputs[0].data_;
+  auto out_data = outputs[0].data_;
+  CHECK_EQ(closure.dims_to_reduce.NumDims(), 1) << "currently do reduction on one dimension only";
+  int m = in_size[0];
+  int n = in_size[1];
+  if (closure.dims_to_reduce[0] == 0) {
+    switch (closure.type) {
+      case ReductionType::kSum:
+        CudaPerformReductionSumOnCol(in_data, out_data, m, n, context.stream);
+        break;
+      case ReductionType::kMax:
+        CudaPerformReductionMaxOnCol(in_data, out_data, m, n, context.stream);
+        break;
+    }
+  } else {
+    switch (closure.type) {
+      case ReductionType::kSum:
+        CudaPerformReductionSumOnRow(in_data, out_data, m, n, context.stream);
+        break;
+      case ReductionType::kMax:
+        CudaPerformReductionMaxOnRow(in_data, out_data, m, n, context.stream);
+        break;
+    }
+  }
+}
+
 void Reduction(const DataList& inputs, const DataList& outputs,
   ReductionClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "Reduction kernel wrong #input";
