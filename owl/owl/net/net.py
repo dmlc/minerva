@@ -178,6 +178,8 @@ class WeightedComputeUnit(ComputeUnitSimple):
         self.biasgrad = None
       
         self.in_shape = None
+        self.fan_in = None
+        self.fan_out = None
 
         # blob learning rate and weight decay
         if len(params.param) >= 1:
@@ -414,6 +416,7 @@ class SoftmaxUnit(ComputeUnit):
             nplabel[i, self.strlabel[i]] = 1
         self.y = owl.from_numpy(nplabel)
         self.out = self.ff_y
+
 
         
     def backward(self, from_top, to_btm, phase):

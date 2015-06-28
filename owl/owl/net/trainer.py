@@ -208,7 +208,10 @@ class NetTrainer:
 
             s.owl_net.forward_check()
             for i in range(len(losslayer)):
-                all_loss += s.owl_net.units[losslayer[i]].getloss()
+                if len(s.owl_net.units[losslayer[i]].loss_weight) == 1:
+                    all_loss += (s.owl_net.units[losslayer[i]].getloss() * s.owl_net.units[losslayer[i]].loss_weight[0])
+                else:
+                    all_loss += s.owl_net.units[losslayer[i]].getloss()
 
             #get origin loss
             checklayer.weight = oriweight
@@ -216,19 +219,21 @@ class NetTrainer:
             # train on multi-gpu
             s.owl_net.forward_check()
             for i in range(len(losslayer)):
-                ori_all_loss += s.owl_net.units[losslayer[i]].getloss()
+                if len(s.owl_net.units[losslayer[i]].loss_weight) == 1:
+                    ori_all_loss += (s.owl_net.units[losslayer[i]].getloss() * s.owl_net.units[losslayer[i]].loss_weight[0])
+                else:
+                    ori_all_loss += s.owl_net.units[losslayer[i]].getloss()
 
             s.owl_net.backward('TEST')
             #get analytic gradient
             npgrad = checklayer.weightgrad.to_numpy()
             npgrad = npgrad.reshape(np.prod(weightshape[0:len(weightshape)]))
             analy_grad = npgrad[position] /  s.owl_net.units[losslayer[i]].out.shape[1]
-            
+           
             num_grad = (all_loss - ori_all_loss) / h
-
+            
             info = "Gradient Check at positon: %d analy: %f num: %f ratio: %f" % (position, analy_grad, num_grad, analy_grad / num_grad)
             print info
-
 
 class NetTester:
     ''' Class for performing testing, it can be single-view or multi-view, can be top-1 or top-5
