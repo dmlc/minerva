@@ -4,6 +4,7 @@ import time
 import numpy as np
 import owl
 from net import Net
+import net
 from net_helper import CaffeNetBuilder
 from caffe import *
 from PIL import Image
@@ -163,6 +164,71 @@ class NetTrainer:
                 print "Save to snapshot %d, current lr %f" % ((iteridx + 1) / (s.owl_net.solver.snapshot), s.owl_net.current_lr)
                 s.builder.save_net_to_file(s.owl_net, s.snapshot_dir, (iteridx + 1) / (s.owl_net.solver.snapshot))
             sys.stdout.flush()
+
+    def gradient_checker(s, checklayer_name):
+        ''' Check backpropagation on multiple GPUs
+        '''
+        h = 1e-2
+        threshold = 1e-4
+        checklayer = s.owl_net.units[s.owl_net.name_to_uid[checklayer_name][0]] 
+        
+        losslayer = []
+        for i in xrange(len(s.owl_net.units)):
+            if isinstance(s.owl_net.units[i], net.SoftmaxUnit):
+                losslayer.append(i)
+       
+        last = None
+        '''
+        wunits = []
+        for i in xrange(len(s.owl_net.units)):
+            if isinstance(s.owl_net.units[i], net.WeightedComputeUnit):
+                wunits.append(i)
+        '''
+        wunits = s.owl_net.get_weighted_unit_ids()
+        accunits = s.owl_net.get_accuracy_units()
+        owl.set_device(s.gpu[0])
+        
+        for iteridx in range(100):
+            #disturb the weights
+            oriweight = checklayer.weight
+            npweight = checklayer.weight.to_numpy()
+            weightshape = np.shape(npweight)
+            npweight = npweight.reshape(np.prod(weightshape[0:len(weightshape)]))
+            position = np.random.randint(0, np.shape(npweight)[0])
+            disturb = np.zeros(np.shape(npweight), dtype = np.float32)
+            disturb[position] = h
+            oriposval = npweight[position]
+            npweight += disturb
+            newposval = npweight[position]
+            npweight = npweight.reshape(weightshape)
+            checklayer.weight = owl.from_numpy(npweight)
+
+            all_loss = 0
+            # train on multi-gpu
+
+            s.owl_net.forward_check()
+            for i in range(len(losslayer)):
+                all_loss += s.owl_net.units[losslayer[i]].getloss()
+
+            #get origin loss
+            checklayer.weight = oriweight
+            ori_all_loss = 0
+            # train on multi-gpu
+            s.owl_net.forward_check()
+            for i in range(len(losslayer)):
+                ori_all_loss += s.owl_net.units[losslayer[i]].getloss()
+
+            s.owl_net.backward('TEST')
+            #get analytic gradient
+            npgrad = checklayer.weightgrad.to_numpy()
+            npgrad = npgrad.reshape(np.prod(weightshape[0:len(weightshape)]))
+            analy_grad = npgrad[position] /  s.owl_net.units[losslayer[i]].out.shape[1]
+            
+            num_grad = (all_loss - ori_all_loss) / h
+
+            info = "Gradient Check at positon: %d analy: %f num: %f ratio: %f" % (position, analy_grad, num_grad, analy_grad / num_grad)
+            print info
+
 
 class NetTester:
     ''' Class for performing testing, it can be single-view or multi-view, can be top-1 or top-5

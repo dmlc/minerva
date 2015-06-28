@@ -328,6 +328,10 @@ class LMDBDataProvider:
                 count = count + 1
                 if count == self.batch_size:
                     yield (samples, labels)
+                    if phase == 'CHECK':
+                        while True:
+                            yield(samples, labels)
+                    
                     labels = np.zeros([self.batch_size, num_label], dtype=np.float32)
                     count = 0
         if count != self.batch_size:
