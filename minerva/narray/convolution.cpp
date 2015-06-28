@@ -73,7 +73,7 @@ NArray Convolution::ConvBackwardBias(ImageBatch diff) {
   return NArray::ComputeOne({diff}, new_size, op);
 }
 
-std::vector<ConvAlgoProfResult> Convolution::ConvForwardFindAlgorithm(
+std::vector<ConvFwdAlgoProfResult> Convolution::ConvForwardFindAlgorithm(
     ImageBatch src
   , Filter filter
   , ConvInfo info) {
@@ -85,7 +85,7 @@ std::vector<ConvAlgoProfResult> Convolution::ConvForwardFindAlgorithm(
     src.GetNumImages()
   };
   auto op = new ConvForwardFindAlgorithmOp{};
-  auto res = std::make_shared<std::vector<ConvAlgoProfResult>>();
+  auto res = std::make_shared<std::vector<ConvFwdAlgoProfResult>>();
   op->closure.results = res;
   op->closure.pad_height = info.pad_height;
   op->closure.pad_width = info.pad_width;

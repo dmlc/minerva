@@ -10,7 +10,7 @@ class Convolution {
   static ImageBatch ConvBackwardData(ImageBatch diff, ImageBatch bottom, Filter filter, ConvInfo info);
   static Filter ConvBackwardFilter(ImageBatch diff, ImageBatch bottom, Filter filter, ConvInfo info);
   static NArray ConvBackwardBias(ImageBatch diff);
-  static std::vector<ConvAlgoProfResult> ConvForwardFindAlgorithm(
+  static std::vector<ConvFwdAlgoProfResult> ConvForwardFindAlgorithm(
     ImageBatch src
   , Filter filter
   , ConvInfo info);

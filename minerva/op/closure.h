@@ -119,7 +119,7 @@ struct ConvBackwardBiasClosure {
 };
 
 struct ConvForwardFindAlgorithmClosure : public ConvForwardClosure {
-  std::shared_ptr<std::vector<ConvAlgoProfResult>> results;
+  std::shared_ptr<std::vector<ConvFwdAlgoProfResult>> results;
 };
 
 template<int i> struct SoftmaxClosure {

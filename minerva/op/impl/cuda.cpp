@@ -545,22 +545,22 @@ void ConvForwardFindAlgorithm(
     if (cur.status != CUDNN_STATUS_SUCCESS) {
       continue;
     }
-    ConvAlgoProfResult res;
+    ConvFwdAlgoProfResult res;
     switch (cur.algo) {
       case CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM:
-        res.algo = ConvInfo::Algorithm::kImplicitGemm;
+        res.algo = ConvInfo::DataAlgorithm::kImplicitGemm;
         break;
       case CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM:
-        res.algo = ConvInfo::Algorithm::kImplicitPrecompGemm;
+        res.algo = ConvInfo::DataAlgorithm::kImplicitPrecompGemm;
         break;
       case CUDNN_CONVOLUTION_FWD_ALGO_GEMM:
-        res.algo = ConvInfo::Algorithm::kGemm;
+        res.algo = ConvInfo::DataAlgorithm::kGemm;
         break;
       case CUDNN_CONVOLUTION_FWD_ALGO_DIRECT:
-        res.algo = ConvInfo::Algorithm::kDirect;
+        res.algo = ConvInfo::DataAlgorithm::kDirect;
         break;
       case CUDNN_CONVOLUTION_FWD_ALGO_FFT:
-        res.algo = ConvInfo::Algorithm::kFft;
+        res.algo = ConvInfo::DataAlgorithm::kFft;
         break;
       default:
         common::FatalError("unrecognized algorithm");

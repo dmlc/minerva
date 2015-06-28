@@ -4,7 +4,7 @@
 namespace minerva {
 
 struct ConvInfo {
-  enum class Algorithm {
+  enum class DataAlgorithm {
     kImplicitGemm,
     kImplicitPrecompGemm,
     kGemm,
@@ -12,20 +12,29 @@ struct ConvInfo {
     kFft,
     kAuto
   };
+  enum class FilterAlgorithm {
+    kAlgo0,
+    kAlgo1,
+    kFft,
+    kAuto
+  };
   ConvInfo(int ph = 0, int pw = 0, int sv = 1, int sh = 1)
-    : pad_height(ph)
-    , pad_width(pw)
-    , stride_vertical(sv)
-    , stride_horizontal(sh) {
+    : pad_height{ph}
+    , pad_width{pw}
+    , stride_vertical{sv}
+    , stride_horizontal{sh} {
   }
   int pad_height;
   int pad_width;
   int stride_vertical;
   int stride_horizontal;
+  DataAlgorithm forward_algorithm = DataAlgorithm::kAuto;
+  DataAlgorithm backward_data_algorithm = DataAlgorithm::kAuto;
+  FilterAlgorithm backward_filter_algorithm = FilterAlgorithm::kAuto;
 };
 
-struct ConvAlgoProfResult {
-  ConvInfo::Algorithm algo;
+struct ConvFwdAlgoProfResult {
+  ConvInfo::DataAlgorithm algo;
   float time;
   size_t memory;
 };
