@@ -233,8 +233,7 @@ class WeightedComputeUnit(ComputeUnitSimple):
         elif self.bias_filler.type == "uniform":
             npbias = np.random.uniform(self.bias_filler.min, self.bias_filler.max, self.bshape)
         elif self.bias_filler.type == "xavier":
-            fan_in = np.prod(self.in_shape[:])
-            scale = np.sqrt(float(3)/fan_in)
+            scale = np.sqrt(float(3)/self.fan_in)
             npbias = np.random.uniform(-scale, scale, self.bshape)
         self.bias = owl.from_numpy(npbias.astype(np.float32)).reshape(self.bshape)
         
@@ -590,7 +589,7 @@ class FullyConnection(WeightedComputeUnit):
         self.start_on_ori = to_top[self.top_names[0]]['start_on_ori']
         #set fan_in fan_out
         self.fan_out = self.inner_product_param.num_output
-        self.fan_in = from_btm[self.btm_names[0]]['out_shape'][0]
+        self.fan_in = np.prod(from_btm[self.btm_names[0]]['out_shape'][0:len(from_btm[self.btm_names[0]]['out_shape'])])
 
 
     def ff(self, act, phase):

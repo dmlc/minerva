@@ -5,15 +5,16 @@ Train network
 
 Use following command to start training given Caffe's solver and configure file
 ```bash
-./net_trainer.py <solver_file> <SNAPSHOT> <NUM_GPU>
+./net_trainer.py <solver_file> <SNAPSHOT> <NUM_GPU> <SYNC_FREQ>
 ```
 * `solver_file` is the file name in Caffe's [solver](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/quick_solver.prototxt) format.
 * `SNAPSHOT` is the index of the snapshot to start with (default: 0). If SNAPSHOT is not equal to 0, it means we continue training from the formal snapshot
 * `NUM_GPU` is the number of gpu to use.
+* `SYNC_FREQ` is the option to hide IO time consuming, set SYN_FREQ > 1 usually have better speed but will consume more GPU RAM. Please propally set it to let Minerva run smoothly on your machine. (default: 1) 
 
 Example:
 ```bash
-./net_trainer.py /path/to/solver.txt 0 4
+./net_trainer.py /path/to/solver.txt 0 4 2
 ```
 
 Test network
