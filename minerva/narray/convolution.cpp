@@ -7,9 +7,6 @@ ImageBatch Convolution::ConvForward(ImageBatch src, Filter filter, NArray bias, 
   CHECK_EQ(src.GetNumFeatureMaps(), filter.GetNumInputs()) << "#input channels mismatch";
   CHECK_EQ(bias.Size().NumDims(), 1) << "bias dimension mismatch";
   CHECK_EQ(bias.Size()[0], filter.GetNumOutputs()) << "bias size mismatch";
-  //no such limit
-  //CHECK_EQ((src.GetHeight() + 2 * info.pad_height - filter.GetHeight()) % info.stride_vertical, 0) << "filter height mismatch";
-  //CHECK_EQ((src.GetWidth() + 2 * info.pad_width - filter.GetWidth()) % info.stride_horizontal, 0) << "filter width mismatch";
   Scale new_size {
     (src.GetWidth() + 2 * info.pad_width - filter.GetWidth()) / info.stride_horizontal + 1,
     (src.GetHeight() + 2 * info.pad_height - filter.GetHeight()) / info.stride_vertical + 1,
@@ -74,6 +71,29 @@ NArray Convolution::ConvBackwardBias(ImageBatch diff) {
   };
   ConvBackwardBiasOp* op = new ConvBackwardBiasOp();
   return NArray::ComputeOne({diff}, new_size, op);
+}
+
+std::vector<ConvAlgoProfResult> Convolution::ConvForwardFindAlgorithm(
+    ImageBatch src
+  , Filter filter
+  , ConvInfo info) {
+  CHECK_EQ(src.GetNumFeatureMaps(), filter.GetNumInputs()) << "#input channels mismatch";
+  Scale new_size {
+    (src.GetWidth() + 2 * info.pad_width - filter.GetWidth()) / info.stride_horizontal + 1,
+    (src.GetHeight() + 2 * info.pad_height - filter.GetHeight()) / info.stride_vertical + 1,
+    filter.GetNumOutputs(),
+    src.GetNumImages()
+  };
+  auto op = new ConvForwardFindAlgorithmOp{};
+  auto res = std::make_shared<std::vector<ConvAlgoProfResult>>();
+  op->closure.results = res;
+  op->closure.pad_height = info.pad_height;
+  op->closure.pad_width = info.pad_width;
+  op->closure.stride_vertical = info.stride_vertical;
+  op->closure.stride_horizontal = info.stride_horizontal;
+  auto ret = NArray::ComputeOne({src, filter}, new_size, op);
+  ret.Wait();
+  return *res;
 }
 
 ImageBatch Convolution::SoftmaxForward(ImageBatch src, SoftmaxAlgorithm algorithm) {

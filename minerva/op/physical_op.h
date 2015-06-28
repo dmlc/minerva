@@ -247,6 +247,14 @@ class ConvBackwardBiasOp : public ComputeFnWithClosure<ConvBackwardBiasClosure> 
   }
 };
 
+class ConvForwardFindAlgorithmOp :
+    public ComputeFnWithClosure<ConvForwardFindAlgorithmClosure> {
+ public:
+  std::string Name() const {
+    return "conv ff find algo";
+  }
+};
+
 class SoftmaxForwardOp : public ComputeFnWithClosure<SoftmaxForwardClosure> {
  public:
   std::string Name() const {

@@ -118,6 +118,10 @@ typedef ConvClosure<2> ConvBackwardFilterClosure;
 struct ConvBackwardBiasClosure {
 };
 
+struct ConvForwardFindAlgorithmClosure : public ConvForwardClosure {
+  std::shared_ptr<std::vector<ConvAlgoProfResult>> results;
+};
+
 template<int i> struct SoftmaxClosure {
   SoftmaxAlgorithm algorithm;
 };

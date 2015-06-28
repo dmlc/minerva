@@ -1,8 +1,17 @@
 #pragma once
+#include <cstdlib>
 
 namespace minerva {
 
 struct ConvInfo {
+  enum class Algorithm {
+    kImplicitGemm,
+    kImplicitPrecompGemm,
+    kGemm,
+    kDirect,
+    kFft,
+    kAuto
+  };
   ConvInfo(int ph = 0, int pw = 0, int sv = 1, int sh = 1)
     : pad_height(ph)
     , pad_width(pw)
@@ -13,6 +22,12 @@ struct ConvInfo {
   int pad_width;
   int stride_vertical;
   int stride_horizontal;
+};
+
+struct ConvAlgoProfResult {
+  ConvInfo::Algorithm algo;
+  float time;
+  size_t memory;
 };
 
 struct PoolingInfo {

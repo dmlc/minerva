@@ -10,6 +10,10 @@ class Convolution {
   static ImageBatch ConvBackwardData(ImageBatch diff, ImageBatch bottom, Filter filter, ConvInfo info);
   static Filter ConvBackwardFilter(ImageBatch diff, ImageBatch bottom, Filter filter, ConvInfo info);
   static NArray ConvBackwardBias(ImageBatch diff);
+  static std::vector<ConvAlgoProfResult> ConvForwardFindAlgorithm(
+    ImageBatch src
+  , Filter filter
+  , ConvInfo info);
   static ImageBatch SoftmaxForward(ImageBatch src, SoftmaxAlgorithm algorithm);
   static ImageBatch SoftmaxBackward(ImageBatch diff, ImageBatch top, SoftmaxAlgorithm algorithm);
   static ImageBatch ActivationForward(ImageBatch src, ActivationAlgorithm algorithm);

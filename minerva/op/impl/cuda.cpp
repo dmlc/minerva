@@ -7,6 +7,7 @@
 #include <chrono>
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
+#include <cudnn.h>
 #endif
 
 #ifdef HAS_PS
@@ -450,6 +451,130 @@ void ConvBackwardBias(const DataList& inputs, const DataList& outputs, ConvBackw
   int top_height = top_diff.size_[1];
   int top_width = top_diff.size_[0];
   CudaPerformConvBackwardBias(top_diff.data_, bias_diff.data_, num_images, top_num_channels, top_height, top_width, context.stream, context.cudnn_handle);
+}
+
+void ConvForwardFindAlgorithm(
+    DataList const& inputs
+  , DataList const& outputs
+  , ConvForwardFindAlgorithmClosure& closure
+  , Context const& context) {
+  CHECK_EQ(inputs.size(), 2) << "(conv forward find algo) #inputs wrong";
+  CHECK_EQ(outputs.size(), 1) << "(conv forward find algo) #outputs wrong";
+  auto&& bottom = inputs[0];
+  auto&& filter = inputs[1];
+  auto&& top = outputs[0];
+  int num_images = bottom.size_[3];
+  int bottom_num_channels = bottom.size_[2];
+  int top_num_channels = top.size_[2];
+  int bottom_height = bottom.size_[1];
+  int bottom_width = bottom.size_[0];
+  int filter_height = filter.size_[1];
+  int filter_width = filter.size_[0];
+
+  cudnnTensorDescriptor_t bottom_desc;
+  cudnnFilterDescriptor_t filter_desc;
+  cudnnTensorDescriptor_t bias_desc;
+  cudnnConvolutionDescriptor_t conv_desc;
+  cudnnTensorDescriptor_t top_desc;
+
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&bottom_desc));
+  CUDNN_CALL(cudnnCreateFilterDescriptor(&filter_desc));
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&bias_desc));
+  CUDNN_CALL(cudnnCreateConvolutionDescriptor(&conv_desc));
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&top_desc));
+
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(
+    bottom_desc
+  , CUDNN_TENSOR_NCHW
+  , CUDNN_DATA_FLOAT
+  , num_images
+  , bottom_num_channels
+  , bottom_height
+  , bottom_width));
+  CUDNN_CALL(cudnnSetFilter4dDescriptor(
+    filter_desc
+  , CUDNN_DATA_FLOAT
+  , top_num_channels
+  , bottom_num_channels
+  , filter_height
+  , filter_width));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(
+    bias_desc
+  , CUDNN_TENSOR_NCHW
+  , CUDNN_DATA_FLOAT
+  , 1
+  , top_num_channels
+  , 1
+  , 1));
+  CUDNN_CALL(cudnnSetConvolution2dDescriptor(
+    conv_desc
+  , closure.pad_height
+  , closure.pad_width
+  , closure.stride_vertical
+  , closure.stride_horizontal
+  , 1
+  , 1
+  , CUDNN_CONVOLUTION));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(
+    top_desc
+  , CUDNN_TENSOR_NCHW
+  , CUDNN_DATA_FLOAT
+  , num_images
+  , top_num_channels
+  , (bottom_height + 2 * closure.pad_height - filter_height) /
+    closure.stride_vertical + 1
+  , (bottom_width + 2 * closure.pad_width - filter_width) /
+    closure.stride_horizontal + 1));
+
+  constexpr int requested_count = 16;
+  int returned_count;
+  auto result = new cudnnConvolutionFwdAlgoPerf_t[requested_count];
+  CUDNN_CALL(cudnnFindConvolutionForwardAlgorithm(
+    context.cudnn_handle
+  , bottom_desc
+  , filter_desc
+  , conv_desc
+  , top_desc
+  , requested_count
+  , &returned_count
+  , result));
+  CUDA_CALL(cudaStreamSynchronize(context.stream));  // synchronize before destruction
+
+  for (int i = 0; i < returned_count; ++i) {
+    auto&& cur = result[i];
+    if (cur.status != CUDNN_STATUS_SUCCESS) {
+      continue;
+    }
+    ConvAlgoProfResult res;
+    switch (cur.algo) {
+      case CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM:
+        res.algo = ConvInfo::Algorithm::kImplicitGemm;
+        break;
+      case CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM:
+        res.algo = ConvInfo::Algorithm::kImplicitPrecompGemm;
+        break;
+      case CUDNN_CONVOLUTION_FWD_ALGO_GEMM:
+        res.algo = ConvInfo::Algorithm::kGemm;
+        break;
+      case CUDNN_CONVOLUTION_FWD_ALGO_DIRECT:
+        res.algo = ConvInfo::Algorithm::kDirect;
+        break;
+      case CUDNN_CONVOLUTION_FWD_ALGO_FFT:
+        res.algo = ConvInfo::Algorithm::kFft;
+        break;
+      default:
+        common::FatalError("unrecognized algorithm");
+    }
+    res.time = cur.time;
+    res.memory = cur.memory;
+    closure.results->push_back(res);
+  }
+
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(top_desc));
+  CUDNN_CALL(cudnnDestroyConvolutionDescriptor(conv_desc));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(bias_desc));
+  CUDNN_CALL(cudnnDestroyFilterDescriptor(filter_desc));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(bottom_desc));
 }
 
 void SoftmaxForward(const DataList& inputs, const DataList& outputs, SoftmaxForwardClosure& closure, const Context& context) {
