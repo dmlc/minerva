@@ -20,10 +20,6 @@
   DISALLOW_COPY_AND_ASSIGN(TypeName); \
   DISALLOW_MOVE_AND_ASSIGN(TypeName)
 
-# if defined(_MSC_VER)
-# define __attribute__(A) /* do nothing */
-# endif
-
 namespace minerva {
 
 template<typename T>
@@ -70,11 +66,7 @@ namespace common {
 
 template<typename... Args>
 std::string FString(char const* format, Args&&... args) {
-# if defined(_MSC_VER)
-    const size_t buffer_size = 1024;
-# else
-    size_t constexpr buffer_size = 1024;
-# endif
+  size_t constexpr buffer_size = 1024;
   char buffer[buffer_size];
   snprintf(buffer, buffer_size, format, std::forward<Args>(args)...);
   return std::string(buffer);

@@ -87,11 +87,7 @@ class CpuDevice : public ThreadedDevice {
   std::string Name() const override;
 
  private:
-# if defined(_MSC_VER)
-    static const size_t kDefaultThreadNum = 4;
-# else
-    static size_t constexpr kDefaultThreadNum = 4;
-# endif
+  static size_t constexpr kDefaultThreadNum = 4;
   void DoCopyRemoteData(float*, float*, size_t, int) override;
   void DoExecute(const DataList&, const DataList&, PhysicalOp&, int) override;
 };
