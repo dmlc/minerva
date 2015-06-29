@@ -443,6 +443,191 @@ cdef class NArray(object):
         m.ToNumpy(&dest[0], deref(self._d))
         return dest.reshape(tuple(reversed(self.shape)))
 
+cdef class ConvForwardAlgorithmWrapper(object):
+    cdef int _d
+
+    def __cinit__(self, int d):
+        self._d = d
+
+    def is_same(self, ConvForwardAlgorithmWrapper rhs):
+        return self._d == rhs._d
+
+class _ConvForwardAlgorithms(object):
+    def __init__(self):
+        self._implicit_gemm = ConvForwardAlgorithmWrapper(
+            m.OfConvForwardAlgorithm(
+                m.kConvForwardAlgorithmImplicitGemm))
+
+        self._implicit_precomp_gemm = ConvForwardAlgorithmWrapper(
+            m.OfConvForwardAlgorithm(
+                m.kConvForwardAlgorithmImplicitPrecompGemm))
+
+        self._gemm = ConvForwardAlgorithmWrapper(
+            m.OfConvForwardAlgorithm(
+                m.kConvForwardAlgorithmGemm))
+
+        self._direct = ConvForwardAlgorithmWrapper(
+            m.OfConvForwardAlgorithm(
+                m.kConvForwardAlgorithmDirect))
+
+        self._fft = ConvForwardAlgorithmWrapper(
+            m.OfConvForwardAlgorithm(
+                m.kConvForwardAlgorithmFft))
+
+        self._auto = ConvForwardAlgorithmWrapper(
+            m.OfConvForwardAlgorithm(
+                m.kConvForwardAlgorithmAuto))
+
+    def find(self, a):
+        if self._implicit_gemm.is_same(a):
+            return self._implicit_gemm
+        elif self._implicit_precomp_gemm.is_same(a):
+            return self._implicit_precomp_gemm
+        elif self._gemm.is_same(a):
+            return self._gemm
+        elif self._direct.is_same(a):
+            return self._direct
+        elif self._fft.is_same(a):
+            return self._fft
+        elif self._auto.is_same(a):
+            return self._auto
+        else:
+            raise TypeError('invalid convolution forward algorithm')
+
+    @property
+    def implicit_gemm(self):
+        return self._implicit_gemm
+
+    @property
+    def implicit_precomp_gemm(self):
+        return self._implicit_precomp_gemm
+
+    @property
+    def gemm(self):
+        return self._gemm
+
+    @property
+    def direct(self):
+        return self._direct
+
+    @property
+    def fft(self):
+        return self._fft
+
+    @property
+    def auto(self):
+        return self._auto
+
+conv_forward_algo = _ConvForwardAlgorithms()
+
+cdef class ConvBackwardDataAlgorithmWrapper(object):
+    cdef int _d
+
+    def __cinit__(self, int d):
+        self._d = d
+
+    def is_same(self, ConvBackwardDataAlgorithmWrapper rhs):
+        return self._d == rhs._d
+
+class _ConvBackwardDataAlgorithms(object):
+    def __init__(self):
+        self._algo0 = ConvBackwardDataAlgorithmWrapper(
+            m.OfConvBackwardDataAlgorithm(
+                m.kConvBackwardDataAlgorithmAlgo0))
+        self._algo1 = ConvBackwardDataAlgorithmWrapper(
+            m.OfConvBackwardDataAlgorithm(
+                m.kConvBackwardDataAlgorithmAlgo1))
+        self._fft = ConvBackwardDataAlgorithmWrapper(
+            m.OfConvBackwardDataAlgorithm(
+                m.kConvBackwardDataAlgorithmFft))
+        self._auto = ConvBackwardDataAlgorithmWrapper(
+            m.OfConvBackwardDataAlgorithm(
+                m.kConvBackwardDataAlgorithmAuto))
+
+    def find(self, a):
+        if self._algo0.is_same(a):
+            return self._algo0
+        elif self._algo1.is_same(a):
+            return self._algo1
+        elif self._fft.is_same(a):
+            return self._fft
+        elif self._auto.is_same(a):
+            return self._auto
+        else:
+            raise TypeError('invalid convolution backward data algorithm')
+
+    @property
+    def algo0(self):
+        return self._algo0
+
+    @property
+    def algo1(self):
+        return self._algo1
+
+    @property
+    def fft(self):
+        return self._fft
+
+    @property
+    def auto(self):
+        return self._auto
+
+conv_backward_data_algo = _ConvBackwardDataAlgorithms()
+
+cdef class ConvBackwardFilterAlgorithmWrapper(object):
+    cdef int _d
+
+    def __cinit__(self, int d):
+        self._d = d
+
+    def is_same(self, ConvBackwardFilterAlgorithmWrapper rhs):
+        return self._d == rhs._d
+
+class _ConvBackwardFilterAlgorithms(object):
+    def __init__(self):
+        self._algo0 = ConvBackwardFilterAlgorithmWrapper(
+            m.OfConvBackwardFilterAlgorithm(
+                m.kConvBackwardFilterAlgorithmAlgo0))
+        self._algo1 = ConvBackwardFilterAlgorithmWrapper(
+            m.OfConvBackwardFilterAlgorithm(
+                m.kConvBackwardFilterAlgorithmAlgo1))
+        self._fft = ConvBackwardFilterAlgorithmWrapper(
+            m.OfConvBackwardFilterAlgorithm(
+                m.kConvBackwardFilterAlgorithmFft))
+        self._auto = ConvBackwardFilterAlgorithmWrapper(
+            m.OfConvBackwardFilterAlgorithm(
+                m.kConvBackwardFilterAlgorithmAuto))
+
+    def find(self, a):
+        if self._algo0.is_same(a):
+            return self._algo0
+        elif self._algo1.is_same(a):
+            return self._algo1
+        elif self._fft.is_same(a):
+            return self._fft
+        elif self._auto.is_same(a):
+            return self._auto
+        else:
+            raise TypeError('invalid convolution backward filter algorithm')
+
+    @property
+    def algo0(self):
+        return self._algo0
+
+    @property
+    def algo1(self):
+        return self._algo1
+
+    @property
+    def fft(self):
+        return self._fft
+
+    @property
+    def auto(self):
+        return self._auto
+
+conv_backward_filter_algo = _ConvBackwardFilterAlgorithms()
+
 cdef class PoolingAlgorithmWrapper(object):
     cdef int _d
 

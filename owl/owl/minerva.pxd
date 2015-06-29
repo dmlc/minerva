@@ -93,6 +93,53 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
     @staticmethod
     NArray RandBernoulli(const Scale&, float) except +
 
+  ctypedef enum ConvForwardAlgorithm 'minerva::ConvInfo::ForwardAlgorithm':
+    kConvForwardAlgorithmImplicitGemm\
+      'minerva::ConvInfo::ForwardAlgorithm::kImplicitGemm'
+    kConvForwardAlgorithmImplicitPrecompGemm\
+      'minerva::ConvInfo::ForwardAlgorithm::kImplicitPrecompGemm'
+    kConvForwardAlgorithmGemm 'minerva::ConvInfo::ForwardAlgorithm::kGemm'
+    kConvForwardAlgorithmDirect 'minerva::ConvInfo::ForwardAlgorithm::kDirect'
+    kConvForwardAlgorithmFft 'minerva::ConvInfo::ForwardAlgorithm::kFft'
+    kConvForwardAlgorithmAuto 'minerva::ConvInfo::ForwardAlgorithm::kAuto'
+  int OfConvForwardAlgorithm\
+    'libowl::OfEvilEnumClass'(ConvForwardAlgorithm) except +
+  ConvForwardAlgorithm ToConvForwardAlgorithm\
+    'libowl::ToEvilEnumClass<minerva::ConvInfo::ForwardAlgorithm>'(int)\
+    except +
+
+  ctypedef enum ConvBackwardDataAlgorithm\
+      'minerva::ConvInfo::BackwardDataAlgorithm':
+    kConvBackwardDataAlgorithmAlgo0\
+      'minerva::ConvInfo::BackwardDataAlgorithm::kAlgo0'
+    kConvBackwardDataAlgorithmAlgo1\
+      'minerva::ConvInfo::BackwardDataAlgorithm::kAlgo1'
+    kConvBackwardDataAlgorithmFft\
+      'minerva::ConvInfo::BackwardDataAlgorithm::kFft'
+    kConvBackwardDataAlgorithmAuto\
+      'minerva::ConvInfo::BackwardDataAlgorithm::kAuto'
+  int OfConvBackwardDataAlgorithm\
+    'libowl::OfEvilEnumClass'(ConvBackwardDataAlgorithm) except +
+  ConvBackwardDataAlgorithm ToConvBackwardDataAlgorithm\
+    'libowl::ToEvilEnumClass<minerva::ConvInfo::BackwardDataAlgorithm>'(int)\
+    except +
+
+  ctypedef enum ConvBackwardFilterAlgorithm\
+      'minerva::ConvInfo::BackwardFilterAlgorithm':
+    kConvBackwardFilterAlgorithmAlgo0\
+      'minerva::ConvInfo::BackwardFilterAlgorithm::kAlgo0'
+    kConvBackwardFilterAlgorithmAlgo1\
+      'minerva::ConvInfo::BackwardFilterAlgorithm::kAlgo1'
+    kConvBackwardFilterAlgorithmFft\
+      'minerva::ConvInfo::BackwardFilterAlgorithm::kFft'
+    kConvBackwardFilterAlgorithmAuto\
+      'minerva::ConvInfo::BackwardFilterAlgorithm::kAuto'
+  int OfConvBackwardFilterAlgorithm\
+    'libowl::OfEvilEnumClass'(ConvBackwardFilterAlgorithm) except +
+  ConvBackwardFilterAlgorithm ToConvBackwardFilterAlgorithm\
+    'libowl::ToEvilEnumClass<minerva::ConvInfo::BackwardFilterAlgorithm>'(int)\
+    except +
+
   ctypedef enum PoolingAlgorithm 'minerva::PoolingInfo::Algorithm':
     kPoolingAlgorithmMax 'minerva::PoolingInfo::Algorithm::kMax'
     kPoolingAlgorithmAverage 'minerva::PoolingInfo::Algorithm::kAverage'
