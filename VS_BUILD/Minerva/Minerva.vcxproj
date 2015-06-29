@@ -1,0 +1,217 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C1F9972B-32D4-4788-9A2B-7C5FEE61F037}</ProjectGuid>
+    <RootNamespace>Minerva</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\..\Minerva;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\..\third_party\include;$(SolutionDir)\..\..\Minerva;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>HAS_CUDA;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\..\third_party\include;$(SolutionDir)\..\..\Minerva;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;HAS_CUDA;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\minerva\backend\backend.h" />
+    <ClInclude Include="..\..\minerva\backend\backend_chunk.h" />
+    <ClInclude Include="..\..\minerva\backend\dag\dag_chunk.h" />
+    <ClInclude Include="..\..\minerva\backend\dag\dag_scheduler.h" />
+    <ClInclude Include="..\..\minerva\backend\dag\multi_node_lock.h" />
+    <ClInclude Include="..\..\minerva\backend\dag\priority_dispatcher_queue.h" />
+    <ClInclude Include="..\..\minerva\backend\dag\runtime_info_map.h" />
+    <ClInclude Include="..\..\minerva\backend\dag\task_type.h" />
+    <ClInclude Include="..\..\minerva\backend\simple_backend.h" />
+    <ClInclude Include="..\..\minerva\common\bool_flag.h" />
+    <ClInclude Include="..\..\minerva\common\common.h" />
+    <ClInclude Include="..\..\minerva\common\concurrent_blocking_queue.h" />
+    <ClInclude Include="..\..\minerva\common\concurrent_unordered_map.h" />
+    <ClInclude Include="..\..\minerva\common\concurrent_unordered_set.h" />
+    <ClInclude Include="..\..\minerva\common\cuda_utils.h" />
+    <ClInclude Include="..\..\minerva\common\make_unique.h" />
+    <ClInclude Include="..\..\minerva\common\scale.h" />
+    <ClInclude Include="..\..\minerva\common\shared_mutex.h" />
+    <ClInclude Include="..\..\minerva\common\singleton.h" />
+    <ClInclude Include="..\..\minerva\common\spin_lock.h" />
+    <ClInclude Include="..\..\minerva\common\thread_pool.h" />
+    <ClInclude Include="..\..\minerva\dag\dag.h" />
+    <ClInclude Include="..\..\minerva\dag\dag_node.h" />
+    <ClInclude Include="..\..\minerva\dag\dag_printer.h" />
+    <ClInclude Include="..\..\minerva\dag\physical_dag.h" />
+    <ClInclude Include="..\..\minerva\device\data_store.h" />
+    <ClInclude Include="..\..\minerva\device\device.h" />
+    <ClInclude Include="..\..\minerva\device\device_listener.h" />
+    <ClInclude Include="..\..\minerva\device\device_manager.h" />
+    <ClInclude Include="..\..\minerva\device\pooled_data_store.h" />
+    <ClInclude Include="..\..\minerva\device\task.h" />
+    <ClInclude Include="..\..\minerva\device\task_data.h" />
+    <ClInclude Include="..\..\Minerva\dmlc\base.h" />
+    <ClInclude Include="..\..\Minerva\dmlc\logging.h" />
+    <ClInclude Include="..\..\minerva\minerva.h" />
+    <ClInclude Include="..\..\minerva\narray\convolution.h" />
+    <ClInclude Include="..\..\minerva\narray\convolution_info.h" />
+    <ClInclude Include="..\..\minerva\narray\image_batch.h" />
+    <ClInclude Include="..\..\minerva\narray\narray.h" />
+    <ClInclude Include="..\..\minerva\narray\narray_elewise.h" />
+    <ClInclude Include="..\..\minerva\op\basic_fn.h" />
+    <ClInclude Include="..\..\minerva\op\closure.h" />
+    <ClInclude Include="..\..\minerva\op\compute_fn.h" />
+    <ClInclude Include="..\..\minerva\op\context.h" />
+    <ClInclude Include="..\..\minerva\op\data_shard.h" />
+    <ClInclude Include="..\..\minerva\op\impl\basic.h" />
+    <ClInclude Include="..\..\minerva\op\impl\bundle.h" />
+    <ClInclude Include="..\..\minerva\op\impl\cuda.h" />
+    <ClInclude Include="..\..\minerva\op\impl\impl.h" />
+    <ClInclude Include="..\..\minerva\op\impl\ps.h" />
+    <ClInclude Include="..\..\minerva\op\physical.h" />
+    <ClInclude Include="..\..\minerva\op\physical_fn.h" />
+    <ClInclude Include="..\..\minerva\op\physical_op.h" />
+    <ClInclude Include="..\..\minerva\profiler\cpu_timer.h" />
+    <ClInclude Include="..\..\minerva\profiler\execution_profiler.h" />
+    <ClInclude Include="..\..\minerva\profiler\timer.h" />
+    <ClInclude Include="..\..\minerva\profiler\wall_timer.h" />
+    <ClInclude Include="..\..\minerva\ps.h" />
+    <ClInclude Include="..\..\minerva\system\minerva_system.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\minerva\backend\backend.cpp" />
+    <ClCompile Include="..\..\minerva\backend\dag\dag_chunk.cpp" />
+    <ClCompile Include="..\..\minerva\backend\dag\dag_scheduler.cpp" />
+    <ClCompile Include="..\..\minerva\backend\dag\priority_dispatcher_queue.cpp" />
+    <ClCompile Include="..\..\minerva\backend\dag\runtime_info_map.cpp" />
+    <ClCompile Include="..\..\minerva\backend\simple_backend.cpp" />
+    <ClCompile Include="..\..\minerva\common\common.cpp" />
+    <ClCompile Include="..\..\minerva\common\scale.cpp" />
+    <ClCompile Include="..\..\minerva\common\shared_mutex.cpp" />
+    <ClCompile Include="..\..\minerva\common\spin_lock.cpp" />
+    <ClCompile Include="..\..\minerva\dag\dag_node.cpp" />
+    <ClCompile Include="..\..\minerva\dag\physical_dag.cpp" />
+    <ClCompile Include="..\..\minerva\device\data_store.cpp" />
+    <ClCompile Include="..\..\minerva\device\device.cpp" />
+    <ClCompile Include="..\..\minerva\device\device_manager.cpp" />
+    <ClCompile Include="..\..\minerva\device\pooled_data_store.cpp" />
+    <ClCompile Include="..\..\minerva\narray\convolution.cpp" />
+    <ClCompile Include="..\..\minerva\narray\image_batch.cpp" />
+    <ClCompile Include="..\..\minerva\narray\narray.cpp" />
+    <ClCompile Include="..\..\minerva\narray\narray_elewise.cpp" />
+    <ClCompile Include="..\..\minerva\narray\narray_reduction.cpp" />
+    <ClCompile Include="..\..\minerva\op\impl\basic.cpp" />
+    <ClCompile Include="..\..\minerva\op\impl\cuda.cpp" />
+    <ClCompile Include="..\..\minerva\profiler\cpu_timer.cpp" />
+    <ClCompile Include="..\..\minerva\profiler\execution_profiler.cpp" />
+    <ClCompile Include="..\..\minerva\profiler\timer.cpp" />
+    <ClCompile Include="..\..\minerva\profiler\wall_timer.cpp" />
+    <ClCompile Include="..\..\minerva\system\minerva_system.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

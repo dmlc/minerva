@@ -38,6 +38,7 @@ uint64_t DeviceManager::CreateGpuDevice(int gid) {
   return id;
 #else
   common::FatalError("please recompile with macro HAS_CUDA");
+  return 0;
 #endif
 }
 
@@ -48,6 +49,7 @@ int DeviceManager::GetGpuDeviceCount() {
   return ret;
 #else
   common::FatalError("please recompile with macro HAS_CUDA");
+  return 0;
 #endif
 }
 

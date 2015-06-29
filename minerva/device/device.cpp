@@ -132,7 +132,11 @@ struct GpuDevice::Impl {
   ~Impl();
   inline void ActivateDevice() const;
 
+# if defined(_MSC_VER)
+  static const size_t kParallelism = 4;
+# else
   static size_t constexpr kParallelism = 4;
+# endif
   int const device;
   array<cudaStream_t, kParallelism> stream;
   array<cublasHandle_t, kParallelism> cublas_handle;
