@@ -65,9 +65,15 @@ class SharedMutex {
   std::condition_variable gate2_;
   uint64_t state_ = 0;
 
+# if defined (_MSC_VER)
+  static const uint64_t reader_entered_ =
+    _ULLONG_MAX >> 1;
+  static const uint64_t writer_entered_ = ~reader_entered_;
+# else
   static constexpr uint64_t reader_entered_ =
     std::numeric_limits<uint64_t>::max() >> 1;
   static constexpr uint64_t writer_entered_ = ~reader_entered_;
+# endif
 };
 
 }  // namespace common

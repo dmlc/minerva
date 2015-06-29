@@ -30,7 +30,11 @@ class EverlastingSingleton {
 
 };
 
+# if defined(_MSC_VER)
+template<typename T> std::unique_ptr<T> EverlastingSingleton<T>::data_ = nullptr;
+# else
 template<typename T> std::unique_ptr<T> EverlastingSingleton<T>::data_{};
+# endif
 
 }  // namespace common
 }  // namespace minerva
