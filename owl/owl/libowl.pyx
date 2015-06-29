@@ -232,7 +232,7 @@ cdef class NArray(object):
                     deref(src._d)
                 ,   deref(filter._d)
                 ,   deref(bias._d)
-                ,   deref(info._d)));
+                ,   deref(info._d)))
 
     @staticmethod
     def conv_backward_data(
@@ -242,7 +242,7 @@ cdef class NArray(object):
                     deref(diff._d)
                 ,   deref(bottom._d)
                 ,   deref(filter._d)
-                ,   deref(info._d)));
+                ,   deref(info._d)))
 
     @staticmethod
     def conv_backward_filter(
@@ -252,18 +252,38 @@ cdef class NArray(object):
                     deref(diff._d)
                 ,   deref(bottom._d)
                 ,   deref(filter._d)
-                ,   deref(info._d)));
+                ,   deref(info._d)))
 
     @staticmethod
     def conv_backward_bias(NArray diff):
-        return _wrap_cpp_narray(m.ConvBackwardBias(deref(diff._d)));
+        return _wrap_cpp_narray(m.ConvBackwardBias(deref(diff._d)))
+
+    @staticmethod
+    def conv_forward_find_algorithm(NArray src, NArray filter, ConvInfo info):
+        cdef vector[m.ConvFwdAlgoProfResult] res
+        res = m.ConvForwardFindAlgorithm(
+            deref(src._d)
+        ,   deref(filter._d)
+        ,   deref(info._d))
+        ret = []
+        for i in res:
+            algo = conv_forward_algo.find(
+                ConvForwardAlgorithmWrapper(m.OfConvForwardAlgorithm(i.algo)))
+            time = i.time
+            memory = i.memory
+            ret.append({
+                'algorithm': algo,
+                'time': time,
+                'memory': memory
+            })
+        return ret
 
     @staticmethod
     def softmax_forward(NArray src, SoftmaxAlgorithmWrapper algo):
         return _wrap_cpp_narray(
                 m.SoftmaxForward(
                     deref(src._d)
-                ,   m.ToSoftmaxAlgorithm(algo._d)));
+                ,   m.ToSoftmaxAlgorithm(algo._d)))
 
     @staticmethod
     def softmax_backward(NArray diff, NArray top, SoftmaxAlgorithmWrapper algo):
@@ -271,14 +291,14 @@ cdef class NArray(object):
                 m.SoftmaxBackward(
                     deref(diff._d)
                 ,   deref(top._d)
-                ,   m.ToSoftmaxAlgorithm(algo._d)));
+                ,   m.ToSoftmaxAlgorithm(algo._d)))
 
     @staticmethod
     def activation_forward(NArray src, ActivationAlgorithmWrapper algo):
         return _wrap_cpp_narray(
                 m.ActivationForward(
                     deref(src._d)
-                ,   m.ToActivationAlgorithm(algo._d)));
+                ,   m.ToActivationAlgorithm(algo._d)))
 
     @staticmethod
     def activation_backward(
@@ -291,14 +311,14 @@ cdef class NArray(object):
                     deref(diff._d)
                 ,   deref(top._d)
                 ,   deref(bottom._d)
-                ,   m.ToActivationAlgorithm(algo._d)));
+                ,   m.ToActivationAlgorithm(algo._d)))
 
     @staticmethod
     def pooling_forward(NArray src, PoolingInfo algo):
         return _wrap_cpp_narray(
                 m.PoolingForward(
                     deref(src._d)
-                ,   deref(algo._d)));
+                ,   deref(algo._d)))
 
     @staticmethod
     def pooling_backward(
@@ -311,7 +331,7 @@ cdef class NArray(object):
                     deref(diff._d)
                 ,   deref(top._d)
                 ,   deref(bottom._d)
-                ,   deref(algo._d)));
+                ,   deref(algo._d)))
 
     @staticmethod
     def lrn_forward(NArray src, NArray scale, int local_size, float a, float b):
@@ -321,7 +341,7 @@ cdef class NArray(object):
                 ,   deref(scale._d)
                 ,   local_size
                 ,   a
-                ,   b));
+                ,   b))
 
     @staticmethod
     def lrn_backward(
@@ -340,7 +360,7 @@ cdef class NArray(object):
                 ,   deref(top_diff._d)
                 ,   local_size
                 ,   a
-                ,   b));
+                ,   b))
 
     def sum(self, rhs):
         cdef int i

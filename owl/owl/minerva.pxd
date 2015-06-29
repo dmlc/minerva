@@ -33,6 +33,8 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva::Convolution':
   NArray ConvBackwardData(NArray, NArray, NArray, ConvInfo) except +
   NArray ConvBackwardFilter(NArray, NArray, NArray, ConvInfo) except +
   NArray ConvBackwardBias(NArray) except +
+  vector[ConvFwdAlgoProfResult] ConvForwardFindAlgorithm(
+      NArray, NArray, ConvInfo) except +
   NArray SoftmaxForward(NArray, SoftmaxAlgorithm) except +
   NArray SoftmaxBackward(NArray, NArray, SoftmaxAlgorithm) except +
   NArray ActivationForward(NArray, ActivationAlgorithm) except +
@@ -189,4 +191,9 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
     int stride_horizontal
     int pad_height
     int pad_width
+
+  cppclass ConvFwdAlgoProfResult:
+    ConvForwardAlgorithm algo
+    float time
+    size_t memory
 
