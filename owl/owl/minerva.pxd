@@ -164,11 +164,21 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
     'libowl::ToEvilEnumClass<minerva::ActivationAlgorithm>'(int) except +
 
   cppclass ConvInfo:
-    ConvInfo(int, int, int, int)
+    ConvInfo(
+      int
+    , int
+    , int
+    , int
+    , ConvForwardAlgorithm
+    , ConvBackwardDataAlgorithm
+    , ConvBackwardFilterAlgorithm)
     int pad_height
     int pad_width
     int stride_vertical
     int stride_horizontal
+    ConvForwardAlgorithm forward_algorithm
+    ConvBackwardDataAlgorithm backward_data_algorithm
+    ConvBackwardFilterAlgorithm backward_filter_algorithm
 
   cppclass PoolingInfo:
     PoolingInfo(PoolingAlgorithm, int, int, int, int, int, int)

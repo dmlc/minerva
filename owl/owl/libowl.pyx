@@ -746,8 +746,18 @@ cdef class ConvInfo(object):
         ,   int ph=0
         ,   int pw=0
         ,   int sv=1
-        ,   int sh=1):
-        self._d = new m.ConvInfo(ph, pw, sv, sh)
+        ,   int sh=1
+        ,   ConvForwardAlgorithmWrapper f=conv_forward_algo.auto
+        ,   ConvBackwardDataAlgorithmWrapper bd=conv_backward_data_algo.auto
+        ,   ConvBackwardFilterAlgorithmWrapper bf=\
+                conv_backward_filter_algo.auto):
+        cdef m.ConvForwardAlgorithm fa
+        cdef m.ConvBackwardDataAlgorithm bda
+        cdef m.ConvBackwardFilterAlgorithm bfa
+        fa = m.ToConvForwardAlgorithm(f._d)
+        bda = m.ToConvBackwardDataAlgorithm(bd._d)
+        bfa = m.ToConvBackwardFilterAlgorithm(bf._d)
+        self._d = new m.ConvInfo(ph, pw, sv, sh, fa, bda, bfa)
 
     def __dealloc__(self):
         del self._d
@@ -779,6 +789,40 @@ cdef class ConvInfo(object):
 
         def __get__(self):
             return self._d.stride_horizontal
+
+    property forward_algorithm:
+        def __set__(self, ConvForwardAlgorithmWrapper a):
+            cdef m.ConvForwardAlgorithm algo
+            algo = m.ToConvForwardAlgorithm(a._d)
+            self._d.forward_algorithm = algo
+
+        def __get__(self):
+            return conv_forward_algo.find(ConvForwardAlgorithmWrapper(
+                m.OfConvForwardAlgorithm(self._d.forward_algorithm)))
+
+    property backward_data_algorithm:
+        def __set__(self, ConvBackwardDataAlgorithmWrapper a):
+            cdef m.ConvBackwardDataAlgorithm algo
+            algo = m.ToConvBackwardDataAlgorithm(a._d)
+            self._d.backward_data_algorithm = algo
+
+        def __get__(self):
+            return conv_backward_data_algo.find(
+                ConvBackwardDataAlgorithmWrapper(
+                    m.OfConvBackwardDataAlgorithm(
+                        self._d.backward_data_algorithm)))
+
+    property backward_filter_algorithm:
+        def __set__(self, ConvBackwardFilterAlgorithmWrapper a):
+            cdef m.ConvBackwardFilterAlgorithm algo
+            algo = m.ToConvBackwardFilterAlgorithm(a._d)
+            self._d.backward_filter_algorithm = algo
+
+        def __get__(self):
+            return conv_backward_filter_algo.find(
+                ConvBackwardFilterAlgorithmWrapper(
+                    m.OfConvBackwardFilterAlgorithm(
+                        self._d.backward_filter_algorithm)))
 
 cdef class PoolingInfo(object):
     cdef m.PoolingInfo* _d

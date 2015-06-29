@@ -24,20 +24,29 @@ struct ConvInfo {
     kFft,
     kAuto
   };
-  ConvInfo(int ph = 0, int pw = 0, int sv = 1, int sh = 1)
+  ConvInfo(
+      int ph = 0
+    , int pw = 0
+    , int sv = 1
+    , int sh = 1
+    , ForwardAlgorithm fa = ForwardAlgorithm::kAuto
+    , BackwardDataAlgorithm bda = BackwardDataAlgorithm::kAuto
+    , BackwardFilterAlgorithm bfa = BackwardFilterAlgorithm::kAuto)
     : pad_height{ph}
     , pad_width{pw}
     , stride_vertical{sv}
-    , stride_horizontal{sh} {
+    , stride_horizontal{sh}
+    , forward_algorithm{fa}
+    , backward_data_algorithm{bda}
+    , backward_filter_algorithm{bfa} {
   }
   int pad_height;
   int pad_width;
   int stride_vertical;
   int stride_horizontal;
-  ForwardAlgorithm forward_algorithm = ForwardAlgorithm::kAuto;
-  BackwardDataAlgorithm backward_data_algorithm = BackwardDataAlgorithm::kAuto;
-  BackwardFilterAlgorithm backward_filter_algorithm =
-    BackwardFilterAlgorithm::kAuto;
+  ForwardAlgorithm forward_algorithm;
+  BackwardDataAlgorithm backward_data_algorithm;
+  BackwardFilterAlgorithm backward_filter_algorithm;
 };
 
 struct ConvFwdAlgoProfResult {
