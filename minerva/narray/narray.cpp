@@ -192,6 +192,25 @@ NArray NArray::Select(std::vector<int> const& indices) const {
 }
 
 // Replicate matrix
+NArray NArray::NormExceptDimArithmetic(const NArray& rhs, ArithmeticType type) const {
+  auto& lhs = *this;
+  CHECK_EQ(lhs.Size().NumDims(), rhs.Size().NumDims()) << "#dimension mismatch";
+  int dim_to_except = -1;
+  // Dimensions to replicate
+  for (size_t i = 0; i < lhs.Size().NumDims(); ++i) {
+    if (rhs.Size()[i] != 1) {
+		dim_to_except = i;
+		break;
+	} 
+  }
+  CHECK_GT(dim_to_except, -1) << "#dimension mismatch";
+  NormExceptDimArithmeticOp* op = new NormExceptDimArithmeticOp();
+  op->closure.type = type;
+  op->closure.dim_to_except = dim_to_except;
+  return NArray::ComputeOne({lhs, rhs}, lhs.Size(), op);
+}
+
+// Replicate matrix
 NArray NArray::NormArithmetic(const NArray& rhs, ArithmeticType type) const {
   auto& lhs = *this;
   CHECK_EQ(lhs.Size().NumDims(), rhs.Size().NumDims()) << "#dimension mismatch";

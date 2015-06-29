@@ -21,7 +21,9 @@ INSTALL_COMPUTE_FN(ArithmeticConstClosure, basic::ArithmeticConst, NO_IMPL, cuda
 INSTALL_COMPUTE_FN(MatMultClosure, basic::MatMult, NO_IMPL, cuda::MatMult);
 INSTALL_COMPUTE_FN(TransposeClosure, basic::Transpose, NO_IMPL, cuda::Transpose);
 INSTALL_COMPUTE_FN(ReductionClosure, basic::Reduction, NO_IMPL, cuda::Reduction);
+INSTALL_COMPUTE_FN(ReductionExceptDimClosure, NO_IMPL, NO_IMPL, cuda::ReductionExceptDim);
 INSTALL_COMPUTE_FN(ReductionWithReshapeClosure, NO_IMPL, NO_IMPL, cuda::ReductionWithReshape);
+INSTALL_COMPUTE_FN(NormExceptDimArithmeticClosure, NO_IMPL, NO_IMPL, cuda::NormExceptDimArithmetic);
 INSTALL_COMPUTE_FN(NormArithmeticClosure, basic::NormArithmetic, NO_IMPL, cuda::NormArithmetic);
 INSTALL_COMPUTE_FN(MaxIndexClosure, basic::MaxIndex, NO_IMPL, cuda::MaxIndex);
 INSTALL_COMPUTE_FN(ReshapeClosure, basic::Reshape, NO_IMPL, cuda::Reshape);

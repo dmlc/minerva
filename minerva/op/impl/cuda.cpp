@@ -208,6 +208,48 @@ void Transpose(const DataList& inputs, const DataList& outputs,
   CudaPerformTranspose(in_data, res_data, m, n, context.cublas_handle);
 }
 
+
+void NormExceptDimArithmetic(const DataList& inputs, const DataList& outputs, NormExceptDimArithmeticClosure& closure,
+  const Context & context) {
+  CHECK_EQ(inputs.size(), 2) << "NormExceptDimArithmetic kernel wrong #input";
+  CHECK_EQ(outputs.size(), 1) << "NormExceptDimArithmetic kernel wrong #output";
+  // Normalizee is the chunk with full size, normalizer is the chunk with reduced dimensions
+  auto normalizee_size = inputs[0].size_;
+  auto normalizer_size = inputs[1].size_;
+  auto normalizee_data = inputs[0].data_;
+  auto normalizer_data = inputs[1].data_;
+  auto res_data = outputs[0].data_;
+  CHECK_LT(closure.dim_to_except, normalizee_size.NumDims()) << "dim to except error";
+  int before_dim = 1;
+  int after_dim = 1;
+  int except_dim = normalizee_size[closure.dim_to_except];
+  for (int i = 0; i < normalizee_size.NumDims(); i++) {
+	  if (i < closure.dim_to_except)
+		  before_dim *= normalizee_size[i];
+	  else if ( i > closure.dim_to_except)
+		  after_dim *= normalizee_size[i];
+  }
+  switch(closure.type) {
+    case ArithmeticType::kAdd:
+	  CudaPerformNormAddExceptDim(normalizee_data, normalizer_data, res_data, before_dim, except_dim, after_dim, context.stream);
+	  break;
+    case ArithmeticType::kSub:
+	  CudaPerformNormSubExceptDim(normalizee_data, normalizer_data, res_data, before_dim, except_dim, after_dim, context.stream);
+	  break;
+    case ArithmeticType::kMult:
+      CudaPerformNormMultExceptDim(normalizee_data, normalizer_data, res_data, before_dim, except_dim, after_dim, context.stream);
+	  break;
+    case ArithmeticType::kDiv:
+	  CudaPerformNormDivExceptDim(normalizee_data, normalizer_data, res_data, before_dim, except_dim, after_dim, context.stream);
+	  break;
+  }
+}
+
+
+
+
+
+
 void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithmeticClosure& closure,
   const Context & context) {
   CHECK_EQ(inputs.size(), 2) << "NormArithmetic kernel wrong #input";
@@ -256,35 +298,30 @@ void NormArithmetic(const DataList& inputs, const DataList& outputs, NormArithme
   }
 }
 
-void ReductionOnDim(const DataList& inputs, const DataList& outputs,
-  ReductionOnDimClosure& closure, const Context& context) {
+void ReductionExceptDim(const DataList& inputs, const DataList& outputs,
+  ReductionExceptDimClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "Reduction kernel wrong #input";
   CHECK_EQ(outputs.size(), 1) << "Reduction kernel wrong #output";
   auto in_size = inputs[0].size_;
   auto out_size = outputs[0].size_;
   auto in_data = inputs[0].data_;
   auto out_data = outputs[0].data_;
-  CHECK_EQ(closure.dims_to_reduce.NumDims(), 1) << "currently do reduction on one dimension only";
-  int m = in_size[0];
-  int n = in_size[1];
-  if (closure.dims_to_reduce[0] == 0) {
-    switch (closure.type) {
-      case ReductionType::kSum:
-        CudaPerformReductionSumOnCol(in_data, out_data, m, n, context.stream);
-        break;
-      case ReductionType::kMax:
-        CudaPerformReductionMaxOnCol(in_data, out_data, m, n, context.stream);
-        break;
-    }
-  } else {
-    switch (closure.type) {
-      case ReductionType::kSum:
-        CudaPerformReductionSumOnRow(in_data, out_data, m, n, context.stream);
-        break;
-      case ReductionType::kMax:
-        CudaPerformReductionMaxOnRow(in_data, out_data, m, n, context.stream);
-        break;
-    }
+  CHECK_LT(closure.dim_to_except, in_size.NumDims()) << "dim_to_except error";
+  int before_dim = 1;
+  int after_dim = 1;
+  for(int i = 0; i < in_size.NumDims(); i++){
+	if(i < closure.dim_to_except)
+		before_dim *= in_size[i];
+	else if(i > closure.dim_to_except)
+		after_dim *= in_size[i];
+  }
+  switch (closure.type) {
+	case ReductionType::kSum:
+		CudaPerformReductionExceptDimSum(in_data, out_data, before_dim, in_size[closure.dim_to_except],after_dim, context.stream);
+		break;
+	case ReductionType::kMax:
+		CudaPerformReductionExceptDimMax(in_data, out_data, before_dim, in_size[closure.dim_to_except],after_dim, context.stream);
+		break;
   }
 }
 
@@ -332,7 +369,7 @@ void ReductionWithReshape(const DataList& inputs, const DataList& outputs,
   auto out_data = outputs[0].data_;
   //Check the reshape is reasonable
   int total_dim = 1;
-  for (auto i : dim) {
+  for (int i = 0; i < in_size.NumDims(); i++) {
 	total_dim *= in_size[i];
   }
   CHECK_EQ(closure.newshape.NumDims(), 2) << "Only Redhape to a 2-D NArray";

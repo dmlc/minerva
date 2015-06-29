@@ -101,6 +101,34 @@ void CudaPerformLeftConstDiv(float* in, float* out, float val, size_t size, cuda
   CheckCudaError("CudaPerformLeftConstDiv");
 }
 
+void CudaPerformNormAddExceptDim(float* matrix, float* row, float* res, int before_dim, int except_dim, int after_dim, cudaStream_t stream) {
+  int block, thread;
+  FindConfiguration(before_dim * after_dim, block, thread);
+  CudaPerformNormExceptDimKernel<<<block, thread, 0, stream>>>(matrix, row, res, before_dim, except_dim, after_dim, SumOp());
+  CheckCudaError("CudaPerformNormAddExceptDim");
+}
+
+void CudaPerformNormSubExceptDim(float* matrix, float* row, float* res, int before_dim, int except_dim, int after_dim, cudaStream_t stream) {
+  int block, thread;
+  FindConfiguration(before_dim * after_dim, block, thread);
+  CudaPerformNormExceptDimKernel<<<block, thread, 0, stream>>>(matrix, row, res, before_dim, except_dim, after_dim, SubOp());
+  CheckCudaError("CudaPerformNormSubExceptDim");
+}
+
+void CudaPerformNormMultExceptDim(float* matrix, float* row, float* res, int before_dim, int except_dim, int after_dim, cudaStream_t stream) {
+  int block, thread;
+  FindConfiguration(before_dim * after_dim, block, thread);
+  CudaPerformNormExceptDimKernel<<<block, thread, 0, stream>>>(matrix, row, res, before_dim, except_dim, after_dim, MultOp());
+  CheckCudaError("CudaPerformNormMultExceptDim");
+}
+
+void CudaPerformNormDivExceptDim(float* matrix, float* row, float* res, int before_dim, int except_dim, int after_dim, cudaStream_t stream) {
+  int block, thread;
+  FindConfiguration(before_dim * after_dim, block, thread);
+  CudaPerformNormExceptDimKernel<<<block, thread, 0, stream>>>(matrix, row, res, before_dim, except_dim, after_dim, DivOp());
+  CheckCudaError("CudaPerformNormDivExceptDim");
+}
+
 void CudaPerformNormAddOnCol(float* matrix, float* row, float* res, int m, int n, cudaStream_t stream) {
   int block, thread;
   FindConfiguration(m, block, thread);
@@ -155,6 +183,20 @@ void CudaPerformNormDivOnRow(float* matrix, float* row, float* res, int m, int n
   FindConfiguration(m, block, thread);
   CudaPerformNormOnRowKernel<<<block, thread, 0, stream>>>(matrix, row, res, m, n, DivOp());
   CheckCudaError("CudaPerformNormDivOnRow");
+}
+
+void CudaPerformReductionExceptDimSum(float* in, float* out, int before_dim, int except_dim, int after_dim, cudaStream_t stream) {
+  int block, thread;
+  FindConfiguration(except_dim, block, thread);
+  CudaPerformReductionExceptDimKernel<<<block, thread, 0, stream>>>(in, out, before_dim, except_dim, after_dim, SumOp());
+  CheckCudaError("CudaPerformReductionExceptDimSum");
+}
+
+void CudaPerformReductionExceptDimMax(float* in, float* out, int before_dim, int except_dim, int after_dim, cudaStream_t stream) {
+  int block, thread;
+  FindConfiguration(except_dim, block, thread);
+  CudaPerformReductionExceptDimKernel<<<block, thread, 0, stream>>>(in, out, before_dim, except_dim, after_dim, MaxOp());
+  CheckCudaError("CudaPerformReductionExceptDimSum");
 }
 
 void CudaPerformReductionSumOnCol(float* in, float* out, int m, int n, cudaStream_t stream) {

@@ -6,6 +6,34 @@ using namespace std;
 
 namespace minerva {
 
+NArray NArray::MaxAllExceptDim(const int dim_to_except) const {
+	ReductionExceptDimOp* reductionexceptdim_op = new ReductionExceptDimOp();
+	reductionexceptdim_op->closure.type = ReductionType::kMax;
+	reductionexceptdim_op->closure.dim_to_except = dim_to_except;
+	auto size = Size();
+	CHECK_LT(dim_to_except, size.NumDims()) << "reduce dim exceeds NArray dims";
+	for (int i = 1; i < size.NumDims(); i++){
+		if ( i != dim_to_except)	
+			size[i] = 1;
+	}
+	return NArray::ComputeOne({*this}, size, reductionexceptdim_op);
+}
+
+NArray NArray::SumAllExceptDim(const int dim_to_except) const {
+	ReductionExceptDimOp* reductionexceptdim_op = new ReductionExceptDimOp();
+	reductionexceptdim_op->closure.type = ReductionType::kSum;
+	reductionexceptdim_op->closure.dim_to_except = dim_to_except;
+	auto size = Size();
+	CHECK_LT(dim_to_except, size.NumDims()) << "reduce dim exceeds NArray dims";
+	for (int i = 1; i < size.NumDims(); i++){
+		if ( i != dim_to_except)	
+			size[i] = 1;
+	}
+	return NArray::ComputeOne({*this}, size, reductionexceptdim_op);
+}
+
+/*
+//Implement by two reductionwithreshape
 NArray NArray::SumAllExceptDim(const int dim) const {
 	auto size = Size();
 	//deprecated
@@ -63,7 +91,7 @@ NArray NArray::SumAllExceptDim(const int dim) const {
 		return result_p1;
 	}
 }
-
+*/
 	
 // Lazy reductions
 NArray NArray::Sum(int dim) const {

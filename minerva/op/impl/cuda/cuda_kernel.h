@@ -105,17 +105,17 @@ __global__ static void CudaPerformDotKernel(float* x, float* y, size_t size, Fun
 
 // res = NArray Norm on Dim
 template<typename Func>
-__global__ static void CudaPerformNormOnDimKernel(float* matrix, float* row, float * res, int dim_before, int dim_after, int dim_norm, Func func) {
+__global__ static void CudaPerformNormExceptDimKernel(float* matrix, float* row, float * res, int before_dim, int except_dim, int after_dim, Func func) {
   int pos_id = threadIdx.x + blockIdx.x * blockDim.x;
   int step = gridDim.x * blockDim.x;
-  int pos_all = dim_before * dim_after;
+  int pos_all = before_dim * after_dim;
   int pos_before = 0, pos_after = 0;
 
   while (pos_id < pos_all) {
-	pos_before = pos_id % dim_before;
-	pos_after = pos_id / dim_before;
-    for (int i = 0; i < dim_norm; ++i) {
-      res[pos_before + i * dim_norm + pos_after * dim_norm * dim_after] = func(matrix[pos_before + i * dim_norm + pos_after * dim_norm * dim_after], row[i]);
+	pos_before = pos_id % before_dim;
+	pos_after = pos_id / before_dim;
+    for (int i = 0; i < except_dim; ++i) {
+      res[pos_before + i * except_dim + pos_after * except_dim * before_dim] = func(matrix[pos_before + i * except_dim + pos_after * except_dim * before_dim], row[i]);
     }
     pos_id += step;
   }
@@ -146,6 +146,21 @@ __global__ static void CudaPerformNormOnRowKernel(float* matrix, float* col, flo
     row_id += step;
   }
 }
+
+template<typename Func>
+__global__ static void CudaPerformReductionExceptDimKernel(float* matrix, float* row, int before_dim, int except_dim, int after_dim, Func func) {
+  int except_dim_id = threadIdx.x + blockIdx.x * blockDim.x;
+  int step = gridDim.x * blockDim.x;
+  while (except_dim_id < except_dim) {
+    float r = matrix[except_dim_id * before_dim];
+    for (int i = 1; i < before_dim * after_dim; ++i) {
+      r = func(r, matrix[(i / after_dim) * before_dim * except_dim + except_dim_id * before_dim + (i % after_dim)]);
+    }
+    row[except_dim_id] = r;
+    except_dim_id += step;
+  }
+}
+
 
 // row = ReductionOp(matrix)
 template<typename Func>

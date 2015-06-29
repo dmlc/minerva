@@ -32,10 +32,18 @@ void CudaPerformNormSubOnRow(float* matrix, float* row, float* res, int m, int n
 void CudaPerformNormMultOnRow(float* matrix, float* row, float* res, int m, int n, cudaStream_t);
 void CudaPerformNormDivOnRow(float* matrix, float* row, float* res, int m, int n, cudaStream_t);
 
+void CudaPerformNormAddExceptDim(float* matrix, float* row, float* res, int before_dim, int except_dim, int after_dim, cudaStream_t);
+void CudaPerformNormSubExceptDim(float* matrix, float* row, float* res, int before_dim, int except_dim, int after_dim, cudaStream_t);
+void CudaPerformNormMultExceptDim(float* matrix, float* row, float* res, int before_dim, int except_dim, int after_dim, cudaStream_t);
+void CudaPerformNormDivExceptDim(float* matrix, float* row, float* res, int before_dim, int except_dim, int after_dim, cudaStream_t);
+
 void CudaPerformReductionSumOnCol(float* in, float* out, int m, int n, cudaStream_t);
 void CudaPerformReductionMaxOnCol(float* in, float* out, int m, int n, cudaStream_t);
 void CudaPerformReductionSumOnRow(float* in, float* out, int m, int n, cudaStream_t);
 void CudaPerformReductionMaxOnRow(float* in, float* out, int m, int n, cudaStream_t);
+
+void CudaPerformReductionExceptDimMax(float* in, float* out, int before_dim, int except_dim, int after_dim, cudaStream_t);
+void CudaPerformReductionExceptDimSum(float* in, float* out, int before_dim, int except_dim, int after_dim, cudaStream_t);
 
 void CudaPerformMaxIndexOnCol(float* in, float* out, int m, int n, cudaStream_t);
 void CudaPerformMaxIndexOnRow(float* in, float* out, int m, int n, cudaStream_t);

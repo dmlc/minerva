@@ -52,6 +52,11 @@ struct TransposeClosure {
 struct ReshapeClosure {
 };
 
+struct ReductionExceptDimClosure {
+  ReductionType type;
+  int dim_to_except;
+};
+
 struct ReductionClosure {
   ReductionType type;
   Scale dims_to_reduce;
@@ -98,6 +103,12 @@ struct ArithmeticConstClosure {
   float val;
   int side; // 0 is left const, 1 is right const
 };
+
+struct NormExceptDimArithmeticClosure {
+  ArithmeticType type;
+  int dim_to_except;
+};
+
 
 struct NormArithmeticClosure {
   ArithmeticType type;

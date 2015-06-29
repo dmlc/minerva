@@ -86,9 +86,13 @@ class NArray {
   NArray Max(int dim) const;
   NArray Max(const Scale& dims) const;
   NArray MaxIndex(int dim) const;
+  NArray SumAllExceptDim(const int dim_to_except) const;
+  NArray MaxAllExceptDim(const int dim_to_except) const;
 
   // Replicate matrix
   NArray NormArithmetic(const NArray&, ArithmeticType) const;
+  NArray NormExceptDimArithmetic(const NArray&, ArithmeticType) const;
+  
   // Non-lazy reductions
   float Sum() const;  // TODO
   float Max() const;  // TODO

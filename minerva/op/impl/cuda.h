@@ -11,8 +11,10 @@ void Arithmetic(const DataList&, const DataList&, ArithmeticClosure&, const Cont
 void MatMult(const DataList&, const DataList&, MatMultClosure&, const Context&);
 void ArithmeticConst(const DataList&, const DataList&, ArithmeticConstClosure&, const Context&);
 void Transpose(const DataList&, const DataList&, TransposeClosure&, const Context&);
+void NormExceptDimArithmetic(const DataList&, const DataList&, NormExceptDimArithmeticClosure&, const Context &);
 void NormArithmetic(const DataList&, const DataList&, NormArithmeticClosure&, const Context &);
 void Reduction(const DataList&, const DataList&, ReductionClosure&, const Context&);
+void ReductionExceptDim(const DataList&, const DataList&, ReductionExceptDimClosure&, const Context&);
 void ReductionWithReshape(const DataList&, const DataList&, ReductionWithReshapeClosure&, const Context&);
 void MaxIndex(const DataList&, const DataList&, MaxIndexClosure&, const Context&);
 void Reshape(const DataList&, const DataList&, ReshapeClosure&, const Context&);

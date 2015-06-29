@@ -63,6 +63,19 @@ class TransOp : public ComputeFnWithClosure<TransposeClosure> {
   }
 };
 
+class ReductionExceptDimOp : public ComputeFnWithClosure<ReductionExceptDimClosure> {
+ public:
+  std::string Name() const {
+   switch (closure.type) {
+     case ReductionType::kSum:
+       return "sum";
+     case ReductionType::kMax:
+       return "max";
+   }
+   return "reduction except Dim N/A";
+  }
+};
+
 class ReductionOp : public ComputeFnWithClosure<ReductionClosure> {
  public:
   std::string Name() const {
@@ -144,6 +157,29 @@ class ArithmeticConstOp : public ComputeFnWithClosure<ArithmeticConstClosure> {
     if(closure.side == 1) { // right
       ss << closure.val;
     }
+    return ss.str();
+  }
+};
+
+class NormExceptDimArithmeticOp : public ComputeFnWithClosure<NormExceptDimArithmeticClosure> {
+ public:
+  std::string Name() const {
+    std::stringstream ss;
+    switch (closure.type) {
+      case ArithmeticType::kAdd:
+        ss << "+";
+        break;
+      case ArithmeticType::kSub:
+        ss << "-";
+        break;
+      case ArithmeticType::kMult:
+        ss << ".*";
+        break;
+      case ArithmeticType::kDiv:
+        ss << "./";
+        break;
+    }
+    ss << " norm except dim";
     return ss.str();
   }
 };
