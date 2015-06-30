@@ -660,6 +660,7 @@ class ConvConnection(WeightedComputeUnit):
                        self.in_shape[2],
                        self.num_output]
         self.bshape = [self.out_shape[2]]
+        print self.convolver.ff_algo_profile(self.in_shape, self.wshape)
         
         to_top[self.top_names[0]]['stride_on_ori'] = from_btm[self.btm_names[0]]['stride_on_ori'] * self.conv_params.stride
         to_top[self.top_names[0]]['rec_on_ori'] = from_btm[self.btm_names[0]]['rec_on_ori'] + (self.conv_params.kernel_size - 1) * from_btm[self.btm_names[0]]['stride_on_ori']

@@ -10,6 +10,10 @@ pool_op = _owl.pooling_algo
 """ Same enum type as cudnn's ``cudnnPoolingMode_t``. Either ``pool_op.max`` or ``pool_op.avg``.
 """
 
+conv_forward_algo = _owl.conv_forward_algo
+conv_backward_data_algo = _owl.conv_backward_data_algo
+conv_backward_filter_algo = _owl.conv_backward_filter_algo
+
 def softmax(x, op = soft_op.instance):
     """ Perform softmax on the given ndarray.
 
@@ -102,6 +106,12 @@ class Convolver:
         """
         return _owl.NArray.conv_forward(x, w, b, self.param)
 
+    def ff_algo_profile(self, input_shape, filter_shape):
+        return _owl.conv_forward_find(input_shape, filter_shape, self.param)
+
+    def set_ff_algo(self, algo):
+        self.param.forward_algorithm = algo
+
     def bp(self, y, x, w):
         """ Backward convolution
 
@@ -113,6 +123,9 @@ class Convolver:
         """
         return _owl.NArray.conv_backward_data(y, x, w, self.param)
 
+    def set_bp_algo(self, algo):
+        self.param.backward_data_algorithm = algo
+
     def weight_grad(self, y, x, w):
         """ Compute the gradient of filters
 
@@ -123,6 +136,9 @@ class Convolver:
         :rtype: owl.NArray
         """
         return _owl.NArray.conv_backward_filter(y, x, w, self.param)
+
+    def set_weight_grad_algo(self, algo):
+        self.param.backward_filter_algorithm = algo
 
     def bias_grad(self, y):
         """ Compute the gradient of bias
