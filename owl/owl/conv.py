@@ -107,7 +107,7 @@ class Convolver:
         return _owl.NArray.conv_forward(x, w, b, self.param)
 
     def ff_algo_profile(self, input_shape, filter_shape):
-        return _owl.conv_forward_find(input_shape, filter_shape, self.param)
+        return _owl.NArray.conv_forward_find_algorithm(input_shape, filter_shape, self.param)
 
     def set_ff_algo(self, algo):
         self.param.forward_algorithm = algo

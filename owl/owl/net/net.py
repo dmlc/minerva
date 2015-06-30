@@ -660,7 +660,19 @@ class ConvConnection(WeightedComputeUnit):
                        self.in_shape[2],
                        self.num_output]
         self.bshape = [self.out_shape[2]]
-        print self.convolver.ff_algo_profile(self.in_shape, self.wshape)
+    
+        # do ff algorithm profiling
+        algo_profiles = self.convolver.ff_algo_profile(self.in_shape, self.wshape)
+        ff_algo = co.conv_forward_algo.auto
+        min_time = float("inf")
+        for prof in algo_profiles:
+            print 'algo:', co.conv_forward_algo.tostr(prof['algorithm']), 'time:', prof['time']
+            if prof['time'] > 0 and prof['time'] < min_time:
+                min_time = prof['time']
+                ff_algo = prof['algorithm']
+        #ff_algo = co.conv_forward_algo.auto
+        print 'Set ff algo to be ', co.conv_forward_algo.tostr(ff_algo)
+        self.convolver.set_ff_algo(ff_algo)
         
         to_top[self.top_names[0]]['stride_on_ori'] = from_btm[self.btm_names[0]]['stride_on_ori'] * self.conv_params.stride
         to_top[self.top_names[0]]['rec_on_ori'] = from_btm[self.btm_names[0]]['rec_on_ori'] + (self.conv_params.kernel_size - 1) * from_btm[self.btm_names[0]]['stride_on_ori']

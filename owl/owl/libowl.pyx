@@ -516,6 +516,22 @@ class _ConvForwardAlgorithms(object):
         else:
             raise TypeError('invalid convolution forward algorithm')
 
+    def tostr(self, a):
+        if self._implicit_gemm.is_same(a):
+            return "implicit_gemm"
+        elif self._implicit_precomp_gemm.is_same(a):
+            return "implicit_precomp_gemm"
+        elif self._gemm.is_same(a):
+            return "gemm"
+        elif self._direct.is_same(a):
+            return "direct"
+        elif self._fft.is_same(a):
+            return "fft"
+        elif self._auto.is_same(a):
+            return "auto"
+        else:
+            raise TypeError('invalid convolution forward algorithm')
+
     @property
     def implicit_gemm(self):
         return self._implicit_gemm
