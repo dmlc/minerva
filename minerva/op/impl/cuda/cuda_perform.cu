@@ -626,7 +626,11 @@ void CudaPerformRandBernoulli(float* dst, size_t size, unsigned int seed, float 
   int block, thread;
   FindConfiguration(size, block, thread);
   CudaPerformRandBernoulliKernel<<<block, thread, 0, stream>>>(dst, size, seed, p);
+# if defined(_MSC_VER)
+  CheckCudaError(__FUNCTION__);
+# else
   CheckCudaError(__func__);
+# endif
 }
 
 void CudaPerformFill(float* dst, size_t size, float val, cudaStream_t stream) {
