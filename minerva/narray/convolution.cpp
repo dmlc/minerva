@@ -53,9 +53,11 @@ NArray Convolution::ConvBackwardBias(ImageBatch diff) {
 }
 
 std::vector<ConvFwdAlgoProfResult> Convolution::ConvForwardFindAlgorithm(
-    ImageBatch src
-  , Filter filter
+    Scale const& src_shape
+  , Scale const& filter_shape
   , ConvInfo info) {
+  auto&& src = ImageBatch{NArray::Zeros(src_shape)};
+  auto&& filter = Filter{NArray::Zeros(filter_shape)};
   CHECK_EQ(src.GetNumFeatureMaps(), filter.GetNumInputs()) << "#input channels mismatch";
   Scale new_size {
     (src.GetWidth() + 2 * info.pad_width - filter.GetWidth()) / info.stride_horizontal + 1,

@@ -701,9 +701,6 @@ void ConvForwardFindAlgorithm(
 
   for (int i = 0; i < returned_count; ++i) {
     auto&& cur = result[i];
-    if (cur.status != CUDNN_STATUS_SUCCESS) {
-      continue;
-    }
     ConvFwdAlgoProfResult res;
     switch (cur.algo) {
       case CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM:

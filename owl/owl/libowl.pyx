@@ -259,11 +259,13 @@ cdef class NArray(object):
         return _wrap_cpp_narray(m.ConvBackwardBias(deref(diff._d)))
 
     @staticmethod
-    def conv_forward_find_algorithm(NArray src, NArray filter, ConvInfo info):
+    def conv_forward_find_algorithm(src, filter, ConvInfo info):
         cdef vector[m.ConvFwdAlgoProfResult] res
+        cdef vector[int] src_shape = _list_to_vector(src)
+        cdef vector[int] filter_shape = _list_to_vector(filter)
         res = m.ConvForwardFindAlgorithm(
-            deref(src._d)
-        ,   deref(filter._d)
+            m.ToScale(&src_shape)
+        ,   m.ToScale(&filter_shape)
         ,   deref(info._d))
         ret = []
         for i in res:

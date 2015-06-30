@@ -11,8 +11,8 @@ class Convolution {
   static Filter ConvBackwardFilter(ImageBatch diff, ImageBatch bottom, Filter filter, ConvInfo info);
   static NArray ConvBackwardBias(ImageBatch diff);
   static std::vector<ConvFwdAlgoProfResult> ConvForwardFindAlgorithm(
-    ImageBatch src
-  , Filter filter
+    Scale const& src_shape
+  , Scale const& filter_shape
   , ConvInfo info);
   static ImageBatch SoftmaxForward(ImageBatch src, SoftmaxAlgorithm algorithm);
   static ImageBatch SoftmaxBackward(ImageBatch diff, ImageBatch top, SoftmaxAlgorithm algorithm);
