@@ -479,11 +479,13 @@ void ConvForward(const DataList& inputs, const DataList& outputs, ConvForwardClo
   cudnnConvolutionFwdAlgo_t algorithm;
   if (closure.algo == ConvInfo::ForwardAlgorithm::kAuto) {
     CUDNN_CALL(cudnnGetConvolutionForwardAlgorithm(context.cudnn_handle, bottom_desc, filter_desc, conv_desc, top_desc, CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algorithm));
+    cout << "auto ALGO is " << algorithm << endl;
   } else {
     algorithm = ForwardAlgorithmToCuda(closure.algo);
   }
   size_t workspace_size;
   void* workspace;
+  cout << "ALGO is " << algorithm << endl;
   CUDNN_CALL(cudnnGetConvolutionForwardWorkspaceSize(context.cudnn_handle, bottom_desc, filter_desc, conv_desc, top_desc, algorithm, &workspace_size));
   CUDA_CALL(cudaMalloc(&workspace, workspace_size));
   CUDNN_CALL(cudnnConvolutionForward(context.cudnn_handle, &one, bottom_desc, bottom.data_, filter_desc, filter.data_, conv_desc, algorithm, workspace, workspace_size, &zero, top_desc, top.data_));

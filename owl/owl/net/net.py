@@ -670,6 +670,9 @@ class ConvConnection(WeightedComputeUnit):
             if prof['time'] > 0 and prof['time'] < min_time:
                 min_time = prof['time']
                 ff_algo = prof['algorithm']
+            #if prof['algorithm'].is_same(co.conv_forward_algo.fft) and prof['time'] > 0:
+              #ff_algo = co.conv_forward_algo.fft
+              #break
         #ff_algo = co.conv_forward_algo.auto
         print 'Set ff algo to be ', co.conv_forward_algo.tostr(ff_algo)
         self.convolver.set_ff_algo(ff_algo)
