@@ -217,7 +217,7 @@ void Reduction(const DataList& inputs, const DataList& outputs, ReductionClosure
 }
 
 void SoftmaxForward(const DataList& inputs, const DataList& outputs, SoftmaxForwardClosure& closure) {
-  //TODO: Currently CPU only support kInstance softmax 
+  //TODO: Currently CPU only support kInstance softmax
   CHECK_EQ(inputs.size(), 1) << "(reduction) #inputs is wrong!";
   CHECK_EQ(outputs.size(), 1) << "(reduction) #outputs is wrong!";
   float* in_data = inputs[0].data_;
@@ -227,7 +227,7 @@ void SoftmaxForward(const DataList& inputs, const DataList& outputs, SoftmaxForw
   auto res_max = outputs[0].size_;
   auto res_range = ScaleRange::MakeRangeFromOrigin(res_max);
   auto accumulator = Scale::Origin(in_max.NumDims());
- 
+
   //normalize according to batch dimension
   std::vector<int> batchdim(1,0);
   auto dim_to_norm = Scale(batchdim);
@@ -245,22 +245,20 @@ void SoftmaxForward(const DataList& inputs, const DataList& outputs, SoftmaxForw
     }
     //exp(x - max), also sum the result
     cur = accumulator;
-    float sum_exp = 0;
-    while (cur.IncrDimensions(in_max, dim_to_norm)) {
-      res_data[in_range.Flatten(cur)] = expf(in_data[in_range.Flatten(cur)] - tmp);
-      sum_exp += res_data[in_range.Flatten(cur)];
-    }
-    //devide the sum
-    cur = accumulator;
-    while (cur.IncrDimensions(in_max, dim_to_norm)) {
-      res_data[in_range.Flatten(cur)] /= sum_exp; 
+    if (cur != in_max) {
+      float sum_exp = 0;
+      do {
+        res_data[in_range.Flatten(cur)] = expf(in_data[in_range.Flatten(cur)] - tmp);
+        sum_exp += res_data[in_range.Flatten(cur)];
+      } while (cur.IncrDimensions(in_max, dim_to_norm));
+      // devide the sum
+      cur = accumulator;
+      do {
+        res_data[in_range.Flatten(cur)] /= sum_exp;
+      } while (cur.IncrDimensions(in_max, dim_to_norm));
     }
   } while (accumulator.IncrWithDimensionsFixed(res_max, dim_to_norm));
 }
-
-
-
-
 
 void ArrayLoader(const DataList& outputs, ArrayLoaderClosure& closure) {
   CHECK_EQ(outputs.size(), 1) << "(array loader) #outputs wrong";
@@ -491,4 +489,3 @@ void Index(const DataList& inputs, const DataList& outputs, IndexClosure& closur
 
 }  // end of namespace basic
 }  // end of namespace minerva
-
