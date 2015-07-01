@@ -22,7 +22,10 @@ static NArray ArithmeticHelper(const NArray& lhs, const NArray& rhs, ArithmeticT
     return NArray::ComputeOne({lhs, rhs}, lhs.Size(), arith_op);
   } else {
     // Do NormArithmetic
-    return lhs.NormArithmetic(rhs, type);
+	if (lhs.Size().NumDims() == 2)
+		return lhs.NormArithmetic(rhs, type);
+	else
+		return lhs.NormExceptDimArithmetic(rhs, type);
   }
 }
 
@@ -30,6 +33,13 @@ static NArray ArithmeticConstHelper(const NArray& narr, float val, int side, Ari
   ArithmeticConstOp* arith_const_op = new ArithmeticConstOp();
   arith_const_op->closure = {type, val, side};
   return NArray::ComputeOne({narr}, narr.Size(), arith_const_op);
+}
+
+
+NArray Elewise::Pow(const NArray& narr, float exponent) {
+  PowOp* pow_op = new PowOp();
+  pow_op->closure= {exponent};
+  return NArray::ComputeOne({narr}, narr.Size(), pow_op);
 }
 
 // Element-wise operations

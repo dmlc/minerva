@@ -9,6 +9,7 @@ class Elewise {
   static NArray Mult(const NArray&, const NArray&);
   static NArray Exp(const NArray&);
   static NArray Ln(const NArray&);
+  static NArray Pow(const NArray&, float exponent);
   static NArray SigmoidForward(const NArray&);
   static NArray SigmoidBackward(const NArray& diff, const NArray& top, const NArray& bottom);
   static NArray ReluForward(const NArray&);

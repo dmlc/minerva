@@ -245,6 +245,13 @@ void CudaPerformReshape(float* in, float* out, size_t size, cudaStream_t stream)
   CUDA_CALL(cudaMemcpyAsync(out, in, size, cudaMemcpyDefault, stream));
 }
 
+void CudaPerformPow(float* in, float* out, size_t size, float exponent, cudaStream_t stream) {
+  int block, thread;
+  FindConfiguration(size, block, thread);
+  CudaPerformDotKernel<<<block, thread, 0, stream>>>(in, out, exponent, size, PowOp());
+  CheckCudaError("CudaPerformPow");
+}
+
 void CudaPerformElewiseExp(float* in, float* out, size_t size, cudaStream_t stream) {
   int block, thread;
   FindConfiguration(size, block, thread);

@@ -74,6 +74,7 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
     NArray SubAssignNum 'operator-='(float) except +
     NArray MulAssignNum 'operator*='(float) except +
     NArray DivAssignNum 'operator/='(float) except +
+    NArray SumAllExceptDim(int) except +
     NArray Sum(int) except +
     NArray Sum(const Scale&) except +
     NArray Max(int) except +

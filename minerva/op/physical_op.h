@@ -116,6 +116,13 @@ class ReshapeOp : public ComputeFnWithClosure<ReshapeClosure> {
   }
 };
 
+class PowOp : public ComputeFnWithClosure<PowClosure> {
+ public:
+  std::string Name() const {
+    return "pow";
+  }
+};
+
 class ElewiseOp : public ComputeFnWithClosure<ElewiseClosure> {
  public:
   std::string Name() const {

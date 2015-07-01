@@ -72,6 +72,10 @@ struct MaxIndexClosure {
   int dim;
 };
 
+struct PowClosure {
+	float exponent;
+};
+
 struct ElewiseClosure {
   ElewiseType type;
 };

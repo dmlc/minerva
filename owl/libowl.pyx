@@ -342,6 +342,9 @@ cdef class NArray(object):
                 ,   a
                 ,   b));
 
+    def sumallexceptdim(self, int dim_to_except):
+        return _wrap_cpp_narray(self._d.SumAllExceptDim(dim_to_except))
+
     def sum(self, rhs):
         cdef int i
         cdef vector[int] v

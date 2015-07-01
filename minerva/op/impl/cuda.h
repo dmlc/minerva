@@ -19,6 +19,7 @@ void ReductionWithReshape(const DataList&, const DataList&, ReductionWithReshape
 void MaxIndex(const DataList&, const DataList&, MaxIndexClosure&, const Context&);
 void Reshape(const DataList&, const DataList&, ReshapeClosure&, const Context&);
 void Elewise(const DataList&, const DataList&, ElewiseClosure&, const Context&);
+void Pow(const DataList&, const DataList&, PowClosure&, const Context&);
 void SigmoidForward(const DataList&, const DataList&, SigmoidForwardClosure&, const Context&);
 void SigmoidBackward(const DataList&, const DataList&, SigmoidBackwardClosure&, const Context&);
 void ReluForward(const DataList&, const DataList&, ReluForwardClosure&, const Context&);

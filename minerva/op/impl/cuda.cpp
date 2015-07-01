@@ -223,7 +223,7 @@ void NormExceptDimArithmetic(const DataList& inputs, const DataList& outputs, No
   int before_dim = 1;
   int after_dim = 1;
   int except_dim = normalizee_size[closure.dim_to_except];
-  for (int i = 0; i < normalizee_size.NumDims(); i++) {
+  for (size_t i = 0; i < normalizee_size.NumDims(); i++) {
 	  if (i < closure.dim_to_except)
 		  before_dim *= normalizee_size[i];
 	  else if ( i > closure.dim_to_except)
@@ -309,7 +309,7 @@ void ReductionExceptDim(const DataList& inputs, const DataList& outputs,
   CHECK_LT(closure.dim_to_except, in_size.NumDims()) << "dim_to_except error";
   int before_dim = 1;
   int after_dim = 1;
-  for(int i = 0; i < in_size.NumDims(); i++){
+  for(size_t i = 0; i < in_size.NumDims(); i++){
 	if(i < closure.dim_to_except)
 		before_dim *= in_size[i];
 	else if(i > closure.dim_to_except)
@@ -369,7 +369,7 @@ void ReductionWithReshape(const DataList& inputs, const DataList& outputs,
   auto out_data = outputs[0].data_;
   //Check the reshape is reasonable
   int total_dim = 1;
-  for (int i = 0; i < in_size.NumDims(); i++) {
+  for (size_t i = 0; i < in_size.NumDims(); i++) {
 	total_dim *= in_size[i];
   }
   CHECK_EQ(closure.newshape.NumDims(), 2) << "Only Redhape to a 2-D NArray";
@@ -423,6 +423,14 @@ void Reshape(const DataList& inputs, const DataList& outputs, ReshapeClosure&, c
   CudaPerformReshape(inputs[0].data_, outputs[0].data_, inputs[0].size_.Prod() * sizeof(float), context.stream);
 }
 
+void Pow(const DataList& inputs, const DataList& outputs, PowClosure& closure, const Context& context) {
+  CHECK_EQ(inputs.size(), 1) << "(elewise) #inputs is wrong!";
+  CHECK_EQ(outputs.size(), 1) << "(elewise) #outputs is wrong!";
+  float* in_data = inputs[0].data_;
+  float* res_data = outputs[0].data_;
+  int length = outputs[0].size_.Prod();
+  CudaPerformPow(in_data, res_data, length, closure.exponent, context.stream);
+}
 
 void Elewise(const DataList& inputs, const DataList& outputs, ElewiseClosure& closure, const Context& context) {
   CHECK_EQ(inputs.size(), 1) << "(elewise) #inputs is wrong!";

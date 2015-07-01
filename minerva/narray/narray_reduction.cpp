@@ -12,8 +12,8 @@ NArray NArray::MaxAllExceptDim(const int dim_to_except) const {
 	reductionexceptdim_op->closure.dim_to_except = dim_to_except;
 	auto size = Size();
 	CHECK_LT(dim_to_except, size.NumDims()) << "reduce dim exceeds NArray dims";
-	for (int i = 1; i < size.NumDims(); i++){
-		if ( i != dim_to_except)	
+	for (size_t i = 1; i < size.NumDims(); i++){
+		if ( i != size_t(dim_to_except))	
 			size[i] = 1;
 	}
 	return NArray::ComputeOne({*this}, size, reductionexceptdim_op);
@@ -25,8 +25,8 @@ NArray NArray::SumAllExceptDim(const int dim_to_except) const {
 	reductionexceptdim_op->closure.dim_to_except = dim_to_except;
 	auto size = Size();
 	CHECK_LT(dim_to_except, size.NumDims()) << "reduce dim exceeds NArray dims";
-	for (int i = 1; i < size.NumDims(); i++){
-		if ( i != dim_to_except)	
+	for (size_t i = 1; i < size.NumDims(); i++){
+		if ( i != size_t(dim_to_except))	
 			size[i] = 1;
 	}
 	return NArray::ComputeOne({*this}, size, reductionexceptdim_op);

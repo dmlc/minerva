@@ -50,6 +50,7 @@ void CudaPerformMaxIndexOnRow(float* in, float* out, int m, int n, cudaStream_t)
 
 void CudaPerformReshape(float* in, float* out, size_t size, cudaStream_t);
 
+void CudaPerformPow(float* in, float* out, size_t size, float exponent, cudaStream_t);
 void CudaPerformElewiseExp(float* in, float* out, size_t size, cudaStream_t);
 void CudaPerformElewiseLn(float* in, float* out, size_t size, cudaStream_t);
 void CudaPerformElewiseNegative(float* in, float* out, size_t size, cudaStream_t);

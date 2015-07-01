@@ -24,6 +24,13 @@ class NegativeOp {
 };
 
 // Binary function
+class PowOp {
+  public:
+  __device__ inline float operator()(float a, float b) const {
+    return powf(a, b);
+  }
+};
+
 class SubOp {
  public:
   __device__ inline float operator()(float a, float b) const {

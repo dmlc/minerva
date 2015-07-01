@@ -203,6 +203,15 @@ NArray NArray::NormExceptDimArithmetic(const NArray& rhs, ArithmeticType type) c
 		break;
 	} 
   }
+  if(dim_to_except == -1)
+  {
+	  for (size_t i = 0; i < lhs.Size().NumDims(); ++i) {
+		if (lhs.Size()[i] == 1) {
+			dim_to_except = i;
+			break;
+		} 
+	  }
+  }
   CHECK_GT(dim_to_except, -1) << "#dimension mismatch";
   NormExceptDimArithmeticOp* op = new NormExceptDimArithmeticOp();
   op->closure.type = type;
