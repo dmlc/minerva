@@ -810,6 +810,7 @@ class LMDBDataUnit(DataUnit):
 
             LMDB data provider now support multi-view testing, if multiview == True, it will produce concequtive 10 batches of different views of the same original image     
         '''
+        '''
         if self.generator == None:
             if self.multiview == False:
                 self.generator = self.dp.get_mb(phase)
@@ -834,9 +835,10 @@ class LMDBDataUnit(DataUnit):
                 [self.crop_size, self.crop_size, 3, samples.shape[0]])
         for i in range (1, len(self.top_names)):
             to_top[self.top_names[i]] = labels[:,i - 1]
-        #to_top[self.top_names[0]] = owl.zeros([self.crop_size, self.crop_size, 3, 256])
-        #for i in range (1, len(self.top_names)):
-            #to_top[self.top_names[i]] = np.ones(256)
+        '''
+        to_top[self.top_names[0]] = owl.zeros([self.crop_size, self.crop_size, 3, 256])
+        for i in range (1, len(self.top_names)):
+            to_top[self.top_names[i]] = np.ones(256)
         self.out = to_top[self.top_names[0]]
 
     def __str__(self):
