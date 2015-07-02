@@ -780,10 +780,10 @@ class LMDBDataUnit(DataUnit):
     
     def __init__(self, params, num_gpu):
         super(LMDBDataUnit, self).__init__(params, num_gpu)
-        if params.include[0].phase == Phase.Value('TRAIN'):
-            self.dp = LMDBDataProvider(params.data_param, params.transform_param, num_gpu)
-        else:
-            self.dp = LMDBDataProvider(params.data_param, params.transform_param, 1)
+        #if params.include[0].phase == Phase.Value('TRAIN'):
+        #    self.dp = LMDBDataProvider(params.data_param, params.transform_param, num_gpu)
+        #else:
+        #    self.dp = LMDBDataProvider(params.data_param, params.transform_param, 1)
         self.params = params
         self.crop_size = params.transform_param.crop_size
         self.generator = None
