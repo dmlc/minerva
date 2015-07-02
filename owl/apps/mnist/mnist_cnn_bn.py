@@ -43,18 +43,18 @@ class MNISTCNNModel:
         ];
         #batch norm bias
         self.bias_bn = [
-            owl.zeros([16]),
-            owl.zeros([32]),
+            owl.zeros([1, 1, 16, 1]),
+            owl.zeros([1, 1, 32, 1]),
             owl.zeros([10, 1])
         ];
         self.biasdelta_bn = [
-            owl.zeros([16]),
-            owl.zeros([32]),
+            owl.zeros([1, 1, 16, 1]),
+            owl.zeros([1, 1, 32, 1]),
             owl.zeros([10, 1])
         ];
         self.biasgrad_bn = [
-            owl.zeros([16]),
-            owl.zeros([32]),
+            owl.zeros([1, 1, 16, 1]),
+            owl.zeros([1, 1, 32, 1]),
             owl.zeros([10, 1])
         ];
         self.weights_bn = [
@@ -88,6 +88,7 @@ def bpprop(model, samples, label):
     acts = [None] * num_layers
     #batch norm usage
     acts_before = [None] * num_layers
+    acts_before_nonlinear = [None] * num_layers
     acts_after = [None] * num_layers
     exp_ = [None] * num_layers
     var_ = [None] * num_layers
@@ -96,6 +97,8 @@ def bpprop(model, samples, label):
     errs = [None] * num_layers
     weightgrad = [None] * len(model.weights)
     biasgrad = [None] * len(model.bias)
+    weightgrad_bn = [None] * len(model.weights)
+    biasgrad_bn = [None] * len(model.bias)
 
     #epslon for batch norm
     eps_ = 1e-10
@@ -103,32 +106,29 @@ def bpprop(model, samples, label):
 
     acts[0] = samples
 
+
     #batch norm
     #note all bias should be zero, we don't add bias after norm
     acts_before[1] = model.convs[0].ff(acts[0], model.weights[0], model.bias[0])
     scale_[1] = 1.0 / np.prod(acts_before[1].shape) * acts_before[1].shape[2]
     exp_[1] = scale_[1] * acts_before[1].sumallexceptdim(2)
-    var_[1] = scale_[1] * (acts_before[1] - exp_[1]) * (acts_before[1] - exp_[1])
-
-    print exp_[1].shape
-    print var_[1].shape
-
+    var_[1] = scale_[1] * ele.mult(acts_before[1] - exp_[1], acts_before[1] - exp_[1]).sumallexceptdim(2)
     acts_after[1] = ele.mult((acts_before[1] - exp_[1]), ele.pow(ele.mult(var_[1], var_[1]) + eps_, -0.5))
-    acts[1] = ele.mult(acts_after[1], model.weight_bn[0]) + model.bias_bn[0]
-    acts[1] = ele.sigm(acts[1])
-   
+    acts_before_nonlinear[1] = ele.mult(acts_after[1], model.weights_bn[0]) + model.bias_bn[0]
+    acts[1] = ele.sigm(acts_before_nonlinear[1])
+
     #pooling
     acts[2] = model.poolings[0].ff(acts[1])
-   
+    
     #batch norm
     #note all bias should be zero, we don't add bias after norm
     acts_before[3] = model.convs[1].ff(acts[2], model.weights[1], model.bias[1])
     scale_[3] = 1.0 / np.prod(acts_before[3].shape) * acts_before[3].shape[2]
     exp_[3] = scale_[3] * acts_before[3].sumallexceptdim(2)
-    var_[3] = scale_[3] * (acts_before[3] - exp_[3]) * (acts_before[3] - exp_[3])
+    var_[3] = scale_[3] * ele.mult(acts_before[3] - exp_[3], acts_before[3] - exp_[3]).sumallexceptdim(2)
     acts_after[3] = ele.mult((acts_before[3] - exp_[3]), ele.pow(ele.mult(var_[3], var_[3]) + eps_, -0.5))
-    acts[3] = ele.mult(acts_after[3], model.weight_bn[1]) + model.bias_bn[1]
-    acts[3] = ele.sigm(acts[3])
+    acts_before_nonlinear[3] = ele.mult(acts_after[3], model.weights_bn[1]) + model.bias_bn[1]
+    acts[3] = ele.sigm(acts_before_nonlinear[3])
 
     #pooling
     acts[4] = model.poolings[1].ff(acts[3])
@@ -139,22 +139,28 @@ def bpprop(model, samples, label):
 
     errs[5] = out - label
     errs[4] = (model.weights[2].trans() * errs[5]).reshape(acts[4].shape)
-    errs[3] = ele.sigm_back(model.poolings[1].bp(errs[4], acts[4], acts[3]), acts[3])
+    errs[3] = ele.sigm_back(model.poolings[1].bp(errs[4], acts[4], acts[3]), acts[3], acts_before_nonlinear[3])
     
     #batchnorm bp
     gy_ = errs[3]
     gx_norm = ele.mult(errs[3], model.weights_bn[1]) 
     gvar_ = ele.mult(ele.mult(acts_before[3] - exp_[3], gx_norm).sumallexceptdim(2), -0.5 * ele.pow(ele.mult(var_[3], var_[3]) + eps_, -1.5));
-    gexp_ = (gx_norm, -1 * ele.pow(ele.mult(var_[3], var_[3]) + eps_, -0.5)).sumallexceptdim(2) + ele.mult(gvar_, -2 * scale_ * (acts_before[3] - exp_[3]).sumallexceptdim(2)) 
-    error[3] = ele.mult(gx_norm, -1 * ele.pow(ele.mult(var_[3], var_[3]) + eps_, -0.5)) + ele.mult(2 * scale_ * (acts_before[3] - exp_[3]), gvar_) + scale_ * gexp_ 
-    model.weightgrad_bn[1] = ele.mult(gy_, acts_after[3]).sumallexceptdim(2)
-    model.biasgrad_bn[1] = gy_.sumallexceptdim(2)
-
-
-    exit(1)
+    gexp_ = ele.mult(gx_norm.sumallexceptdim(2), -1.0 * ele.pow(ele.mult(var_[3], var_[3]) + eps_, -0.5)) + ele.mult(gvar_, -2.0 * scale_[3] * (acts_before[3] - exp_[3]).sumallexceptdim(2)) 
+    errs[3] = ele.mult(gx_norm, -1.0 * ele.pow(ele.mult(var_[3], var_[3]) + eps_, -0.5)) + ele.mult(2.0 * scale_[3] * (acts_before[3] - exp_[3]), gvar_) + scale_[3] * gexp_ 
+    weightgrad_bn[1] = ele.mult(gy_, acts_after[3]).sumallexceptdim(2)
+    biasgrad_bn[1] = gy_.sumallexceptdim(2)
 
     errs[2] = model.convs[1].bp(errs[3], acts[2], model.weights[1])
-    errs[1] = ele.sigm_back(model.poolings[0].bp(errs[2], acts[2], acts[1]), acts[1])
+
+    errs[1] = ele.sigm_back(model.poolings[0].bp(errs[2], acts[2], acts[1]), acts[1], acts_before_nonlinear[1])
+    #batchnorm bp
+    gy_ = errs[1]
+    gx_norm = ele.mult(errs[1], model.weights_bn[0]) 
+    gvar_ = ele.mult(ele.mult(acts_before[1] - exp_[1], gx_norm).sumallexceptdim(2), -0.5 * ele.pow(ele.mult(var_[1], var_[1]) + eps_, -1.5));
+    gexp_ = ele.mult(gx_norm.sumallexceptdim(2), -1.0 * ele.pow(ele.mult(var_[1], var_[1]) + eps_, -0.5)) + ele.mult(gvar_, -2.0 * scale_[1] * (acts_before[1] - exp_[1]).sumallexceptdim(2)) 
+    errs[1] = ele.mult(gx_norm, -1.0 * ele.pow(ele.mult(var_[1], var_[1]) + eps_, -0.5)) + ele.mult(2.0 * scale_[1] * (acts_before[1] - exp_[1]), gvar_) + scale_[1] * gexp_ 
+    weightgrad_bn[0] = ele.mult(gy_, acts_after[1]).sumallexceptdim(2)
+    biasgrad_bn[0] = gy_.sumallexceptdim(2)
 
     weightgrad[2] = errs[5] * acts[4].reshape(fc_shape).trans()
     biasgrad[2] = errs[5].sum(1)
@@ -162,7 +168,7 @@ def bpprop(model, samples, label):
     biasgrad[1] = model.convs[1].bias_grad(errs[3])
     weightgrad[0] = model.convs[0].weight_grad(errs[1], acts[0], model.weights[0])
     biasgrad[0] = model.convs[0].bias_grad(errs[1])
-    return (out, weightgrad, biasgrad)
+    return (out, weightgrad, biasgrad, weightgrad_bn, biasgrad_bn)
 
 def train_network(model, num_epochs=100, minibatch_size=256, lr=0.01, mom=0.75, wd=5e-4):
     # load data
@@ -176,6 +182,8 @@ def train_network(model, num_epochs=100, minibatch_size=256, lr=0.01, mom=0.75, 
         count = 0
         weightgrads = [None] * len(gpu)
         biasgrads = [None] * len(gpu)
+        weightgrads_bn = [None] * len(gpu)
+        biasgrads_bn = [None] * len(gpu)
         for (mb_samples, mb_labels) in train_data:
             count += 1
             current_gpu = count % len(gpu)
@@ -183,13 +191,19 @@ def train_network(model, num_epochs=100, minibatch_size=256, lr=0.01, mom=0.75, 
             num_samples = mb_samples.shape[0]
             data = owl.from_numpy(mb_samples).reshape([28, 28, 1, num_samples])
             label = owl.from_numpy(mb_labels)
-            out, weightgrads[current_gpu], biasgrads[current_gpu] = bpprop(model, data, label)
+            out, weightgrads[current_gpu], biasgrads[current_gpu], weightgrads_bn[current_gpu], biasgrads_bn[current_gpu] = bpprop(model, data, label)
             if current_gpu == 0:
                 for k in range(len(model.weights)):
                     model.weightdelta[k] = mom * model.weightdelta[k] - lr / num_samples / len(gpu) * multi_gpu_merge(weightgrads, 0, k) - lr * wd * model.weights[k]
                     model.biasdelta[k] = mom * model.biasdelta[k] - lr / num_samples / len(gpu) * multi_gpu_merge(biasgrads, 0, k)
                     model.weights[k] += model.weightdelta[k]
                     model.bias[k] += model.biasdelta[k]
+                    if weightgrads_bn[current_gpu][k] != None:
+                        model.weightdelta_bn[k] = mom * model.weightdelta_bn[k] - lr / num_samples / len(gpu) * multi_gpu_merge(weightgrads_bn, 0, k) - lr * wd * model.weights_bn[k]
+                        model.biasdelta_bn[k] = mom * model.biasdelta_bn[k] - lr / num_samples / len(gpu) * multi_gpu_merge(biasgrads_bn, 0, k)
+                        model.weights_bn[k] += model.weightdelta_bn[k]
+                        model.bias_bn[k] += model.biasdelta_bn[k]
+                    
                 if count % (len(gpu) * lazy_cycle) == 0:
                     print_training_accuracy(out, label, num_samples, 'Training')
         print '---End of Epoch #', i, 'time:', time.time() - last

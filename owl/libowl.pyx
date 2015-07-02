@@ -182,6 +182,10 @@ cdef class NArray(object):
         return _wrap_cpp_narray(m.Mult(deref(lhs._d), deref(rhs._d)))
 
     @staticmethod
+    def pow(NArray lhs, float exponent):
+        return _wrap_cpp_narray(m.Pow(deref(lhs._d), exponent))
+
+    @staticmethod
     def exp(NArray lhs):
         return _wrap_cpp_narray(m.Exp(deref(lhs._d)))
 

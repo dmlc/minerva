@@ -13,6 +13,16 @@ def mult(x, y):
     """
     return _owl.NArray.mult(x, y)
 
+def pow(x, y):
+    """ Pow function
+
+    :param owl.NArray x: input
+    :param float x: exponent
+    :return: result ndarray
+    :rtype: owl.NArray
+    """
+    return _owl.NArray.pow(x, y)
+
 def exp(x):
     """ Exponential function
 
@@ -58,14 +68,16 @@ def tanh(x):
     """
     return _owl.NArray.tanh(x)
 
-def sigm_back(y):
-    """ Derivative of sigmoid function: y * (1 - y)
+def sigm_back(y, ff_x, ff_y):
+    """ Derivative of sigmoid function
 
     :param owl.NArray y: error from higher layer
+    :param owl.NArray ff_x: activation before sigmoid
+    :param owl.NArray ff_y: activation after sigmoid
     :return: result ndarray
     :rtype: owl.NArray
     """
-    return _owl.NArray.sigm_back(y)
+    return _owl.NArray.sigm_back(y, ff_x, ff_y)
 
 def relu_back(y, x):
     """ Derivative of RELU function

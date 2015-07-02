@@ -264,9 +264,11 @@ class SigmoidUnit(ComputeUnitSimple):
     ''' Compute unit for Sigmoid non-linearity
     '''
     def ff(self, x, phase):
-        return ele.sigm(x)
+        self.ff_x = x
+        self.ff_y = ele.sigm(x)
+        return self.ff_y
     def bp(self, y):
-        return ele.sigm_back(y)
+        return ele.sigm_back(y, self.ff_y, self.ff_x)
     def __str__(self):
         return 'sigmoid'
 

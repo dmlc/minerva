@@ -19,6 +19,7 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva::MinervaSystem':
 
 cdef extern from '../minerva/minerva.h' namespace 'minerva::Elewise':
   NArray Mult(const NArray&, const NArray&) except +
+  NArray Pow(const NArray&, float exponent) except +
   NArray Exp(const NArray&) except +
   NArray Ln(const NArray&) except +
   NArray SigmoidForward(const NArray&) except +
