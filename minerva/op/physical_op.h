@@ -68,9 +68,9 @@ class ReductionExceptDimOp : public ComputeFnWithClosure<ReductionExceptDimClosu
   std::string Name() const {
    switch (closure.type) {
      case ReductionType::kSum:
-       return "sum";
+       return "sumexceptdim";
      case ReductionType::kMax:
-       return "max";
+       return "maxexceptdim";
    }
    return "reduction except Dim N/A";
   }

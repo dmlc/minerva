@@ -122,7 +122,7 @@ __global__ static void CudaPerformNormExceptDimKernel(float* matrix, float* row,
 	pos_before = pos_id % before_dim;
 	pos_after = pos_id / before_dim;
     for (int i = 0; i < except_dim; ++i) {
-      res[pos_before + i * except_dim + pos_after * except_dim * before_dim] = func(matrix[pos_before + i * except_dim + pos_after * except_dim * before_dim], row[i]);
+      res[pos_before + i * before_dim + pos_after * except_dim * before_dim] = func(matrix[pos_before + i * before_dim + pos_after * except_dim * before_dim], row[i]);
     }
     pos_id += step;
   }
@@ -161,7 +161,7 @@ __global__ static void CudaPerformReductionExceptDimKernel(float* matrix, float*
   while (except_dim_id < except_dim) {
     float r = matrix[except_dim_id * before_dim];
     for (int i = 1; i < before_dim * after_dim; ++i) {
-      r = func(r, matrix[(i / after_dim) * before_dim * except_dim + except_dim_id * before_dim + (i % after_dim)]);
+	  r = func(r, matrix[(i / before_dim) * before_dim * except_dim + except_dim_id * before_dim + (i % before_dim)]);
     }
     row[except_dim_id] = r;
     except_dim_id += step;

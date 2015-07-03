@@ -132,8 +132,10 @@ def bpprop(model, samples, label):
 
     #pooling
     acts[4] = model.poolings[1].ff(acts[3])
+    
     #fully
     acts[5] = model.weights[2] * acts[4].reshape(fc_shape) + model.bias[2]
+    
     #softmax
     out = conv.softmax(acts[5], conv.soft_op.instance)
 
@@ -165,9 +167,7 @@ def bpprop(model, samples, label):
     weightgrad[2] = errs[5] * acts[4].reshape(fc_shape).trans()
     biasgrad[2] = errs[5].sum(1)
     weightgrad[1] = model.convs[1].weight_grad(errs[3], acts[2], model.weights[1])
-    biasgrad[1] = model.convs[1].bias_grad(errs[3])
     weightgrad[0] = model.convs[0].weight_grad(errs[1], acts[0], model.weights[0])
-    biasgrad[0] = model.convs[0].bias_grad(errs[1])
     return (out, weightgrad, biasgrad, weightgrad_bn, biasgrad_bn)
 
 def train_network(model, num_epochs=100, minibatch_size=256, lr=0.01, mom=0.75, wd=5e-4):
@@ -192,18 +192,20 @@ def train_network(model, num_epochs=100, minibatch_size=256, lr=0.01, mom=0.75, 
             data = owl.from_numpy(mb_samples).reshape([28, 28, 1, num_samples])
             label = owl.from_numpy(mb_labels)
             out, weightgrads[current_gpu], biasgrads[current_gpu], weightgrads_bn[current_gpu], biasgrads_bn[current_gpu] = bpprop(model, data, label)
+            
+
             if current_gpu == 0:
                 for k in range(len(model.weights)):
                     model.weightdelta[k] = mom * model.weightdelta[k] - lr / num_samples / len(gpu) * multi_gpu_merge(weightgrads, 0, k) - lr * wd * model.weights[k]
-                    model.biasdelta[k] = mom * model.biasdelta[k] - lr / num_samples / len(gpu) * multi_gpu_merge(biasgrads, 0, k)
                     model.weights[k] += model.weightdelta[k]
-                    model.bias[k] += model.biasdelta[k]
                     if weightgrads_bn[current_gpu][k] != None:
                         model.weightdelta_bn[k] = mom * model.weightdelta_bn[k] - lr / num_samples / len(gpu) * multi_gpu_merge(weightgrads_bn, 0, k) - lr * wd * model.weights_bn[k]
                         model.biasdelta_bn[k] = mom * model.biasdelta_bn[k] - lr / num_samples / len(gpu) * multi_gpu_merge(biasgrads_bn, 0, k)
                         model.weights_bn[k] += model.weightdelta_bn[k]
                         model.bias_bn[k] += model.biasdelta_bn[k]
-                    
+                    else:
+                        model.bias[k] += model.biasdelta[k]
+                        model.biasdelta[k] = mom * model.biasdelta[k] - lr / num_samples / len(gpu) * multi_gpu_merge(biasgrads, 0, k)
                 if count % (len(gpu) * lazy_cycle) == 0:
                     print_training_accuracy(out, label, num_samples, 'Training')
         print '---End of Epoch #', i, 'time:', time.time() - last
