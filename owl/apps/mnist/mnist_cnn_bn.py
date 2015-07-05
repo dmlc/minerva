@@ -58,19 +58,19 @@ class MNISTCNNModel:
             owl.zeros([10, 1])
         ];
         self.weights_bn = [
-            owl.randn([1, 1, 16, 1], 0.0, 0.1),
-            owl.randn([1, 1, 32, 1], 0.0, 0.1),
-            owl.randn([1, 10], 0.0, 0.1)
+            owl.ones([1, 1, 16, 1]),
+            owl.ones([1, 1, 32, 1]),
+            owl.ones([10, 1])
         ];
         self.weightdelta_bn = [
-            owl.zeros([5, 5, 1, 16]),
-            owl.zeros([5, 5, 16, 32]),
-            owl.zeros([10, 512])
+            owl.zeros([1, 1, 16, 1]),
+            owl.zeros([1, 1, 32, 1]),
+            owl.zeros([10, 1])
         ];
         self.weightgrad_bn = [
-            owl.zeros([5, 5, 1, 16]),
-            owl.zeros([5, 5, 16, 32]),
-            owl.zeros([10, 512])
+            owl.zeros([1, 1, 16, 1]),
+            owl.zeros([1, 1, 32, 1]),
+            owl.zeros([10, 1])
         ];
 
 
@@ -210,7 +210,7 @@ def train_network(model, num_epochs=100, minibatch_size=256, lr=0.01, mom=0.75, 
                     print_training_accuracy(out, label, num_samples, 'Training')
         print '---End of Epoch #', i, 'time:', time.time() - last
         # do test
-        out, _, _  = bpprop(model, test_samples, test_labels)
+        out, _, _, _, _  = bpprop(model, test_samples, test_labels)
         print_training_accuracy(out, test_labels, num_test_samples, 'Testing')
 
 def multi_gpu_merge(l, base, layer):

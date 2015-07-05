@@ -402,6 +402,7 @@ message ConvolutionParameter {
     CUDNN = 2;
   }
   optional Engine engine = 15 [default = DEFAULT];
+  optional bool use_bn = 16 [default = false]; // whether to use batch norm	
 }
 
 // Message that stores parameters used by DataLayer
@@ -549,6 +550,7 @@ message InnerProductParameter {
   optional bool bias_term = 2 [default = true]; // whether to have bias terms
   optional FillerParameter weight_filler = 3; // The filler for the weight
   optional FillerParameter bias_filler = 4; // The filler for the bias
+  optional bool use_bn = 5 [default = false]; // whether to use batch norm	
 }
 
 // Message that stores parameters used by LRNLayer

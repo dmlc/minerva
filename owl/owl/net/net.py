@@ -176,7 +176,19 @@ class WeightedComputeUnit(ComputeUnitSimple):
         self.bias = None
         self.biasdelta = None
         self.biasgrad = None
-      
+     
+        #batch norm weights and bias
+        self.weight_bn = None
+        self.weightdelta_bn = None
+        self.weightgrad_bn = None
+        self.bias_bn = None
+        self.biasdelta_bn = None
+        self.biasgrad_bn = None
+
+        #use batch norm
+        self.use_bn = False
+        self.eps_ = 1e-10
+
         self.in_shape = None
 
         # blob learning rate and weight decay
@@ -196,18 +208,18 @@ class WeightedComputeUnit(ComputeUnitSimple):
         Currently, four types of initializers are supported: ``"constant", "gaussian", "uniform", "xavier"``.
         '''
         #init weight
-        npweights = None
+        npweight = None
         if self.weight_filler.type == "constant":
-            npweights = np.ones(self.wshape, dtype = np.float32) * self.weight_filler.value
+            npweight = np.ones(self.wshape, dtype = np.float32) * self.weight_filler.value
         elif self.weight_filler.type == "gaussian":
-            npweights = np.random.normal(self.weight_filler.mean, self.weight_filler.std, self.wshape)
+            npweight = np.random.normal(self.weight_filler.mean, self.weight_filler.std, self.wshape)
         elif self.weight_filler.type == "uniform":
-            npweights = np.random.uniform(self.weight_filler.min, self.weight_filler.max, self.wshape)
+            npweight = np.random.uniform(self.weight_filler.min, self.weight_filler.max, self.wshape)
         elif self.weight_filler.type == "xavier":
             fan_in = np.prod(self.in_shape[:])
             scale = np.sqrt(float(3)/fan_in)
-            npweights = np.random.uniform(-scale, scale, self.wshape)
-        self.weight = owl.from_numpy(npweights.astype(np.float32)).reshape(self.wshape)
+            npweight = np.random.uniform(-scale, scale, self.wshape)
+        self.weight = owl.from_numpy(npweight.astype(np.float32)).reshape(self.wshape)
       
         #init bias
         npwbias = None
@@ -222,6 +234,27 @@ class WeightedComputeUnit(ComputeUnitSimple):
             scale = np.sqrt(float(3)/fan_in)
             npbias = np.random.uniform(-scale, scale, self.bshape)
         self.bias = owl.from_numpy(npbias.astype(np.float32)).reshape(self.bshape)
+
+        if self.use_bn == True:
+            if len(self.wshape) == 2:
+                wshape_bn = self.wshape[:]
+                wshape_bn[1] = 1  
+                #TODO: currently only init to 1
+                npweight_bn = np.ones(wshape_bn, dtype = np.float32)
+                self.weight_bn = owl.from_numpy(npweight_bn.astype(np.float32)).reshape(wshape_bn)
+                npbias_bn = np.zeros(wshape_bn, dtype = np.float32)
+                self.bias_bn = owl.from_numpy(npbias_bn.astype(np.float32)).reshape(wshape_bn)
+            else:
+                wshape_bn = self.wshape[:]
+                wshape_bn[0] = 1  
+                wshape_bn[1] = 1  
+                wshape_bn[3] = 1  
+                #TODO: currently only init to 1
+                npweight_bn = np.ones(wshape_bn, dtype = np.float32)
+                self.weight_bn = owl.from_numpy(npweight_bn.astype(np.float32)).reshape(wshape_bn)
+                npbias_bn = np.zeros(wshape_bn, dtype = np.float32)
+                self.bias_bn = owl.from_numpy(npbias_bn.astype(np.float32)).reshape(wshape_bn)
+
         
     def weight_update(self, base_lr, base_weight_decay, momentum, batch_size):
         ''' Update the weight & bias
@@ -241,14 +274,33 @@ class WeightedComputeUnit(ComputeUnitSimple):
         self.weight = self.weight + self.weightdelta
         self.weightgrad = None
 
-        if self.biasdelta == None:
-            self.biasdelta = owl.zeros(self.biasgrad.shape)
+        if self.use_bn == True:
+            if self.biasdelta_bn == None:
+                self.biasdelta_bn = owl.zeros(self.biasgrad_bn.shape)
 
-        self.biasdelta = momentum * self.biasdelta \
-                        - (base_lr * self.blobs_lr[1] / batch_size) * self.biasgrad \
-                        - (base_lr * self.blobs_lr[1] * base_weight_decay * self.weight_decay[1]) * self.bias
-        self.bias = self.bias + self.biasdelta
-        self.biasgrad = None
+            self.biasdelta_bn = momentum * self.biasdelta_bn \
+                            - (base_lr * self.blobs_lr[1] / batch_size) * self.biasgrad_bn \
+                            - (base_lr * self.blobs_lr[1] * base_weight_decay * self.weight_decay[1]) * self.bias_bn
+            self.bias_bn = self.bias_bn + self.biasdelta_bn
+            self.biasgrad_bn = None
+            
+            if self.weightdelta_bn == None:
+                self.weightdelta_bn = owl.zeros(self.weightgrad_bn.shape)
+
+            self.weightdelta_bn = momentum * self.weightdelta_bn \
+                            - (base_lr * self.blobs_lr[0] / batch_size) * self.weightgrad_bn \
+                            - (base_lr * self.blobs_lr[0] * base_weight_decay * self.weight_decay[0]) * self.weight_bn
+            self.weight_bn = self.weight_bn + self.weightdelta_bn
+            self.weightgrad_bn = None
+        else:
+            if self.biasdelta == None:
+                self.biasdelta = owl.zeros(self.biasgrad.shape)
+
+            self.biasdelta = momentum * self.biasdelta \
+                            - (base_lr * self.blobs_lr[1] / batch_size) * self.biasgrad \
+                            - (base_lr * self.blobs_lr[1] * base_weight_decay * self.weight_decay[1]) * self.bias
+            self.bias = self.bias + self.biasdelta
+            self.biasgrad = None
 
 class LinearUnit(ComputeUnitSimple):
     ''' Compute unit for linear transformation
@@ -538,7 +590,12 @@ class FullyConnection(WeightedComputeUnit):
         self.inner_product_param = params.inner_product_param
         self.weight_filler = params.inner_product_param.weight_filler
         self.bias_filler = params.inner_product_param.bias_filler
-    
+        #batch norm
+        self.exp_ = None
+        self.scale_ = None
+        self.var_ = None
+        self.use_bn = params.inner_product_param.use_bn
+
     def compute_size(self, from_btm, to_top):
         ''' Compute the output size and also weight and bias size
         The weight size is ``[top_shape[0], btm_shape[0]]``; the bias size is ``[top_shape[0], 1]``
@@ -576,10 +633,20 @@ class FullyConnection(WeightedComputeUnit):
             a = act.reshape([np.prod(shp[0:-1], dtype=np.int32), shp[-1]])
         else:
             a = act
-        self.ff_act = act # save ff value
+        
+        self.ff_act = act
         if self.weight == None:
             self.init_weights_with_filler()
-        return self.weight * a + self.bias
+        if self.use_bn == True:
+            #No need to add bias
+            self.ff_act_beforebn = self.weight * a
+            self.scale_ = 1.0 / self.ff_act_beforebn.shape[0]
+            self.exp_ = self.scale_ * self.ff_act_beforebn.sum(1)
+            self.var_ = self.scale_ * ele.mult(self.ff_act_beforebn - self.exp_, self.ff_act_beforebn - self.exp_).sum(1)
+            self.ff_act_afterbn = ele.mult((self.ff_act_beforebn - self.exp_), ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -0.5))
+            return ele.mult(self.ff_act_afterbn, self.weight_bn) + self.bias_bn
+        else:
+            return self.weight * a + self.bias
 
     def bp(self, sen):
         shp = self.ff_act.shape
@@ -587,9 +654,22 @@ class FullyConnection(WeightedComputeUnit):
             a = self.ff_act.reshape([np.prod(shp[0:-1], dtype=np.int32), shp[-1]])
         else:
             a = self.ff_act
-        self.weightgrad = sen * a.trans()
-        self.biasgrad = sen.sum(1)
-        s = self.weight.trans() * sen
+        
+        #batch norm
+        if self.use_bn == True:
+            gy_ = sen
+            gx_norm = ele.mult(sen, self.weight_bn)
+            gvar_ = ele.mult(ele.mult(self.ff_act_beforebn - self.exp_, gx_norm).sum(1), -0.5 * ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -1.5))
+            gexp_ = ele.mult(gx_norm.sum(1), -1.0 * ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -0.5)) + ele.mult(gvar_, -2.0 * self.scale_ * (self.ff_act_beforebn - self.exp_).sum(1))
+            self.weightgrad_bn = ele.mult(gy_, self.ff_act_afterbn).sum(1)
+            self.biasgrad_bn = gy_.sum(1)
+            sen_beforebn = ele.mult(gx_norm, -1.0 * ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -0.5)) + ele.mult(2.0 * self.scale_ * (self.ff_act_beforebn - self.exp_), gvar_) + self.scale_ * gexp_
+            self.weightgrad = sen_beforebn * a.trans()
+            s = self.weight.trans() * sen_beforebn
+        else:
+            self.weightgrad = sen * a.trans()
+            self.biasgrad = sen.sum(1)
+            s = self.weight.trans() * sen
         if len(shp) > 2:
             s = s.reshape(shp)
         return s
@@ -621,6 +701,11 @@ class ConvConnection(WeightedComputeUnit):
         self.group_bias = []
         self.weight_filler = params.convolution_param.weight_filler
         self.bias_filler = params.convolution_param.bias_filler
+        #batch norm
+        self.exp_ = None
+        self.scale_ = None
+        self.var_ = None
+
     
     def compute_size(self, from_btm, to_top):
         ''' Compute the output size and also weight and bias size
@@ -664,7 +749,15 @@ class ConvConnection(WeightedComputeUnit):
             self.ff_act = act
             if self.weight == None:
                 self.init_weights_with_filler()
-            return self.convolver.ff(act, self.weight, self.bias)
+            if self.use_bn == True:
+                self.ff_act_beforebn = self.convolver.ff(act, self.weight, self.bias)
+                self.scale_ = 1.0 / np.prod(self.ff_act_beforebn.shape) * self.ff_act_beforebn.shape[2]
+                self.exp_ = self.scale * self.ff_act_beforebn.sumallexceptdim(2)
+                self.var_ = self.scale * ele.mult(self.ff_act_beforebn - self.exp_, self.ff_act_beforebn - self.exp_).sumallexceptdim(2)
+                self.ff_act_afterbn = ele.mult((self.ff_act_beforebn - self.exp_), ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -0.5))
+                return ele.mult(self.ff_act_afterbn, self.weight_bn) + self.bias_bn
+            else:
+                return self.convolver.ff(act, self.weight, self.bias)
         else:
             #currently doesn't support multi-group
             assert(False)
@@ -677,9 +770,20 @@ class ConvConnection(WeightedComputeUnit):
             using a bigger convolution with number of feature maps doubled.
         '''
         if self.group == 1:
-            self.weightgrad = self.convolver.weight_grad(sen, self.ff_act, self.weight)
-            self.biasgrad = self.convolver.bias_grad(sen)
-            return self.convolver.bp(sen, self.ff_act, self.weight)
+            if self.use_bn == True:
+                gy_ = sen
+                gx_norm = ele.mult(sen, self.weight_bn)
+                gvar_ = ele.mult(ele.mult(self.ff_act_beforebn - self.exp_, gx_norm).sumallexceptdim(2), -0.5 * ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -1.5))
+                gexp_ = ele.mult(gx_norm.sumallexceptdim(2), -1.0 * ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -0.5)) + ele.mult(gvar_, -2.0 * self.scale_ * (self.ff_act_beforebn - self.exp_).sumallexceptdim(2))
+                self.weightgrad_bn = ele.mult(gy_, self.ff_act_afterbn).sumallexceptdim(2)
+                self.biasgrad_bn = gy_.sumallexceptdim(2)
+                sen_beforebn = ele.mult(gx_norm, -1.0 * ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -0.5)) + ele.mult(2.0 * self.scale_ * (self.ff_act_beforebn - self.exp_), gvar_) + self.scale_ * gexp_
+                self.weightgrad = self.convolver.weight_grad(sen_beforebn, self.ff_act, self.weight)
+                return self.convolver.bp(sen_beforebn, self.ff_act, self.weight)
+            else:
+                self.weightgrad = self.convolver.weight_grad(sen, self.ff_act, self.weight)
+                self.biasgrad = self.convolver.bias_grad(sen)
+                return self.convolver.bp(sen, self.ff_act, self.weight)
         else:
             #currently doesn't support multi-group
             assert(False)
