@@ -22,9 +22,5 @@ if (BUILD_WITH_BLAS)
   target_link_libraries(minerva ${CBLAS_LIBRARIES})
 endif ()
 
-if (BUILD_WITH_PS)
-  target_link_libraries(minerva minervaps)
-endif ()
-
 set(LIBRARY_OUTPUT_PATH ${Minerva_BINARY_DIR}/lib)
 

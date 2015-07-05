@@ -14,6 +14,7 @@ CUDA_ROOT=
 
 # Root path to find cudnn
 CUDNN_ROOT=
+CUDNN_VERSION=
 
 # build type: (Release | Debug | RelWithDebInfo)
 BUILD_TYPE=Release
@@ -29,6 +30,7 @@ BUILD_TESTS=0
 
 # whether building with PS
 BUILD_WITH_PS=0
+PS_ROOT=
 
 # whether build cpu-only version
 BUILD_CPU_ONLY=0

@@ -143,8 +143,8 @@ class ComputeUnitSimple(ComputeUnit):
     def backward(self, from_top, to_btm, phase):
         ''' Transform the interface from multiple input/output to only one input/output function :py:meth:`bp`.
         '''
-        to_btm[self.btm_names[0]] = self.bp(from_top[self.top_names[0]])
-    def bp(self, sen):
+        to_btm[self.btm_names[0]] = self.bp(from_top[self.top_names[0]], phase)
+    def bp(self, sen, phase):
         ''' Function for backward-propagation
 
         :param owl.NArray sen: the sensitivity (or error derivative to the input) from the top unit
@@ -162,10 +162,10 @@ class WeightedComputeUnit(ComputeUnitSimple):
     :ivar owl.NArray bias: bias tensor
     :ivar owl.NArray biasdelta: momentum of bias
     :ivar owl.NArray biasgrad: gradient of bias
-    :ivar blobs_lr: learning rate specific for this unit; a list of float represents: [weight_lr, bias_lr]
-    :vartype blobs_lr: list float
-    :ivar weight_decay: weight decay specific for this unit; a list of float represents: [weight_wd, bias_wd]
-    :vartype weight_decay: list float
+    :ivar float lr_mult_w: learning rate multiplier for the weight of this unit
+    :ivar float lr_mult_b: bias learning rate multiplier for the bias of this unit
+    :ivar float decay_mult_w: decay multiplier for the weight of this unit
+    :ivar float decay_mult_b: decay multiplier for the bias of this unit
     '''
     def __init__(self, params):
         super(WeightedComputeUnit, self).__init__(params)
@@ -190,14 +190,30 @@ class WeightedComputeUnit(ComputeUnitSimple):
         self.eps_ = 1e-10
 
         self.in_shape = None
+        self.fan_in = None
+        self.fan_out = None
 
         # blob learning rate and weight decay
-        self.blobs_lr = params.blobs_lr
-        self.weight_decay = params.weight_decay
-        if len(self.blobs_lr) == 0:
-            self.blobs_lr = [1,1]
-        if len(self.weight_decay) == 0:
-            self.weight_decay = [1, 0]
+        if len(params.param) >= 1:
+            self.lr_mult_w = params.param[0].lr_mult
+            self.decay_mult_w = params.param[0].decay_mult
+        else:
+            self.lr_mult_w = 1
+            self.decay_mult_w = 1
+
+        if len(params.param) >= 2:
+            self.lr_mult_b = params.param[1].lr_mult
+            self.decay_mult_b = params.param[1].decay_mult
+        else:
+            self.lr_mult_b = 1
+            self.decay_mult_b = 0
+
+        #self.blobs_lr = params.blobs_lr
+        #self.weight_decay = params.weight_decay
+        #if len(self.blobs_lr) == 0:
+            #self.blobs_lr = [1,1]
+        #if len(self.weight_decay) == 0:
+            #self.weight_decay = [1, 0]
     
     def compute_size(self, from_btm, to_top):
         pass 
@@ -230,8 +246,7 @@ class WeightedComputeUnit(ComputeUnitSimple):
         elif self.bias_filler.type == "uniform":
             npbias = np.random.uniform(self.bias_filler.min, self.bias_filler.max, self.bshape)
         elif self.bias_filler.type == "xavier":
-            fan_in = np.prod(self.in_shape[:])
-            scale = np.sqrt(float(3)/fan_in)
+            scale = np.sqrt(float(3)/self.fan_in)
             npbias = np.random.uniform(-scale, scale, self.bshape)
         self.bias = owl.from_numpy(npbias.astype(np.float32)).reshape(self.bshape)
 
@@ -248,6 +263,7 @@ class WeightedComputeUnit(ComputeUnitSimple):
                 wshape_bn = self.wshape[:]
                 wshape_bn[0] = 1  
                 wshape_bn[1] = 1  
+                wshape_bn[2] = self.wshape[3] 
                 wshape_bn[3] = 1  
                 #TODO: currently only init to 1
                 npweight_bn = np.ones(wshape_bn, dtype = np.float32)
@@ -269,8 +285,9 @@ class WeightedComputeUnit(ComputeUnitSimple):
             self.weightdelta = owl.zeros(self.weightgrad.shape)
 
         self.weightdelta = momentum * self.weightdelta \
-                        - (base_lr * self.blobs_lr[0] / batch_size) * self.weightgrad \
-                        - (base_lr * self.blobs_lr[0] * base_weight_decay * self.weight_decay[0]) * self.weight
+                        - (base_lr * self.lr_mult_w / batch_size) * self.weightgrad \
+                        - (base_lr * self.lr_mult_w * base_weight_decay * self.decay_mult_w) * self.weight
+        
         self.weight = self.weight + self.weightdelta
         self.weightgrad = None
 
@@ -307,7 +324,7 @@ class LinearUnit(ComputeUnitSimple):
     '''
     def ff(self, x, phase):
         return x
-    def bp(self, y):
+    def bp(self, y, phase):
         return y
     def __str__(self):
         return 'linear'
@@ -330,7 +347,7 @@ class ReluUnit(ComputeUnitSimple):
     def ff(self, x, phase):
         self.ff_x = x
         return ele.relu(x)
-    def bp(self, y):
+    def bp(self, y, phase):
         return ele.relu_back(y, self.ff_x)
     def __str__(self):
         return 'relu'
@@ -340,7 +357,7 @@ class TanhUnit(ComputeUnitSimple):
     '''
     def ff(self, x, phase):
         return ele.tanh(x)
-    def bp(self, y):
+    def bp(self, y, phase):
         return ele.tanh_back(y)
     def __str__(self):
         return 'tanh'
@@ -362,7 +379,7 @@ class PoolingUnit(ComputeUnitSimple):
         if self.ppa.pool == PoolingParameter.PoolMethod.Value('MAX'):
             pool_ty = co.pool_op.max
         elif self.ppa.pool == PoolingParameter.PoolMethod.Value('AVE'):
-            pool_ty = co.pool_op.avg
+            pool_ty = co.pool_op.average
         self.pooler = co.Pooler(self.ppa.kernel_size, self.ppa.kernel_size,
                                 self.ppa.stride, self.ppa.stride,
                                 self.ppa.pad, self.ppa.pad,
@@ -391,7 +408,7 @@ class PoolingUnit(ComputeUnitSimple):
         self.ff_x = x
         self.ff_y = self.pooler.ff(x)
         return self.ff_y
-    def bp(self, y):
+    def bp(self, y, phase):
         return self.pooler.bp(y, self.ff_y, self.ff_x)
     def __str__(self):
         return 'pooling'
@@ -408,17 +425,18 @@ class DropoutUnit(ComputeUnitSimple):
         
         The dropout mask will not be multiplied if under ``"TEST"`` mode.
         '''
-        self.dropmask = owl.randb(x.shape, self.keep_ratio)
         if phase == "TRAIN":
+            self.dropmask = owl.randb(x.shape, self.keep_ratio)
             return ele.mult(x, self.dropmask)*self.scale
         else:
             return x
         #for gradient test
         #return x
-    def bp(self, y):
-        return ele.mult(y, self.dropmask)*self.scale
-        #for gradient test
-        #return y
+    def bp(self, y, phase):
+        if phase == "TRAIN":
+            return ele.mult(y, self.dropmask)*self.scale
+        else:
+            return y
     def __str__(self):
         return 'dropout'
 
@@ -451,6 +469,9 @@ class SoftmaxUnit(ComputeUnit):
         for i in range(len(self.strlabel)):
             nplabel[i, self.strlabel[i]] = 1
         self.y = owl.from_numpy(nplabel)
+        self.out = self.ff_y
+
+
         
     def backward(self, from_top, to_btm, phase):
         if len(self.loss_weight) == 1:
@@ -533,7 +554,7 @@ class LRNUnit(ComputeUnitSimple):
         self.scale = owl.zeros(x.shape)
         self.ff_y = self.lrner.ff(x, self.scale)
         return self.ff_y
-    def bp(self, y):
+    def bp(self, y, phase):
         return self.lrner.bp(self.ff_x, self.ff_y, self.scale, y)
     def __str__(self):
         return 'lrn'
@@ -570,6 +591,7 @@ class ConcatUnit(ComputeUnit):
             narrays.append(from_btm[self.btm_names[i]])
             self.slice_count.append(from_btm[self.btm_names[i]].shape[self.concat_dim])
         to_top[self.top_names[0]] = owl.concat(narrays, self.concat_dim)
+        self.out = to_top[self.top_names[0]] 
     
     def backward(self, from_top, to_btm, phase):
         st_off = 0
@@ -626,7 +648,11 @@ class FullyConnection(WeightedComputeUnit):
         to_top[self.top_names[0]]['stride_on_ori'] = self.stride_on_ori
         to_top[self.top_names[0]]['start_on_ori'] = from_btm[self.btm_names[0]]['start_on_ori']
         self.start_on_ori = to_top[self.top_names[0]]['start_on_ori']
-    
+        #set fan_in fan_out
+        self.fan_out = self.inner_product_param.num_output
+        self.fan_in = np.prod(from_btm[self.btm_names[0]]['out_shape'][0:len(from_btm[self.btm_names[0]]['out_shape'])])
+
+
     def ff(self, act, phase):
         shp = act.shape
         if len(shp) > 2:
@@ -640,15 +666,15 @@ class FullyConnection(WeightedComputeUnit):
         if self.use_bn == True:
             #No need to add bias
             self.ff_act_beforebn = self.weight * a
-            self.scale_ = 1.0 / self.ff_act_beforebn.shape[0]
+            self.scale_ = 1.0 / self.ff_act_beforebn.shape[1]
             self.exp_ = self.scale_ * self.ff_act_beforebn.sum(1)
             self.var_ = self.scale_ * ele.mult(self.ff_act_beforebn - self.exp_, self.ff_act_beforebn - self.exp_).sum(1)
-            self.ff_act_afterbn = ele.mult((self.ff_act_beforebn - self.exp_), ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -0.5))
+            self.ff_act_afterbn = ele.mult((self.ff_act_beforebn - self.exp_), ele.pow(self.var_ + self.eps_, -0.5))
             return ele.mult(self.ff_act_afterbn, self.weight_bn) + self.bias_bn
         else:
             return self.weight * a + self.bias
 
-    def bp(self, sen):
+    def bp(self, sen, phase):
         shp = self.ff_act.shape
         if len(shp) > 2:
             a = self.ff_act.reshape([np.prod(shp[0:-1], dtype=np.int32), shp[-1]])
@@ -659,11 +685,11 @@ class FullyConnection(WeightedComputeUnit):
         if self.use_bn == True:
             gy_ = sen
             gx_norm = ele.mult(sen, self.weight_bn)
-            gvar_ = ele.mult(ele.mult(self.ff_act_beforebn - self.exp_, gx_norm).sum(1), -0.5 * ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -1.5))
-            gexp_ = ele.mult(gx_norm.sum(1), -1.0 * ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -0.5)) + ele.mult(gvar_, -2.0 * self.scale_ * (self.ff_act_beforebn - self.exp_).sum(1))
+            gvar_ = ele.mult(ele.mult(self.ff_act_beforebn - self.exp_, gx_norm).sum(1), -0.5 * ele.pow(self.var_ + self.eps_, -1.5))
+            gexp_ = ele.mult(gx_norm.sum(1), -1.0 * ele.pow(self.var_ + self.eps_, -0.5)) + ele.mult(gvar_, -2.0 * self.scale_ * (self.ff_act_beforebn - self.exp_).sum(1))
             self.weightgrad_bn = ele.mult(gy_, self.ff_act_afterbn).sum(1)
             self.biasgrad_bn = gy_.sum(1)
-            sen_beforebn = ele.mult(gx_norm, -1.0 * ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -0.5)) + ele.mult(2.0 * self.scale_ * (self.ff_act_beforebn - self.exp_), gvar_) + self.scale_ * gexp_
+            sen_beforebn = ele.mult(gx_norm, 1.0 * ele.pow(self.var_ + self.eps_, -0.5)) + ele.mult(2.0 * self.scale_ * (self.ff_act_beforebn - self.exp_), gvar_) + self.scale_ * gexp_
             self.weightgrad = sen_beforebn * a.trans()
             s = self.weight.trans() * sen_beforebn
         else:
@@ -695,6 +721,8 @@ class ConvConnection(WeightedComputeUnit):
                 self.conv_params.pad, self.conv_params.stride, self.conv_params.stride)
         self.num_output = params.convolution_param.num_output
         self.group = params.convolution_param.group
+        
+
         #TODO: hack, we don't want to slice agian to use it into bp as a parameter
         self.group_data = []
         self.group_filter = []
@@ -705,6 +733,7 @@ class ConvConnection(WeightedComputeUnit):
         self.exp_ = None
         self.scale_ = None
         self.var_ = None
+        self.use_bn = params.convolution_param.use_bn
 
     
     def compute_size(self, from_btm, to_top):
@@ -737,6 +766,9 @@ class ConvConnection(WeightedComputeUnit):
         self.stride_on_ori = to_top[self.top_names[0]]['stride_on_ori']
         self.start_on_ori = to_top[self.top_names[0]]['start_on_ori']
         self.rec_on_ori = to_top[self.top_names[0]]['rec_on_ori']
+        #set fan_in fan_out
+        self.fan_out = self.conv_params.kernel_size * self.conv_params.kernel_size * self.conv_params.num_output
+        self.fan_in = self.conv_params.kernel_size * self.conv_params.kernel_size * from_btm[self.btm_names[0]]['out_shape'][2]
 
     def ff(self, act, phase):
         ''' Feed-forward of convolution
@@ -752,9 +784,9 @@ class ConvConnection(WeightedComputeUnit):
             if self.use_bn == True:
                 self.ff_act_beforebn = self.convolver.ff(act, self.weight, self.bias)
                 self.scale_ = 1.0 / np.prod(self.ff_act_beforebn.shape) * self.ff_act_beforebn.shape[2]
-                self.exp_ = self.scale * self.ff_act_beforebn.sumallexceptdim(2)
-                self.var_ = self.scale * ele.mult(self.ff_act_beforebn - self.exp_, self.ff_act_beforebn - self.exp_).sumallexceptdim(2)
-                self.ff_act_afterbn = ele.mult((self.ff_act_beforebn - self.exp_), ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -0.5))
+                self.exp_ = self.scale_ * self.ff_act_beforebn.sumallexceptdim(2)
+                self.var_ = self.scale_ * ele.mult(self.ff_act_beforebn - self.exp_, self.ff_act_beforebn - self.exp_).sumallexceptdim(2)
+                self.ff_act_afterbn = ele.mult((self.ff_act_beforebn - self.exp_), ele.pow(self.var_ + self.eps_, -0.5))
                 return ele.mult(self.ff_act_afterbn, self.weight_bn) + self.bias_bn
             else:
                 return self.convolver.ff(act, self.weight, self.bias)
@@ -762,7 +794,7 @@ class ConvConnection(WeightedComputeUnit):
             #currently doesn't support multi-group
             assert(False)
         
-    def bp(self, sen):
+    def bp(self, sen, phase):
         ''' Backward propagation of convolution
 
         .. warning::
@@ -773,11 +805,11 @@ class ConvConnection(WeightedComputeUnit):
             if self.use_bn == True:
                 gy_ = sen
                 gx_norm = ele.mult(sen, self.weight_bn)
-                gvar_ = ele.mult(ele.mult(self.ff_act_beforebn - self.exp_, gx_norm).sumallexceptdim(2), -0.5 * ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -1.5))
-                gexp_ = ele.mult(gx_norm.sumallexceptdim(2), -1.0 * ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -0.5)) + ele.mult(gvar_, -2.0 * self.scale_ * (self.ff_act_beforebn - self.exp_).sumallexceptdim(2))
+                gvar_ = ele.mult(ele.mult(self.ff_act_beforebn - self.exp_, gx_norm).sumallexceptdim(2), -0.5 * ele.pow(self.var_ + self.eps_, -1.5))
+                gexp_ = ele.mult(gx_norm.sumallexceptdim(2), -1.0 * ele.pow(self.var_ + self.eps_, -0.5)) + ele.mult(gvar_, -2.0 * self.scale_ * (self.ff_act_beforebn - self.exp_).sumallexceptdim(2))
                 self.weightgrad_bn = ele.mult(gy_, self.ff_act_afterbn).sumallexceptdim(2)
                 self.biasgrad_bn = gy_.sumallexceptdim(2)
-                sen_beforebn = ele.mult(gx_norm, -1.0 * ele.pow(ele.mult(self.var_, self.var_) + self.eps_, -0.5)) + ele.mult(2.0 * self.scale_ * (self.ff_act_beforebn - self.exp_), gvar_) + self.scale_ * gexp_
+                sen_beforebn = ele.mult(gx_norm, 1.0 * ele.pow(self.var_ + self.eps_, -0.5)) + ele.mult(2.0 * self.scale_ * (self.ff_act_beforebn - self.exp_), gvar_) + self.scale_ * gexp_
                 self.weightgrad = self.convolver.weight_grad(sen_beforebn, self.ff_act, self.weight)
                 return self.convolver.bp(sen_beforebn, self.ff_act, self.weight)
             else:
@@ -907,6 +939,9 @@ class LMDBDataUnit(DataUnit):
                 [self.crop_size, self.crop_size, 3, samples.shape[0]])
         for i in range (1, len(self.top_names)):
             to_top[self.top_names[i]] = labels[:,i - 1]
+        #to_top[self.top_names[0]] = owl.zeros([self.crop_size, self.crop_size, 3, 256])
+        #for i in range (1, len(self.top_names)):
+            #to_top[self.top_names[i]] = np.ones(256)
         self.out = to_top[self.top_names[0]]
 
     def __str__(self):
@@ -1163,6 +1198,16 @@ class Net:
                 from_btm.update(unit_to_tops[btm])
             self.units[u].forward(from_btm, unit_to_tops[u], phase)
 
+    def forward_check(self):
+        ''' Check forward function, use the same batch of data, remove random
+        '''
+        unit_to_tops = [{} for name in self.units]
+        for u in self._toporder('TEST'):
+            from_btm = {}
+            for btm in self.reverse_adjacent[u]:
+                from_btm.update(unit_to_tops[btm])
+            self.units[u].forward(from_btm, unit_to_tops[u], 'CHECK')
+    
     def backward(self, phase = 'TRAIN'):
         ''' Perform the backward pass
         '''

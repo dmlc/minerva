@@ -272,7 +272,7 @@ class LMDBDataProvider:
             self.mean_data[0] = transform_param.mean_value[0]
             self.mean_data[1] = transform_param.mean_value[1]
             self.mean_data[2] = transform_param.mean_value[2]           
-        else:    
+        else:
             with open(transform_param.mean_file, 'rb') as f:
                 bp.ParseFromString(f.read())
             mean_narray = np.array(bp.data, dtype=np.float32)
@@ -328,6 +328,10 @@ class LMDBDataProvider:
                 count = count + 1
                 if count == self.batch_size:
                     yield (samples, labels)
+                    if phase == 'CHECK':
+                        while True:
+                            yield(samples, labels)
+                    
                     labels = np.zeros([self.batch_size, num_label], dtype=np.float32)
                     count = 0
         if count != self.batch_size:

@@ -113,7 +113,7 @@ def bpprop(model, samples, label):
     scale_[1] = 1.0 / np.prod(acts_before[1].shape) * acts_before[1].shape[2]
     exp_[1] = scale_[1] * acts_before[1].sumallexceptdim(2)
     var_[1] = scale_[1] * ele.mult(acts_before[1] - exp_[1], acts_before[1] - exp_[1]).sumallexceptdim(2)
-    acts_after[1] = ele.mult((acts_before[1] - exp_[1]), ele.pow(ele.mult(var_[1], var_[1]) + eps_, -0.5))
+    acts_after[1] = ele.mult((acts_before[1] - exp_[1]), ele.pow(var_[1] + eps_, -0.5))
     acts_before_nonlinear[1] = ele.mult(acts_after[1], model.weights_bn[0]) + model.bias_bn[0]
     acts[1] = ele.sigm(acts_before_nonlinear[1])
 
@@ -126,7 +126,7 @@ def bpprop(model, samples, label):
     scale_[3] = 1.0 / np.prod(acts_before[3].shape) * acts_before[3].shape[2]
     exp_[3] = scale_[3] * acts_before[3].sumallexceptdim(2)
     var_[3] = scale_[3] * ele.mult(acts_before[3] - exp_[3], acts_before[3] - exp_[3]).sumallexceptdim(2)
-    acts_after[3] = ele.mult((acts_before[3] - exp_[3]), ele.pow(ele.mult(var_[3], var_[3]) + eps_, -0.5))
+    acts_after[3] = ele.mult((acts_before[3] - exp_[3]), ele.pow(var_[3] + eps_, -0.5))
     acts_before_nonlinear[3] = ele.mult(acts_after[3], model.weights_bn[1]) + model.bias_bn[1]
     acts[3] = ele.sigm(acts_before_nonlinear[3])
 
@@ -146,9 +146,9 @@ def bpprop(model, samples, label):
     #batchnorm bp
     gy_ = errs[3]
     gx_norm = ele.mult(errs[3], model.weights_bn[1]) 
-    gvar_ = ele.mult(ele.mult(acts_before[3] - exp_[3], gx_norm).sumallexceptdim(2), -0.5 * ele.pow(ele.mult(var_[3], var_[3]) + eps_, -1.5));
-    gexp_ = ele.mult(gx_norm.sumallexceptdim(2), -1.0 * ele.pow(ele.mult(var_[3], var_[3]) + eps_, -0.5)) + ele.mult(gvar_, -2.0 * scale_[3] * (acts_before[3] - exp_[3]).sumallexceptdim(2)) 
-    errs[3] = ele.mult(gx_norm, -1.0 * ele.pow(ele.mult(var_[3], var_[3]) + eps_, -0.5)) + ele.mult(2.0 * scale_[3] * (acts_before[3] - exp_[3]), gvar_) + scale_[3] * gexp_ 
+    gvar_ = ele.mult(ele.mult(acts_before[3] - exp_[3], gx_norm).sumallexceptdim(2), -0.5 * ele.pow(var_[3] + eps_, -1.5));
+    gexp_ = ele.mult(gx_norm.sumallexceptdim(2), -1.0 * ele.pow(var_[3] + eps_, -0.5)) + ele.mult(gvar_, -2.0 * scale_[3] * (acts_before[3] - exp_[3]).sumallexceptdim(2)) 
+    errs[3] = ele.mult(gx_norm, 1.0 * ele.pow(var_[3] + eps_, -0.5)) + ele.mult(2.0 * scale_[3] * (acts_before[3] - exp_[3]), gvar_) + scale_[3] * gexp_ 
     weightgrad_bn[1] = ele.mult(gy_, acts_after[3]).sumallexceptdim(2)
     biasgrad_bn[1] = gy_.sumallexceptdim(2)
 
@@ -158,9 +158,9 @@ def bpprop(model, samples, label):
     #batchnorm bp
     gy_ = errs[1]
     gx_norm = ele.mult(errs[1], model.weights_bn[0]) 
-    gvar_ = ele.mult(ele.mult(acts_before[1] - exp_[1], gx_norm).sumallexceptdim(2), -0.5 * ele.pow(ele.mult(var_[1], var_[1]) + eps_, -1.5));
-    gexp_ = ele.mult(gx_norm.sumallexceptdim(2), -1.0 * ele.pow(ele.mult(var_[1], var_[1]) + eps_, -0.5)) + ele.mult(gvar_, -2.0 * scale_[1] * (acts_before[1] - exp_[1]).sumallexceptdim(2)) 
-    errs[1] = ele.mult(gx_norm, -1.0 * ele.pow(ele.mult(var_[1], var_[1]) + eps_, -0.5)) + ele.mult(2.0 * scale_[1] * (acts_before[1] - exp_[1]), gvar_) + scale_[1] * gexp_ 
+    gvar_ = ele.mult(ele.mult(acts_before[1] - exp_[1], gx_norm).sumallexceptdim(2), -0.5 * ele.pow(var_[1] + eps_, -1.5));
+    gexp_ = ele.mult(gx_norm.sumallexceptdim(2), -1.0 * ele.pow(var_[1] + eps_, -0.5)) + ele.mult(gvar_, -2.0 * scale_[1] * (acts_before[1] - exp_[1]).sumallexceptdim(2)) 
+    errs[1] = ele.mult(gx_norm, 1.0 * ele.pow(var_[1] + eps_, -0.5)) + ele.mult(2.0 * scale_[1] * (acts_before[1] - exp_[1]), gvar_) + scale_[1] * gexp_ 
     weightgrad_bn[0] = ele.mult(gy_, acts_after[1]).sumallexceptdim(2)
     biasgrad_bn[0] = gy_.sumallexceptdim(2)
 
@@ -170,7 +170,7 @@ def bpprop(model, samples, label):
     weightgrad[0] = model.convs[0].weight_grad(errs[1], acts[0], model.weights[0])
     return (out, weightgrad, biasgrad, weightgrad_bn, biasgrad_bn)
 
-def train_network(model, num_epochs=100, minibatch_size=256, lr=0.01, mom=0.75, wd=5e-4):
+def train_network(model, num_epochs=3, minibatch_size=256, lr=0.01, mom=0.75, wd=5e-4):
     # load data
     (train_data, test_data) = mnist_io.load_mb_from_mat('mnist_all.mat', minibatch_size / len(gpu))
     num_test_samples = test_data[0].shape[0]
@@ -208,6 +208,7 @@ def train_network(model, num_epochs=100, minibatch_size=256, lr=0.01, mom=0.75, 
                         model.biasdelta[k] = mom * model.biasdelta[k] - lr / num_samples / len(gpu) * multi_gpu_merge(biasgrads, 0, k)
                 if count % (len(gpu) * lazy_cycle) == 0:
                     print_training_accuracy(out, label, num_samples, 'Training')
+                    sys.stdout.flush()
         print '---End of Epoch #', i, 'time:', time.time() - last
         # do test
         out, _, _, _, _  = bpprop(model, test_samples, test_labels)

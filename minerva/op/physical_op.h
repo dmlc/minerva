@@ -228,6 +228,13 @@ class SigmoidBackwardOp : public ComputeFnWithClosure<SigmoidBackwardClosure> {
   }
 };
 
+class ThresholdNormOp : public ComputeFnWithClosure<ThresholdNormClosure> {
+ public:
+  std::string Name() const {
+    return "threshold norm";
+  }
+};
+
 class ReluForwardOp : public ComputeFnWithClosure<ReluForwardClosure> {
  public:
   std::string Name() const {

@@ -1,4 +1,3 @@
-#include <glog/logging.h>
 #include <minerva.h>
 #include <fstream>
 #include "ps.h"
@@ -6,7 +5,7 @@
 using namespace std;
 using namespace minerva;
 
-#define LL LOG(ERROR)
+#define LL cout
 
 template <typename V>
 inline std::string arrstr(const V* data, int n) {
@@ -149,7 +148,7 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
 #ifdef HAS_CUDA
   uint64_t gpuDevice = ms.device_manager().CreateGpuDevice(0);
 #endif
-  ms.current_device_id_ = cpuDevice;
+  ms.SetDevice(cpuDevice);
 
   weights.resize(num_layers - 1);
   bias.resize(num_layers - 1);
@@ -171,7 +170,7 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
     DumpParams(0);
     for (int mb = rank; mb < num_mb_per_epoch; mb+=size) {
 
-      ms.current_device_id_ = cpuDevice;
+      ms.SetDevice(cpuDevice);
 
       Scale data_size{ lsize[0], mb_size };
       Scale label_size{ lsize[num_layers - 1], mb_size };
@@ -186,7 +185,7 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
       NArray label = NArray::MakeNArray(label_size, label_ptr);
 
 #ifdef HAS_CUDA
-      ms.current_device_id_ = gpuDevice;
+      ms.SetDevice(gpuDevice);
 #endif
 
       // ff
@@ -204,16 +203,17 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
         sens[k] = weights[k].Trans() * sens[k + 1];
         sens[k] = Elewise::Mult(sens[k], d_act);
       }
-
-      ms.current_device_id_ = cpuDevice;
+      ms.SetDevice(cpuDevice);
       for (int k = 0; k < num_layers - 1; ++k) {
         bias[k] = NArray::PushGradAndPullWeight(sens[k + 1].Sum(1) / mb_size, GetBiasName(k));
         weights[k] = NArray::PushGradAndPullWeight(sens[k + 1] * acts[k].Trans() / mb_size, GetWeightName(k));
       }
-      ms.current_device_id_ = gpuDevice;
+#ifdef HAS_CUDA
+      ms.SetDevice(gpuDevice);
+#endif
 
       if ((mb - rank) % 20 == 0) {
-        ms.current_device_id_ = cpuDevice;
+        ms.SetDevice(cpuDevice);
         PrintTrainingAccuracy(acts[num_layers - 1], label);
       }
       DumpParams(mb + 1);
@@ -221,7 +221,7 @@ int MinervaWorkerMain(int rank, int size, int argc, char *argv[]) {
     data_file_in.close();
     label_file_in.close();
   }
-  ms.current_device_id_ = cpuDevice;
+  ms.SetDevice(cpuDevice);
 
   // output weights
   cout << "Write weight to files" << endl;

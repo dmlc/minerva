@@ -119,5 +119,3 @@ class HeatmapVisualizer:
         feature_file.close()
 
 
-
-

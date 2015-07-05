@@ -4,6 +4,7 @@ import time
 import numpy as np
 import owl
 from net import Net
+import net
 from net_helper import CaffeNetBuilder
 from caffe import *
 from PIL import Image
@@ -21,11 +22,16 @@ class NetTrainer:
     :ivar str solver_file: path of the solver file in Caffe's proto format
     :ivar int snapshot: the idx of snapshot to start with
     :ivar int num_gpu: the number of gpu to use
+    :ivar int sync_freq: the frequency to stop lazy evaluation and print some information. The frequency means every how many
+                         minibatches will the trainer call ``owl.wait_for_all()``. Note that this will influence the training
+                         speed. Normally, the higher value is given, the faster the training speed but the more memory is used
+                         during execution.
     '''
-    def __init__(self, solver_file, snapshot = 0, num_gpu = 1):
+    def __init__(self, solver_file, snapshot = 0, num_gpu = 1, sync_freq=1):
         self.solver_file = solver_file
         self.snapshot = snapshot
         self.num_gpu = num_gpu
+        self.sync_freq = sync_freq
         self.gpu = [owl.create_gpu_device(i) for i in range(num_gpu)]
 
     def build_net(self):
@@ -98,7 +104,10 @@ class NetTrainer:
         wunits = s.owl_net.get_weighted_unit_ids()
         last_start = time.time()
 
-        for iteridx in range(s.snapshot * s.owl_net.solver.snapshot, s.owl_net.solver.max_iter):
+        start_idx = s.snapshot * s.owl_net.solver.snapshot
+        end_idx = s.owl_net.solver.max_iter
+
+        for iteridx in range(start_idx, end_idx):
             # get the learning rate
             if s.owl_net.solver.lr_policy == "poly":
                 s.owl_net.current_lr = s.owl_net.base_lr * pow(1 - float(iteridx) / s.owl_net.solver.max_iter, s.owl_net.solver.power)
@@ -128,10 +137,11 @@ class NetTrainer:
                 s.owl_net.units[wid].biasgrad = bgrad[upd_gpu][i]
                 s.owl_net.update(wid)
 
-            if iteridx % 2 == 0:
+            if iteridx % s.sync_freq == 0:
                 owl.wait_for_all()
                 thistime = time.time() - last
-                print "Finished training %d minibatch (time: %s)" % (iteridx, thistime)
+                speed = s.owl_net.batch_size * s.sync_freq / thistime
+                print "Finished training %d minibatch (time: %s; speed: %s img/s)" % (iteridx, thistime, speed)
                 last = time.time()
 
             wgrad = [[] for i in range(s.num_gpu)] # reset gradients
@@ -163,6 +173,78 @@ class NetTrainer:
                 print "Save to snapshot %d, current lr %f" % ((iteridx + 1) / (s.owl_net.solver.snapshot), s.owl_net.current_lr)
                 s.builder.save_net_to_file(s.owl_net, s.snapshot_dir, (iteridx + 1) / (s.owl_net.solver.snapshot))
             sys.stdout.flush()
+
+    def gradient_checker(s, checklayer_name):
+        ''' Check backpropagation on multiple GPUs
+        '''
+        h = 1e-2
+        threshold = 1e-4
+        checklayer = s.owl_net.units[s.owl_net.name_to_uid[checklayer_name][0]] 
+        
+        losslayer = []
+        for i in xrange(len(s.owl_net.units)):
+            if isinstance(s.owl_net.units[i], net.SoftmaxUnit):
+                losslayer.append(i)
+       
+        last = None
+        '''
+        wunits = []
+        for i in xrange(len(s.owl_net.units)):
+            if isinstance(s.owl_net.units[i], net.WeightedComputeUnit):
+                wunits.append(i)
+        '''
+        wunits = s.owl_net.get_weighted_unit_ids()
+        accunits = s.owl_net.get_accuracy_units()
+        owl.set_device(s.gpu[0])
+        
+        for iteridx in range(100):
+            #disturb the weights
+            oriweight = checklayer.weight
+            if checklayer.weight == None:
+                checklayer.init_weights_with_filler()
+            npweight = checklayer.weight.to_numpy()
+            weightshape = np.shape(npweight)
+            npweight = npweight.reshape(np.prod(weightshape[0:len(weightshape)]))
+            position = np.random.randint(0, np.shape(npweight)[0])
+            disturb = np.zeros(np.shape(npweight), dtype = np.float32)
+            disturb[position] = h
+            oriposval = npweight[position]
+            npweight += disturb
+            newposval = npweight[position]
+            npweight = npweight.reshape(weightshape)
+            checklayer.weight = owl.from_numpy(npweight)
+
+            all_loss = 0
+            # train on multi-gpu
+
+            s.owl_net.forward_check()
+            for i in range(len(losslayer)):
+                if len(s.owl_net.units[losslayer[i]].loss_weight) == 1:
+                    all_loss += (s.owl_net.units[losslayer[i]].getloss() * s.owl_net.units[losslayer[i]].loss_weight[0])
+                else:
+                    all_loss += s.owl_net.units[losslayer[i]].getloss()
+
+            #get origin loss
+            checklayer.weight = oriweight
+            ori_all_loss = 0
+            # train on multi-gpu
+            s.owl_net.forward_check()
+            for i in range(len(losslayer)):
+                if len(s.owl_net.units[losslayer[i]].loss_weight) == 1:
+                    ori_all_loss += (s.owl_net.units[losslayer[i]].getloss() * s.owl_net.units[losslayer[i]].loss_weight[0])
+                else:
+                    ori_all_loss += s.owl_net.units[losslayer[i]].getloss()
+
+            s.owl_net.backward('TEST')
+            #get analytic gradient
+            npgrad = checklayer.weightgrad.to_numpy()
+            npgrad = npgrad.reshape(np.prod(weightshape[0:len(weightshape)]))
+            analy_grad = npgrad[position] /  s.owl_net.units[losslayer[i]].out.shape[1]
+           
+            num_grad = (all_loss - ori_all_loss) / h
+            
+            info = "Gradient Check at positon: %d analy: %f num: %f ratio: %f" % (position, analy_grad, num_grad, analy_grad / num_grad)
+            print info
 
 class NetTester:
     ''' Class for performing testing, it can be single-view or multi-view, can be top-1 or top-5
@@ -397,7 +479,7 @@ class FilterVisualizer:
                 res_img = np.zeros([feature_unit.rec_on_ori * 3, feature_unit.rec_on_ori * 3, 3])
                 filter_feature = np.copy(all_feature[:,i,:,:])
                 for patchidx in range(9):
-                    maxidx = np.max_index(filter_feature)
+                    maxidx = np.argmax(filter_feature)
                     colidx = maxidx % feature_shape[0]
                     maxidx = (maxidx - colidx) / feature_shape[0]
                     rowidx = maxidx % feature_shape[1]
