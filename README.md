@@ -11,6 +11,7 @@
 * Minerva's Tutorial and API documents are released!
 * Minerva had migrated to [dmlc](https://github.com/dmlc), where you could find many awesome machine learning repositories!
 * Minerva now evolves to use cudnn_v2. Please download and use the new [library](https://developer.nvidia.com/cuDNN).
+* Minerva now supports the latest version of Caffe's network configuration protobuf format. If you are using older version, error may occur. Please use the [tool](https://github.com/BVLC/caffe/blob/master/tools/upgrade_net_proto_text.cpp) to upgrade the configure file.
 
 ## Overview
 
