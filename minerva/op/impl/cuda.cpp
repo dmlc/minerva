@@ -485,8 +485,8 @@ void ConvForward(const DataList& inputs, const DataList& outputs, ConvForwardClo
   }
   size_t workspace_size;
   void* workspace;
-  cout << "ALGO is " << algorithm << endl;
   CUDNN_CALL(cudnnGetConvolutionForwardWorkspaceSize(context.cudnn_handle, bottom_desc, filter_desc, conv_desc, top_desc, algorithm, &workspace_size));
+  cout << "ALGO is " << algorithm << " workspace: " << workspace_size / 1024 / 1024 << " MB" << endl;
   CUDA_CALL(cudaMalloc(&workspace, workspace_size));
   CUDNN_CALL(cudnnConvolutionForward(context.cudnn_handle, &one, bottom_desc, bottom.data_, filter_desc, filter.data_, conv_desc, algorithm, workspace, workspace_size, &zero, top_desc, top.data_));
   CUDNN_CALL(cudnnAddTensor(context.cudnn_handle, CUDNN_ADD_SAME_C, &one, bias_desc, bias.data_, &one, top_desc, top.data_));
