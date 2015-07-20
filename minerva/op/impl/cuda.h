@@ -27,6 +27,8 @@ void ConvBackwardData(const DataList&, const DataList&, ConvBackwardDataClosure&
 void ConvBackwardFilter(const DataList&, const DataList&, ConvBackwardFilterClosure&, const Context&);
 void ConvBackwardBias(const DataList&, const DataList&, ConvBackwardBiasClosure&, const Context&);
 void ConvForwardFindAlgorithm(DataList const&, DataList const&, ConvForwardFindAlgorithmClosure&, Context const&);
+void ConvBackwardFilterFindAlgorithm(DataList const&, DataList const&, ConvBackwardFilterFindAlgorithmClosure&, Context const&);
+void ConvBackwardDataFindAlgorithm(DataList const&, DataList const&, ConvBackwardDataFindAlgorithmClosure&, Context const&);
 void SoftmaxForward(const DataList&, const DataList&, SoftmaxForwardClosure&, const Context&);
 void SoftmaxBackward(const DataList&, const DataList&, SoftmaxBackwardClosure&, const Context&);
 void ActivationForward(const DataList&, const DataList&, ActivationForwardClosure&, const Context&);

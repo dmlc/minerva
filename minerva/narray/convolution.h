@@ -14,6 +14,16 @@ class Convolution {
     Scale const& src_shape
   , Scale const& filter_shape
   , ConvInfo info);
+  static std::vector<ConvBwdFilterAlgoProfResult> ConvBackwardFilterFindAlgorithm(
+    Scale const& top_shape
+  , Scale const& bottom_shape
+  , Scale const& filter_shape
+  , ConvInfo info);
+  static std::vector<ConvBwdDataAlgoProfResult> ConvBackwardDataFindAlgorithm(
+    Scale const& top_shape
+  , Scale const& bottom_shape
+  , Scale const& filter_shape
+  , ConvInfo info);
   static ImageBatch SoftmaxForward(ImageBatch src, SoftmaxAlgorithm algorithm);
   static ImageBatch SoftmaxBackward(ImageBatch diff, ImageBatch top, SoftmaxAlgorithm algorithm);
   static ImageBatch ActivationForward(ImageBatch src, ActivationAlgorithm algorithm);

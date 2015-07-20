@@ -77,6 +77,46 @@ std::vector<ConvFwdAlgoProfResult> Convolution::ConvForwardFindAlgorithm(
   return *res;
 }
 
+std::vector<ConvBwdFilterAlgoProfResult> Convolution::ConvBackwardFilterFindAlgorithm(
+    Scale const& top_shape
+  , Scale const& bottom_shape
+  , Scale const& filter_shape
+  , ConvInfo info) {
+  auto&& top = ImageBatch{NArray::Zeros(top_shape)};
+  auto&& bottom = ImageBatch{NArray::Zeros(bottom_shape)};
+  CHECK_EQ(top.GetNumImages(), bottom.GetNumImages()) << "#images mismatch";
+  auto op = new ConvBackwardFilterFindAlgorithmOp{};
+  auto res = std::make_shared<std::vector<ConvBwdFilterAlgoProfResult>>();
+  op->closure.results = res;
+  op->closure.pad_height = info.pad_height;
+  op->closure.pad_width = info.pad_width;
+  op->closure.stride_vertical = info.stride_vertical;
+  op->closure.stride_horizontal = info.stride_horizontal;
+  auto ret = NArray::ComputeOne({top, bottom}, filter_shape, op);
+  ret.Wait();
+  return *res;
+}
+
+std::vector<ConvBwdDataAlgoProfResult> Convolution::ConvBackwardDataFindAlgorithm(
+    Scale const& top_shape
+  , Scale const& bottom_shape
+  , Scale const& filter_shape
+  , ConvInfo info) {
+  auto&& top = ImageBatch{NArray::Zeros(top_shape)};
+  auto&& filter = Filter{NArray::Zeros(filter_shape)};
+  CHECK_EQ(top.GetNumFeatureMaps(), filter.GetNumOutputs()) << "#output channels mismatch";
+  auto op = new ConvBackwardDataFindAlgorithmOp{};
+  auto res = std::make_shared<std::vector<ConvBwdDataAlgoProfResult>>();
+  op->closure.results = res;
+  op->closure.pad_height = info.pad_height;
+  op->closure.pad_width = info.pad_width;
+  op->closure.stride_vertical = info.stride_vertical;
+  op->closure.stride_horizontal = info.stride_horizontal;
+  auto ret = NArray::ComputeOne({top, filter}, bottom_shape, op);
+  ret.Wait();
+  return *res;
+}
+
 ImageBatch Convolution::SoftmaxForward(ImageBatch src, SoftmaxAlgorithm algorithm) {
   SoftmaxForwardOp* op = new SoftmaxForwardOp();
   op->closure.algorithm = algorithm;

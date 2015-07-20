@@ -37,6 +37,8 @@ INSTALL_COMPUTE_FN(ConvBackwardDataClosure, NO_IMPL, NO_IMPL, cuda::ConvBackward
 INSTALL_COMPUTE_FN(ConvBackwardFilterClosure, NO_IMPL, NO_IMPL, cuda::ConvBackwardFilter);
 INSTALL_COMPUTE_FN(ConvBackwardBiasClosure, NO_IMPL, NO_IMPL, cuda::ConvBackwardBias);
 INSTALL_COMPUTE_FN(ConvForwardFindAlgorithmClosure, NO_IMPL, NO_IMPL, cuda::ConvForwardFindAlgorithm);
+INSTALL_COMPUTE_FN(ConvBackwardFilterFindAlgorithmClosure, NO_IMPL, NO_IMPL, cuda::ConvBackwardFilterFindAlgorithm);
+INSTALL_COMPUTE_FN(ConvBackwardDataFindAlgorithmClosure, NO_IMPL, NO_IMPL, cuda::ConvBackwardDataFindAlgorithm);
 INSTALL_COMPUTE_FN(SoftmaxForwardClosure, basic::SoftmaxForward, NO_IMPL, cuda::SoftmaxForward);
 INSTALL_COMPUTE_FN(SoftmaxBackwardClosure, NO_IMPL, NO_IMPL, cuda::SoftmaxBackward);
 INSTALL_COMPUTE_FN(ActivationForwardClosure, basic::ActivationForward, NO_IMPL, cuda::ActivationForward);

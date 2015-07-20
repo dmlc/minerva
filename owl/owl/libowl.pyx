@@ -281,6 +281,54 @@ cdef class NArray(object):
         return ret
 
     @staticmethod
+    def conv_backward_filter_find_algorithm(diff, bottom, filter, ConvInfo info):
+        cdef vector[m.ConvBwdFilterAlgoProfResult] res
+        cdef vector[int] top_shape = _list_to_vector(diff)
+        cdef vector[int] bottom_shape = _list_to_vector(bottom)
+        cdef vector[int] filter_shape = _list_to_vector(filter)
+        res = m.ConvBackwardFilterFindAlgorithm(
+            m.ToScale(&top_shape)
+        ,   m.ToScale(&bottom_shape)
+        ,   m.ToScale(&filter_shape)
+        ,   deref(info._d))
+        ret = []
+        for i in res:
+            algo = conv_backward_filter_algo.find(
+                ConvBackwardFilterAlgorithmWrapper(m.OfConvBackwardFilterAlgorithm(i.algo)))
+            time = i.time
+            memory = i.memory
+            ret.append({
+                'algorithm': algo,
+                'time': time,
+                'memory': memory
+            })
+        return ret
+
+    @staticmethod
+    def conv_backward_data_find_algorithm(diff, bottom, filter, ConvInfo info):
+        cdef vector[m.ConvBwdDataAlgoProfResult] res
+        cdef vector[int] top_shape = _list_to_vector(diff)
+        cdef vector[int] bottom_shape = _list_to_vector(bottom)
+        cdef vector[int] filter_shape = _list_to_vector(filter)
+        res = m.ConvBackwardDataFindAlgorithm(
+            m.ToScale(&top_shape)
+        ,   m.ToScale(&bottom_shape)
+        ,   m.ToScale(&filter_shape)
+        ,   deref(info._d))
+        ret = []
+        for i in res:
+            algo = conv_backward_data_algo.find(
+                ConvBackwardDataAlgorithmWrapper(m.OfConvBackwardDataAlgorithm(i.algo)))
+            time = i.time
+            memory = i.memory
+            ret.append({
+                'algorithm': algo,
+                'time': time,
+                'memory': memory
+            })
+        return ret
+
+    @staticmethod
     def softmax_forward(NArray src, SoftmaxAlgorithmWrapper algo):
         return _wrap_cpp_narray(
                 m.SoftmaxForward(

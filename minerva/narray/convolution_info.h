@@ -49,11 +49,18 @@ struct ConvInfo {
   BackwardFilterAlgorithm backward_filter_algorithm;
 };
 
-struct ConvFwdAlgoProfResult {
-  ConvInfo::ForwardAlgorithm algo;
+template<typename T>
+struct AlgoProfResult {
+  T algo;
   float time;
   size_t memory;
 };
+
+using ConvFwdAlgoProfResult = AlgoProfResult<ConvInfo::ForwardAlgorithm>;
+
+using ConvBwdFilterAlgoProfResult = AlgoProfResult<ConvInfo::BackwardFilterAlgorithm>;
+
+using ConvBwdDataAlgoProfResult = AlgoProfResult<ConvInfo::BackwardDataAlgorithm>;
 
 struct PoolingInfo {
   enum class Algorithm {

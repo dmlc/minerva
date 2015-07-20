@@ -129,6 +129,14 @@ struct ConvForwardFindAlgorithmClosure : public ConvClosure {
   std::shared_ptr<std::vector<ConvFwdAlgoProfResult>> results;
 };
 
+struct ConvBackwardFilterFindAlgorithmClosure : public ConvClosure {
+  std::shared_ptr<std::vector<ConvBwdFilterAlgoProfResult>> results;
+};
+
+struct ConvBackwardDataFindAlgorithmClosure : public ConvClosure {
+  std::shared_ptr<std::vector<ConvBwdDataAlgoProfResult>> results;
+};
+
 template<int i> struct SoftmaxClosure {
   SoftmaxAlgorithm algorithm;
 };

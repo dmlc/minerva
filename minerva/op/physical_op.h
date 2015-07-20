@@ -255,6 +255,22 @@ class ConvForwardFindAlgorithmOp :
   }
 };
 
+class ConvBackwardFilterFindAlgorithmOp :
+    public ComputeFnWithClosure<ConvBackwardFilterFindAlgorithmClosure> {
+ public:
+  std::string Name() const {
+    return "conv bp filter find algo";
+  }
+};
+
+class ConvBackwardDataFindAlgorithmOp :
+    public ComputeFnWithClosure<ConvBackwardDataFindAlgorithmClosure> {
+ public:
+  std::string Name() const {
+    return "conv bp data find algo";
+  }
+};
+
 class SoftmaxForwardOp : public ComputeFnWithClosure<SoftmaxForwardClosure> {
  public:
   std::string Name() const {
