@@ -42,8 +42,8 @@ void Randn(const DataList&, RandnClosure&, const Context&);
 void RandBernoulli(const DataList&, RandBernoulliClosure&, const Context&);
 void Fill(const DataList&, FillClosure&, const Context&);
 
-void LRNForward(const DataList&, const DataList&, LRNForwardClosure&, const Context&);
-void LRNBackward(const DataList&, const DataList&, LRNBackwardClosure&, const Context&);
+void LrnForward(const DataList&, const DataList&, LrnForwardClosure&, const Context&);
+void LrnBackward(const DataList&, const DataList&, LrnBackwardClosure&, const Context&);
 void Concat(const DataList&, const DataList&, ConcatClosure&, const Context&);
 void Slice(const DataList&, const DataList&, SliceClosure&, const Context&);
 void Index(const DataList&, const DataList&, IndexClosure&, const Context&);

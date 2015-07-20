@@ -167,14 +167,15 @@ typedef PoolingClosure<0> PoolingForwardClosure;
 
 typedef PoolingClosure<1> PoolingBackwardClosure;
 
-template<int i> struct LRNClosure {
+template<int i> struct LrnClosure {
 	int local_size;
-	float alpha, beta;
-	Scale data_shape;
+    float alpha;
+    float beta;
+    float k;
 };
 
-typedef LRNClosure<0> LRNForwardClosure;
-typedef LRNClosure<1> LRNBackwardClosure;
+typedef LrnClosure<0> LrnForwardClosure;
+typedef LrnClosure<1> LrnBackwardClosure;
 
 struct ConcatClosure {
   int catdim;

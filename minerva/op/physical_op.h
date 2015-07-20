@@ -363,17 +363,17 @@ class PoolingBackwardOp : public ComputeFnWithClosure<PoolingBackwardClosure> {
   }
 };
 
-class LRNForwardOp : public ComputeFnWithClosure<LRNForwardClosure> {
+class LrnForwardOp : public ComputeFnWithClosure<LrnForwardClosure> {
  public:
   std::string Name() const {
-    return "LRN Forward";
+    return "Lrn Forward";
   }
 };
 
-class LRNBackwardOp : public ComputeFnWithClosure<LRNBackwardClosure> {
+class LrnBackwardOp : public ComputeFnWithClosure<LrnBackwardClosure> {
  public:
   std::string Name() const {
-    return "LRN Backward";
+    return "Lrn Backward";
   }
 };
 

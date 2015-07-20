@@ -543,32 +543,6 @@ void CudaPerformFill(float* dst, size_t size, float val, cudaStream_t stream) {
   CheckCudaError("CudaPerformFill");
 }
 
-void CudaPerformLRNForward(float* bottom, float* scale, float* res, int local_size, float alpha, float beta, int num_img, int channel, int width, int height, cudaStream_t stream) {
-  int block, thread, size;
-  size = num_img * height * width;
-  FindConfiguration(size, block, thread);
-  LRNFillScale<<<block, thread, 0, stream>>>(
-      size, bottom, num_img, channel, height, width, local_size,
-      alpha / local_size, scale);
-  CheckCudaError("LRNFillScale");
-
-  size = num_img * channel * width * height;
-  FindConfiguration(size, block, thread);
-  // NOLINT_NEXT_LINE(whitespace/operators)
-  LRNComputeOutput<<<block, thread, 0, stream>>>(size, bottom, scale, -beta, res);
-  CheckCudaError("LRNComputeOutput");
-}
-
-void CudaPerformLRNBackward(float* bottom_data, float* top_data, float* scale, float* top_diff, float* bottom_diff, int local_size, float alpha, float beta, int num_img, int channel, int width, int height, cudaStream_t stream) {
-  int block, thread;
-  int size = num_img * width * height;
-  FindConfiguration(size, block, thread);
-  LRNComputeDiff<<<block, thread, 0, stream>>>(
-      size, bottom_data, top_data, scale, top_diff,  num_img, channel, height, width, local_size,
-      -beta, float(2. * alpha * beta / local_size), bottom_diff);
-  CheckCudaError("LRNBackward");
-}
-
 void CudaPerformSelect(float* dst, float* src, std::vector<int> indices, size_t cols, size_t rows, cudaStream_t stream) {
   int block, thread;
   int size = cols * rows;

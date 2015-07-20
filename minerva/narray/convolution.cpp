@@ -203,16 +203,18 @@ ImageBatch Convolution::PoolingBackward(ImageBatch diff, ImageBatch top, ImageBa
 }
 
 
-ImageBatch Convolution::LRNForward(ImageBatch src, ImageBatch scale, int local_size, float alpha, float beta) {
-  LRNForwardOp* op = new LRNForwardOp();
-  op->closure = {local_size, alpha, beta, src.Size()};
-  return NArray::ComputeOne({src, scale}, src.Size(), op);
+ImageBatch Convolution::LrnForward(ImageBatch src, int local_size, float alpha, float beta, float k) {
+  auto op = new LrnForwardOp();
+  op->closure = {local_size, alpha, beta, k};
+  return NArray::ComputeOne({src}, src.Size(), op);
 }
 
-ImageBatch Convolution::LRNBackward(ImageBatch bottom_data, ImageBatch top_data, ImageBatch scale, ImageBatch top_diff , int local_size, float alpha, float beta) {
-  LRNBackwardOp* op = new LRNBackwardOp();
-  op->closure = {local_size, alpha, beta, bottom_data.Size()};
-  return NArray::ComputeOne({bottom_data, top_data, scale, top_diff}, bottom_data.Size(), op);
+ImageBatch Convolution::LrnBackward(ImageBatch top, ImageBatch top_diff, ImageBatch bottom, int local_size, float alpha, float beta, float k) {
+  CHECK_EQ(top.Size(), top_diff.Size()) << "inputs sizes mismatch";
+  CHECK_EQ(top.Size(), bottom.Size()) << "inputs sizes mismatch";
+  auto op = new LrnBackwardOp();
+  op->closure = {local_size, alpha, beta, k};
+  return NArray::ComputeOne({top, top_diff, bottom}, top.Size(), op);
 }
 
 }  // namespace minerva

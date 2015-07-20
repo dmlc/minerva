@@ -31,8 +31,8 @@ class Convolution {
   static ImageBatch PoolingForward(ImageBatch src, PoolingInfo info);
   static ImageBatch PoolingBackward(ImageBatch diff, ImageBatch top, ImageBatch bottom, PoolingInfo info);
 
-  static ImageBatch LRNForward(ImageBatch src, ImageBatch scale, int local_size, float alpha, float beta);
-  static ImageBatch LRNBackward(ImageBatch bottom_data, ImageBatch top_data, ImageBatch scale, ImageBatch top_diff , int local_size, float alpha, float beta);
+  static ImageBatch LrnForward(ImageBatch src, int local_size, float alpha, float beta, float k);
+  static ImageBatch LrnBackward(ImageBatch top, ImageBatch top_diff, ImageBatch bottom, int local_size, float alpha, float beta, float k);
 
 };
 

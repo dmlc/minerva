@@ -92,40 +92,110 @@ void Arithmetic(const DataList& inputs, const DataList& outputs, ArithmeticClosu
   }
 }
 
-void LRNForward(const DataList& inputs, const DataList& outputs, LRNForwardClosure& closure, const Context & context) {
-  CHECK_EQ(inputs.size(), 2) << "(LRNForward) #inputs is wrong!";
-  CHECK_EQ(outputs.size(), 1) << "(LRNForward) #outputs is wrong!";
-  float* bottom_data = inputs[0].data_;
-  float* scale_data = inputs[1].data_;
-  float* res_data = outputs[0].data_;
+void LrnForward(DataList const& inputs, DataList const& outputs, LrnForwardClosure& closure, Context const& context) {
+  CHECK_EQ(inputs.size(), 1) << "(LrnForward) #inputs is wrong!";
+  CHECK_EQ(outputs.size(), 1) << "(LrnForward) #outputs is wrong!";
+  auto&& bottom = inputs[0];
+  auto&& top = outputs[0];
   int local_size = closure.local_size;
   float alpha = closure.alpha;
   float beta = closure.beta;
-  int num_img = closure.data_shape[3];
-  int channel = closure.data_shape[2];
-  int weight = closure.data_shape[1];
-  int height = closure.data_shape[0];
-  CudaPerformLRNForward(bottom_data, scale_data, res_data, local_size, alpha, beta, num_img, channel, weight, height, context.stream);
+  float k = closure.k;
+  int num_images = bottom.size_[3];
+  int channels = bottom.size_[2];
+  int height = bottom.size_[1];
+  int width = bottom.size_[0];
+
+  cudnnTensorDescriptor_t bottom_desc;
+  cudnnLRNDescriptor_t norm_desc;
+  cudnnTensorDescriptor_t top_desc;
+
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&bottom_desc));
+  CUDNN_CALL(cudnnCreateLRNDescriptor(&norm_desc));
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&top_desc));
+
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(bottom_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, channels, height, width));
+  CUDNN_CALL(cudnnSetLRNDescriptor(norm_desc, local_size, alpha, beta, k));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(top_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, channels, height, width));
+
+  float one = 1;
+  float zero = 0;
+  CUDNN_CALL(cudnnLRNCrossChannelForward(
+    context.cudnn_handle
+  , norm_desc
+  , CUDNN_LRN_CROSS_CHANNEL_DIM1
+  , &one
+  , bottom_desc
+  , bottom.data_
+  , &zero
+  , top_desc
+  , top.data_));
+  CUDA_CALL(cudaStreamSynchronize(context.stream));  // Synchronize before destruction
+
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(top_desc));
+  CUDNN_CALL(cudnnDestroyLRNDescriptor(norm_desc));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(bottom_desc));
 }
 
-void LRNBackward(const DataList& inputs, const DataList& outputs, LRNBackwardClosure& closure, const Context & context) {
-  CHECK_EQ(inputs.size(), 4) << "(LRNBackward) #inputs is wrong!";
-  CHECK_EQ(outputs.size(), 1) << "(LRNBackward) #outputs is wrong!";
-  float* bottom_data = inputs[0].data_;
-  float* top_data = inputs[1].data_;
-  float* scale_data = inputs[2].data_;
-  float* top_diff = inputs[3].data_;
-  float* bottom_diff = outputs[0].data_;
+void LrnBackward(DataList const& inputs, DataList const& outputs, LrnBackwardClosure& closure, Context const& context) {
+  CHECK_EQ(inputs.size(), 3) << "(LrnBackward) #inputs is wrong!";
+  CHECK_EQ(outputs.size(), 1) << "(LrnBackward) #outputs is wrong!";
+  auto&& top = inputs[0];
+  auto&& top_diff = inputs[1];
+  auto&& bottom = inputs[2];
+  auto&& bottom_diff = outputs[0];
+
   int local_size = closure.local_size;
   float alpha = closure.alpha;
   float beta = closure.beta;
-  int num_img = closure.data_shape[3];
-  int channel = closure.data_shape[2];
-  int weight = closure.data_shape[1];
-  int height = closure.data_shape[0];
-  CudaPerformLRNBackward(bottom_data, top_data, scale_data, top_diff, bottom_diff, local_size, alpha, beta, num_img, channel, weight, height, context.stream);
-}
+  float k = closure.k;
+  int num_images = top.size_[3];
+  int channels = top.size_[2];
+  int height = top.size_[1];
+  int width = top.size_[0];
 
+  cudnnTensorDescriptor_t top_desc;
+  cudnnTensorDescriptor_t top_diff_desc;
+  cudnnTensorDescriptor_t bottom_desc;
+  cudnnLRNDescriptor_t norm_desc;
+  cudnnTensorDescriptor_t bottom_diff_desc;
+
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&top_desc));
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&top_diff_desc));
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&bottom_desc));
+  CUDNN_CALL(cudnnCreateLRNDescriptor(&norm_desc));
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&bottom_diff_desc));
+
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(top_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, channels, height, width));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(top_diff_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, channels, height, width));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(bottom_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, channels, height, width));
+  CUDNN_CALL(cudnnSetLRNDescriptor(norm_desc, local_size, alpha, beta, k));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(bottom_diff_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, num_images, channels, height, width));
+
+  float one = 1;
+  float zero = 0;
+  CUDNN_CALL(cudnnLRNCrossChannelBackward(
+    context.cudnn_handle
+  , norm_desc
+  , CUDNN_LRN_CROSS_CHANNEL_DIM1
+  , &one
+  , top_desc
+  , top.data_
+  , top_diff_desc
+  , top_diff.data_
+  , bottom_desc
+  , bottom.data_
+  , &zero
+  , bottom_diff_desc
+  , bottom_diff.data_));
+  CUDA_CALL(cudaStreamSynchronize(context.stream));  // Synchronize before destruction
+
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(bottom_diff_desc));
+  CUDNN_CALL(cudnnDestroyLRNDescriptor(norm_desc));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(bottom_desc));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(top_diff_desc));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(top_desc));
+}
 
 void Concat(const DataList& inputs, const DataList& outputs, ConcatClosure& closure, const Context & context) {
   CHECK_GT(inputs.size(), 1) << "(Concat) #inputs is wrong!";

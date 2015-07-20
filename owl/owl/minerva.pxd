@@ -46,9 +46,9 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva::Convolution':
       NArray, NArray, NArray, ActivationAlgorithm) except +
   NArray PoolingForward(NArray, PoolingInfo) except +
   NArray PoolingBackward(NArray, NArray, NArray, PoolingInfo) except +
-  NArray LRNForward(NArray, NArray, int, float, float) except +
-  NArray LRNBackward(
-      NArray, NArray, NArray, NArray, int, float, float) except +
+  NArray LrnForward(NArray, int, float, float, float) except +
+  NArray LrnBackward(
+      NArray, NArray, NArray, int, float, float, float) except +
 
 cdef extern from '../minerva/minerva.h' namespace 'minerva':
   NArray NArrayAddNArray 'operator+'(const NArray&, const NArray&) except +

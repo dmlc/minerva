@@ -384,33 +384,33 @@ cdef class NArray(object):
                 ,   deref(algo._d)))
 
     @staticmethod
-    def lrn_forward(NArray src, NArray scale, int local_size, float a, float b):
+    def lrn_forward(NArray src, int local_size, float a, float b, float k):
         return _wrap_cpp_narray(
-                m.LRNForward(
+                m.LrnForward(
                     deref(src._d)
-                ,   deref(scale._d)
                 ,   local_size
                 ,   a
-                ,   b))
+                ,   b
+                ,   k))
 
     @staticmethod
     def lrn_backward(
-            NArray bottom_data
-        ,   NArray top_data
-        ,   NArray scale
+            NArray top
         ,   NArray top_diff
+        ,   NArray bottom
         ,   int local_size
         ,   float a
-        ,   float b):
+        ,   float b
+        ,   float k):
         return _wrap_cpp_narray(
-                m.LRNBackward(
-                    deref(bottom_data._d)
-                ,   deref(top_data._d)
-                ,   deref(scale._d)
+                m.LrnBackward(
+                    deref(top._d)
                 ,   deref(top_diff._d)
+                ,   deref(bottom._d)
                 ,   local_size
                 ,   a
-                ,   b))
+                ,   b
+                ,   k))
 
     def sum(self, rhs):
         cdef int i
