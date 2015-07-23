@@ -213,6 +213,9 @@ void GpuDevice::DoExecute(const DataList& in, const DataList& out, PhysicalOp& o
   ctx.stream = impl_->stream[thrid];
   ctx.cublas_handle = impl_->cublas_handle[thrid];
   ctx.cudnn_handle = impl_->cudnn_handle[thrid];
+  ctx.temporary_space_allocator = [this](size_t s) {
+    return data_store_->GetTemporarySpace(s);
+  };
   op.compute_fn->Execute(in, out, ctx);
   CUDA_CALL_MSG(op.compute_fn->Name(), cudaStreamSynchronize(impl_->stream[thrid]));
 }
@@ -253,6 +256,9 @@ void CpuDevice::DoCopyRemoteData(float* dst, float* src, size_t size, int) {
 void CpuDevice::DoExecute(const DataList& in, const DataList& out, PhysicalOp& op, int) {
   Context ctx;
   ctx.impl_type = ImplType::kBasic;
+  ctx.temporary_space_allocator = [this](size_t s) {
+    return data_store_->GetTemporarySpace(s);
+  };
   op.compute_fn->Execute(in, out, ctx);
 }
 

@@ -1,5 +1,7 @@
 #pragma once
 #include <iostream>
+#include <functional>
+#include "device/data_store.h"
 #ifdef HAS_CUDA
 #include <cuda_runtime.h>
 #include <cublas.h>
@@ -26,12 +28,15 @@ inline std::ostream& operator<<(std::ostream& os, ImplType t) {
 }
 
 struct Context {
+  using TemporarySpaceAllocator =
+    std::function<std::unique_ptr<TemporarySpaceHolder>(size_t)>;
   ImplType impl_type;
 #ifdef HAS_CUDA
   cudaStream_t stream;
   cublasHandle_t cublas_handle;
   cudnnHandle_t cudnn_handle;
 #endif
+  TemporarySpaceAllocator temporary_space_allocator;
   virtual ~Context() = default;
 };
 

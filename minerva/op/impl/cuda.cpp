@@ -554,15 +554,14 @@ void ConvForward(const DataList& inputs, const DataList& outputs, ConvForwardClo
     algorithm = ForwardAlgorithmToCuda(closure.algo);
   }
   size_t workspace_size;
-  void* workspace;
   CUDNN_CALL(cudnnGetConvolutionForwardWorkspaceSize(context.cudnn_handle, bottom_desc, filter_desc, conv_desc, top_desc, algorithm, &workspace_size));
   cout << "ALGO is " << algorithm << " workspace: " << workspace_size / 1024 / 1024 << " MB" << endl;
-  CUDA_CALL(cudaMalloc(&workspace, workspace_size));
+  auto&& temporary_space = context.temporary_space_allocator(workspace_size);
+  void* workspace = temporary_space->ptr();
   CUDNN_CALL(cudnnConvolutionForward(context.cudnn_handle, &one, bottom_desc, bottom.data_, filter_desc, filter.data_, conv_desc, algorithm, workspace, workspace_size, &zero, top_desc, top.data_));
   CUDNN_CALL(cudnnAddTensor(context.cudnn_handle, CUDNN_ADD_SAME_C, &one, bias_desc, bias.data_, &one, top_desc, top.data_));
   CUDA_CALL(cudaStreamSynchronize(context.stream));  // Synchronize before destruction
 
-  CUDA_CALL(cudaFree(workspace));
   CUDNN_CALL(cudnnDestroyTensorDescriptor(top_desc));
   CUDNN_CALL(cudnnDestroyConvolutionDescriptor(conv_desc));
   CUDNN_CALL(cudnnDestroyTensorDescriptor(bias_desc));
@@ -608,13 +607,12 @@ void ConvBackwardData(const DataList& inputs, const DataList& outputs, ConvBackw
     algorithm = BackwardDataAlgorithmToCuda(closure.algo);
   }
   size_t workspace_size;
-  void* workspace;
   CUDNN_CALL(cudnnGetConvolutionBackwardDataWorkspaceSize(context.cudnn_handle, filter_desc, top_diff_desc, conv_desc, bottom_diff_desc, algorithm, &workspace_size));
-  CUDA_CALL(cudaMalloc(&workspace, workspace_size));
+  auto&& temporary_space = context.temporary_space_allocator(workspace_size);
+  void* workspace = temporary_space->ptr();
   CUDNN_CALL(cudnnConvolutionBackwardData_v3(context.cudnn_handle, &one, filter_desc, filter.data_, top_diff_desc, top_diff.data_, conv_desc, algorithm, workspace, workspace_size, &zero, bottom_diff_desc, bottom_diff.data_));
   CUDA_CALL(cudaStreamSynchronize(context.stream));  // Synchronize before destruction
 
-  CUDA_CALL(cudaFree(workspace));
   CUDNN_CALL(cudnnDestroyTensorDescriptor(top_diff_desc));
   CUDNN_CALL(cudnnDestroyConvolutionDescriptor(conv_desc));
   CUDNN_CALL(cudnnDestroyFilterDescriptor(filter_desc));
@@ -659,13 +657,12 @@ void ConvBackwardFilter(const DataList& inputs, const DataList& outputs, ConvBac
     algorithm = BackwardFilterAlgorithmToCuda(closure.algo);
   }
   size_t workspace_size;
-  void* workspace;
   CUDNN_CALL(cudnnGetConvolutionBackwardFilterWorkspaceSize(context.cudnn_handle, bottom_desc, top_diff_desc, conv_desc, filter_diff_desc, algorithm, &workspace_size));
-  CUDA_CALL(cudaMalloc(&workspace, workspace_size));
+  auto&& temporary_space = context.temporary_space_allocator(workspace_size);
+  void* workspace = temporary_space->ptr();
   CUDNN_CALL(cudnnConvolutionBackwardFilter_v3(context.cudnn_handle, &one, bottom_desc, bottom.data_, top_diff_desc, top_diff.data_, conv_desc, algorithm, workspace, workspace_size, &zero, filter_diff_desc, filter_diff.data_));
   CUDA_CALL(cudaStreamSynchronize(context.stream));  // Synchronize before destruction
 
-  CUDA_CALL(cudaFree(workspace));
   CUDNN_CALL(cudnnDestroyTensorDescriptor(top_diff_desc));
   CUDNN_CALL(cudnnDestroyConvolutionDescriptor(conv_desc));
   CUDNN_CALL(cudnnDestroyFilterDescriptor(filter_diff_desc));

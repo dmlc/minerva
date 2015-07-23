@@ -9,6 +9,12 @@ TemporarySpaceHolder::TemporarySpaceHolder(void* ptr, size_t size,
   , deallocator_{deallocator} {
 }
 
+TemporarySpaceHolder::TemporarySpaceHolder(std::nullptr_t)
+  : ptr_{nullptr}
+  , size_{0}
+  , deallocator_{[]() {}} {
+}
+
 TemporarySpaceHolder::~TemporarySpaceHolder() {
   deallocator_();
 }

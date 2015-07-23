@@ -58,24 +58,28 @@ size_t DataStore::GetTotalBytes() const {
 
 std::unique_ptr<TemporarySpaceHolder>
 DataStore::GetTemporarySpace(size_t length) {
-  lock_guard<mutex> lck(access_mutex_);
-  uint64_t id;
-  // allocate new id
-  if (temporary_space_.size() == 0) {
-    id = 0;
+  if (length == 0) {
+    return common::MakeUnique<TemporarySpaceHolder>(nullptr);
   } else {
-    id = temporary_space_.rbegin()->first + 1;
+    lock_guard<mutex> lck(access_mutex_);
+    uint64_t id;
+    // allocate new id
+    if (temporary_space_.size() == 0) {
+      id = 0;
+    } else {
+      id = temporary_space_.rbegin()->first + 1;
+    }
+    DLOG(INFO) << "create temporary data #" << id << " length " << length;
+    auto&& it = temporary_space_.emplace(id, DataState());
+    auto&& ds = it.first->second;
+    ds.length = length;
+    ds.ptr = allocator_(length);
+    auto deallocator = [this, id]() {
+      FreeTemporarySpace(id);
+    };
+    return
+      common::MakeUnique<TemporarySpaceHolder>(ds.ptr, ds.length, deallocator);
   }
-  DLOG(INFO) << "create temporary data #" << id << " length " << length;
-  auto&& it = temporary_space_.emplace(id, DataState());
-  auto&& ds = it.first->second;
-  ds.length = length;
-  ds.ptr = allocator_(length);
-  auto deallocator = [this, id]() {
-    FreeTemporarySpace(id);
-  };
-  return
-    common::MakeUnique<TemporarySpaceHolder>(ds.ptr, ds.length, deallocator);
 }
 
 void DataStore::FreeTemporarySpace(uint64_t id) {
