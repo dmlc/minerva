@@ -22,7 +22,8 @@ float* PooledDataStore::CreateData(uint64_t id, size_t length) {
   auto it = data_states_.emplace(id, DataState());
   CHECK(it.second) << "data already existed";
   auto&& ds = it.first->second;
-  DoCreateData(&ds, length);
+  ds.length = length;
+  DoCreateData(&ds.ptr, length);
   return static_cast<float*>(ds.ptr);
 }
 
@@ -44,22 +45,13 @@ PooledDataStore::GetTemporarySpace(size_t length) {
     return common::MakeUnique<TemporarySpaceHolder>(nullptr);
   } else {
     lock_guard<mutex> lck(access_mutex_);
-    uint64_t id;
-    // allocate new id
-    if (temporary_space_.size() == 0) {
-      id = 0;
-    } else {
-      id = temporary_space_.rbegin()->first + 1;
-    }
-    DLOG(INFO) << "create temporary data #" << id << " length " << length;
-    auto&& it = temporary_space_.emplace(id, DataState{});
-    auto&& ds = it.first->second;
-    DoCreateData(&ds, length);
-    auto deallocator = [this, id]() {
-      FreeTemporarySpace(id);
+    DLOG(INFO) << "create temporary data of length " << length;
+    float * ptr = nullptr;
+    DoCreateData((void**)&ptr, length);
+    auto deletor = [this, length, ptr]() {
+      this->FreeTemporarySpace(ptr, length);
     };
-    return
-      common::MakeUnique<TemporarySpaceHolder>(ds.ptr, ds.length, deallocator);
+    return std::unique_ptr<TemporarySpaceHolder>(new TemporarySpaceHolder(ptr, length, deletor));
   }
 }
 
@@ -74,29 +66,29 @@ void PooledDataStore::ReleaseFreeSpace() {
   free_space_.clear();
 }
 
-void PooledDataStore::DoCreateData(DataState* ds, size_t length) {
-  ds->length = length;
+void PooledDataStore::DoCreateData(void** ptr, size_t length) {
   auto&& find_free_space = free_space_.find(length);
   if (find_free_space != free_space_.end()) {
     // reuse
-    ds->ptr = find_free_space->second.front();
+    *ptr = find_free_space->second.front();
     find_free_space->second.pop();
     if (find_free_space->second.size() == 0) {
       free_space_.erase(find_free_space);
     }
   } else {
-    ds->ptr = allocator_(length);
     total_ += length;
     if (threshold_ < total_) {
       ReleaseFreeSpace();
     }
+    CHECK_GE(threshold_,  total_) << "not enough space";
+    *ptr = allocator_(length);
+    //cout << "Allocate size=" << length << " total=" << total_ << endl;
   }
 }
 
-void PooledDataStore::FreeTemporarySpace(uint64_t id) {
-  auto&& ds = temporary_space_.at(id);
-  free_space_[ds.length].push(ds.ptr);
-  CHECK_EQ(temporary_space_.erase(id), 1);
+void PooledDataStore::FreeTemporarySpace(void* ptr, size_t length) {
+  lock_guard<mutex> lck(access_mutex_);
+  free_space_[length].push(ptr);
 }
 
 }  // namespace minerva

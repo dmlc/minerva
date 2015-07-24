@@ -12,7 +12,6 @@ DataStore::~DataStore() {
   for (auto& i : data_states_) {
     deallocator_(i.second.ptr);
   }
-  CHECK_EQ(temporary_space_.size(), 0) << "temporary space not empty on exit";
 }
 
 float* DataStore::CreateData(uint64_t id, size_t length) {
@@ -50,43 +49,28 @@ size_t DataStore::GetTotalBytes() const {
   for (auto&& it : data_states_) {
     total_bytes += it.second.length;
   }
-  for(auto&& it : temporary_space_) {
-    total_bytes += it.second.length;
-  }
+  // XXX temporary space is not counted
   return total_bytes;
 }
 
 std::unique_ptr<TemporarySpaceHolder>
 DataStore::GetTemporarySpace(size_t length) {
+
   if (length == 0) {
     return common::MakeUnique<TemporarySpaceHolder>(nullptr);
   } else {
     lock_guard<mutex> lck(access_mutex_);
-    uint64_t id;
-    // allocate new id
-    if (temporary_space_.size() == 0) {
-      id = 0;
-    } else {
-      id = temporary_space_.rbegin()->first + 1;
-    }
-    DLOG(INFO) << "create temporary data #" << id << " length " << length;
-    auto&& it = temporary_space_.emplace(id, DataState());
-    auto&& ds = it.first->second;
-    ds.length = length;
-    ds.ptr = allocator_(length);
-    auto deallocator = [this, id]() {
-      FreeTemporarySpace(id);
+    DLOG(INFO) << "create temporary data of length " << length;
+    float * ptr = static_cast<float*>(allocator_(length));
+    auto deletor = [this, length, ptr]() {
+      this->FreeTemporarySpace(ptr, length);
     };
-    return
-      common::MakeUnique<TemporarySpaceHolder>(ds.ptr, ds.length, deallocator);
+    return std::unique_ptr<TemporarySpaceHolder>(new TemporarySpaceHolder(ptr, length, deletor));
   }
 }
 
-void DataStore::FreeTemporarySpace(uint64_t id) {
-  lock_guard<mutex> lck(access_mutex_);
-  auto&& ds = temporary_space_.at(id);
-  deallocator_(ds.ptr);
-  CHECK_EQ(temporary_space_.erase(id), 1);
+void DataStore::FreeTemporarySpace(void* ptr, size_t length) {
+  deallocator_(ptr);
 }
 
 }  // namespace minerva

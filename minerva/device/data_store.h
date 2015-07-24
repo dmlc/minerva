@@ -30,10 +30,9 @@ class DataStore {
   };
   mutable std::mutex access_mutex_;
   std::unordered_map<uint64_t, DataState> data_states_;
-  std::map<uint64_t, DataState> temporary_space_;
   std::function<void*(size_t)> allocator_;
   std::function<void(void*)> deallocator_;
-  virtual void FreeTemporarySpace(uint64_t);
+  virtual void FreeTemporarySpace(void*, size_t);
 };
 
 }  // namespace minerva

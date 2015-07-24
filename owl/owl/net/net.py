@@ -687,7 +687,7 @@ class ConvConnection(WeightedComputeUnit):
                     algo = prof['algorithm']
                 if os.environ.get('USE_FFT'):
                     if prof['algorithm'].is_same(fft_algo) and prof['time'] > 0:
-                        return ff_algo
+                        return fft_algo
             return algo
 
         ff_algo_profiles = self.convolver.ff_algo_profile(self.in_shape, self.wshape)

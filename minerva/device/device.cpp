@@ -22,7 +22,7 @@
 #include <cublas_v2.h>
 #endif
 
-#define DEFAULT_POOL_SIZE ((size_t) 5.8 * 1024 * 1024 * 1024)
+#define DEFAULT_POOL_SIZE ((size_t) 8.8 * 1024 * 1024 * 1024)
 DEFINE_bool(no_execute, false, "Disable the actual computation (for performance debuggin)");
 
 using namespace std;
@@ -176,7 +176,10 @@ GpuDevice::GpuDevice(uint64_t device_id, DeviceListener* l, int gpu_id) : Thread
     impl_->ActivateDevice();
     CUDA_CALL(cudaFree(ptr));
   };
-  data_store_ = common::MakeUnique<PooledDataStore>(DEFAULT_POOL_SIZE, allocator, deallocator);
+  // get total memory size
+  size_t free_byte, total_byte;
+  CUDA_CALL(cudaMemGetInfo(&free_byte, &total_byte));
+  data_store_ = common::MakeUnique<PooledDataStore>(0.95 * free_byte, allocator, deallocator);
 }
 
 GpuDevice::~GpuDevice() {

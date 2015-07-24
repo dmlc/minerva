@@ -19,8 +19,8 @@ class PooledDataStore final : public DataStore {
   size_t total_ = 0;
   std::unordered_map<size_t, std::queue<void*>> free_space_;
   void ReleaseFreeSpace();
-  void DoCreateData(DataState*, size_t);
-  virtual void FreeTemporarySpace(uint64_t) override;
+  void DoCreateData(void**, size_t);
+  virtual void FreeTemporarySpace(void*, size_t) override;
 };
 
 }  // namespace minerva
