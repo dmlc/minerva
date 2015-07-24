@@ -489,15 +489,16 @@ class LRNUnit(ComputeUnitSimple):
     '''
     def __init__(self, params):
         super(LRNUnit, self).__init__(params)
-        self.lrner = co.Lrner(params.lrn_param.local_size, params.lrn_param.alpha, params.lrn_param.beta)
-        self.scale = None
+        self.lrner = co.Lrner(
+                params.lrn_param.local_size,
+                params.lrn_param.alpha,
+                params.lrn_param.beta)
     def ff(self, x, phase):
         self.ff_x = x
-        self.scale = owl.zeros(x.shape)
-        self.ff_y = self.lrner.ff(x, self.scale)
+        self.ff_y = self.lrner.ff(x)
         return self.ff_y
     def bp(self, y):
-        return self.lrner.bp(self.ff_x, self.ff_y, self.scale, y)
+        return self.lrner.bp(self.ff_x, self.ff_y, y)
     def __str__(self):
         return 'lrn'
 
@@ -650,42 +651,70 @@ class ConvConnection(WeightedComputeUnit):
             - ``Co``: number of output channels
         '''
         self.in_shape = from_btm[self.btm_names[0]]['out_shape'][:]
-        to_top[self.top_names[0]] = dict()
-        to_top[self.top_names[0]]['out_shape'] = from_btm[self.btm_names[0]]['out_shape'][:]
-        to_top[self.top_names[0]]['out_shape'][0] = (to_top[self.top_names[0]]['out_shape'][0] + 2 * self.conv_params.pad - self.conv_params.kernel_size) / self.conv_params.stride + 1
-        to_top[self.top_names[0]]['out_shape'][1] = (to_top[self.top_names[0]]['out_shape'][1] + 2 * self.conv_params.pad - self.conv_params.kernel_size) / self.conv_params.stride + 1
-        to_top[self.top_names[0]]['out_shape'][2] = self.num_output
-        self.out_shape = to_top[self.top_names[0]]['out_shape'][:]
+        out_width = (self.in_shape[0] + 2 * self.conv_params.pad - self.conv_params.kernel_size) / self.conv_params.stride + 1
+        out_height = (self.in_shape[1] + 2 * self.conv_params.pad - self.conv_params.kernel_size) / self.conv_params.stride + 1
+        self.out_shape = [out_width,
+                          out_height,
+                          self.num_output,
+                          self.in_shape[3]]
         self.wshape = [self.conv_params.kernel_size,
                        self.conv_params.kernel_size,
                        self.in_shape[2],
                        self.num_output]
         self.bshape = [self.out_shape[2]]
+        print 'input:%s\toutput:%s\tfilter:%s\tbias:%s' % (
+                self.in_shape, self.out_shape, self.wshape, self.bshape)
     
-        # do ff algorithm profiling
-        algo_profiles = self.convolver.ff_algo_profile(self.in_shape, self.wshape)
-        ff_algo = co.conv_forward_algo.auto
-        min_time = float("inf")
-        for prof in algo_profiles:
-            print 'algo:', co.conv_forward_algo.tostr(prof['algorithm']), 'time:', prof['time']
-            if prof['time'] > 0 and prof['time'] < min_time:
-                min_time = prof['time']
-                ff_algo = prof['algorithm']
-            if os.environ.get('USE_FFT'):
-                if prof['algorithm'].is_same(co.conv_forward_algo.fft) and prof['time'] > 0:
-                  ff_algo = co.conv_forward_algo.fft
-                  break
-        if os.environ.get('USE_AUTO'):
-            ff_algo = co.conv_forward_algo.auto
-        print 'Set ff algo to be ', co.conv_forward_algo.tostr(ff_algo)
-        self.convolver.set_ff_algo(ff_algo)
-        
+        to_top[self.top_names[0]] = dict()
+        to_top[self.top_names[0]]['out_shape'] = self.out_shape
         to_top[self.top_names[0]]['stride_on_ori'] = from_btm[self.btm_names[0]]['stride_on_ori'] * self.conv_params.stride
         to_top[self.top_names[0]]['rec_on_ori'] = from_btm[self.btm_names[0]]['rec_on_ori'] + (self.conv_params.kernel_size - 1) * from_btm[self.btm_names[0]]['stride_on_ori']
         to_top[self.top_names[0]]['start_on_ori'] = from_btm[self.btm_names[0]]['start_on_ori'] - self.conv_params.pad * from_btm[self.btm_names[0]]['stride_on_ori']
         self.stride_on_ori = to_top[self.top_names[0]]['stride_on_ori']
         self.start_on_ori = to_top[self.top_names[0]]['start_on_ori']
         self.rec_on_ori = to_top[self.top_names[0]]['rec_on_ori']
+
+        # do algorithm profiling
+        def find_algo_from_profiles(profiles, fft_algo, auto_algo):
+            if os.environ.get('USE_AUTO'):
+                return auto_algo
+            min_time = float("inf")
+            algo = None
+            for prof in profiles:
+                #print 'algo:', co.conv_forward_algo.tostr(prof['algorithm']), 'time:', prof['time']
+                if prof['time'] > 0 and prof['time'] < min_time:
+                    min_time = prof['time']
+                    algo = prof['algorithm']
+                if os.environ.get('USE_FFT'):
+                    if prof['algorithm'].is_same(fft_algo) and prof['time'] > 0:
+                        return ff_algo
+            return algo
+
+        ff_algo_profiles = self.convolver.ff_algo_profile(self.in_shape, self.wshape)
+        bp_algo_profiles = self.convolver.bp_algo_profile(self.out_shape, self.in_shape, self.wshape)
+        wgrad_algo_profiles = self.convolver.weight_grad_algo_profile(self.out_shape, self.in_shape, self.wshape)
+
+        ff_algo = find_algo_from_profiles(
+                ff_algo_profiles,
+                co.conv_forward_algo.fft,
+                co.conv_forward_algo.auto)
+        bp_algo = find_algo_from_profiles(
+                bp_algo_profiles,
+                co.conv_backward_data_algo.fft,
+                co.conv_backward_data_algo.auto)
+        wgrad_algo = find_algo_from_profiles(
+                wgrad_algo_profiles,
+                co.conv_backward_filter_algo.fft,
+                co.conv_backward_filter_algo.auto)
+
+        print 'Choose ff_algo=%s\tbp_algo=%s\twgrad_algo=%s' % (
+                co.conv_forward_algo.tostr(ff_algo),
+                co.conv_backward_data_algo.tostr(bp_algo),
+                co.conv_backward_filter_algo.tostr(wgrad_algo))
+        
+        self.convolver.set_ff_algo(ff_algo)
+        self.convolver.set_bp_algo(bp_algo)
+        self.convolver.set_weight_grad_algo(wgrad_algo)
 
     def ff(self, act, phase):
         ''' Feed-forward of convolution

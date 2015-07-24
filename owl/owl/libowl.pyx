@@ -642,6 +642,18 @@ class _ConvBackwardDataAlgorithms(object):
         else:
             raise TypeError('invalid convolution backward data algorithm')
 
+    def tostr(self, a):
+        if self._algo0.is_same(a):
+            return "algo0"
+        elif self._algo1.is_same(a):
+            return "algo1"
+        elif self._fft.is_same(a):
+            return "fft"
+        elif self._auto.is_same(a):
+            return "auto"
+        else:
+            raise TypeError('invalid convolution forward algorithm')
+
     @property
     def algo0(self):
         return self._algo0
@@ -695,6 +707,18 @@ class _ConvBackwardFilterAlgorithms(object):
             return self._auto
         else:
             raise TypeError('invalid convolution backward filter algorithm')
+
+    def tostr(self, a):
+        if self._algo0.is_same(a):
+            return "algo0"
+        elif self._algo1.is_same(a):
+            return "algo1"
+        elif self._fft.is_same(a):
+            return "fft"
+        elif self._auto.is_same(a):
+            return "auto"
+        else:
+            raise TypeError('invalid convolution forward algorithm')
 
     @property
     def algo0(self):

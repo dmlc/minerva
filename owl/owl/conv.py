@@ -40,7 +40,7 @@ class Lrner:
     :ivar float alpha: lrn parameters
     :ivar float beta: lrn parameters
     """
-    def __init__(self, local_size, alpha, beta):
+    def __init__(self, local_size, alpha, beta, k = 1.0):
         """ Constructor for Convolver class
 
         :param int local_size: the size of lrn across channel
@@ -50,29 +50,32 @@ class Lrner:
         self.local_size = local_size
         self.alpha = alpha
         self.beta = beta
+        self.k = k
 
-    def ff(self, x, scale):
+    def ff(self, x):
         """ Feed-forward local response norm
 
         :param owl.NArray x: input of the lrn
-        :param owl.NArray scale: auxiliary matrix to help computing
         :return: result ndarray after forward lrn
         :rtype: owl.NArray
         """
         #print np.reshape(x.to_numpy(), np.prod(np.shape(x.to_numpy()))).tolist()[0:100]
-        return _owl.NArray.lrn_forward(x, scale, self.local_size, self.alpha, self.beta)
+        return _owl.NArray.lrn_forward(
+                x,
+                self.local_size, self.alpha, self.beta, self.k)
 
-    def bp(self, bottom_data, top_data, scale, top_diff):
+    def bp(self, bottom_data, top_data, top_diff):
         """ Backward local response norm
 
         :param owl.NArray bottom_data: activation before lrn
         :param owl.NArray top_data: activation after lrn
-        :param owl.NArray scale: auxiliary matrix to help computing
         :param owl.NArray top_diff: error derivative
         :return: result ndarray after backward lrn
         :rtype: owl.NArray
         """
-        return _owl.NArray.lrn_backward(bottom_data, top_data, scale, top_diff, self.local_size, self.alpha, self.beta)
+        return _owl.NArray.lrn_backward(
+                bottom_data, top_data, top_diff,
+                self.local_size, self.alpha, self.beta, self.k)
 
 
 class Convolver:
@@ -93,6 +96,9 @@ class Convolver:
         ci.pad_width = pad_w
         ci.stride_vertical = stride_v
         ci.stride_horizontal = stride_h
+        ci.forward_algorithm = conv_forward_algo.auto
+        ci.backward_data_algorithm = conv_backward_data_algo.auto
+        ci.backward_filter_algorithm = conv_backward_filter_algo.auto
         self.param = ci
 
     def ff(self, x, w, b):
@@ -123,6 +129,13 @@ class Convolver:
         """
         return _owl.NArray.conv_backward_data(y, x, w, self.param)
 
+    def bp_algo_profile(self, output_shape, input_shape, filter_shape):
+        return _owl.NArray.conv_backward_data_find_algorithm(
+                output_shape,
+                input_shape,
+                filter_shape,
+                self.param);
+
     def set_bp_algo(self, algo):
         self.param.backward_data_algorithm = algo
 
@@ -136,6 +149,13 @@ class Convolver:
         :rtype: owl.NArray
         """
         return _owl.NArray.conv_backward_filter(y, x, w, self.param)
+
+    def weight_grad_algo_profile(self, output_shape, input_shape, filter_shape):
+        return _owl.NArray.conv_backward_filter_find_algorithm(
+                output_shape,
+                input_shape,
+                filter_shape,
+                self.param);
 
     def set_weight_grad_algo(self, algo):
         self.param.backward_filter_algorithm = algo
