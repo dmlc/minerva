@@ -45,6 +45,21 @@ ExternalProject_Add(dmlc-core
 set(THIRD_LIBS ${THIRD_LIBS} ${THIRD_LIB_PATH}/libdmlc.a)
 add_dependencies(third-party dmlc-core)
 
+# mshadow
+set(MSHADOW_INSTALL_CMD
+  ${CMAKE_COMMAND} -E make_directory <INSTALL_DIR>/lib/ &&
+  ${CMAKE_COMMAND} -E make_directory <INSTALL_DIR>/include/ &&
+  ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/mshadow <INSTALL_DIR>/mshadow)
+ExternalProject_Add(mshadow
+  PREFIX ${THIRD_PREFIX}
+  GIT_REPOSITORY "https://github.com/dmlc/mshadow.git"
+  UPDATE_COMMAND ""
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ${MSHADOW_INSTALL_CMD}
+)
+add_dependencies(third-party mshadow)
+
 if(BUILD_TESTS)
   ExternalProject_Add(gtest
     SOURCE_DIR ${THIRD_SRC}/gtest-1.7.0
