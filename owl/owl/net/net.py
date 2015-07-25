@@ -820,6 +820,7 @@ class LMDBDataUnit(DataUnit):
         self.generator = None
         self.out = None
         self.multiview = False
+        self.num_gpu = num_gpu
 
     def compute_size(self, from_btm, to_top):
         self.out_shape = [self.params.transform_param.crop_size,
@@ -868,9 +869,9 @@ class LMDBDataUnit(DataUnit):
         for i in range (1, len(self.top_names)):
             to_top[self.top_names[i]] = labels[:,i - 1]
         '''
-        to_top[self.top_names[0]] = owl.zeros([self.crop_size, self.crop_size, 3, 256])
+        to_top[self.top_names[0]] = owl.zeros([self.crop_size, self.crop_size, 3, 256 / self.num_gpu])
         for i in range (1, len(self.top_names)):
-            to_top[self.top_names[i]] = np.ones(256)
+            to_top[self.top_names[i]] = np.ones(256 / self.num_gpu)
         self.out = to_top[self.top_names[0]]
 
     def __str__(self):
