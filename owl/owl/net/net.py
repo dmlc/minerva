@@ -405,13 +405,7 @@ class SoftmaxUnit(ComputeUnit):
     def forward(self, from_btm, to_top, phase):
         to_top[self.top_names[0]] = co.softmax(from_btm[self.btm_names[0]], co.soft_op.instance)
         self.ff_y = to_top[self.top_names[0]]
-        #turn label into matrix form
-        nplabel = np.zeros([self.ff_y.shape[1], self.ff_y.shape[0]], dtype=np.float32)
-        self.strlabel = from_btm[self.btm_names[1]]
-        
-        for i in range(len(self.strlabel)):
-            nplabel[i, self.strlabel[i]] = 1
-        self.y = owl.from_numpy(nplabel)
+        self.y = from_btm[self.btm_names[1]]
         self.out = self.ff_y
 
         
@@ -811,16 +805,18 @@ class LMDBDataUnit(DataUnit):
     
     def __init__(self, params, num_gpu):
         super(LMDBDataUnit, self).__init__(params, num_gpu)
-        #if params.include[0].phase == Phase.Value('TRAIN'):
-        #    self.dp = LMDBDataProvider(params.data_param, params.transform_param, num_gpu)
-        #else:
-        #    self.dp = LMDBDataProvider(params.data_param, params.transform_param, 1)
+        if params.include[0].phase == Phase.Value('TRAIN'):
+            self.dp = LMDBDataProvider(params.data_param, params.transform_param, num_gpu)
+        else:
+            self.dp = LMDBDataProvider(params.data_param, params.transform_param, 1)
         self.params = params
         self.crop_size = params.transform_param.crop_size
         self.generator = None
         self.out = None
         self.multiview = False
         self.num_gpu = num_gpu
+
+        self.save = None
 
     def compute_size(self, from_btm, to_top):
         self.out_shape = [self.params.transform_param.crop_size,
@@ -843,7 +839,11 @@ class LMDBDataUnit(DataUnit):
 
             LMDB data provider now support multi-view testing, if multiview == True, it will produce concequtive 10 batches of different views of the same original image     
         '''
-        '''
+        if self.save != None:
+            for k, v in self.save.iteritems():
+                to_top[k] = v
+            return
+
         if self.generator == None:
             if self.multiview == False:
                 self.generator = self.dp.get_mb(phase)
@@ -867,12 +867,22 @@ class LMDBDataUnit(DataUnit):
         to_top[self.top_names[0]] = owl.from_numpy(samples).reshape(
                 [self.crop_size, self.crop_size, 3, samples.shape[0]])
         for i in range (1, len(self.top_names)):
-            to_top[self.top_names[i]] = labels[:,i - 1]
+            lblvalue = labels[:,i - 1]
+            #turn label into matrix form
+            nplabel = np.zeros([samples.shape[0], 1000], dtype=np.float32) # the label size is hacked
+            for j in range(len(lblvalue)):
+                nplabel[j, lblvalue[j]] = 1
+            to_top[self.top_names[i]] = owl.from_numpy(nplabel)
+
         '''
         to_top[self.top_names[0]] = owl.zeros([self.crop_size, self.crop_size, 3, 256 / self.num_gpu])
         for i in range (1, len(self.top_names)):
             to_top[self.top_names[i]] = np.ones(256 / self.num_gpu)
+        '''
+
         self.out = to_top[self.top_names[0]]
+
+        self.save = to_top.copy()
 
     def __str__(self):
         return 'lmdb_data'
