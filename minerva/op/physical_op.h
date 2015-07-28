@@ -25,6 +25,13 @@ class RandnOp : public PhyDataGenFnWithClosure<RandnClosure> {
   }
 };
 
+class DataProviderOp : public PhyDataGenFnWithClosure<DataProviderClosure> {
+   public:
+       std::string Name() const {
+             return ":data provider loader";
+               }
+};
+
 class RandBernoulliOp : public PhyDataGenFnWithClosure<RandBernoulliClosure> {
  public:
   std::string Name() const {

@@ -18,6 +18,7 @@ void Reshape(const DataList&, const DataList&, ReshapeClosure&);
 void SyncWithPS(const DataList& inputs, const DataList& outputs, SyncWithPSClosure& closure);
 
 void ArrayLoader(const DataList&, ArrayLoaderClosure&);
+void DataProvider(const DataList&, DataProviderClosure&);
 void Randn(const DataList&, RandnClosure&);
 void RandBernoulli(const DataList&, RandBernoulliClosure&);
 void Fill(const DataList&, FillClosure&);
