@@ -78,6 +78,8 @@ set(GENERAL_FLAGS_DEBUG "${COMPILER_FLAGS} -O0 -g")
 set(GENERAL_FLAGS_RELEASE "${COMPILER_FLAGS} -O2 -mtune=native -mssse3")
 set(CMAKE_CXX_FLAGS_DEBUG "${GENERAL_FLAGS_DEBUG} -std=c++11")
 set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11 -DNDEBUG")
+#MSHADOW and CXXNET Flags
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fopenmp -DMSHADOW_STAND_ALONE=1 -DCXXNET_USE_OPENCV=1 -DCXXNET_USE_OPENCV_DECODER=1")
 
 ############################################# find packages
 set(CORE_DEPS "")
@@ -115,10 +117,16 @@ else(BUILD_CPU_ONLY)
   endif ()
 endif(BUILD_CPU_ONLY)
 
+############################################# opencv
+find_package(OpenCV REQUIRED)
+message(STATUS "Found OpenCV libraries: ${OpenCV_LIBRARIES}")
+include_directories(SYSTEM ${OPENCV_INCLUDE_PATH})
+
 ############################################# third party libraries
 add_subdirectory(third_party)
 include_directories(SYSTEM ${THIRD_INCLUDE_PATH})
 set(CORE_DEPS ${CORE_DEPS} ${THIRD_LIBS})
+
 ############################################# macros
 
 if(BUILD_WITH_PS)

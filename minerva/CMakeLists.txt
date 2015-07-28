@@ -16,7 +16,7 @@ else (CUDA_FOUND)
 endif (CUDA_FOUND)
 
 add_dependencies(minerva third-party)
-target_link_libraries(minerva ${CORE_DEPS})
+target_link_libraries(minerva ${CORE_DEPS} ${OpenCV_LIBRARIES})
 
 if (BUILD_WITH_BLAS)
   target_link_libraries(minerva ${CBLAS_LIBRARIES})

@@ -49,7 +49,7 @@ add_dependencies(third-party dmlc-core)
 set(MSHADOW_INSTALL_CMD
   ${CMAKE_COMMAND} -E make_directory <INSTALL_DIR>/lib/ &&
   ${CMAKE_COMMAND} -E make_directory <INSTALL_DIR>/include/ &&
-  ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/mshadow <INSTALL_DIR>/mshadow)
+  ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/mshadow <INSTALL_DIR>/include/mshadow)
 ExternalProject_Add(mshadow
   PREFIX ${THIRD_PREFIX}
   GIT_REPOSITORY "https://github.com/dmlc/mshadow.git"

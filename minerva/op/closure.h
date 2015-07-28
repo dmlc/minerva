@@ -2,6 +2,7 @@
 #include <memory>
 #include "common/scale.h"
 #include "narray/convolution_info.h"
+#include "io/data.h"
 
 namespace minerva {
 
@@ -25,6 +26,10 @@ enum class ReductionType {
 
 struct ArrayLoaderClosure {
   std::shared_ptr<float> data;
+};
+
+struct DataProviderClosure {
+    cxxnet::IIterator<cxxnet::DataBatch>* itr;
 };
 
 struct RandnClosure {
