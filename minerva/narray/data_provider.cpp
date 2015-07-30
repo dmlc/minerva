@@ -36,9 +36,9 @@ void DataProvider::Init() {
       continue;
 	  }
 	  if (!strcmp(name, "iter") && !strcmp(val, "end")) {
-		if (flag == 1) {
-		  data_itr = cxxnet::CreateIterator(itcfg);
-		}
+      if (flag == 1) {
+        data_itr = cxxnet::CreateIterator(itcfg);
+      }
 		  flag = 0; itcfg.clear();
 	  }
 	  if (flag == 0) {

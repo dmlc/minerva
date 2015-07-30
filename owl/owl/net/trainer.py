@@ -26,11 +26,10 @@ class NetTrainer:
                          speed. Normally, the higher value is given, the faster the training speed but the more memory is used
                          during execution.
     '''
-    def __init__(self, solver_file, snapshot = 0, num_gpu = 1, sync_freq=1):
+    def __init__(self, solver_file, snapshot = 0, num_gpu = 1):
         self.solver_file = solver_file
         self.snapshot = snapshot
         self.num_gpu = num_gpu
-        self.sync_freq = sync_freq
         self.gpu = [owl.create_gpu_device(i) for i in range(num_gpu)]
         owl.set_device(self.gpu[0])
 
@@ -137,12 +136,12 @@ class NetTrainer:
                 s.owl_net.units[wid].biasgrad = bgrad[upd_gpu][i]
                 s.owl_net.update(wid)
 
-            if iteridx % s.sync_freq == 0:
-                owl.wait_for_all()
-                thistime = time.time() - last
-                speed = s.owl_net.batch_size * s.sync_freq / thistime
-                print "Finished training %d minibatch (time: %s; speed: %s img/s)" % (iteridx, thistime, speed)
-                last = time.time()
+            # wait for evaluation to finish for each minibatch
+            owl.wait_for_all()
+            thistime = time.time() - last
+            speed = s.owl_net.batch_size / thistime
+            print "Finished training %d minibatch (time: %s; speed: %s img/s)" % (iteridx, thistime, speed)
+            last = time.time()
 
             wgrad = [[] for i in range(s.num_gpu)] # reset gradients
             bgrad = [[] for i in range(s.num_gpu)]
