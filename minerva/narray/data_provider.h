@@ -1,13 +1,8 @@
 #pragma once
-#include "narray/image_batch.h"
-#include <dmlc/io.h>
-#include <dmlc/logging.h>
-#include "minerva.h"
-#include "utils/config.h"
-
-using namespace std;
-using namespace cxxnet;
-using namespace dmlc;
+#include <vector>
+#include <utility>
+#include <cstring>
+#include <narray/narray.h>
 
 namespace cxxnet {
 class DataBatch;
@@ -19,9 +14,9 @@ namespace minerva {
 class DataProvider {
  public:
    cxxnet::IIterator<cxxnet::DataBatch>* data_itr;
-	 DataProvider(std::string dataconfig);
+	 DataProvider(const std::string &dataconfig);
 	 ~DataProvider();
-	 vector<NArray> GetNextValue();
+   std::vector<NArray> GetNextValue();
  private:
 	 void CreateDataIterator();
 	 void Init();

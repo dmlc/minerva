@@ -1,6 +1,10 @@
+#include <dmlc/io.h>
+#include <dmlc/logging.h>
+
 #include "narray/data_provider.h"
 #include "op/physical_op.h"
 #include "io/data.h"
+#include "utils/config.h"
 
 using namespace std;
 using namespace cxxnet;
@@ -68,10 +72,7 @@ void DataProvider::Init()
 	data_itr->BeforeFirst();
 }
 
-
-
-
-DataProvider::DataProvider(std::string dataconfig)
+DataProvider::DataProvider(const std::string &dataconfig)
 {
 	dmlc::Stream *pcfg = dmlc::Stream::Create(dataconfig.c_str(), "r");
 	{
@@ -88,7 +89,7 @@ DataProvider::DataProvider(std::string dataconfig)
 	Init();
 }
 
-DataProvider::~DataProvider(){}
+DataProvider::~DataProvider() {}
 
 vector<NArray> DataProvider::GetNextValue()
 {
