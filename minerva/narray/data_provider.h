@@ -22,7 +22,7 @@ class DataProvider {
 	 void Init();
 	 std::vector< std::pair< std::string, std::string> > cfg;
 	 Scale data_scale, label_scale;
-	 int batch_size_; 
+	 int channel, width, height, batch_size_; 
 };
 
 

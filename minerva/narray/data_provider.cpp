@@ -46,28 +46,24 @@ void DataProvider::Init()
 	  }
 	}
 	if (data_itr != NULL) {
-  	  for (size_t i = 0; i < defcfg.size(); ++ i) {
+    for (size_t i = 0; i < defcfg.size(); ++ i) {
 		  data_itr->SetParam(defcfg[i].first.c_str(), defcfg[i].second.c_str());
 		  if (!strcmp(defcfg[i].first.c_str(), "batch_size"))
-		  {
-			batch_size_ = atoi(defcfg[i].second.c_str());	
-			std::vector<int> label_scale_vec;
-			label_scale_vec.push_back(1);
-			label_scale_vec.push_back(batch_size_);
-		    label_scale = Scale(label_scale_vec);	
-		  }
-		  if (!strcmp(defcfg[i].first.c_str(), "input_shape")){
-			int height, width, channel;
-			sscanf(defcfg[i].second.c_str(), "%u,%u,%u", &channel, &width, &height);
-			std::vector<int> data_scale_vec;
-			data_scale_vec.push_back(height);
-			data_scale_vec.push_back(width);
-			data_scale_vec.push_back(channel);
-			data_scale_vec.push_back(batch_size_);
-			data_scale = Scale(data_scale_vec);
-		  }
+			  batch_size_ = atoi(defcfg[i].second.c_str());	
+		  if (!strcmp(defcfg[i].first.c_str(), "input_shape"))
+			  sscanf(defcfg[i].second.c_str(), "%u,%u,%u", &channel, &width, &height);
 	  }
-	  data_itr->Init();
+    std::vector<int> label_scale_vec;
+    label_scale_vec.push_back(1);
+    label_scale_vec.push_back(batch_size_);
+    label_scale = Scale(label_scale_vec);
+	  std::vector<int> data_scale_vec;
+    data_scale_vec.push_back(height);
+    data_scale_vec.push_back(width);
+    data_scale_vec.push_back(channel);
+    data_scale_vec.push_back(batch_size_);
+    data_scale = Scale(data_scale_vec);
+    data_itr->Init();
 	}
 	data_itr->BeforeFirst();
 }

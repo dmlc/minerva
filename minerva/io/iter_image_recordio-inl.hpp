@@ -103,13 +103,18 @@ class ImageRecordIOParser {
     #pragma omp parallel
     {
       maxthread = std::max(omp_get_num_procs() / 2 - 1, 1);
+      //maxthread = std::max(omp_get_num_procs(), 1);
     }
     nthread_ = std::min(maxthread, nthread_);
+    //nthread_ = maxthread;
     #pragma omp parallel num_threads(nthread_)
     {
       nthread = omp_get_num_threads();
     }
     nthread_ = nthread;
+
+    std::cout << "nthread " << nthread << " " << maxthread << std::endl;
+
     // setup decoders
     for (int i = 0; i < nthread; ++i) {
       augmenters_.push_back(new ImageAugmenter());

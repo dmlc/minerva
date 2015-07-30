@@ -275,10 +275,8 @@ void DataProvider(const DataList& outputs, DataProviderClosure& closure) {
       closure.itr->Next();
   }
   const cxxnet::DataBatch& batch = closure.itr->Value();
-  mshadow::Tensor<mshadow::cpu, 2> label = batch.label;
-  mshadow::Tensor<mshadow::cpu, 4> image = batch.data;
-  memcpy(outputs[0].data_, image.dptr_, outputs[0].size_.Prod() * sizeof(float));
-  memcpy(outputs[1].data_, label.dptr_, outputs[1].size_.Prod() * sizeof(float));
+  memcpy(outputs[0].data_, batch.data.dptr_, outputs[0].size_.Prod() * sizeof(float));
+  memcpy(outputs[1].data_, batch.label.dptr_, outputs[1].size_.Prod() * sizeof(float));
 }
 
 void Randn(const DataList& output, RandnClosure& closure) {
