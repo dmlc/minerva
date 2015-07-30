@@ -4,6 +4,7 @@ import cython
 from libc.stdlib cimport calloc, free
 from libc.string cimport strcpy
 from libcpp.vector cimport vector
+from libcpp.string cimport string
 import numpy as np
 cimport numpy as np
 cimport minerva as m
@@ -1005,3 +1006,16 @@ cdef class PoolingInfo(object):
         def __get__(self):
             return self._d.pad_width
 
+cdef class DataProvider(object):
+    cdef m.DataProvider* _d
+
+    def __cinit__(
+            self
+        ,   string dataconfig):
+        self._d = new m.DataProvider(dataconfig)
+
+    def __dealloc__(self):
+        del self._d
+
+    def get_next(self):
+        return [_wrap_cpp_narray(a) for a in self._d.GetNextValue()]

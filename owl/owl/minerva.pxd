@@ -1,6 +1,7 @@
 from libc.stdint cimport *
 from libcpp cimport bool
 from libcpp.vector cimport vector
+from libcpp.string cimport string
 
 cdef extern from './minerva_utils.h' namespace 'libowl':
   uint64_t CreateCpuDevice() except +
@@ -210,3 +211,7 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
     ConvBackwardDataAlgorithm algo
     float time
     size_t memory
+
+  cppclass DataProvider:
+    DataProvider(string)
+    vector[NArray] GetNextValue() except +
