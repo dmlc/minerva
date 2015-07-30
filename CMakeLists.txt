@@ -81,9 +81,13 @@ set(CMAKE_CXX_FLAGS_RELEASE "${GENERAL_FLAGS_RELEASE} -std=c++11 -DNDEBUG")
 #MSHADOW and CXXNET Flags
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fopenmp -DMSHADOW_STAND_ALONE=1 -DCXXNET_USE_OPENCV=1 -DCXXNET_USE_OPENCV_DECODER=1")
 
-############################################# find packages
 set(CORE_DEPS "")
+############################################# third party libraries
+add_subdirectory(third_party)
+include_directories(SYSTEM ${THIRD_INCLUDE_PATH})
+set(CORE_DEPS ${CORE_DEPS} ${THIRD_LIBS})
 
+############################################# find packages
 find_package(Threads REQUIRED)
 set(CORE_DEPS ${CORE_DEPS} ${CMAKE_THREAD_LIBS_INIT})
 
@@ -123,11 +127,6 @@ message(STATUS "OpenCV libraries: ${OpenCV_LIBRARIES}")
 message(STATUS "OpenCV includes: ${OpenCV_INCLUDE_DIRS}")
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 
-############################################# third party libraries
-add_subdirectory(third_party)
-include_directories(SYSTEM ${THIRD_INCLUDE_PATH})
-set(CORE_DEPS ${CORE_DEPS} ${THIRD_LIBS})
-
 ############################################# macros
 
 if(BUILD_WITH_PS)
@@ -148,6 +147,11 @@ message(STATUS "build unit tests                    -- ${BUILD_TESTS}")
 message(STATUS "build cpu-only version              -- ${BUILD_CPU_ONLY}")
 message(STATUS "build with parameter server support -- ${BUILD_WITH_PS}")
 message(STATUS "build with BLAS library for CPU     -- ${BUILD_WITH_BLAS}")
+
+get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+foreach(dir ${dirs})
+  message(STATUS "dir='${dir}'")
+endforeach()
 
 add_subdirectory(minerva)
 
