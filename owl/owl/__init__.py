@@ -20,6 +20,7 @@ import numpy as np
 import libowl as _owl
 
 NArray = _owl.NArray
+DataProvider = _owl.DataProvider
 _owl.initialize()
 
 # def initialize():
@@ -90,6 +91,14 @@ def set_device(dev):
     :param int dev: the id of the device (usually returned by create_xxx_device)
     """
     _owl.set_device(dev)
+
+def get_current_device():
+    """ Return the current device
+
+    :return: the current device
+    :rtype: int
+    """
+    return _owl.get_current_device()
 
 def zeros(shape):
     """ Create ndarray of zero values
@@ -187,6 +196,8 @@ def slice(src, slice_dim, st_off, slice_count):
     :rtype: owl.NArray
     """
     return NArray.slice(src, slice_dim, st_off, slice_count)
+
+cpu_dev = create_cpu_device()
 
 # def print_profiler_result():
 #     """ Print result from execution profiler

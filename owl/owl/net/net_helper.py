@@ -76,6 +76,10 @@ class CaffeNetBuilder:
                     owl_net.data_layers.append(l.name)
                     if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
                         owl_net.batch_size = l.window_data_param.batch_size
+                elif ty == 'RecordData':
+                    owl_net.data_layers.append(l.name)
+                    if len(l.include) != 0 and l.include[0].phase == Phase.Value('TRAIN'):
+                        owl_net.batch_size = l.record_data_param.batch_size
                 elif ty == 'SoftmaxWithLoss':
                     owl_net.loss_uids.append(uid)
                 elif ty == 'Accuracy':
@@ -127,6 +131,8 @@ class CaffeNetBuilder:
             return net.ImageDataUnit(caffe_layer, num_gpu)
         elif ty == 'WindowData':
             return net.ImageWindowDataUnit(caffe_layer, num_gpu)
+        elif ty == 'RecordData':
+            return net.RecordDataUnit(caffe_layer, num_gpu)
         elif ty == 'InnerProduct':
             return net.FullyConnection(caffe_layer)
         elif ty == 'Convolution':

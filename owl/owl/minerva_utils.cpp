@@ -30,6 +30,11 @@ void SetDevice(uint64_t id) {
   ms.SetDevice(id);
 }
 
+uint64_t GetCurrentDevice() {
+  auto&& ms = minerva::MinervaSystem::Instance();
+  return ms.current_device_id();
+}
+
 minerva::Scale ToScale(std::vector<int>* v) {
   minerva::Scale r(std::move(*v));
   return r;

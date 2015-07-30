@@ -319,6 +319,9 @@ message LayerParameter {
   optional TanHParameter tanh_param = 127;
   optional ThresholdParameter threshold_param = 128;
   optional WindowDataParameter window_data_param = 129;
+
+  // [MINERVA] minerva type
+  optional RecordDataParameter record_data_param = 131;
 }
 
 // Message that stores parameters used to apply transformation
@@ -905,4 +908,11 @@ message V0LayerParameter {
   optional uint32 concat_dim = 65 [default = 1];
 
   optional HDF5OutputParameter hdf5_output_param = 1001;
+}
+
+message RecordDataParameter {
+  // path to the configuration file
+  optional string config_path = 1;
+  // batch size
+  optional int32 batch_size = 2;
 }

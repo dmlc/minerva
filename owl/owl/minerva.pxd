@@ -9,6 +9,7 @@ cdef extern from './minerva_utils.h' namespace 'libowl':
   int GetGpuDeviceCount() except +
   void WaitForAll() except +
   void SetDevice(uint64_t) except +
+  uint64_t GetCurrentDevice() except +
   Scale ToScale(vector[int]*) except +
   vector[int] OfScale(const Scale&) except +
   NArray FromNumpy(const float*, const Scale&) except +
@@ -213,5 +214,5 @@ cdef extern from '../minerva/minerva.h' namespace 'minerva':
     size_t memory
 
   cppclass DataProvider:
-    DataProvider(string)
+    DataProvider(string, int)
     vector[NArray] GetNextValue() except +

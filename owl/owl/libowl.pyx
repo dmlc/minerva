@@ -35,6 +35,9 @@ def wait_for_all():
 def set_device(i):
     m.SetDevice(i)
 
+def get_current_device():
+    return m.GetCurrentDevice()
+
 def initialize():
     cdef int argc = len(sys.argv)
     cdef char** argv = <char**>(calloc(argc, sizeof(char*)))
@@ -1011,8 +1014,9 @@ cdef class DataProvider(object):
 
     def __cinit__(
             self
-        ,   string dataconfig):
-        self._d = new m.DataProvider(dataconfig)
+        ,   string dataconfig
+        ,   int num_gpu):
+        self._d = new m.DataProvider(dataconfig, num_gpu)
 
     def __dealloc__(self):
         del self._d

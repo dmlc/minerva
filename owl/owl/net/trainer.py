@@ -32,6 +32,7 @@ class NetTrainer:
         self.num_gpu = num_gpu
         self.sync_freq = sync_freq
         self.gpu = [owl.create_gpu_device(i) for i in range(num_gpu)]
+        owl.set_device(self.gpu[0])
 
     def build_net(self):
         ''' Build network structure using Caffe's proto definition. It will also initialize

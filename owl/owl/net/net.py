@@ -805,7 +805,6 @@ class LMDBDataUnit(DataUnit):
     
     def __init__(self, params, num_gpu):
         super(LMDBDataUnit, self).__init__(params, num_gpu)
-        print params.include
         if params.include[0].phase == Phase.Value('TRAIN'):
             self.dp = LMDBDataProvider(params.data_param, params.transform_param, num_gpu)
         else:
@@ -887,6 +886,49 @@ class LMDBDataUnit(DataUnit):
 
     def __str__(self):
         return 'lmdb_data'
+
+class RecordDataUnit(DataUnit):
+    def __init__(self, params, num_gpu):
+        super(RecordDataUnit, self).__init__(params, num_gpu)
+        if params.include[0].phase == Phase.Value('TRAIN'):
+            self.dp = owl.DataProvider(params.record_data_param.config_path, num_gpu)
+        else:
+            self.dp = owl.DataProvider(params.record_data_param.config_path, 1)
+        self.params = params
+        self.crop_size = params.transform_param.crop_size
+        self.out = None
+        self.multiview = False
+        self.num_gpu = num_gpu
+
+    def compute_size(self, from_btm, to_top):
+        self.out_shape = [self.crop_size,
+                          self.crop_size,
+                          3, 1]
+        to_top[self.top_names[0]] = dict()
+        to_top[self.top_names[0]]['out_shape'] = self.out_shape[:]
+        to_top[self.top_names[0]]['rec_on_ori'] = 1
+        to_top[self.top_names[0]]['stride_on_ori'] = 1 
+        to_top[self.top_names[0]]['start_on_ori'] = 0
+        self.rec_on_ori = 1
+        self.stride_on_ori = 1
+        self.start_on_ori = 0
+   
+    def forward(self, from_btm, to_top, phase):
+        olddev = owl.get_current_device()
+
+        owl.set_device(owl.cpu_dev)
+        [samples, labels] = self.dp.get_next()
+        owl.set_device(olddev)
+        #print samples.shape
+        #print labels.shape
+
+        to_top[self.top_names[0]] = samples
+        to_top[self.top_names[1]] = labels
+        self.out = to_top[self.top_names[0]]
+
+    def __str__(self):
+        return 'record_data'
+
 
 class ImageDataUnit(DataUnit):
     ''' DataUnit load from raw images.

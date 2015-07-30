@@ -10,6 +10,7 @@ uint64_t CreateGpuDevice(int);
 int GetGpuDeviceCount();
 void WaitForAll();
 void SetDevice(uint64_t);
+uint64_t GetCurrentDevice();
 minerva::Scale ToScale(std::vector<int>*);
 std::vector<int> OfScale(minerva::Scale const&);
 
