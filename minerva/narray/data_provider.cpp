@@ -1,5 +1,6 @@
 #include "narray/data_provider.h"
 #include "op/physical_op.h"
+#include "io/data.h"
 
 using namespace std;
 using namespace cxxnet;

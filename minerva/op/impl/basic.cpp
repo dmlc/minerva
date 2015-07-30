@@ -1,5 +1,7 @@
 #include "basic.h"
 #include "op/closure.h"
+#include "io/data.h"
+
 #include <cmath>
 #include <dmlc/logging.h>
 #include <chrono>

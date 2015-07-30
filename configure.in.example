@@ -14,7 +14,9 @@ CUDA_ROOT=
 
 # Root path to find cudnn
 CUDNN_ROOT=
-CUDNN_VERSION=
+
+# OpenCV root path to search
+OPENCV_ROOT=
 
 # build type: (Release | Debug | RelWithDebInfo)
 BUILD_TYPE=Release

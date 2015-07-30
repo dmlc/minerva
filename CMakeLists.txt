@@ -119,8 +119,9 @@ endif(BUILD_CPU_ONLY)
 
 ############################################# opencv
 find_package(OpenCV REQUIRED)
-message(STATUS "Found OpenCV libraries: ${OpenCV_LIBRARIES}")
-include_directories(SYSTEM ${OPENCV_INCLUDE_PATH})
+message(STATUS "OpenCV libraries: ${OpenCV_LIBRARIES}")
+message(STATUS "OpenCV includes: ${OpenCV_INCLUDE_DIRS}")
+include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 
 ############################################# third party libraries
 add_subdirectory(third_party)

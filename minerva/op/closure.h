@@ -2,7 +2,11 @@
 #include <memory>
 #include "common/scale.h"
 #include "narray/convolution_info.h"
-#include "io/data.h"
+
+namespace cxxnet {
+class DataBatch;
+template<typename T> class IIterator;
+}
 
 namespace minerva {
 
