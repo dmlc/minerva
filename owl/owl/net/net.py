@@ -924,10 +924,8 @@ class RecordDataUnit(DataUnit):
         samples = self.next_samples
         labels = self.next_labels
         [self.next_samples, self.next_labels] = self.dp.get_next()
-        '''
         #no prefetch
-        [samples, labels] = self.dp.get_next()
-        '''
+        #[samples, labels] = self.dp.get_next()
         owl.set_device(olddev)
         #print samples.shape
         #print labels.shape

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <random>
 #include <cstring>
+#include <mutex>
 
 using namespace std;
 
@@ -267,7 +268,12 @@ void ArrayLoader(const DataList& outputs, ArrayLoaderClosure& closure) {
   closure.data.reset();
 }
 
+std::mutex g_data_provider_mutex;
+
 void DataProvider(const DataList& outputs, DataProviderClosure& closure) {
+  // need lock to protect io
+  std::lock_guard<std::mutex> ul(g_data_provider_mutex);
+
   CHECK_EQ(outputs.size(), 2) << "(data provider) #outputs wrong, one data, one label";
   CHECK(closure.itr) << "iterator ready";
   if(!closure.itr->Next()){

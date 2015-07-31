@@ -48,6 +48,7 @@ void DataProvider::Init() {
 	  }
 	}
 	if (data_itr != NULL) {
+    data_itr->SetParam("buffer_size", "5");
     for (size_t i = 0; i < defcfg.size(); ++ i) {
 		  if (!strcmp(defcfg[i].first.c_str(), "batch_size")) {
 			  batch_size_ = atoi(defcfg[i].second.c_str()) / num_gpu_;	
