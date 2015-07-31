@@ -102,18 +102,17 @@ class ImageRecordIOParser {
     int maxthread;
     #pragma omp parallel
     {
-      maxthread = std::max(omp_get_num_procs() / 2 - 1, 1);
-      //maxthread = std::max(omp_get_num_procs(), 1);
+      //maxthread = std::max(omp_get_num_procs() / 2 - 1, 1);
+      maxthread = std::max(omp_get_num_procs() - 1, 1);
     }
-    nthread_ = std::min(maxthread, nthread_);
-    //nthread_ = maxthread;
+    nthread_ = maxthread;
     #pragma omp parallel num_threads(nthread_)
     {
       nthread = omp_get_num_threads();
     }
     nthread_ = nthread;
 
-    std::cout << "nthread " << nthread << " " << maxthread << std::endl;
+    std::cout << "parser nthread " << nthread << " maxthread " << maxthread << std::endl;
 
     // setup decoders
     for (int i = 0; i < nthread; ++i) {
@@ -332,6 +331,8 @@ class ImageRecordIOIterator : public IIterator<DataInst> {
   DataInst out_;
   // whether shuffle data
   int shuffle_;
+  // thread parser num
+  int parser_nthread;
   // data ptr
   size_t inst_ptr_;
   // random sampler

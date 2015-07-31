@@ -899,6 +899,10 @@ class RecordDataUnit(DataUnit):
         self.out = None
         self.multiview = False
         self.num_gpu = num_gpu
+        olddev = owl.get_current_device()
+        owl.set_device(owl.cpu_dev)
+        [self.next_samples, self.next_labels] = self.dp.get_next()
+        owl.set_device(olddev)
 
     def compute_size(self, from_btm, to_top):
         self.out_shape = [self.crop_size,
@@ -915,9 +919,15 @@ class RecordDataUnit(DataUnit):
    
     def forward(self, from_btm, to_top, phase):
         olddev = owl.get_current_device()
-
         owl.set_device(owl.cpu_dev)
+        #prefetch
+        samples = self.next_samples
+        labels = self.next_labels
+        [self.next_samples, self.next_labels] = self.dp.get_next()
+        '''
+        #no prefetch
         [samples, labels] = self.dp.get_next()
+        '''
         owl.set_device(olddev)
         #print samples.shape
         #print labels.shape

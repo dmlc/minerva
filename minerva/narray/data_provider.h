@@ -23,7 +23,7 @@ class DataProvider {
    const int num_gpu_;
 	 std::vector< std::pair< std::string, std::string> > cfg;
 	 Scale data_scale, label_scale;
-	 int channel, width, height, batch_size_; 
+	 int channel, width, height, batch_size_, label_dim; 
 };
 
 
