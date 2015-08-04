@@ -113,8 +113,8 @@ ImageBatch Convolution::PoolingForward(ImageBatch src, PoolingInfo info) {
     --pooled_width;
   }
   Scale new_size {
-    pooled_height,
     pooled_width,
+    pooled_height,
     src.GetNumFeatureMaps(),
     src.GetNumImages()
   };
